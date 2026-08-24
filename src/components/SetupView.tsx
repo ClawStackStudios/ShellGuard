@@ -114,7 +114,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-ocean text-slate-900 dark:text-slate-50 antialiased min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 overflow-auto relative selection:bg-[#e4048a]/30">
+    <div className="bg-slate-50 dark:bg-ocean text-slate-900 dark:text-slate-50 antialiased h-screen flex flex-col justify-center items-center p-4 overflow-hidden relative selection:bg-[#e4048a]/30">
       {/* Ambient Background Glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#e4048a]/10 dark:bg-[#e4048a]/5 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-[#06b6d4]/10 dark:bg-[#06b6d4]/5 blur-[100px] pointer-events-none" />
@@ -123,10 +123,10 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-[460px] bg-white dark:bg-surf-container backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-[#e4048a]/40 dark:border-[#e4048a]/30 p-8 sm:p-10 flex flex-col relative z-10 my-8"
+        className="w-full max-w-[460px] bg-white dark:bg-surf-container backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-[#e4048a]/40 dark:border-[#e4048a]/30 p-6 sm:p-8 flex flex-col relative z-10"
       >
         {/* ── Mascot Icon Badge ────────────────────────────────────────── */}
-        <div className="flex justify-center mb-5">
+        <div className="flex justify-center mb-3">
           <div className="w-16 h-16 rounded-2xl bg-white dark:bg-surf-lowest border-2 border-[#e4048a]/30 dark:border-[#e4048a]/40 p-1.5 flex items-center justify-center shadow-lg shadow-[#e4048a]/10 overflow-hidden">
             <img 
               alt="ShellGuard Mascot" 
@@ -154,7 +154,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
 
         {/* ── Progress Indicators (Two horizontal pills) ───────────────── */}
         {step !== "success" && (
-          <div className="flex items-center justify-center gap-3 my-7" id="progress-bar">
+          <div className="flex items-center justify-center gap-3 my-4" id="progress-bar">
             <div 
               className="h-1.5 w-24 sm:w-28 rounded-full bg-[#06b6d4] shadow-[0_0_12px_rgba(6,182,212,0.6)] transition-all duration-500" 
               id="bar-1" 
@@ -172,7 +172,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
 
         {/* ── Error Banner ──────────────────────────── */}
         {error && (
-          <div className="flex items-start gap-3 p-3.5 mb-6 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl" id="error-banner">
+          <div className="flex items-start gap-3 p-3 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl" id="error-banner">
             <ShieldAlert className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-650 dark:text-red-400" id="error-message">
               {error}
@@ -199,15 +199,15 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
               </div>
 
               {/* Title & Description */}
-              <h3 className="text-2xl font-headline font-bold text-center text-slate-900 dark:text-white mb-2 tracking-tight">
+              <h3 className="text-xl font-headline font-bold text-center text-slate-900 dark:text-white mb-2 tracking-tight">
                 Initialize Your Identity
               </h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm text-center leading-relaxed max-w-xs mx-auto mb-7">
+              <p className="text-slate-500 dark:text-slate-400 text-xs text-center leading-relaxed max-w-xs mx-auto mb-5">
                 Choose your handle in the reef. This will be anchored to your cryptographic key.
               </p>
 
               {/* Form Input: USERNAME * */}
-              <div className="space-y-1.5 mb-4">
+              <div className="space-y-1 mb-3">
                 <label className="text-[10px] font-headline font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1">
                   USERNAME <span className="text-[#06b6d4] text-xs font-bold">*</span>
                 </label>
@@ -223,7 +223,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
               </div>
 
               {/* Form Input: DISPLAY NAME (optional) */}
-              <div className="space-y-1.5 mb-6">
+              <div className="space-y-1 mb-5">
                 <label className="text-[10px] font-headline font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                   DISPLAY NAME <span className="text-slate-400 dark:text-slate-500 font-normal lowercase text-[10px]">(optional)</span>
                 </label>
@@ -269,9 +269,9 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.25 }}
-              className="space-y-6"
+              className="space-y-4"
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="w-16 h-16 bg-[#06b6d4]/10 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Shield className="w-8 h-8 text-[#06b6d4]" />
                 </div>
@@ -282,7 +282,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
               </div>
 
               {/* Key Display Card */}
-              <div className="bg-slate-50 dark:bg-surf-lowest rounded-xl p-4 border border-slate-200 dark:border-white/10 space-y-3 shadow-inner">
+              <div className="bg-slate-50 dark:bg-surf-lowest rounded-xl p-3 border border-slate-200 dark:border-white/10 space-y-2 shadow-inner">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <span className="text-[9px] font-mono font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
@@ -315,7 +315,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
               </div>
 
               {/* Warning Banner */}
-              <div className="bg-red-50 border border-red-100 dark:bg-[#e4048a]/5 dark:border-[#e4048a]/20 rounded-xl p-3.5 flex gap-2.5 italic">
+              <div className="bg-red-50 border border-red-100 dark:bg-[#e4048a]/5 dark:border-[#e4048a]/20 rounded-xl p-2.5 flex gap-2 italic">
                 <Zap className="w-4 h-4 text-red-500 dark:text-[#e4048a] flex-shrink-0 mt-0.5" />
                 <p className="text-[10px] text-red-650 dark:text-[#e4048a]/80 leading-relaxed font-semibold uppercase tracking-tight">
                   YOUR VAULTKEY IS NOT STORED ON OUR SERVERS. DOWNLOAD THE VAULT ACCESS FILE OR LOSE ACCESS FOREVER.
@@ -341,7 +341,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
                 <button 
                   onClick={completeWizard}
                   disabled={!isDownloaded || isCompleting}
-                  className="w-full py-4 bg-gradient-to-r from-[#e4048a] to-[#ef4444] hover:from-[#c80378] hover:to-[#dc2626] text-white font-headline font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-[#e4048a]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-gradient-to-r from-[#e4048a] to-[#ef4444] hover:from-[#c80378] hover:to-[#dc2626] text-white font-headline font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-[#e4048a]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 >
                   {!isCompleting ? (
                     <span className="flex items-center gap-2">
@@ -387,7 +387,7 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
 
         {/* ── Footer Navigation & Credits ────────────────────────────── */}
         {step !== "success" && (
-          <div className="pt-6 mt-6 border-t border-slate-100 dark:border-white/5">
+          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/5">
             <div className="flex items-center justify-center gap-6 text-[11px] font-headline font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <button 
                 onClick={onSwitch}

@@ -50,6 +50,12 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
             >
               Claw In
             </button>
+            <button 
+              onClick={onHatch}
+              className="px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest text-white bg-gradient-to-r from-claw-cyan to-deep-teal shadow-lg shadow-cyan-200 dark:shadow-cyan-900/40 hover:opacity-90 transition-opacity cursor-pointer border border-transparent"
+            >
+              Hatch Vault
+            </button>
           </div>
         </div>
       </header>

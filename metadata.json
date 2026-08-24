@@ -1,0 +1,6 @@
+{
+  "name": "ShellGuard©™",
+  "description": "Exoskeletal Protection for Human + Agent Secrets. Built by ClawStack Studios©™.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root, html.light {
+  --bg-base: 241 245 249;         /* Ocean Mist / slate-100 */
+  --bg-surface: 255 255 255;      /* Crisp White */
+  --text-main: 15 23 42;          /* slate-900 */
+  --text-muted: 100 116 139;      /* slate-500 */
+  --border-subtle: 203 213 225;   /* slate-300 */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --identity-bg: #ffffff;
+  --header-border-line: #3b0764;  /* ShellGuard Dark Purple in Light Mode */
+}
+
+html.dark {
+  --bg-base: 15 20 25;            /* Abyssal Dark */
+  --bg-surface: 23 28 33;         /* Deep Subsurface */
+  --text-main: 222 227 234;       /* Luminous Shell */
+  --text-muted: 135 146 152;      /* Abyssal Muted */
+  --border-subtle: 61 72 78;      /* Carapace Ridge */
+  --glass-bg: rgba(23, 28, 33, 0.85);
+  --identity-bg: #111827;
+  --header-border-line: #e4048a;  /* Lobster Red in Dark Mode */
+}
+
+@theme {
+  --color-ocean: #1e0f15;
+  --color-lobster-red: #e4048a;
+  --color-shellguard-purple: #3b0764;
+  --color-claw-cyan: #06b6d4;
+  --color-shell-white: #f8dbe3;
+  --color-deep-teal: #47343a;
+  
+  --color-surf-dim: #1e0f15;
+  --color-surf-bright: #47343a;
+  --color-surf-lowest: #180a0f;
+  --color-surf-low: #27171d;
+  --color-surf-container: #2b1b21;
+  --color-surf-high: #36252b;
+  --color-surf-highest: #423036;
+  
+  --font-sans: "Outfit", "Inter", system-ui, sans-serif;
+  --font-headline: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+/* View Transition API Circular Reveal Configuration */
+/* Disable the default cross-fade so the JS circular clip-path takes over */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* Core Canvas bindings - Using rgb() so Tailwind opacity still works optionally */
+@layer base {
+  html, :host, body {
+    background-color: rgb(var(--bg-base));
+    color: rgb(var(--text-main));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+}
+
+/* Utility classes directly referencing tokens */
+.bg-theme-base { background-color: rgb(var(--bg-base)); }
+.bg-theme-surface { background-color: rgb(var(--bg-surface)); }
+.text-theme-main { color: rgb(var(--text-main)); }
+.text-theme-muted { color: rgb(var(--text-muted)); }
+.border-theme-subtle { border-color: rgb(var(--border-subtle)); }
+.border-header-dynamic { 
+  border-color: var(--header-border-line); 
+  transition: border-color 0.3s ease;
+}
+
+.glow-cyan {
+  box-shadow: 0 0 32px 0 rgba(50, 179, 221, 0.18);
+}
+
+.glow-red {
+  box-shadow: 0 0 32px 0 rgba(255, 59, 48, 0.18);
+}
+
+.carapace-border {
+  border: 1px solid rgba(50, 179, 221, 0.2);
+}
+
+.claw-border {
+  border: 2px solid #e4048a;
+}
+
+.glass-card {
+  background-color: rgb(var(--bg-surface));
+  border: 1px solid rgb(var(--border-subtle));
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.lobster-gradient-text {
+  background: linear-gradient(to right, #e4048a, #ef4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.identity-card {
+  background: var(--identity-bg);
+  border: 1px solid rgb(var(--border-subtle));
+}
+
+.glow-primary {
+  box-shadow: 0 0 20px rgba(228, 4, 138, 0.2);
+}
+
+.bg-grid-pattern {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

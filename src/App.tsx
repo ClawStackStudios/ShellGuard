@@ -527,7 +527,7 @@ export default function App() {
   const isSettingsMode = view.startsWith('settings');
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-theme-surface overflow-hidden font-sans selection:bg-claw-cyan/30 flex">
+    <div className="h-screen bg-theme-surface text-theme-main overflow-hidden font-sans selection:bg-claw-cyan/30 flex">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
@@ -538,7 +538,7 @@ export default function App() {
 
       {/* Sidebar - FIXED to the left viewport wall */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 h-full flex flex-col overflow-hidden bg-white dark:bg-theme-surface border-r border-theme-subtle transition-all duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 h-full flex flex-col overflow-hidden bg-theme-surface border-r border-theme-subtle transition-all duration-300 ease-in-out ${
           isSidebarCollapsed ? "w-16 translate-x-0" : 
           isSidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:translate-x-0"
         }`}
@@ -563,7 +563,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main 
-        className="h-full w-full flex flex-col min-h-0 bg-slate-50 dark:bg-theme-base overflow-hidden relative transition-all duration-300 ease-in-out"
+        className="h-full w-full flex flex-col min-h-0 bg-theme-base text-theme-main overflow-hidden relative transition-all duration-300 ease-in-out"
         style={{ 
           paddingLeft: window.innerWidth < 1024 ? 0 : isSidebarCollapsed ? "64px" : "256px" 
         }}

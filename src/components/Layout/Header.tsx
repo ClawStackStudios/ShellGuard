@@ -23,7 +23,7 @@ export function Header({ user, onToggleSidebar, view }: HeaderProps) {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <header className="bg-theme-base/90 backdrop-blur-md border-b-2 border-lobster-red dark:border-lobster-red px-4 md:px-6 py-2 md:py-3 flex-shrink-0 h-16 transition-colors duration-300 z-30 relative">
+    <header className="bg-theme-base/90 backdrop-blur-md border-b-2 border-purple-600 dark:border-red-500 px-4 md:px-6 py-2 md:py-3 flex-shrink-0 h-16 transition-colors duration-300 z-30 relative">
       <div className="flex items-center justify-between gap-4 h-full max-w-7xl mx-auto">
         {/* Left Side: Toggle & Breadcrumbs */}
         <div className="flex items-center gap-2 md:gap-4">

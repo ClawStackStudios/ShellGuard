@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+# NOTE (delta #10): package-lock.json is deliberately NOT excluded.
+# The Dockerfile runs `npm ci`, which requires it for reproducible images.
+# (ClawChives excludes it — known reproducibility bug we do not inherit.)
+
+# Git
+.git
+.gitignore
+
+# Development
+.vscode
+.cursor
+.env
+.env.*
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# Testing
+tests/
+coverage/
+.vitest/
+.cache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+data/
+data-dev/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-shm
+*.db-wal
+
+# Repo scratch (never ship in the image; never use a blanket *.md rule —
+# skills/shellguard/SKILL.md is copied into the image)
+docs/
+*.log
+bun.lock
+patch_*.cjs
+fix_app.cjs
+Migrating ShellGuard To SQLite.md
+implementation_plan.md

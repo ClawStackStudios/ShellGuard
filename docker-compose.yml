@@ -1,0 +1,31 @@
+services:
+  # ─── ShellGuard (API + UI Single Container) ─────────────────────────────────
+  shellguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shellguard
+    stdin_open: true
+    tty: true
+    ports:
+      - "4545:4545"
+  # ─── Docker Bind Mount for SQLite Database ───────
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=4545
+      - DATA_DIR=/app/data
+      - DB_ENCRYPTION_KEY=${DB_ENCRYPTION_KEY:-}
+      - TRUST_PROXY=${TRUST_PROXY:-false}
+      - CORS_ORIGIN=${CORS_ORIGIN:-}
+      - TOKEN_TTL_DEFAULT=${TOKEN_TTL_DEFAULT:-}
+      - PUID=1000
+      - PGID=1000
+      # For detailed configuration, see README.md → Running with Docker section
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4545/api/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s

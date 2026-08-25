@@ -1,32 +1,405 @@
-# 🦞 ShellGuard©™
+# 🛡️ ShellGuard
 
-**Exoskeletal Protection for Human + Agent Secrets.**
+<div align="center">
 
-ShellGuard©™ is a sovereign secrets manager built by ClawStack Studios©™. It allows you to store your most sensitive pearls behind a hardened carapace of encryption, accessible only through cryptographic identity.
+```text
+    ___  ____ ____ _  _ ____ _    ___  ____ ____ ___ _    ____ ____ ____
+    |__] |__/ |___ |\ | |__| |     |  [__  |___  |  |    |___ |__| [__
+    |    |  \ |___ | \| |  | |___  |  ___] |___  |  |___ |___ |  |  ___]
+
+              ~ **ClawStack Mobile Studios©™** ~
+```
+
+*Exoskeletal Protection for Human + Agent Secrets — a zero-knowledge vault where Humans and AI Lobsters guard their pearls together.*
+
+</div>
+
+---
+
+[![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
+[![Version](https://img.shields.io/badge/Version-v0.2.0-blue?style=for-the-badge)](#)
+[![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
+[![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![SQLite](https://img.shields.io/badge/SQLite%20%2B%20SQLCipher-07405E?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![License](https://img.shields.io/badge/License-TBD-lightgrey?style=for-the-badge)](LICENSE)
+[![ClawStack](https://img.shields.io/badge/ClawStack-Mobile_Studios-FF4500?style=for-the-badge&logo=gitlab&logoColor=white)](#)
+
+---
+
+## ⚠️ FRESH START — Breaking Change
+
+> [!CAUTION]
+> **This release scuttles the old reef.** ShellGuard v0.2.0 migrates onto a brand-new SQLite bedrock with transactional migrations. **All previously stored local data is wiped** — the legacy `shellguard.db` file is deleted and cannot be recovered. Export anything you need from an older build *before* upgrading, then register a fresh identity on first launch. There is no legacy import path.
+
+---
+
+## 📜 Table of Contents
+
+<details>
+<summary>Unfurl the Scroll 📜</summary>
+
+- [About](#-about)
+- [Architecture](#️-architecture)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Running with Docker](#-running-with-docker)
+  - [Running Locally with npm](#-running-locally-with-npm)
+- [Environment Variables](#️-environment-variables)
+- [Key System](#-key-system)
+- [API Reference](#-api-reference)
+- [Project Structure](#-project-structure)
+- [Available Scripts](#️-available-scripts)
+- [Related Documentation](#-related-documentation)
+- [Contributing](#-contributing)
+- [Security](#️-security)
+
+</details>
+
+---
+
+## 📌 About
+
+**ShellGuard** is a privacy-first, self-hostable **secrets vault** built for the Human-Agent ecosystem. Passwords, TOTP seeds, secure notes, SSH keys and encrypted attachments live as *pearls* behind a hardened carapace: everything sensitive is encrypted **in your browser** before the server ever sees it. No cloud. No plaintext at rest. Just your grotto.
+
+- 🔐 **Zero-Knowledge ShellCryption©™** — Secrets are sealed client-side with AES-GCM-256 derived from your `hu-` key via HKDF. The server stores only opaque `{v, alg, iv, ct, aad}` blobs and mathematically cannot decrypt them.
+- 🗝️ **ClawKeys©™ Identity** — Passwordless login with a generated `hu-` identity key; short-lived `api-` bearer tokens carry every request.
+- 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
+- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP), secure notes, SSH keys and base64 attachments, organized into color-coded nested **pods**.
+- 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
+- 📤 **Sovereign Exports** — Metadata CSV export and re-auth-gated decrypted JSON backup; import restores your pearls on any reef.
+- ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically.
+- 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
+- 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
+- 🌊 **Reef Modernist Design** — "Bioluminescent Defense": deep abyssal surfaces, glowing shells, Sora/Geist/JetBrains Mono typography.
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    subgraph Client ["🌐 Browser"]
+        UI[React / Tailwind UI<br/>Reef Modernist]
+        SC["ShellCryption©™<br/>HKDF → AES-GCM-256<br/>client-side field encryption"]
+        REST[RestAdapter<br/>unwraps {success, data}]
+        Session["sessionStorage<br/>sg_api_token"]
+    end
+
+    subgraph Server ["🖥️ server.ts (Express 5)"]
+        API["REST API<br/>helmet · cors · zod · rate limits<br/>Port 4646 dev / 4545 prod"]
+        DB[("db.sqlite<br/>WAL · SQLCipher optional")]
+        AUDIT[("audit.sqlite<br/>segregated append-only logs")]
+    end
+
+    UI --> SC
+    SC -->|"ciphertext blobs only"| REST
+    REST -->|"fetch + Bearer api-*"| API
+    API --> DB
+    API --> AUDIT
+```
+
+The server is a **cipher-keeper, never a key-holder**: encryption keys exist only in browser memory, derived from your `hu-` key each session. See [ARCHITECTURE.md](./ARCHITECTURE.md) for the request pipeline, auth state machine and hard constraints.
+
+---
 
 ## 🚀 Getting Started
 
-### 1. Molt Your Identity
-On first launch, choose a username and generate your **hu- key**. This is your root identity. **Download it and store it safely.** If you lose it, your vault is locked forever.
+### Prerequisites
 
-### 2. Lock Your Pearls
-Add secrets to your vault. Each pearl is encrypted at rest using ShellCryption©™ standards.
+- **Node.js** v20+
+- **npm** v10+
+- **Docker & Docker Compose** *(for containerized deployment)*
 
-### 3. Spawn Agents
-Create **Lobster Keys©™** (lb-) for your AI agents. Grant them specific claw strengths (READ, WRITE, DELETE) so they can act on your behalf without ever seeing your root keys.
+---
 
-## 🐳 Deployment
+### 🐳 Running with Docker
+
+<details>
+<summary>Expand Docker instructions</summary>
+
+**1. Generate an encryption key (strongly recommended):**
 
 ```bash
-docker-compose up -d
+openssl rand -base64 32
 ```
 
+**2. Launch the stack:**
+
+```bash
+docker compose up -d
+```
+
+Or build locally instead of pulling from GHCR:
+
+```bash
+docker compose up -d --build
+```
+
+**3. Verify running state:**
+
+- **Web GUI:** [http://localhost:4545](http://localhost:4545)
+- **API Health:** `curl http://localhost:4545/api/health`
+
+**Monitoring & Maintenance:**
+
+- **View Logs:** `docker compose logs -f`
+- **Stop Stack:** `docker compose down`
+- **Wait-for-healthy:** `docker compose up -d --wait`
+
+> [!IMPORTANT]
+> **Data Sovereignty & Persistence**: All pearls, identities and audit reefs live in a bind mount on your host machine (`./data/db.sqlite`, `./data/audit.sqlite`) for maximum visibility and ease of backup. Back up both files — and keep your `DB_ENCRYPTION_KEY` somewhere safe *outside* this directory.
+
+> [!NOTE]
+> For Unraid, a Community Applications template is provided at [`shellguard-unraid-template.xml`](./shellguard-unraid-template.xml) (WebUI port `4545`, appdata path `/mnt/user/appdata/shellguard`, advanced-default `PUID=99`/`PGID=100`).
+
+</details>
+
+---
+
+### 🐚 Running Locally with npm
+
+<details>
+<summary>Expand local development instructions</summary>
+
+```bash
+# 1. Install dependencies (native module build requires python3/make/g++)
+npm ci
+
+# 2. Copy the environment config
+cp .env.example .env
+
+# 3. Start the twin dev servers
+npm run scuttle:dev-start
+#   → Frontend (Vite + HMR): http://localhost:4545
+#   → Backend (Express API): http://localhost:4646/api/health
+```
+
+Stop the reef with `npm run scuttle:dev-stop`; scuttle the dev database with `npm run scuttle:dev-reset`.
+
+Full walkthrough (identity registration, enabling database encryption, health checks): see [QUICKSTART.md](./QUICKSTART.md).
+
+</details>
+
+---
+
+## ⚙️ Environment Variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `NODE_ENV` | `production` | Runtime mode (production or development) |
+| `PORT` | `4646` | Server port (the container sets `4545` so one port serves UI + API) |
+| `DATA_DIR` | `/app/data` | Where `db.sqlite` + `audit.sqlite` are stored (bind mount) |
+| `DB_ENCRYPTION_KEY` | `""` | SQLCipher AES-256 key encrypting the whole database file at rest. Generate with `openssl rand -base64 32`. Optional — see [SECURITY.md § Database Encryption](./SECURITY.md) |
+| `VITE_SHELLCRYPTION_ENABLED` | `true` | Client-side field encryption. Leave `true`; `false` stores secrets in plaintext columns (never do this in production) |
+| `VITE_API_URL` | *(relative)* | API base URL for the frontend when split from the API host |
+| `TOKEN_TTL_DEFAULT` | `1440` | Session token TTL — accepts `30m`/`12h`/`24h`/`7d`/`never`, ISO timestamps or bare minutes |
+| `TRUST_PROXY` | `false` | Set `true` behind a reverse proxy (correct client IPs for rate limiting/HTTPS redirect) |
+| `CORS_ORIGIN` | *(LAN-open)* | Restrict API access to specific origin(s), comma-separated |
+| `ENFORCE_HTTPS` | `false` | Redirect HTTP→HTTPS when terminating TLS in-process |
+| `HTTPS_PORT` | `4647` | Port checked when `ENFORCE_HTTPS=true` |
+| `AUTH_RATE_WINDOW` / `AUTH_RATE_LIMIT` | `900000` / `5` | Brute-force protection window (ms) and attempt cap on auth endpoints |
+| `API_RATE_WINDOW` / `API_RATE_LIMIT` | `60000` / `100` | Global API rate-limit window (ms) and request cap |
+| `PUID` / `PGID` | `1000` | Linux UID/GID the container drops privileges to |
+
+> [!NOTE]
+> ShellGuard has **no admin control plane** in v0.2.0 — there is deliberately no `ADMIN_TOKEN`. It is queued on the [ROADMAP](./ROADMAP.md) behind its own threat-model pass.
+
+---
+
+## 🔑 Key System
+
+ShellGuard uses a **prefix-based identity token system** — no passwords, no accounts on a remote server. Your key file is your identity.
+
+| Prefix | Type | Length | Usage |
+|---|---|---|---|
+| `hu-` | **Human Key** (ShellKey©™) | 64 chars (67 total) | Your personal identity. One-Field Login. Doubles as the HKDF seed for ShellCryption — never leaves your browser unhashed. |
+| `lb-` | **Lobster/Agent Key** | 64 chars (67 total) | For your AI agents and scripts. Granular permissions, optional expiry, per-key rate limits. Generated in Settings. |
+| `api-` | **Session Token** | 32 chars (36 total) | Short-lived REST API bearer. Auto-issued by `POST /api/auth/token`. |
+
+> [!TIP]
+> **Cryptographic Handshake Security**: When an agent authenticates with an `lb-` key, prefer the SHA-256 pre-hashed handshake (`keyHash`) over sending the raw key. The backend validates via constant-time comparison.
+
+> [!CAUTION]
+> Your `hu-` key file is the **only** way into your grotto — and because it seeds your ShellCryption key, losing it means your pearls are unrecoverable ciphertext. Back it up offline.
+
+---
+
+## 🔌 API Reference
+
+> All endpoints except `/api/health`, `/api/auth/register`, `/api/auth/token` and `/skill.md` require `Authorization: Bearer <api-token>`.
+>
+> All responses use the `{ "success": boolean, "data": ... }` envelope. Agent-key permissions map method-first: `GET → canRead`, `POST → canWrite`, `PUT → canEdit`, `DELETE → canDelete`.
+
+<details>
+<summary>View full API endpoint table</summary>
+
+### Auth & Identity
+
+| Method | Endpoint | Permission | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | – | Initialize your Lobster identity (username + SHA-256 `keyHash`) |
+| `POST` | `/api/auth/token` | – | Exchange `hu-`/`lb-` key hash for an `api-` session token |
+| `GET` | `/api/auth/validate` | Bearer | Validate current session token |
+| `GET` | `/api/auth/me` | Bearer | Fetch current profile *(ShellGuard-only endpoint)* |
+| `PUT` | `/api/auth/profile` | Bearer | Update display name *(ShellGuard-only endpoint)* |
+
+### Vault Pearls (Logins)
+
+| Method | Endpoint | Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/vault` | canRead | List all pearl logins (owner-scoped) |
+| `POST` | `/api/vault` | canWrite | Create a login (title, secret, username, url, TOTP seed…) |
+| `PUT` | `/api/vault/:id` | canEdit | Update a login |
+| `DELETE` | `/api/vault/:id` | canDelete | Delete a login |
+
+### Secure Notes
+
+| Method | Endpoint | Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/notes` | canRead | List secure notes |
+| `POST` | `/api/notes` | canWrite | Create a secure note |
+| `PUT` | `/api/notes/:id` | canEdit | Update a secure note |
+| `DELETE` | `/api/notes/:id` | canDelete | Delete a secure note |
+
+### SSH Keys
+
+| Method | Endpoint | Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/keys` | canRead | List SSH keys |
+| `POST` | `/api/keys` | canWrite | Store an SSH key |
+| `PUT` | `/api/keys/:id` | canEdit | Update an SSH key |
+| `DELETE` | `/api/keys/:id` | canDelete | Delete an SSH key |
+
+### Secure Attachments
+
+| Method | Endpoint | Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/attachments` | canRead | List encrypted attachments |
+| `POST` | `/api/attachments` | canWrite | Upload attachment (base64, ~28MB payload cap) |
+| `PUT` | `/api/attachments/:id` | canEdit | Update attachment metadata/file |
+| `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment |
+
+### Agent Keys (LobsterKeys©™)
+
+| Method | Endpoint | Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/agent-keys` | human-only | List active Lobster Keys |
+| `POST` | `/api/agent-keys` | human-only | Generate a new `lb-` key (permissions, expiry, rate limit) |
+| `PATCH` | `/api/agent-keys/:id/revoke` | human-only | Revoke an agent key (immediate) |
+| `DELETE` | `/api/agent-keys/:id` | human-only | Permanently delete a key record |
+
+### Settings & System
+
+| Method | Endpoint | Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/settings/:key` | human-only | Read a synced preference (`appearance/theme`, `generator`, `pods`, `security`) |
+| `PUT` | `/api/settings/:key` | human-only | Write a synced preference (JSON ≤ 256KB) |
+| `GET` | `/api/health` | – | Health check + record counts |
+| `GET` | `/skill.md` | – | AI-agent skill documentation (Markdown) |
+
+</details>
+
+---
+
+## 📂 Project Structure
+
+```
+ShellGuard/
+├── server.ts                     # Express entrypoint (twin-port dev, single-port prod)
+├── migrations/                   # Transactional SQL migrations (0001_initial = schema v1)
+├── skills/shellguard/SKILL.md    # Agent-facing API skill (served at /skill.md)
+├── scripts/scuttle-reset.ts      # Database reset utility
+├── tests/                        # Vitest + supertest suites (isolated DATA_DIRs)
+├── Dockerfile                    # Multi-stage single-image build (node:20-alpine)
+├── docker-compose.yml            # Production stack (build locally)
+├── docker-compose.dev.yml        # Pull-and-run stack (ghcr image)
+├── docker-entrypoint.sh          # PUID/PGID remap + privilege drop
+├── shellguard-unraid-template.xml
+└── src/
+    ├── server/                   # Backend modules
+    │   ├── config/               # apiConfig, corsConfig
+    │   ├── database/             # connection, schema, migrationRunner, index singleton
+    │   ├── middleware/           # auth, rateLimiter, errorHandler, validate, httpsRedirect
+    │   ├── routes/               # auth, vault, notes, sshKeys, attachments, agentKeys, settings
+    │   ├── utils/                # auditLogger, crypto, parsers, tokenExpiry
+    │   └── validation/           # Zod schemas
+    ├── lib/                      # Client crypto (shellCryption.ts), generator, pods, clipboard
+    ├── components/               # Reef Modernist UI (Vault, Generator, Settings, Layout…)
+    ├── services/api/restAdapter.ts  # HTTP adapter unwrapping the {success,data} envelope
+    ├── types.ts                  # Shared TypeScript interfaces
+    └── App.tsx                   # Root view router
+```
+
+---
+
+## 🛠️ Available Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Start only the Vite frontend (:4545, strict port, proxies `/api`) |
+| `npm run dev:server` | Start only the Express API (:4646, watch mode, `DATA_DIR=./data-dev`) |
+| `npm run scuttle:dev-start` | 🦞 Start frontend + backend together (development reef) |
+| `npm run scuttle:dev-stop` | Kill both dev servers |
+| `npm run scuttle:dev-reset` | Scuttle the development database (`data-dev/`) |
+| `npm run scuttle:reset` | Scuttle the production database (`data/`) — DANGER |
+| `npm run start:api` | Start only the Express API server (:4646) |
+| `npm run build` | Type-check + compile the frontend bundle (`tsc && vite build`) |
+| `npm run lint` | TypeScript verification (`tsc --noEmit`) |
+| `npm test` | Run the Vitest suites |
+| `npm run test:full` | Full gate: unit + integration + security + build-gates |
+
+---
+
+## 📚 Related Documentation
+
+| Document | Purpose |
+|---|---|
+| [**ARCHITECTURE.md**](./ARCHITECTURE.md) | System blueprint, request pipeline, hard constraints, ShellGuard-vs-ClawChives deltas |
+| [**SECURITY.md**](./SECURITY.md) | Security model, OWASP coverage, vault threat scenarios, hardening checklist |
+| [**QUICKSTART.md**](./QUICKSTART.md) | Step-by-step first hatch: Docker or npm, registration, encryption |
+| [**CONTRIBUTING.md**](./CONTRIBUTING.md) | Development standards, twin-verbatim policy, PR checklist |
+| [**CRUSTSECURITY.md**](./CRUSTSECURITY.md) | ClawStack©™ standards alignment matrix |
+| [**BLUEPRINT.md**](./BLUEPRINT.md) | Schema v1 data reefs and topology map |
+| [**ROADMAP.md**](./ROADMAP.md) | Changelog and future molts |
+| [**CRUSTAGENT.md**](./CRUSTAGENT.md) | Agent intelligence handshake and stability locks |
+| [**DESIGN.md**](./DESIGN.md) | Reef Modernist design tokens and component language |
+
+---
+
+## 🤝 Contributing
+
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) before your first dive. Two rules worth memorizing early: the **zero-knowledge invariant** (the server never learns a secret) and the **twin-verbatim policy** (server code stays diff-clean against our sibling reef, ClawChives).
+
+---
+
 ## 🛡️ Security
+
 Built on the Five Pillars of Lobsterization©™:
+
 1. Cryptographic Identity
 2. Server-First Data (SQLite)
 3. Sovereign Deployment
 4. Granular Agent Permissions
 5. Consistent Aesthetic
 
-Maintained by CrustAgent©™
+Found a crack in the shell? See [SECURITY.md § Reporting a Vulnerability](./SECURITY.md) — please do **not** open a public issue.
+
+---
+
+<div align="center">
+
+```text
+         _____
+      .'  🛡️  '.       HATCH YOUR VAULT.
+     /  _   _  \      GUARD YOUR PEARLS.
+     |  (o)-(o) |     TRUST THE SHELL.
+     (_    Y    _)
+      '.___W___.'
+      Maintained by CrustAgent©™
+```
+
+</div>

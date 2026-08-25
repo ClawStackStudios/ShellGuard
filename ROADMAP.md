@@ -1,71 +1,95 @@
-# 🦞 ShellGuard©™ Roadmap
+# 🛡️ ShellGuard©™ Roadmap
 
-## 🐚 Current Molt (MVP)
-- [x] ClawKeys©™ Auth (hu-, api-)
-- [x] Vault CRUD (Pearls)
-- [x] Lobster Key Management (lb-)
-- [x] Ocean Dark Theme
-- [x] Develop the Minimum Viable Product (MVP) functionality for ShellGuard. This should include basic threat detection and reporting capabilities. Ensure all user-facing elements and outputs are styled according to the 'lobsterized' aesthetic.
-- [x] Design and implement the core UI components for the ShellGuard MVP, ensuring they adhere to the 'lobsterized' visual philosophy of ClawStackStudios. This includes defining color palettes, typography, button styles, and overall layout that evokes a playful, nautical, and distinctive feel.
-- [x] Create and integrate a mascot or distinct branding elements for ShellGuard that are fully aligned with the 'lobsterized' philosophy. This could include splash screens, loading indicators, or notification icons featuring a character or motif inspired by ClawStackStudios' style.
-
-
-## Phase 1:
-- [x] Add an 'Export to CSV' button in the vault settings that allows users to export their unencrypted metadata (title, category, type) for backup purposes.
-
-- [x] Implement an inactivity timer that automatically locks the vault and redirects the user to the login screen after [Configurable] minutes/seconds of inactivity.
-
-- [x] Provide both the export function and inactivity function settings in the settings menu under new section, separating from the identity details. 
-
-- [x] Add a category filter dropdown to the PasswordVaultView that allows users to toggle between 'Personal', 'Work', or 'Custom' category tags for their stored items.
-
-## Phase 2:
-- [x] Implement a feature to export decrypted vault items (logins, notes, keys) as a protected JSON file for user local backups, including a prompt for user confirmation before initiating the download.
-Create this feature in the Settings, and give the settings menu a consistent sidebar with the dashboard, but put a 'Dashboard' button right below the 'Profile' sidebar entry in the settings menu. to allow users to export their decrypted vault items into a secure JSON file for local backup purposes, requiring a final re-authentication of their ShellKey©™.
-* The settings menu should change dynamically to only display 'Profile' at the top part of the sidebar, and change the settings gear button to a 'Back To Dashboard' button above the 'Logout' button (use 4 square grid icon). Making the settings menu distinct from the dashboard. 
-
-- [x] Add a 'Quick Actions' icon button to the list view of all vault items, allowing users to select actions like 'Copy Username' or 'Copy Password' values directly to the clipboard without needing to open the detail editor.
-
-- [x] Integrate Framer Motion layout animations for the vault items grid so that cards smoothly reorder and animate when being added, deleted, or filtered.
-
-## Phase 3:
-- [ ] Animate the 'Auto-Lock Now' button in user profile settings to provide a visual 'locking' effect (like a latch closing) when clicked, confirming the vault is secured.
-
-- [ ] Implement the idle timeout timer in the settings menu, that triggers the logout functionality if no interaction is detected in the browser for a configurable amount of time (e.g., 5, 15, or 30 minutes).
-
-- [ ] Implement a cryptographically secure random password generator within the 'Logins' creation form, allowing users to customize length and character sets (uppercase, lowercase, numbers, symbols) before saving.
-
-- [ ] Implement a tagging system for vault items. Add a field to the item schema, allow users to add/remove tags in the edit view, and add a sidebar filter section to display items by specific tags.
-
-## Phase 4:
-- [ ] Implement star, pin, and archive sidebar entries under the passwords entry in the sidebar. Add a main 'Dashboard' entry at the top of the sidebar list, so it is the first entry to go back to the dashboard.
-
-- [ ] In the VaultView component, add functionality to select multiple items using checkboxes and then delete them in a single operation. Include a confirmation dialog before proceeding with the bulk deletion.
-
-- [ ] Implement a feature that automatically logs the user out after a period of inactivity (e.g., 15 minutes). This should be tied to user interactions within the application.
-Modify the Agent creation form to allow for custom permissions (READ, WRITE, DELETE) beyond the default. The UI should present checkboxes for each permission type. Update the backend to store and validate these custom permissions.
+*Where the reef has been, and where it molts next.*
 
 ---
 
-# DO NOT IMPLEMENT WITHOUT PLANNING 
+## 📜 Changelog — Completed Molts
 
-## 🌊 Future Molts
-Implement the user onboarding flow for ShellGuard that introduces the application's core features. Integrate the ClawStackStudios 'lobsterized' theme throughout the onboarding process, making it engaging and on-brand.
-- [ ] Modify the Agent creation form to allow for custom permissions (READ, WRITE, DELETE) beyond the default. The UI should present checkboxes for each permission type. Update the backend to store and validate these custom permissions.
-- [ ] Implement the user onboarding flow for ShellGuard that introduces the application's core features. Integrate the ClawStackStudios 'lobsterized' theme throughout the onboarding process, making it engaging and on-brand.
-- [ ] Modify the Agent creation form to allow for custom permissions (READ, WRITE, DELETE) beyond the default. The UI should present checkboxes for each permission type. Update the backend to store and validate these custom permissions.
-- [ ] Apply the 'lobsterized' visual design philosophy of ClawStackStudios to the ShellGuard MVP. This includes color schemes, typography, and overall aesthetic, making the UI distinctively lobster-themed.
-- [ ] **ShellCryption©™ v2:** AES-256-GCM hardware-backed encryption.
-- [ ] **Audit Reef:** Detailed logs of every agent access.
-- [ ] **Mobile Shell:** React Native companion app.
-- [ ] **P2P Sync:** Synchronize vaults across multiple reefs without a central server.
-- [ ] **Biometric Claws:** FaceID/TouchID unlock for mobile shells.
+### ✅ Architecture Parity v0.2.0 (2026-08) — SQLite Bedrock & ClawChives Twin
+
+> The defining molt: ShellGuard refactored onto the exact architecture of its sibling app ClawChives (bookmark manager). **Fresh start — prior local data wiped by design** (breaking change).
+
+- [x] **SQLite bedrock** — `DATA_DIR` layout (`db.sqlite` + segregated append-only `audit.sqlite`), WAL/NORMAL/foreign_keys pragmas, `better-sqlite3-multiple-ciphers` driver with optional SQLCipher at rest
+- [x] **Transactional migrations** — `migrations/0001_initial.{up,down}.sql` define clean schema v1; runner tracks `schema_migrations`; legacy inline-DDL singleton deleted along with root `shellguard.db`
+- [x] **Security kernel** — Express 5 with full middleware chain: TRUST_PROXY → httpsRedirect → helmet (vault CSP) → cors config → scoped body limits (1mb global / 32mb attachments) → rate limiters (global/auth/per-key LRU) → zod validation → centralized error handler
+- [x] **Auth parity** — ClawChives key-hash identity ported wholesale (register/token/validate + SG-only `me`/`profile`, `lookup` dropped); constant-time comparison; fixed TTL parser (`30m`/`12h`/`24h`/`7d`/`never`/ISO/bare-minutes)
+- [x] **Zero-knowledge invariant locked** — server stores only `{v, alg, iv, ct, aad}` ShellCryption blobs with AAD binding `table:recordId`
+- [x] **Domain API parity** — hardened CRUD for pearls/notes/SSH keys/attachments with ownership scoping, audit-on-mutation, `{success,data}` envelope; LobsterKeys©™ lifecycle parity (expiry, rate limits, revoke); new server-side settings storage
+- [x] **Twin-port dev topology** — Vite `:4545` strict-port proxying `/api` → API `:4646`; single-port production serving `dist/` + API
+- [x] **Test harness** — vitest + supertest suites (auth-flow, security incl. cross-owner isolation, vault-crud incl. opacity invariant, settings, build-gates) with per-suite `DATA_DIR` isolation
+- [x] **Containerization** — multi-stage node:20-alpine single image, PUID/PGID entrypoint, healthcheck, compose prod/dev stacks, `.dockerignore` that keeps the lockfile
+- [x] **CI** — docker-publish workflow → `ghcr.io/clawstackstudios/shellguard`
+- [x] **Unraid template** — Community Applications XML (WebUI `:4545`, appdata bind mount, PUID 99/PGID 100 advanced defaults)
+- [x] **Agent skill document** — `skills/shellguard/SKILL.md` served at `/skill.md`
+- [x] **Documentation suite** — README, ARCHITECTURE (with deltas appendix), SECURITY, QUICKSTART, CONTRIBUTING, CRUSTSECURITY, BLUEPRINT (schema v1 truthfulness)
+
+### ✅ MVP & Scaffold (v0.1.x)
+
+- [x] ClawKeys©™ auth (`hu-` identity, `api-` sessions) and vault CRUD (pearls)
+- [x] Lobster Key management (`lb-`) with granular permissions
+- [x] Ocean Dark theme and Reef Modernist design language ([DESIGN.md](./DESIGN.md))
+- [x] Core UI components: Landing, Setup, Login, Vault views with lobsterized aesthetic
+- [x] Branding and mascot integration aligned with ClawStack Studios' style
+
+### ✅ Post-MVP Features
+
+- [x] Metadata CSV export button in vault settings (title, category, type)
+- [x] Configurable inactivity auto-lock ("Retract") redirecting to login
+- [x] Dedicated settings menu section for export + lock controls
+- [x] Category filter dropdown in PasswordVaultView (Personal / Work / Custom pods)
+- [x] Protected decrypted JSON export requiring fresh ShellKey©™ re-authentication
+- [x] Settings sidebar redesign with Dashboard return navigation
+- [x] Quick Actions on vault list rows (copy username/password to clipboard)
+- [x] Framer Motion layout animations for vault grid add/delete/filter
+- [x] Cryptographically secure password generator with length/charset configuration and complexity scoring
+- [x] TOTP support (seed generation, QR codes, live codes via otpauth)
+- [x] Nested color-coded pods (folder trees) with counts
+
+---
+
+## 🌊 Queue — Next Molts
+
+> Prioritized backlog. Nothing here is committed until planned.
+
+### 🔜 High Priority
+
+- [ ] **Attachment BLOB migration `0002_*`** — move base64 attachment payloads into proper SQLite BLOB columns with streaming reads (today they ride as base64 text within the body-limit envelope)
+- [ ] **Tagging system** — tag field on item schema, add/remove tags in edit view, sidebar filter by tag
+- [ ] **Bulk operations** — multi-select checkboxes in VaultView with confirmed bulk delete
+- [ ] **Bulk import endpoint** — batch pearl import with partial-failure reporting
+
+### 🔬 Under Consideration
+
+- [ ] **Admin control plane** — *deferred by locked decision*: an isolated metadata-only dashboard gated by its own token. Requires its own threat-model pass before any route ships. There are deliberately NO admin endpoints in v0.2.0.
+- [ ] **Auto-lock "Retract" animation** — latch-closing visual confirmation when locking manually
+- [ ] **Monolith decomposition** — PasswordVaultView (~2150 lines) and App.tsx (~1100 lines) sliced into feature modules (mechanical edits only during parity work; this deserves its own effort)
+- [ ] **Release automation** — generated release notes and versioned tags from the CI pipeline
+- [ ] **Onboarding flow** — guided first-hatch tour woven into the lobsterized theme
+
+### 🧬 Distant Shores (Vision)
+
+- [ ] **ShellCryption©™ v2** — hardware-backed key storage (WebAuthn PRF / secure enclave)
+- [ ] **Audit Reef surfacing** — user-facing security timeline of agent access
+- [ ] **Mobile Shell** — React Native companion app
+- [ ] **P2P Sync** — synchronize grottos across reefs without a central server
+- [ ] **Biometric Claws** — FaceID/TouchID unlock for mobile shells
+
+---
+
+# DO NOT IMPLEMENT WITHOUT PLANNING
+
+Items below this line are captured ideas, not commitments. Each needs a written plan (threat model where security-relevant) before implementation.
+
+- Apply further 'lobsterized' visual polish across remaining surfaces (color schemes, typography, aesthetic cohesion).
+- Extend quick actions and responsive behaviors across all vault item types.
+- Evaluate passkey/WebAuthn unlock as an alternative to One-Field Login.
+- Explore encrypted sharing of individual pearls between identities (careful: touches the zero-knowledge invariant).
+
+# DEVELOPMENT IDEAS — CAPTURED, NOT SCHEDULED
+
+Design explorations for the Reef Modernist language: dashboard widgets (vault health, password age, reused-secret sonar scan), notification systems, and themed micro-interactions. All UI work must respect the frozen spatial hierarchy documented in [DESIGN.md](./DESIGN.md).
+
+---
 
 Maintained by CrustAgent©™
-
-
-# DEVELOPMENT IDEAS DO NOT IMPLEMENT 
-
-Design the Minimum Viable Product (MVP) for ShellGuard, adhering strictly to the 'lobsterized' visual design philosophy of ClawStackStudios. Focus on creating the core user interface elements that define this aesthetic, including color palettes, typography, button styles, and overall layout, ensuring a cohesive and distinctive look and feel.
-
-Build out the initial set of core features for ShellGuard, ensuring each feature's UI and user experience are deeply infused with the 'lobsterized' design language. Consider features that can be creatively re-imagined through the ClawStackStudios lens, such as user authentication, dashboard widgets, or notification systems, all while maintaining the lobster theme.

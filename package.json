@@ -5,11 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "start:api": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "start": "node server.ts"
+    "start": "node server.ts",
+    "scuttle:dev-stop": "fuser -k 4545/tcp 4646/tcp || true",
+    "scuttle:reset": "npm run scuttle:dev-stop && tsx scripts/scuttle-reset.ts --env production && rm -rf dist",
+    "scuttle:dev-reset": "npm run scuttle:dev-stop && tsx scripts/scuttle-reset.ts --env development"
   },
   "dependencies": {
     "better-sqlite3-multiple-ciphers": "^9.1.1",

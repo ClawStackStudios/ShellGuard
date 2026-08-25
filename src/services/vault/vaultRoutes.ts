@@ -1,5 +1,5 @@
 import { Router } from "express";
-import db from "../database/db.ts";
+import db from "../../server/database/index.ts";
 import { requireAuth, requirePermission, LobsterAuthRequest } from "../auth/authMiddleware.ts";
 
 const router = Router();
@@ -31,8 +31,8 @@ router.post("/", requireAuth, requirePermission("canWrite"), (req: LobsterAuthRe
 
   try {
     db.prepare(`
-      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, notes, totp_secret, attachments) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, notes, totp_secret, attachments, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       req.lobster!.uuid,
@@ -44,7 +44,8 @@ router.post("/", requireAuth, requirePermission("canWrite"), (req: LobsterAuthRe
       category || "Personal",
       notes || "",
       totp_secret || "",
-      attachments || "[]"
+      attachments || "[]",
+      new Date().toISOString()
     );
 
     res.status(201).json({ 

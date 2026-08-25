@@ -1,5 +1,5 @@
 import { Router } from "express";
-import db from "../database/db.ts";
+import db from "../../server/database/index.ts";
 import { requireAuth, requirePermission, LobsterAuthRequest } from "../auth/authMiddleware.ts";
 
 const router = Router();
@@ -18,9 +18,9 @@ router.post("/", requireAuth, requirePermission("canWrite"), (req: LobsterAuthRe
   if (!id || !title || !key_value) return res.status(400).json({ error: "Required fields missing." });
   try {
     db.prepare(`
-      INSERT INTO vault_ssh_keys (id, owner_uuid, title, key_value, username, category) 
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, req.lobster!.uuid, title.trim(), key_value, username || "", category || "Personal");
+      INSERT INTO vault_ssh_keys (id, owner_uuid, title, key_value, username, category, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, req.lobster!.uuid, title.trim(), key_value, username || "", category || "Personal", new Date().toISOString());
     res.status(201).json({ id, title: title.trim(), category: category || "Personal" });
   } catch (err: any) {
     res.status(500).json({ error: "Bedrock failure locking key." });

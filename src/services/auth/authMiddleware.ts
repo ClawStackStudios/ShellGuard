@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import db from "../database/db.ts";
+import db from "../../server/database/index.ts";
 
 export interface LobsterAuthRequest extends Request {
   lobster?: {
@@ -19,9 +19,11 @@ export function requireAuth(req: LobsterAuthRequest, res: Response, next: NextFu
   }
 
   const token = authHeader.split(" ")[1];
-  const session = db.prepare("SELECT * FROM api_tokens WHERE token = ? AND expires_at > CURRENT_TIMESTAMP").get(token) as any;
+  // Expiry is compared as JS dates: ISO8601 strings do NOT order correctly
+  // against SQLite's CURRENT_TIMESTAMP format.
+  const session = db.prepare("SELECT * FROM api_tokens WHERE key = ?").get(token) as any;
 
-  if (!session) {
+  if (!session || (session.expires_at && new Date(session.expires_at) <= new Date())) {
     return res.status(401).json({ error: "Identity artifact expired or invalid." });
   }
 

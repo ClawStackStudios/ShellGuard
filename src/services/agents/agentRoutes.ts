@@ -1,5 +1,5 @@
 import { Router } from "express";
-import db from "../database/db.ts";
+import db from "../../server/database/index.ts";
 import { requireAuth, requirePermission, LobsterAuthRequest } from "../auth/authMiddleware.ts";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
@@ -16,7 +16,7 @@ router.get("/", requireAuth, requirePermission("canRead"), (req: LobsterAuthRequ
   }
 
   try {
-    const agents = db.prepare("SELECT * FROM lobster_keys WHERE owner_uuid = ?").all(req.lobster!.uuid);
+    const agents = db.prepare("SELECT * FROM agent_keys WHERE owner_uuid = ?").all(req.lobster!.uuid);
     res.json(agents);
   } catch (err: any) {
     console.error("Agents GET error:", err);
@@ -43,12 +43,16 @@ router.post("/", requireAuth, requirePermission("canWrite"), (req: LobsterAuthRe
   const apiKey = `lb-${crypto.randomBytes(32).toString("hex")}`;
   
   try {
-    db.prepare("INSERT INTO lobster_keys (id, owner_uuid, api_key, name, permissions) VALUES (?, ?, ?, ?, ?)").run(
+    db.prepare(`
+      INSERT INTO agent_keys (id, owner_uuid, api_key, name, permissions, expiration_type, is_active, created_at)
+      VALUES (?, ?, ?, ?, ?, 'never', 1, ?)
+    `).run(
       id,
       req.lobster!.uuid,
       apiKey,
       name,
-      JSON.stringify(permissions)
+      JSON.stringify(permissions),
+      new Date().toISOString()
     );
 
     res.status(201).json({ id, name, apiKey, permissions });
@@ -69,7 +73,7 @@ router.delete("/:id", requireAuth, requirePermission("canDelete"), (req: Lobster
 
   const { id } = req.params;
   try {
-    const result = db.prepare("DELETE FROM lobster_keys WHERE id = ? AND owner_uuid = ?").run(id, req.lobster!.uuid);
+    const result = db.prepare("DELETE FROM agent_keys WHERE id = ? AND owner_uuid = ?").run(id, req.lobster!.uuid);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: "Agent not found in your reef." });

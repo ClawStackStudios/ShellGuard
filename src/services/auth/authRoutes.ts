@@ -1,5 +1,5 @@
 import { Router } from "express";
-import db from "../database/db.ts";
+import db from "../../server/database/index.ts";
 import crypto from "crypto";
 
 const router = Router();
@@ -27,11 +27,12 @@ router.post("/register", (req, res) => {
   const finalDisplayName = displayName?.trim() || username;
 
   try {
-    db.prepare("INSERT INTO lobsters (uuid, username, display_name, key_hash) VALUES (?, ?, ?, ?)").run(
-      uuid, 
-      username, 
-      finalDisplayName, 
-      keyHash
+    db.prepare("INSERT INTO lobsters (uuid, username, display_name, key_hash, created_at) VALUES (?, ?, ?, ?, ?)").run(
+      uuid,
+      username,
+      finalDisplayName,
+      keyHash,
+      new Date().toISOString()
     );
     res.status(201).json({ uuid, username, displayName: finalDisplayName, message: "Shell hardened. Identity created." });
   } catch (err: any) {
@@ -93,10 +94,11 @@ router.post("/token", (req, res) => {
     const token = `api-${crypto.randomBytes(16).toString("hex")}`;
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 mins
 
-    db.prepare("INSERT INTO api_tokens (token, owner_uuid, owner_type, expires_at) VALUES (?, ?, ?, ?)").run(
+    db.prepare("INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)").run(
       token,
       lobster.uuid,
       "human",
+      new Date().toISOString(),
       expiresAt
     );
 
@@ -131,7 +133,7 @@ router.put("/profile", (req, res) => {
   }
 
   try {
-    const tokenRecord = db.prepare("SELECT * FROM api_tokens WHERE token = ?").get(token) as any;
+    const tokenRecord = db.prepare("SELECT * FROM api_tokens WHERE key = ?").get(token) as any;
     if (!tokenRecord) {
       return res.status(401).json({ error: "Invalid or expired token." });
     }
@@ -166,7 +168,7 @@ router.get("/me", (req, res) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const tokenRecord = db.prepare("SELECT * FROM api_tokens WHERE token = ?").get(token) as any;
+    const tokenRecord = db.prepare("SELECT * FROM api_tokens WHERE key = ?").get(token) as any;
     if (!tokenRecord) {
       return res.status(401).json({ error: "Invalid or expired token." });
     }

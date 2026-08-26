@@ -101,10 +101,10 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
 
       // 5. Complete with onSuccess after showing success animation
       setTimeout(() => {
-        onSuccess({ 
-          uuid: pearl.uuid, 
-          username: pearl.username, 
-          displayName: pearl.displayName || reg.displayName || displayName || pearl.username 
+        onSuccess({
+          uuid: pearl.user.uuid,
+          username: pearl.user.username,
+          displayName: pearl.user.displayName || displayName || pearl.user.username
         }, pearl.token, sk, wizardState.key);
       }, 2000);
     } catch (err: any) {

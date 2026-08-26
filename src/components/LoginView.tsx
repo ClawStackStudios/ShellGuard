@@ -70,10 +70,10 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
       });
 
       const sk = await deriveShellKey(identity.token, identity.uuid);
-      onSuccess({ 
-        uuid: pearl.uuid, 
-        username: pearl.username, 
-        displayName: pearl.displayName || identity.displayName || pearl.username 
+      onSuccess({
+        uuid: pearl.user.uuid,
+        username: pearl.user.username,
+        displayName: pearl.user.displayName || identity.displayName || pearl.user.username
       }, pearl.token, sk, identity.token);
     } catch (err: any) {
       setFileError(err.message || "Failed to parse identity file.");
@@ -92,26 +92,18 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
 
     try {
       const keyHash = await hashToken(pasteKey);
-      
-      let finalUuid = pasteUuid;
-      let finalUsername = pasteUsername;
 
-      if (!finalUuid) {
-        const lookupResult = await restAdapter.POST("/api/auth/lookup", { keyHash });
-        finalUuid = lookupResult.uuid;
-        finalUsername = lookupResult.username;
-      }
-
-      const pearl = await restAdapter.POST("/api/auth/token", { 
-        uuid: finalUuid, 
-        keyHash 
+      // The API resolves the identity from the key hash itself — no lookup hop.
+      const pearl = await restAdapter.POST("/api/auth/token", {
+        ...(pasteUuid ? { uuid: pasteUuid } : {}),
+        keyHash
       });
 
-      const sk = await deriveShellKey(pasteKey, finalUuid);
-      onSuccess({ 
-        uuid: pearl.uuid, 
-        username: pearl.username, 
-        displayName: pearl.displayName || finalUsername || pearl.username 
+      const sk = await deriveShellKey(pasteKey, pearl.user.uuid);
+      onSuccess({
+        uuid: pearl.user.uuid,
+        username: pearl.user.username,
+        displayName: pearl.user.displayName || pearl.user.username
       }, pearl.token, sk, pasteKey);
     } catch (err: any) {
       setPasteError(err.message || "Identity verification failed.");

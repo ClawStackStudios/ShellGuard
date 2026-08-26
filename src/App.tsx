@@ -38,7 +38,7 @@ import {
   ChevronDown,
   X
 } from "lucide-react";
-import { restAdapter } from "./services/api/restAdapter.ts";
+import { restAdapter, SESSION_KEYS } from "./services/api/restAdapter.ts";
 import { InteractiveBrand } from "./components/Branding/InteractiveBrand.tsx";
 import { ThemeToggle } from "./components/Theme/ThemeToggle.tsx";
 import { LandingView } from "./components/LandingView.tsx";
@@ -176,7 +176,7 @@ export default function App() {
   });
 
   const handleLogout = useCallback(() => {
-    sessionStorage.removeItem("sg_api_token");
+    sessionStorage.removeItem(SESSION_KEYS.TOKEN);
     sessionStorage.removeItem("sg_raw_key");
     localStorage.removeItem("sg_lobster");
     setLobster(null);
@@ -210,7 +210,7 @@ export default function App() {
 
   // 🐚 Initial scuttle to check auth
   useEffect(() => {
-    const token = sessionStorage.getItem("sg_api_token");
+    const token = sessionStorage.getItem(SESSION_KEYS.TOKEN);
     const storedLobsterStr = localStorage.getItem("sg_lobster");
     const rawKey = sessionStorage.getItem("sg_raw_key");
     
@@ -303,7 +303,7 @@ export default function App() {
 
   const scuttleAgents = async () => {
     try {
-      const reef = await restAdapter.GET("/api/agents");
+      const reef = await restAdapter.GET("/api/agent-keys");
       setAgents(reef);
     } catch (err: any) {
       setError(err.message);
@@ -447,7 +447,7 @@ export default function App() {
 
   const handleLoginSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
     setLobster(l);
-    sessionStorage.setItem("sg_api_token", t);
+    sessionStorage.setItem(SESSION_KEYS.TOKEN, t);
     sessionStorage.setItem("sg_raw_key", rk);
     localStorage.setItem("sg_lobster", JSON.stringify(l));
     setShellKey(sk);
@@ -627,7 +627,7 @@ export default function App() {
               )}
               {(view === "settings_agents" || view === "agents") && (
                 <motion.div key="agents" className="w-full">
-                  <AgentsView agents={agents} onAdd={async (name, perms) => { await restAdapter.POST("/api/agents", { name, permissions: perms }); scuttleAgents(); }} onDelete={async (id) => { await restAdapter.DELETE(`/api/agents/${id}`); scuttleAgents(); }} />
+                  <AgentsView agents={agents} onAdd={async (name, perms) => { await restAdapter.POST("/api/agent-keys", { name, permissions: perms }); scuttleAgents(); }} onDelete={async (id) => { await restAdapter.DELETE(`/api/agent-keys/${id}`); scuttleAgents(); }} />
                 </motion.div>
               )}
               {view === "generator" && (
@@ -1057,14 +1057,14 @@ function AgentsView({ agents, onAdd, onDelete }: { agents: Agent[]; onAdd: (n: s
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex-shrink-0">API Key:</span>
                   <div 
-                    onClick={() => handleCopyKey(agent.api_key)}
+                    onClick={() => handleCopyKey(agent.apiKey)}
                     className="font-mono text-xs text-theme-main truncate bg-theme-surface hover:bg-slate-100 dark:hover:bg-slate-800/80 px-2.5 py-1.5 rounded-lg border border-theme-subtle flex-1 cursor-pointer transition-colors"
                     title="Click to copy full key"
                   >
                     {visibleKeys[agent.id] ? (
-                      agent.api_key
+                      agent.apiKey
                     ) : (
-                      `${agent.api_key.substring(0, 6)}${"•".repeat(Math.max(8, agent.api_key.length - 10))}${agent.api_key.slice(-4)}`
+                      `${agent.apiKey.substring(0, 6)}${"•".repeat(Math.max(8, agent.apiKey.length - 10))}${agent.apiKey.slice(-4)}`
                     )}
                   </div>
                   <button
@@ -1079,15 +1079,15 @@ function AgentsView({ agents, onAdd, onDelete }: { agents: Agent[]; onAdd: (n: s
 
                 <button 
                   type="button"
-                  onClick={() => handleCopyKey(agent.api_key)}
+                  onClick={() => handleCopyKey(agent.apiKey)}
                   className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex-shrink-0 ${
-                    copiedKey === agent.api_key 
+                    copiedKey === agent.apiKey 
                       ? "bg-emerald-500 text-white shadow-emerald-500/20" 
                       : "bg-lobster-red hover:bg-red-600 text-white shadow-red-500/20"
                   }`}
                   title="Copy full complete API Key to clipboard"
                 >
-                  {copiedKey === agent.api_key ? (
+                  {copiedKey === agent.apiKey ? (
                     <>
                       <Check size={14} />
                       <span>Copied Full Key!</span>

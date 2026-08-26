@@ -44,9 +44,9 @@ export interface SecureAttachment {
 export interface Agent {
   id: string;
   name: string;
-  api_key: string;
-  permissions: string;
-  is_active: number;
+  apiKey: string;
+  permissions: Record<string, boolean>;
+  isActive: boolean;
 }
 
 export interface Lobster {

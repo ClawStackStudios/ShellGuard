@@ -18,3 +18,87 @@ export const AuthSchemas = {
     displayName: z.string().min(1).max(48),
   }),
 };
+
+// ─── Shared field constraints ────────────────────────────────────────────────
+// Zero-knowledge invariant: opaque vault payloads (secret / content /
+// key_value / file_data / totp_secret) are validated by LENGTH AND TYPE ONLY.
+// The server never inspects, parses, or transforms their contents.
+
+const itemId = z.string().min(1).max(64);
+const itemCategory = z.string().max(64).optional();
+const itemTitle = z.string().min(1).max(255);
+
+export const VaultSchemas = {
+  create: z.object({
+    id: itemId,
+    title: itemTitle,
+    secret: z.string().min(1).max(20000), // opaque
+    username: z.string().max(255).optional(),
+    url: z.string().max(2048).optional(),
+    type: z.string().max(32).optional(),
+    category: itemCategory,
+    notes: z.string().max(10000).optional(),
+    totp_secret: z.string().max(5000).optional(), // opaque
+    attachments: z.string().max(2000000).optional(), // opaque JSON string
+  }),
+  update: z.object({
+    title: itemTitle,
+    secret: z.string().min(1).max(20000), // opaque
+    username: z.string().max(255).optional(),
+    url: z.string().max(2048).optional(),
+    type: z.string().max(32).optional(),
+    category: itemCategory,
+    notes: z.string().max(10000).optional(),
+    totp_secret: z.string().max(5000).optional(), // opaque
+    attachments: z.string().max(2000000).optional(), // opaque JSON string
+  }),
+};
+
+export const NoteSchemas = {
+  create: z.object({
+    id: itemId,
+    title: itemTitle,
+    content: z.string().min(1).max(10000), // opaque
+    category: itemCategory,
+  }),
+  update: z.object({
+    title: itemTitle,
+    content: z.string().min(1).max(10000), // opaque
+    category: itemCategory,
+  }),
+};
+
+export const SshKeySchemas = {
+  create: z.object({
+    id: itemId,
+    title: itemTitle,
+    key_value: z.string().min(1).max(20000), // opaque
+    username: z.string().max(255).optional(),
+    category: itemCategory,
+  }),
+  update: z.object({
+    title: itemTitle,
+    key_value: z.string().min(1).max(20000), // opaque
+    username: z.string().max(255).optional(),
+    category: itemCategory,
+  }),
+};
+
+export const AttachmentSchemas = {
+  // file_data ≈ base64 payload; capped well under the scoped 32mb body limit
+  create: z.object({
+    id: itemId,
+    title: itemTitle,
+    file_data: z.string().min(1).max(28000000), // opaque
+    file_name: z.string().max(512).optional(),
+    mime_type: z.string().max(255).optional(),
+    category: itemCategory,
+  }),
+  update: z.object({
+    title: itemTitle,
+    file_data: z.string().min(1).max(28000000), // opaque
+    file_name: z.string().max(512).optional(),
+    mime_type: z.string().max(255).optional(),
+    category: itemCategory,
+  }),
+};

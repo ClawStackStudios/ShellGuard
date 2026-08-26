@@ -18,13 +18,13 @@ import { generateId, generateString } from './src/server/utils/crypto.js';
 import db, { audit, auditDb } from './src/server/database/index.js';
 
 import authRoutes      from './src/server/routes/auth.js';
+import vaultRoutes       from './src/server/routes/vault.js';
+import notesRoutes       from './src/server/routes/notes.js';
+import keysRoutes        from './src/server/routes/sshKeys.js';
+import attachmentsRoutes from './src/server/routes/attachments.js';
 
-// Domain routers (hardened envelope rewrites land in the domain-parity pass;
-// these are the legacy handlers running against the shared database singleton)
-import vaultRoutes       from './src/services/vault/vaultRoutes.js';
-import notesRoutes       from './src/services/vault/notesRoutes.js';
-import keysRoutes        from './src/services/vault/keysRoutes.js';
-import attachmentsRoutes from './src/services/vault/attachmentsRoutes.js';
+// Legacy agents router — replaced by the hardened agent-keys router later
+// in the domain-parity pass.
 import agentRoutes       from './src/services/agents/agentRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);

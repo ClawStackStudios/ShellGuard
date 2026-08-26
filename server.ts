@@ -23,6 +23,7 @@ import notesRoutes       from './src/server/routes/notes.js';
 import keysRoutes        from './src/server/routes/sshKeys.js';
 import attachmentsRoutes from './src/server/routes/attachments.js';
 import agentKeyRoutes    from './src/server/routes/agentKeys.js';
+import settingsRoutes    from './src/server/routes/settings.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -130,6 +131,7 @@ app.use('/api/notes',        notesRoutes);
 app.use('/api/keys',         keysRoutes);
 app.use('/api/attachments',  attachmentsRoutes);
 app.use('/api/agent-keys',   agentKeyRoutes);
+app.use('/api/settings',     settingsRoutes);
 
 // Skill doc: public, no auth — registered before static files and SPA catch-all
 app.get(['/skill.md', '/SKILL.md'], (_req, res) => {

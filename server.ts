@@ -22,10 +22,7 @@ import vaultRoutes       from './src/server/routes/vault.js';
 import notesRoutes       from './src/server/routes/notes.js';
 import keysRoutes        from './src/server/routes/sshKeys.js';
 import attachmentsRoutes from './src/server/routes/attachments.js';
-
-// Legacy agents router — replaced by the hardened agent-keys router later
-// in the domain-parity pass.
-import agentRoutes       from './src/services/agents/agentRoutes.js';
+import agentKeyRoutes    from './src/server/routes/agentKeys.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -132,7 +129,7 @@ app.use('/api/vault',        vaultRoutes);
 app.use('/api/notes',        notesRoutes);
 app.use('/api/keys',         keysRoutes);
 app.use('/api/attachments',  attachmentsRoutes);
-app.use('/api/agent-keys',   agentRoutes);
+app.use('/api/agent-keys',   agentKeyRoutes);
 
 // Skill doc: public, no auth — registered before static files and SPA catch-all
 app.get(['/skill.md', '/SKILL.md'], (_req, res) => {

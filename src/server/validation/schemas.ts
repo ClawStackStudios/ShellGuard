@@ -102,3 +102,23 @@ export const AttachmentSchemas = {
     category: itemCategory,
   }),
 };
+
+export const AgentKeySchemas = {
+  create: z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().min(1).max(100),
+    description: z.string().max(500).optional().nullable(),
+    apiKey: z.string().optional(),
+    permissions: z.object({
+      canRead: z.boolean().optional(),
+      canWrite: z.boolean().optional(),
+      canEdit: z.boolean().optional(),
+      canMove: z.boolean().optional(),
+      canDelete: z.boolean().optional(),
+      level: z.string().optional(),
+    }).optional(),
+    expirationType: z.enum(['never', '30d', '60d', '90d', '30days', '90days', '1year', 'custom']).optional(),
+    expirationDate: z.string().datetime().optional().nullable(),
+    rateLimit: z.number().int().min(1).max(10000).optional().nullable(),
+  }),
+};

@@ -14,4 +14,7 @@ export const AuthSchemas = {
     keyHash: z.string().length(64).optional(),
     ownerKey: z.string().optional(),
   }),
+  profile: z.object({
+    displayName: z.string().min(1).max(48),
+  }),
 };

@@ -1,13 +1,14 @@
 import { Router } from "express";
 import db from "../../server/database/index.ts";
 import { requireAuth, requirePermission, LobsterAuthRequest } from "../auth/authMiddleware.ts";
+import { parseAgentKey } from "../../server/utils/parsers.ts";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
 
 /**
- * 🦞 GET /api/agents
+ * 🐚 GET /api/agent-keys
  * List all active Lobster Keys©™ for the human.
  */
 router.get("/", requireAuth, requirePermission("canRead"), (req: LobsterAuthRequest, res) => {
@@ -17,7 +18,7 @@ router.get("/", requireAuth, requirePermission("canRead"), (req: LobsterAuthRequ
 
   try {
     const agents = db.prepare("SELECT * FROM agent_keys WHERE owner_uuid = ?").all(req.lobster!.uuid);
-    res.json(agents);
+    res.json(agents.map(parseAgentKey));
   } catch (err: any) {
     console.error("Agents GET error:", err);
     res.status(500).json({ error: "Bedrock failure retrieving agents." });
@@ -25,7 +26,7 @@ router.get("/", requireAuth, requirePermission("canRead"), (req: LobsterAuthRequ
 });
 
 /**
- * 🦞 POST /api/agents
+ * 🐚 POST /api/agent-keys
  * Create a new Lobster Key©™ (Agent).
  */
 router.post("/", requireAuth, requirePermission("canWrite"), (req: LobsterAuthRequest, res) => {
@@ -63,7 +64,7 @@ router.post("/", requireAuth, requirePermission("canWrite"), (req: LobsterAuthRe
 });
 
 /**
- * 🦞 DELETE /api/agents/:id
+ * 🐚 DELETE /api/agent-keys/:id
  * Revoke a Lobster Key©™ instantly.
  */
 router.delete("/:id", requireAuth, requirePermission("canDelete"), (req: LobsterAuthRequest, res) => {

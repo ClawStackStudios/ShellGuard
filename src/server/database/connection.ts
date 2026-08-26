@@ -24,22 +24,17 @@ if (encryptionKey) {
 }
 
 function encryptExistingDatabase(dbPath: string, key: string) {
-  const resolvedDbPath = path.resolve(dbPath);
-  const tempPath = resolvedDbPath + '.tmp';
-
+  // better-sqlite3-multiple-ciphers exposes PRAGMA rekey (not SQLCipher's
+  // sqlcipher_export): opening the plaintext file and rekeying encrypts it
+  // in place under the connection's configured cipher.
+  const plain = new Database(path.resolve(dbPath));
   try {
-    const plain = new Database(resolvedDbPath);
-    plain.exec(`
-      ATTACH DATABASE '${tempPath}' AS encrypted KEY '${key}';
-      SELECT sqlcipher_export('encrypted');
-      DETACH DATABASE encrypted;
-    `);
-    plain.close();
-    fs.renameSync(tempPath, resolvedDbPath);
+    plain.pragma(`rekey = '${key}'`);
+    // Sanity check: the file must now be readable as an encrypted database.
+    plain.prepare('SELECT count(*) FROM sqlite_master').get();
     console.log(`[DB] ✅ Database ${path.basename(dbPath)} encrypted successfully.`);
-  } catch (e) {
-    try { fs.unlinkSync(tempPath); } catch {}
-    throw e;
+  } finally {
+    plain.close();
   }
 }
 
@@ -70,7 +65,10 @@ export function createConnection(filename: string, key?: string): Database.Datab
       try {
         db.prepare('SELECT count(*) FROM sqlite_master').get();
       } catch (e: any) {
-        if (e.message.includes('not a database') || e.message.includes('is not a database')) {
+        // SQLite surfaces a plaintext-or-wrong-key file as SQLITE_NOTADB with
+        // either message depending on version — catch both spellings.
+        const msg = String(e?.message ?? '');
+        if (msg.includes('not a database') || msg.includes('unsupported file format') || e.code === 'SQLITE_NOTADB') {
           console.log(`[DB] Detected unencrypted database ${filename} — migrating to encrypted...`);
           db.close();
           encryptExistingDatabase(dbPath, key);

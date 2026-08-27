@@ -142,8 +142,8 @@ router.get('/validate', requireAuth, (req, res) => {
   res.json({ success: true, data: { valid: true, keyType: authReq.keyType, userUuid: authReq.userUuid } });
 });
 
-/** GET /api/auth/me — ShellGuard-only profile fetch */
-router.get('/me', requireAuth, (req, res) => {
+/** GET /api/auth/me — ShellGuard-only profile fetch (human keys only) */
+router.get('/me', requireAuth, requireHuman, (req, res) => {
   const authReq = req as AuthRequest;
   const lobster = db.prepare('SELECT uuid, username, display_name, created_at FROM lobsters WHERE uuid = ?').get(authReq.userUuid) as any;
   if (!lobster) {

@@ -80,13 +80,13 @@ export async function loadServer(): Promise<ServerHandle> {
 
   let mod: Record<string, unknown>;
   try {
-    // House specifier (CC-verbatim): TS source imported with .js extension.
-    mod = (await import('../server.js')) as Record<string, unknown>;
+    // House specifier: this repo imports TS source with explicit .ts extensions.
+    mod = (await import('../../server.ts')) as Record<string, unknown>;
   } catch (err) {
     if (isModuleNotFound(err)) {
       // Resolution failure happens before evaluation — safe to retry the
-      // literal .ts path in case the compiled-extension convention changed.
-      mod = (await import('../server.ts')) as Record<string, unknown>;
+      // compiled-extension convention in case it changes later.
+      mod = (await import('../../server.js')) as Record<string, unknown>;
     } else {
       throw err;
     }

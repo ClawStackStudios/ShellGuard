@@ -13,7 +13,7 @@
   <Category>Security:Other</Category>
   <WebUI>http://[IP]:[PORT:4545]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/ClawStackStudios/ShellGuard/main/shellguard-unraid-template.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/ClawStackStudios/ShellGuard/main/public/thumbnail-icon.png</Icon>
+  <Icon>https://raw.githubusercontent.com/ClawStackStudios/ShellGuard/main/public/assets/thumbnail-icon.png</Icon>
   <ExtraParams>--health-cmd="wget -qO- http://localhost:4545/api/health" --health-interval=15s --health-timeout=10s --health-retries=5 --health-start-period=15s</ExtraParams>
   <PostArgs/>
   <CPUset/>

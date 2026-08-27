@@ -9,7 +9,8 @@ import { defineConfig } from 'vitest/config';
  * Isolation model: NO globalSetup. Every integration suite sets its own
  * `process.env.DATA_DIR` inside `vi.hoisted(...)` BEFORE importing the server
  * module — the database singleton evaluates at module load, so each suite
- * gets a private, throwaway SQLite pair (db + audit) under `tests/data-*/`.
+ * gets a private, throwaway SQLite pair (db + audit) under a throwaway
+ * `tests/data-` prefixed directory.
  * See tests/README.md and tests/helpers/testDb.ts.
  */
 export default defineConfig({

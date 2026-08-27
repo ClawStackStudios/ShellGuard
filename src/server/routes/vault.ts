@@ -3,6 +3,8 @@ import db, { audit } from '../database/index.js';
 import { AuthRequest, requireAuth, requirePermission } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { VaultSchemas } from '../validation/schemas.js';
+import { fieldCipher } from '../utils/fieldEncryption.js';
+import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
 
 const router = Router();
 
@@ -10,13 +12,15 @@ const router = Router();
 
 /**
  * 🐚 GET /api/vault — list the caller's pearls.
+ * Metadata is decrypted server-side before response (when DB_ENCRYPTION_KEY is set).
  */
-router.get('/', requireAuth, requirePermission('canRead'), (req: AuthRequest, res) => {
+router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthRequest, res) => {
   try {
     const items = db
       .prepare('SELECT * FROM vault_pearls WHERE owner_uuid = ? ORDER BY created_at DESC')
-      .all(req.userUuid);
-    res.json({ success: true, data: items });
+      .all(req.userUuid) as Record<string, unknown>[];
+    const decrypted = await prepareReadAll('vault_pearls', items, fieldCipher);
+    res.json({ success: true, data: decrypted });
   } catch (err: any) {
     console.error('Vault GET error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure retrieving vault passwords.' });
@@ -27,23 +31,31 @@ router.get('/', requireAuth, requirePermission('canRead'), (req: AuthRequest, re
  * 🐚 POST /api/vault — lock a new pearl in the vault.
  * Payloads are stored byte-for-byte; only their length is validated.
  */
-router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.create), (req: AuthRequest, res) => {
+router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.create), async (req: AuthRequest, res) => {
   const { id, title, secret, username, url, type, category, notes, totp_secret, attachments } = req.body;
 
   try {
+    const toStore = await prepareWrite('vault_pearls', {
+      title: title.trim(),
+      username: username ? username.trim() : '',
+      url: url ? url.trim() : '',
+      category: category || 'Personal',
+      notes: notes || '',
+    }, fieldCipher);
+
     db.prepare(`
       INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, notes, totp_secret, attachments, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       req.userUuid,
-      title.trim(),
+      toStore.title,
       secret,
-      username ? username.trim() : '',
-      url ? url.trim() : '',
+      toStore.username,
+      toStore.url,
       type || 'password',
-      category || 'Personal',
-      notes || '',
+      toStore.category,
+      toStore.notes,
       totp_secret || '',
       attachments || '[]',
       new Date().toISOString()
@@ -72,7 +84,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
 /**
  * 🐚 PUT /api/vault/:id — update an owned pearl.
  */
-router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), (req: AuthRequest, res) => {
+router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
   const { title, secret, username, url, type, category, notes, totp_secret, attachments } = req.body;
 
@@ -83,18 +95,26 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       return res.status(404).json({ success: false, error: 'Password entry not found in your vault.' });
     }
 
+    const toStore = await prepareWrite('vault_pearls', {
+      title: title.trim(),
+      username: username ? username.trim() : '',
+      url: url ? url.trim() : '',
+      category: category || 'Personal',
+      notes: notes || '',
+    }, fieldCipher);
+
     db.prepare(`
       UPDATE vault_pearls
       SET title = ?, secret = ?, username = ?, url = ?, type = ?, category = ?, notes = ?, totp_secret = ?, attachments = ?
       WHERE id = ? AND owner_uuid = ?
     `).run(
-      title.trim(),
+      toStore.title,
       secret,
-      username ? username.trim() : '',
-      url ? url.trim() : '',
+      toStore.username,
+      toStore.url,
       type || 'password',
-      category || 'Personal',
-      notes || '',
+      toStore.category,
+      toStore.notes,
       totp_secret || '',
       attachments || '[]',
       id,
@@ -121,7 +141,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
 /**
  * 🐚 DELETE /api/vault/:id — crack an owned pearl out of the vault.
  */
-router.delete('/:id', requireAuth, requirePermission('canDelete'), (req: AuthRequest, res) => {
+router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: AuthRequest, res) => {
   const { id } = req.params;
   try {
     const row = db.prepare('SELECT type, category FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
@@ -129,13 +149,15 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), (req: AuthReq
       return res.status(404).json({ success: false, error: 'Password entry not found in your vault.' });
     }
 
+    const decryptedRow = await prepareRead('vault_pearls', row, fieldCipher);
+
     db.prepare('DELETE FROM vault_pearls WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
 
     audit.log('VAULT_ITEM_DELETED', {
       action: 'vault_item_deleted',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemType: row.type, itemId: id, category: row.category },
+      details: { itemType: decryptedRow.type, itemId: id, category: decryptedRow.category },
     });
 
     res.json({ success: true, data: { message: 'Password removed from vault.' } });

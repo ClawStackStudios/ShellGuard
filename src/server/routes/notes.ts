@@ -3,30 +3,38 @@ import db, { audit } from '../database/index.js';
 import { AuthRequest, requireAuth, requirePermission } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { NoteSchemas } from '../validation/schemas.js';
+import { fieldCipher } from '../utils/fieldEncryption.js';
+import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
 
 const router = Router();
 
 // Permission mapping (delta #11): GET→canRead · POST→canWrite · PUT→canEdit · DELETE→canDelete
 
-router.get('/', requireAuth, requirePermission('canRead'), (req: AuthRequest, res) => {
+router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthRequest, res) => {
   try {
     const items = db
       .prepare('SELECT * FROM vault_secure_notes WHERE owner_uuid = ? ORDER BY created_at DESC')
-      .all(req.userUuid);
-    res.json({ success: true, data: items });
+      .all(req.userUuid) as Record<string, unknown>[];
+    const decrypted = await prepareReadAll('vault_secure_notes', items, fieldCipher);
+    res.json({ success: true, data: decrypted });
   } catch (err: any) {
     console.error('Notes GET error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure retrieving notes.' });
   }
 });
 
-router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSchemas.create), (req: AuthRequest, res) => {
+router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSchemas.create), async (req: AuthRequest, res) => {
   const { id, title, content, category } = req.body;
   try {
+    const toStore = await prepareWrite('vault_secure_notes', {
+      title: title.trim(),
+      category: category || 'Personal',
+    }, fieldCipher);
+
     db.prepare(`
       INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, created_at)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, req.userUuid, title.trim(), content, category || 'Personal', new Date().toISOString());
+    `).run(id, req.userUuid, toStore.title, content, toStore.category, new Date().toISOString());
 
     audit.log('NOTE_CREATED', {
       action: 'note_created',
@@ -45,7 +53,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
   }
 });
 
-router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteSchemas.update), (req: AuthRequest, res) => {
+router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
   const { title, content, category } = req.body;
   try {
@@ -54,8 +62,13 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
       return res.status(404).json({ success: false, error: 'Note not found.' });
     }
 
+    const toStore = await prepareWrite('vault_secure_notes', {
+      title: title.trim(),
+      category: category || 'Personal',
+    }, fieldCipher);
+
     db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ? WHERE id = ? AND owner_uuid = ?')
-      .run(title.trim(), content, category || 'Personal', id, req.userUuid);
+      .run(toStore.title, content, toStore.category, id, req.userUuid);
 
     audit.log('NOTE_UPDATED', {
       action: 'note_updated',
@@ -71,7 +84,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
   }
 });
 
-router.delete('/:id', requireAuth, requirePermission('canDelete'), (req: AuthRequest, res) => {
+router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: AuthRequest, res) => {
   const { id } = req.params;
   try {
     const row = db.prepare('SELECT id, category FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
@@ -79,13 +92,15 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), (req: AuthReq
       return res.status(404).json({ success: false, error: 'Note not found.' });
     }
 
+    const decryptedRow = await prepareRead('vault_secure_notes', row, fieldCipher);
+
     db.prepare('DELETE FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
 
     audit.log('NOTE_DELETED', {
       action: 'note_deleted',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: row.category },
+      details: { itemId: id, category: decryptedRow.category },
     });
 
     res.json({ success: true, data: { message: 'Note removed.' } });

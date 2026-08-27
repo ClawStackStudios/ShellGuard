@@ -15,6 +15,7 @@ import { httpsRedirect } from './src/server/middleware/httpsRedirect.js';
 import { purgeExpiredTokens } from './src/server/database/index.js';
 import { scheduleTokenCleanup } from './src/server/utils/tokenExpiry.js';
 import { generateId, generateString } from './src/server/utils/crypto.js';
+import { initFieldCipher } from './src/server/utils/fieldEncryption.js';
 import db, { audit, auditDb } from './src/server/database/index.js';
 
 import authRoutes      from './src/server/routes/auth.js';
@@ -28,7 +29,7 @@ import settingsRoutes    from './src/server/routes/settings.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-const PORT = parseInt(process.env.PORT ?? '4646', 10);
+const PORT = parseInt(process.env.PORT ?? '5454', 10);
 const isProduction = process.env.NODE_ENV === 'production';
 
 // ─── Export for tests ────────────────────────────────────────────────────────
@@ -40,6 +41,14 @@ const SESSION_ID = crypto.randomUUID();
 // ─── Startup tasks ───────────────────────────────────────────────────────────
 purgeExpiredTokens();
 scheduleTokenCleanup(db);
+
+/** Initialize per-row field encryption (BLOCKS until key derivation is complete). */
+try {
+  await initFieldCipher();
+} catch (err) {
+  console.error('[FieldEncryption] ⚠️ Failed to initialize metadata cipher:', err);
+  console.warn('[FieldEncryption] Metadata encryption DISABLED for this session.');
+}
 
 async function performCleanup() {
   try {

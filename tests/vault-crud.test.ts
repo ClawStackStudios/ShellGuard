@@ -10,6 +10,7 @@ import {
   oversizedBase64,
 } from './helpers/testFactories.js';
 import { createTestUserWithToken } from './helpers/testAuth.js';
+import { isEncryptedField } from '../src/server/utils/fieldEncryption.js';
 
 /**
  * Vault CRUD ×4 entity types (pearls / secure notes / SSH keys / attachments).
@@ -30,7 +31,7 @@ vi.hoisted(() => {
   const dir: string = fsLib.mkdtempSync(pathLib.join(process.cwd(), 'tests', 'data-vault-crud-'));
   process.env.DATA_DIR = dir;
   process.env.NODE_ENV = 'test';
-  process.env.PORT = '46463';
+  process.env.PORT = '54543';
   process.env.DB_ENCRYPTION_KEY = '';
   process.env.TOKEN_TTL_DEFAULT = '30m';
   process.env.AUTH_RATE_LIMIT = '1000000';
@@ -200,6 +201,24 @@ describe.each(ENTITIES)('$label — CRUD × envelope × opacity', (spec) => {
     expect(updated.title).toBe(newTitle);
     // the blob survived the update untransformed
     expect(updated[spec.blobField]).toStrictEqual(created.blob);
+  });
+
+  it('metadata columns stored plaintext when DB_ENCRYPTION_KEY not set', async () => {
+    // This suite runs without DB_ENCRYPTION_KEY, so fieldCipher is null.
+    // After POST, title in DB should be the exact plaintext value.
+    // The dedicated metadata-encryption.test.ts suite tests the encrypted case.
+    const title = `Plaintext Metadata Test`;
+    const entity = await createRecord(spec, { title });
+
+    if (!srv.db) {
+      throw new Error('server module does not export `db` — cannot verify storage-layer metadata');
+    }
+    const raw = srv.db
+      .prepare(`SELECT title FROM ${spec.storage.table} WHERE id = ?`)
+      .get(entity.id) as { title: string };
+
+    expect(raw.title).toBe(title);
+    expect(isEncryptedField(raw.title)).toBe(false);
   });
 
   it('category/folder metadata round-trips create → read', async () => {

@@ -3,30 +3,39 @@ import db, { audit } from '../database/index.js';
 import { AuthRequest, requireAuth, requirePermission } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { SshKeySchemas } from '../validation/schemas.js';
+import { fieldCipher } from '../utils/fieldEncryption.js';
+import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
 
 const router = Router();
 
 // Permission mapping (delta #11): GET→canRead · POST→canWrite · PUT→canEdit · DELETE→canDelete
 
-router.get('/', requireAuth, requirePermission('canRead'), (req: AuthRequest, res) => {
+router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthRequest, res) => {
   try {
     const items = db
       .prepare('SELECT * FROM vault_ssh_keys WHERE owner_uuid = ? ORDER BY created_at DESC')
-      .all(req.userUuid);
-    res.json({ success: true, data: items });
+      .all(req.userUuid) as Record<string, unknown>[];
+    const decrypted = await prepareReadAll('vault_ssh_keys', items, fieldCipher);
+    res.json({ success: true, data: decrypted });
   } catch (err: any) {
     console.error('SSH keys GET error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure retrieving keys.' });
   }
 });
 
-router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKeySchemas.create), (req: AuthRequest, res) => {
+router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKeySchemas.create), async (req: AuthRequest, res) => {
   const { id, title, key_value, username, category } = req.body;
   try {
+    const toStore = await prepareWrite('vault_ssh_keys', {
+      title: title.trim(),
+      username: username || '',
+      category: category || 'Personal',
+    }, fieldCipher);
+
     db.prepare(`
       INSERT INTO vault_ssh_keys (id, owner_uuid, title, key_value, username, category, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, req.userUuid, title.trim(), key_value, username || '', category || 'Personal', new Date().toISOString());
+    `).run(id, req.userUuid, toStore.title, key_value, toStore.username, toStore.category, new Date().toISOString());
 
     audit.log('SSH_KEY_CREATED', {
       action: 'ssh_key_created',
@@ -45,7 +54,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKey
   }
 });
 
-router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKeySchemas.update), (req: AuthRequest, res) => {
+router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKeySchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
   const { title, key_value, username, category } = req.body;
   try {
@@ -54,8 +63,14 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKe
       return res.status(404).json({ success: false, error: 'Key not found.' });
     }
 
+    const toStore = await prepareWrite('vault_ssh_keys', {
+      title: title.trim(),
+      username: username || '',
+      category: category || 'Personal',
+    }, fieldCipher);
+
     db.prepare('UPDATE vault_ssh_keys SET title = ?, key_value = ?, username = ?, category = ? WHERE id = ? AND owner_uuid = ?')
-      .run(title.trim(), key_value, username || '', category || 'Personal', id, req.userUuid);
+      .run(toStore.title, key_value, toStore.username, toStore.category, id, req.userUuid);
 
     audit.log('SSH_KEY_UPDATED', {
       action: 'ssh_key_updated',
@@ -71,7 +86,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKe
   }
 });
 
-router.delete('/:id', requireAuth, requirePermission('canDelete'), (req: AuthRequest, res) => {
+router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: AuthRequest, res) => {
   const { id } = req.params;
   try {
     const row = db.prepare('SELECT id, category FROM vault_ssh_keys WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
@@ -79,13 +94,15 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), (req: AuthReq
       return res.status(404).json({ success: false, error: 'Key not found.' });
     }
 
+    const decryptedRow = await prepareRead('vault_ssh_keys', row, fieldCipher);
+
     db.prepare('DELETE FROM vault_ssh_keys WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
 
     audit.log('SSH_KEY_DELETED', {
       action: 'ssh_key_deleted',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: row.category },
+      details: { itemId: id, category: decryptedRow.category },
     });
 
     res.json({ success: true, data: { message: 'Key removed.' } });

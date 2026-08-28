@@ -85,21 +85,39 @@ export const SshKeySchemas = {
 };
 
 export const AttachmentSchemas = {
-  // file_data ≈ base64 payload; capped well under the scoped 32mb body limit
+  // file_data = base64 payload wrapped in a ShellCryption envelope.
+  // Hard limit: 10MB raw file → ~13.3MB base64 + envelope overhead ≈ 14M chars.
+  // Capped well under the scoped 32mb body limit.
   create: z.object({
     id: itemId,
     title: itemTitle,
-    file_data: z.string().min(1).max(28000000), // opaque
+    file_data: z.string().min(1).max(14000000), // opaque
     file_name: z.string().max(512).optional(),
     mime_type: z.string().max(255).optional(),
     category: itemCategory,
   }),
   update: z.object({
     title: itemTitle,
-    file_data: z.string().min(1).max(28000000), // opaque
+    file_data: z.string().min(1).max(14000000), // opaque
     file_name: z.string().max(512).optional(),
     mime_type: z.string().max(255).optional(),
     category: itemCategory,
+  }),
+};
+
+export const AdminSchemas = {
+  auth: z.object({
+    token: z.string().min(1).max(512),
+  }),
+  settings: z.object({
+    audit_retention_days: z.number().int().min(1).max(365).optional(),
+    uptime_retention_days: z.number().int().min(1).max(365).optional(),
+    backup_enabled: z.boolean().optional(),
+    backup_interval_minutes: z.number().int().min(15).max(1440).optional(),
+    backup_retention_count: z.number().int().min(1).max(100).optional(),
+  }),
+  deleteUser: z.object({
+    expect: z.string().min(1).max(255), // must match target username OR uuid server-side
   }),
 };
 

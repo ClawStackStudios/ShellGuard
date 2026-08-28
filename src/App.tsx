@@ -47,6 +47,9 @@ import { SetupView } from "./components/SetupView.tsx";
 import { Sidebar } from "./components/Layout/Sidebar.tsx";
 import { Header } from "./components/Layout/Header.tsx";
 import { PasswordVaultView } from "./components/Vault/PasswordVaultView.tsx";
+import { SuperLobsterProvider, useSuperLobster } from "./components/Admin/SuperLobsterContext.tsx";
+import { SuperLobsterLogin } from "./components/Admin/SuperLobsterLogin.tsx";
+import { SuperLobsterPanel } from "./components/Admin/SuperLobsterPanel.tsx";
 import { GeneratorToolView } from "./components/Generator/GeneratorToolView.tsx";
 import { ImportExportView } from "./components/Settings/ImportExportView.tsx";
 import { 
@@ -60,6 +63,7 @@ import {
   encryptField, 
   decryptField 
 } from "./lib/shellCryption.ts";
+import { PendingAttachment } from "./lib/attachmentUtils.ts";
 import { VaultItem, Agent, Lobster, VaultItemType } from "./types.ts";
 import { GeneratorConfig, getGlobalGeneratorConfig, setGlobalGeneratorConfig } from "./lib/generator.ts";
 import { GeneratorOptions } from "./components/Generator/GeneratorOptions.tsx";
@@ -92,6 +96,28 @@ export default function App() {
     setIsAddingVaultItem(true);
     setIsHeaderAddMenuOpen(false);
   };
+
+  // ── SuperLobster Panel (admin plane) ─────────────────────────────────────────
+  // URL-only entry via #/super-lobster — zero-discovery stance (ADMIN.md T9).
+  // Completely independent of user auth: the panel runs before the molting /
+  // auth gates and never touches vault state or the user shellKey.
+  const [isSuperLobster, setIsSuperLobster] = useState(
+    typeof window !== 'undefined' && window.location.hash === '#/super-lobster'
+  );
+
+  useEffect(() => {
+    const onHashChange = () => setIsSuperLobster(window.location.hash === '#/super-lobster');
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  if (isSuperLobster) {
+    return (
+      <SuperLobsterProvider>
+        <SuperLobsterGate />
+      </SuperLobsterProvider>
+    );
+  }
 
   // Global keyboard shortcuts for quick search
   useEffect(() => {
@@ -310,6 +336,24 @@ export default function App() {
     }
   };
 
+  /**
+   * ShellCrypt + upload a staged attachment file to /api/attachments.
+   * file_data is encrypted under AAD `vault_secure_attachments:{id}`; the
+   * server separately per-row encrypts title/file_name/category metadata.
+   */
+  const uploadAttachmentRecord = async (key: CryptoKey, att: PendingAttachment): Promise<string> => {
+    const encryptedFile = await encryptField(att.dataUrl, key, "vault_secure_attachments", att.id);
+    await restAdapter.POST("/api/attachments", {
+      id: att.id,
+      title: att.file_name,
+      file_data: encryptedFile,
+      file_name: att.file_name,
+      mime_type: att.mime_type,
+      category: "Attachment",
+    });
+    return att.id;
+  };
+
   const lockTheClaw = async (item: {
     title: string;
     secret: string;
@@ -320,6 +364,7 @@ export default function App() {
     notes?: string;
     totp_secret?: string;
     attachments?: string;
+    newAttachments?: PendingAttachment[];
   }) => {
     if (!shellKey) return;
     try {
@@ -335,6 +380,15 @@ export default function App() {
         const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
         await restAdapter.POST("/api/attachments", { id, title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
       } else {
+        // Password pearls: upload staged attachments first, then link their IDs.
+        let attachmentIdsJson = item.attachments || "[]";
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          const uploadedIds: string[] = [];
+          for (const att of item.newAttachments) {
+            uploadedIds.push(await uploadAttachmentRecord(shellKey, att));
+          }
+          attachmentIdsJson = JSON.stringify(uploadedIds);
+        }
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
         if (item.totp_secret) {
@@ -350,7 +404,7 @@ export default function App() {
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
-          attachments: item.attachments || "[]"
+          attachments: attachmentIdsJson
         });
       }
       scuttleVault(shellKey);
@@ -369,6 +423,8 @@ export default function App() {
     notes?: string;
     totp_secret?: string;
     attachments?: string;
+    newAttachments?: PendingAttachment[];
+    removedAttachmentIds?: string[];
   }) => {
     if (!shellKey) return;
     try {
@@ -382,6 +438,19 @@ export default function App() {
         const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
         await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
       } else {
+        // Password pearls: upload staged files, unlink removed ones, then PUT.
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            await uploadAttachmentRecord(shellKey, att);
+          }
+        }
+        if (item.removedAttachmentIds && item.removedAttachmentIds.length > 0) {
+          for (const attId of item.removedAttachmentIds) {
+            await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {
+              /* already gone — unlinking is best-effort */
+            });
+          }
+        }
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
         if (item.totp_secret) {
@@ -1106,4 +1175,17 @@ function AgentsView({ agents, onAdd, onDelete }: { agents: Agent[]; onAdd: (n: s
       </div>
     </div>
   );
+}
+
+/** Auth gate for the SuperLobster Panel — login or panel, nothing else. */
+function SuperLobsterGate() {
+  const { isAdmin, isChecking } = useSuperLobster();
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-theme-base flex items-center justify-center">
+        <p className="text-theme-muted text-sm animate-pulse font-mono">checking the shell…</p>
+      </div>
+    );
+  }
+  return isAdmin ? <SuperLobsterPanel /> : <SuperLobsterLogin />;
 }

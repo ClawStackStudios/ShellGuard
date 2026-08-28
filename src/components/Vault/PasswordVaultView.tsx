@@ -24,6 +24,7 @@ import {
   RefreshCw,
   X,
   Upload,
+  Download,
   MoreVertical,
   Zap,
   Tag,
@@ -56,6 +57,14 @@ import {
   DEFAULT_ROOT_CATEGORIES,
   getPodColor
 } from '../../lib/folderUtils.ts';
+import { generateUUID } from '../../lib/crypto.ts';
+import {
+  MAX_ATTACHMENT_BYTES,
+  PendingAttachment,
+  parseAttachmentIds,
+  formatBytes,
+  downloadAttachment,
+} from '../../lib/attachmentUtils.ts';
 
 interface PasswordVaultViewProps {
   items: VaultItem[];
@@ -68,7 +77,10 @@ interface PasswordVaultViewProps {
     type: VaultItemType;
     notes?: string;
     totp_secret?: string;
+    /** JSON array of vault_secure_attachments IDs linked to this pearl. */
     attachments?: string;
+    /** Staged files to upload (ShellCrypted + POSTed by App.tsx on submit). */
+    newAttachments?: PendingAttachment[];
   }) => Promise<void>;
   onUpdate: (id: string, item: {
     title: string;
@@ -79,7 +91,12 @@ interface PasswordVaultViewProps {
     type: VaultItemType;
     notes?: string;
     totp_secret?: string;
+    /** JSON array of vault_secure_attachments IDs linked to this pearl. */
     attachments?: string;
+    /** Staged files to upload on save. */
+    newAttachments?: PendingAttachment[];
+    /** Existing attachment IDs unlinked in this edit — DELETEd by App.tsx. */
+    removedAttachmentIds?: string[];
   }) => Promise<void>;
   onDelete: (id: string, type: VaultItemType) => Promise<void>;
   onDeleteMultiple?: (selectedItems: { id: string; type: VaultItemType }[]) => Promise<void>;
@@ -182,8 +199,10 @@ export function PasswordVaultView({
   const [showNoteField, setShowNoteField] = useState(false);
   const [totpSecret, setTotpSecret] = useState("");
   const [showTotpField, setShowTotpField] = useState(false);
-  const [attachments, setAttachments] = useState("");
   const [showAttachmentField, setShowAttachmentField] = useState(false);
+  // Staged new files for the add form (uploaded on submit by App.tsx)
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [isExtraDropdownOpen, setIsExtraDropdownOpen] = useState(false);
   const [showPasswordInForm, setShowPasswordInForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -201,8 +220,12 @@ export function PasswordVaultView({
   const [editShowNoteField, setEditShowNoteField] = useState(false);
   const [editTotpSecret, setEditTotpSecret] = useState("");
   const [editShowTotpField, setEditShowTotpField] = useState(false);
-  const [editAttachments, setEditAttachments] = useState("");
   const [editShowAttachmentField, setEditShowAttachmentField] = useState(false);
+  // Edit-form attachment state: kept IDs, staged new files, and unlinked IDs
+  const [editExistingAttachmentIds, setEditExistingAttachmentIds] = useState<string[]>([]);
+  const [editPendingAttachments, setEditPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [editRemovedAttachmentIds, setEditRemovedAttachmentIds] = useState<string[]>([]);
+  const [editAttachmentError, setEditAttachmentError] = useState<string | null>(null);
   const [isEditExtraDropdownOpen, setIsEditExtraDropdownOpen] = useState(false);
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -221,6 +244,55 @@ export function PasswordVaultView({
     } else {
       setEditPassword(generated);
     }
+  };
+
+  // ── Attachment staging ─────────────────────────────────────────────────────
+  // Lookup for attachment records already in the vault (file_name + decrypted
+  // data URL live on type === "attachment" items).
+  const attachmentItemsById = useMemo(() => {
+    const map = new Map<string, VaultItem>();
+    for (const it of items) {
+      if (it.type === "attachment") map.set(it.id, it);
+    }
+    return map;
+  }, [items]);
+
+  const stageAttachmentFile = (file: File, target: "add" | "edit") => {
+    const setError = target === "add" ? setAttachmentError : setEditAttachmentError;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      setError(`"${file.name}" is ${formatBytes(file.size)} — the hard limit is 10 MB per file.`);
+      return;
+    }
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = (re) => {
+      const dataUrl = re.target?.result?.toString();
+      if (!dataUrl) return;
+      const staged: PendingAttachment = {
+        id: generateUUID(),
+        file_name: file.name,
+        mime_type: file.type || "application/octet-stream",
+        size: file.size,
+        dataUrl,
+      };
+      if (target === "add") {
+        setPendingAttachments(prev => [...prev, staged]);
+      } else {
+        setEditPendingAttachments(prev => [...prev, staged]);
+      }
+    };
+    reader.onerror = () => setError(`Could not read "${file.name}".`);
+    reader.readAsDataURL(file);
+  };
+
+  const openAttachmentPicker = (target: "add" | "edit") => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = (e: any) => {
+      const file = e.target?.files?.[0];
+      if (file) stageAttachmentFile(file, target);
+    };
+    input.click();
   };
 
   // Copy handler with visual feedback
@@ -243,7 +315,8 @@ export function PasswordVaultView({
     setShowNoteField(false);
     setTotpSecret("");
     setShowTotpField(false);
-    setAttachments("");
+    setPendingAttachments([]);
+    setAttachmentError(null);
     setShowAttachmentField(false);
     setIsExtraDropdownOpen(false);
     setShowPasswordInForm(false);
@@ -264,8 +337,12 @@ export function PasswordVaultView({
     setEditShowNoteField(!!item.notes);
     setEditTotpSecret(item.totp_secret || "");
     setEditShowTotpField(!!item.totp_secret);
-    setEditAttachments(item.attachments || "");
-    setEditShowAttachmentField(item.attachments && item.attachments !== "[]" ? true : false);
+    const linkedIds = parseAttachmentIds(item.attachments);
+    setEditExistingAttachmentIds(linkedIds);
+    setEditShowAttachmentField(linkedIds.length > 0);
+    setEditPendingAttachments([]);
+    setEditRemovedAttachmentIds([]);
+    setEditAttachmentError(null);
     setIsEditExtraDropdownOpen(false);
     setShowEditPassword(false);
   };
@@ -290,7 +367,8 @@ export function PasswordVaultView({
         type: activeTypeTab,
         notes: showNoteField ? notes.trim() : "",
         totp_secret: showTotpField ? totpSecret.trim() : "",
-        attachments: showAttachmentField ? attachments.trim() : "",
+        attachments: JSON.stringify(pendingAttachments.map(a => a.id)),
+        newAttachments: showAttachmentField ? pendingAttachments : [],
       });
       handleResetAddForm();
     } finally {
@@ -313,7 +391,12 @@ export function PasswordVaultView({
         type: editingItem.type || "password",
         notes: editShowNoteField ? editNotes.trim() : "",
         totp_secret: editShowTotpField ? editTotpSecret.trim() : "",
-        attachments: editShowAttachmentField ? editAttachments.trim() : "",
+        attachments: JSON.stringify([
+          ...editExistingAttachmentIds,
+          ...editPendingAttachments.map(a => a.id),
+        ]),
+        newAttachments: editPendingAttachments,
+        removedAttachmentIds: editRemovedAttachmentIds,
       });
       handleCloseEdit();
     } finally {
@@ -756,15 +839,95 @@ export function PasswordVaultView({
                       )}
                       {editShowAttachmentField && (
                         <div className="col-span-1 md:col-span-2 relative">
-                          <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachment URL / Ref</label>
-                          <input
-                            type="text"
-                            value={editAttachments}
-                            onChange={(e) => setEditAttachments(e.target.value)}
-                            placeholder="URL or reference to an attachment"
-                            className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan focus:ring-1 focus:ring-claw-cyan outline-none transition-all text-theme-main placeholder:text-slate-400"
-                          />
-                          <button type="button" onClick={() => setEditShowAttachmentField(false)} className="absolute top-8 right-3 text-slate-400 hover:text-red-500"><X size={16}/></button>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">
+                            Attachments <span className="normal-case font-medium">(max 10 MB per file, unlimited files)</span>
+                          </label>
+                          <button type="button" onClick={() => setEditShowAttachmentField(false)} className="absolute -top-1 right-0 text-slate-400 hover:text-red-500"><X size={16}/></button>
+
+                          {/* Existing linked attachments */}
+                          {editExistingAttachmentIds.length > 0 && (
+                            <ul className="mb-3 space-y-2">
+                              {editExistingAttachmentIds.map(attId => {
+                                const att = attachmentItemsById.get(attId);
+                                return (
+                                  <li key={attId} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3 py-2">
+                                    <span className="flex items-center gap-2 min-w-0">
+                                      <Paperclip size={14} className="text-claw-cyan shrink-0" />
+                                      <span className="text-sm text-theme-main truncate">{att?.file_name || "Attachment"}</span>
+                                    </span>
+                                    <span className="flex items-center gap-1 shrink-0">
+                                      {att?.secret && (
+                                        <button
+                                          type="button"
+                                          onClick={() => downloadAttachment(att.secret, att.file_name || "attachment")}
+                                          className="text-slate-400 hover:text-claw-cyan transition-colors cursor-pointer p-1"
+                                          title="Download decrypted file"
+                                        >
+                                          <Download size={14} />
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditExistingAttachmentIds(prev => prev.filter(id => id !== attId));
+                                          setEditRemovedAttachmentIds(prev => [...prev, attId]);
+                                        }}
+                                        className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer p-1"
+                                        title="Remove attachment"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                          {/* Upload zone — click or drag a single file */}
+                          <div
+                            className="w-full border-2 border-dashed border-claw-cyan/50 rounded-xl p-6 flex flex-col items-center justify-center bg-claw-cyan/5 hover:bg-claw-cyan/10 transition-colors cursor-pointer text-center"
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const file = e.dataTransfer.files?.[0];
+                              if (file) stageAttachmentFile(file, "edit");
+                            }}
+                            onClick={() => openAttachmentPicker("edit")}
+                          >
+                            <Upload size={28} className="text-claw-cyan/60 mb-2" />
+                            <p className="text-theme-main font-bold mb-1">Click to browse or drag a file here</p>
+                            <p className="text-theme-muted text-xs">Each file is encrypted client-side before upload · 10 MB hard limit</p>
+                          </div>
+
+                          {editAttachmentError && (
+                            <p className="mt-2 text-xs text-red-500 flex items-center gap-1.5">
+                              <AlertTriangle size={13} /> {editAttachmentError}
+                            </p>
+                          )}
+
+                          {/* Newly staged files */}
+                          {editPendingAttachments.length > 0 && (
+                            <ul className="mt-3 space-y-2">
+                              {editPendingAttachments.map(att => (
+                                <li key={att.id} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3 py-2">
+                                  <span className="flex items-center gap-2 min-w-0">
+                                    <Paperclip size={14} className="text-claw-cyan shrink-0" />
+                                    <span className="text-sm text-theme-main truncate">{att.file_name}</span>
+                                    <span className="text-xs text-theme-muted shrink-0 font-mono">{formatBytes(att.size)}</span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditPendingAttachments(prev => prev.filter(a => a.id !== att.id))}
+                                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 cursor-pointer"
+                                    title="Remove attachment"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       )}
                       
@@ -1133,15 +1296,56 @@ export function PasswordVaultView({
                     )}
                     {showAttachmentField && (
                       <div className="col-span-1 md:col-span-2 relative">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachment URL / Ref</label>
-                        <input
-                          type="text"
-                          value={attachments}
-                          onChange={(e) => setAttachments(e.target.value)}
-                          placeholder="URL or reference to an attachment"
-                          className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan focus:ring-1 focus:ring-claw-cyan outline-none transition-all text-theme-main placeholder:text-slate-400"
-                        />
-                        <button type="button" onClick={() => setShowAttachmentField(false)} className="absolute top-8 right-3 text-slate-400 hover:text-red-500"><X size={16}/></button>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">
+                          Attachments <span className="normal-case font-medium">(max 10 MB per file, unlimited files)</span>
+                        </label>
+                        <button type="button" onClick={() => setShowAttachmentField(false)} className="absolute -top-1 right-0 text-slate-400 hover:text-red-500"><X size={16}/></button>
+
+                        {/* Upload zone — click or drag a single file */}
+                        <div
+                          className="w-full border-2 border-dashed border-claw-cyan/50 rounded-xl p-6 flex flex-col items-center justify-center bg-claw-cyan/5 hover:bg-claw-cyan/10 transition-colors cursor-pointer text-center"
+                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) stageAttachmentFile(file, "add");
+                          }}
+                          onClick={() => openAttachmentPicker("add")}
+                        >
+                          <Upload size={28} className="text-claw-cyan/60 mb-2" />
+                          <p className="text-theme-main font-bold mb-1">Click to browse or drag a file here</p>
+                          <p className="text-theme-muted text-xs">Each file is encrypted client-side before upload · 10 MB hard limit</p>
+                        </div>
+
+                        {attachmentError && (
+                          <p className="mt-2 text-xs text-red-500 flex items-center gap-1.5">
+                            <AlertTriangle size={13} /> {attachmentError}
+                          </p>
+                        )}
+
+                        {/* Staged files — unlimited count, one file each */}
+                        {pendingAttachments.length > 0 && (
+                          <ul className="mt-3 space-y-2">
+                            {pendingAttachments.map(att => (
+                              <li key={att.id} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3 py-2">
+                                <span className="flex items-center gap-2 min-w-0">
+                                  <Paperclip size={14} className="text-claw-cyan shrink-0" />
+                                  <span className="text-sm text-theme-main truncate">{att.file_name}</span>
+                                  <span className="text-xs text-theme-muted shrink-0 font-mono">{formatBytes(att.size)}</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setPendingAttachments(prev => prev.filter(a => a.id !== att.id))}
+                                  className="text-slate-400 hover:text-red-500 transition-colors shrink-0 cursor-pointer"
+                                  title="Remove attachment"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     )}
 
@@ -1993,7 +2197,7 @@ export function PasswordVaultView({
                 </div>
 
                 {/* Extra Fields Container */}
-                {(item.totp_secret || item.notes || (item.attachments && item.attachments !== "[]")) && (
+                {(item.totp_secret || item.notes || parseAttachmentIds(item.attachments).length > 0) && (
                   <div className="pt-3 border-t border-theme-subtle flex flex-col gap-3">
                     {item.notes && (
                       <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3 text-sm text-amber-900 dark:text-amber-200">
@@ -2011,16 +2215,39 @@ export function PasswordVaultView({
                         <TotpDisplay secret={item.totp_secret} />
                       </div>
                     )}
-                    {item.attachments && item.attachments !== "[]" && (
-                      <div>
-                        <div className="font-bold flex items-center gap-1.5 mb-1.5 text-xs uppercase tracking-wider text-slate-500">
-                          <Paperclip size={12} /> Attachment Reference
+                    {(() => {
+                      const linkedIds = parseAttachmentIds(item.attachments);
+                      return linkedIds.length > 0 ? (
+                        <div>
+                          <div className="font-bold flex items-center gap-1.5 mb-1.5 text-xs uppercase tracking-wider text-slate-500">
+                            <Paperclip size={12} /> Attachments ({linkedIds.length})
+                          </div>
+                          <ul className="space-y-1.5">
+                            {linkedIds.map(attId => {
+                              const att = attachmentItemsById.get(attId);
+                              return (
+                                <li key={attId} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-3 py-2 border border-theme-subtle">
+                                  <span className="flex items-center gap-2 min-w-0 text-sm text-theme-main">
+                                    <Paperclip size={13} className="text-claw-cyan shrink-0" />
+                                    <span className="truncate">{att?.file_name || "Attachment"}</span>
+                                  </span>
+                                  {att?.secret && (
+                                    <button
+                                      type="button"
+                                      onClick={() => downloadAttachment(att.secret, att.file_name || "attachment")}
+                                      className="flex items-center gap-1.5 text-xs font-semibold text-claw-cyan hover:text-cyan-600 transition-colors shrink-0 cursor-pointer"
+                                      title="Download decrypted file"
+                                    >
+                                      <Download size={13} /> Download
+                                    </button>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-theme-subtle text-sm font-mono break-all text-claw-cyan">
-                          {item.attachments}
-                        </div>
-                      </div>
-                    )}
+                      ) : null;
+                    })()}
                   </div>
                 )}
               </motion.div>

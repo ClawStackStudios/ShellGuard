@@ -144,12 +144,35 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
 router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: AuthRequest, res) => {
   const { id } = req.params;
   try {
-    const row = db.prepare('SELECT type, category FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
+    const row = db.prepare('SELECT type, category, attachments FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
     if (!row) {
       return res.status(404).json({ success: false, error: 'Password entry not found in your vault.' });
     }
 
     const decryptedRow = await prepareRead('vault_pearls', row, fieldCipher);
+
+    // Cascade delete: remove every attachment record referenced by this pearl.
+    // The attachments column holds a JSON array of vault_secure_attachments IDs.
+    let cascadeIds: string[] = [];
+    try {
+      const parsed = JSON.parse(row.attachments || '[]');
+      if (Array.isArray(parsed)) cascadeIds = parsed.filter((v: unknown): v is string => typeof v === 'string');
+    } catch { /* legacy plaintext garbage — nothing to cascade */ }
+
+    if (cascadeIds.length > 0) {
+      const delAttachment = db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?');
+      for (const attId of cascadeIds) {
+        const result = delAttachment.run(attId, req.userUuid);
+        if (result.changes > 0) {
+          audit.log('ATTACHMENT_DELETED', {
+            action: 'attachment_deleted',
+            outcome: 'success',
+            actor: req.userUuid,
+            details: { itemId: attId, cascadeFrom: id },
+          });
+        }
+      }
+    }
 
     db.prepare('DELETE FROM vault_pearls WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
 

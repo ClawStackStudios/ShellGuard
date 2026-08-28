@@ -14,6 +14,7 @@
     "scuttle:stop": "npm run scuttle:dev-stop",
     "scuttle:reset": "npm run scuttle:stop && tsx scripts/scuttle-reset.ts --env production && rm -rf dist",
     "scuttle:dev-reset": "npm run scuttle:stop && tsx scripts/scuttle-reset.ts --env development",
+    "scuttle:restore": "tsx scripts/restore.ts",
     "dev": "vite --port 5353 --strictPort",
     "dev:server": "DATA_DIR=./data-dev PORT=5454 tsx --watch server.ts",
     "start:api": "tsx server.ts",

@@ -11,6 +11,9 @@ export interface VaultItem {
   notes?: string;
   totp_secret?: string; // encrypted
   attachments?: string; // JSON string of attachments
+  // Present on attachment-type items (from vault_secure_attachments rows)
+  file_name?: string;
+  mime_type?: string;
   created_at: string;
 }
 

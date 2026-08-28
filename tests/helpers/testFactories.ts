@@ -157,7 +157,7 @@ export function makeAttachmentPayload(overrides: Partial<AttachmentPayload> = {}
 
 /**
  * Base64 payload of approximately `megabytes` of raw bytes (~4/3 in chars).
- * Used to probe the ~28MB attachment cap without touching the 32mb body limit.
+ * Used to probe the ~10MB attachment cap without touching the 32mb body limit.
  */
 export function oversizedBase64(rawBytes: number): string {
   return Buffer.alloc(rawBytes).toString('base64');

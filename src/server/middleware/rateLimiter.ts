@@ -34,6 +34,19 @@ export const apiLimiter = rateLimit({
   },
 });
 
+/**
+ * Stricter limiter for the SuperLobster panel's token auth endpoint (T1).
+ * Brute-forcing ADMIN_TOKEN through HTTP should be slow and loud.
+ */
+export const adminAuthLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many SuperLobster login attempts. The reef has gone dark for a while.' },
+  skipSuccessfulRequests: true,
+});
+
 export const createAgentKeyRateLimiter = () => {
   const limiterCache = new Map<string, ReturnType<typeof rateLimit>>();
   const MAX_CACHE_SIZE = 100; // ⚡ LRU: keep only last 100 agent keys to prevent unbounded memory growth

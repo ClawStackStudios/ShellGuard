@@ -75,7 +75,7 @@ ShellGuard is entirely passwordless. Your identity and your decryption key are a
 
 ## 🐚 Step 2: Lock Your First Pearls
 
-1. From the Grotto, add items of any type: **login** (with username, URL, TOTP seed), **secure note**, **SSH key**, or **encrypted attachment**.
+1. From the Grotto, add items of any type: **login** (with username, URL, TOTP seed, and unlimited file attachments — 10 MB max per file), **secure note**, **SSH key**, or **encrypted attachment**.
 2. Every secret field is encrypted **in your browser** (AES-GCM-256) before upload. Watch the network tab if you don't believe us — you'll see `{v, alg, iv, ct, aad}` blobs.
 3. Organize pearls into color-coded **pods** (Personal, Work, Custom… nested as deep as you like).
 

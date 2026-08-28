@@ -72,12 +72,13 @@
 - 🔒 **Per-Row Metadata Encryption©™** — Server-side AES-256-GCM encrypts metadata fields (title, username, URL, category, notes, file name) in-place using `DB_ENCRYPTION_KEY`. Backward-compatible: legacy plaintext passes through; new/updated items encrypt automatically.
 - 🗝️ **ClawKeys©™ Identity** — Passwordless login with a generated `hu-` identity key; short-lived `api-` bearer tokens carry every request.
 - 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
-- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP), secure notes, SSH keys and base64 attachments, organized into color-coded nested **pods**.
+- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 10 MB per file), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
 - 📤 **Sovereign Exports** — Metadata CSV export and re-auth-gated decrypted JSON backup; import restores your pearls on any reef.
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically.
 - 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
 - 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
+- 🦞 **SuperLobster Panel** — Token-gated instance admin plane at `/#/super-lobster`: strict-metadata lobster management (cascade delete with type-to-confirm), read-only diagnostics, whitelist-only settings, and failsafe database backups (SQLCipher-consistent Online Backup API snapshots with manifest + rotation). Restores stay offline by design. See [ADMIN.md](./ADMIN.md).
 - 🌊 **Reef Modernist Design** — "Bioluminescent Defense": deep abyssal surfaces, glowing shells, Sora/Geist/JetBrains Mono typography.
 
 ### 🔐 Encryption at a Glance
@@ -380,9 +381,11 @@ npm run start:api
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
 | `GET` | `/api/attachments` | canRead | List encrypted attachments |
-| `POST` | `/api/attachments` | canWrite | Upload attachment (base64, ~28MB payload cap) |
+| `POST` | `/api/attachments` | canWrite | Upload attachment (base64, 10 MB per-file hard cap) |
 | `PUT` | `/api/attachments/:id` | canEdit | Update attachment metadata/file |
 | `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment |
+
+Password entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the login's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 10 MB max per file). Deleting a login cascade-deletes its linked attachments.
 
 ### Agent Keys (LobsterKeys©™)
 
@@ -392,6 +395,26 @@ npm run start:api
 | `POST` | `/api/agent-keys` | human-only | Generate a new `lb-` key (permissions, expiry, rate limit) |
 | `PATCH` | `/api/agent-keys/:id/revoke` | human-only | Revoke an agent key (immediate) |
 | `DELETE` | `/api/agent-keys/:id` | human-only | Permanently delete a key record |
+
+### SuperLobster Panel (admin plane)
+
+Token-gated via `ADMIN_TOKEN` (503 when unset). Cookie-session auth (`sg_admin_session`, 20-min sliding), fully isolated from user Bearer tokens. See [ADMIN.md](./ADMIN.md) for the threat model.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/admin/auth` | Exchange ADMIN_TOKEN for a session cookie |
+| `GET` | `/api/admin/verify` | Quiet session handshake |
+| `POST` | `/api/admin/logout` | Destroy the session |
+| `GET` | `/api/admin/users` | Lobsters overview — strict metadata only (counts + identity, never vault payload fields) |
+| `DELETE` | `/api/admin/users/:uuid` | Cascade delete a lobster + all their data (`expect` confirmation required) |
+| `GET` | `/api/admin/status` | Read-only instance fingerprint (no secrets) |
+| `GET`/`PATCH` | `/api/admin/settings` | Whitelist-only settings (retention + backup config) |
+| `GET` | `/api/admin/uptime` | Historical uptime sessions from the audit reef |
+| `GET` | `/api/admin/audit` | Recent admin/auth/backup security events |
+| `POST` | `/api/admin/backup` | One-shot backup — server-side write to `DATA_DIR/backups/`, no download |
+| `GET` | `/api/admin/backups` | List backup sets |
+
+**No HTTP restore endpoint exists** — restores are offline by design (see [ADMIN.md §5](./ADMIN.md)).
 
 ### Settings & System
 

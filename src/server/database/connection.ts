@@ -7,7 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // DATA_DIR: use env var or fall back to ./data in project root
-const DATA_DIR = process.env.DATA_DIR ?? path.join(__dirname, '..', '..', '..', 'data');
+// Exported for backupManager (backups live in DATA_DIR/backups).
+export const DATA_DIR = process.env.DATA_DIR ?? path.join(__dirname, '..', '..', '..', 'data');
 
 if (!fs.existsSync(DATA_DIR) && process.env.NODE_ENV !== 'test') {
   fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });

@@ -18,3 +18,8 @@ tests/data-*/
 .vscode/*
 .idea
 *.sw?
+
+# Agents
+.claude/
+.clinerules/
+.crustagent/

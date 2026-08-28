@@ -102,7 +102,7 @@ Defined by migration `0001_initial`; tracked in `schema_migrations`. Every user-
 |---|---|---|
 | `id` | TEXT PK | |
 | `owner_uuid` | TEXT FK | |
-| `title` / `file_data` | TEXT | `file_data` = base64 ShellCryption blob (~28MB cap; dedicated 32mb body limit on `/api/attachments`) |
+| `title` / `file_data` | TEXT | `file_data` = base64 ShellCryption blob (10 MB per-file hard cap; dedicated 32mb body limit on `/api/attachments`) |
 | `file_name` / `mime_type` / `category` | TEXT | Plaintext metadata |
 | `created_at` | TEXT | |
 

@@ -23,6 +23,10 @@
 - [x] **Unraid template** — Community Applications XML (WebUI `:5353`, appdata bind mount, PUID 99/PGID 100 advanced defaults)
 - [x] **Agent skill document** — `skills/shellguard/SKILL.md` served at `/skill.md`
 - [x] **Documentation suite** — README, ARCHITECTURE (with deltas appendix), SECURITY, QUICKSTART, CONTRIBUTING, CRUSTSECURITY, BLUEPRINT (schema v1 truthfulness)
+- [x] **Password attachments rework** — reference model: each file stored as its own ShellCrypted `vault_secure_attachments` record, pearls link them via a JSON ID array; file-upload UI (click/drag, 10 MB per-file hard cap, unlimited attachments), download buttons, pearl delete cascade-deletes linked attachments
+- [x] **Per-Row Encryption** — shipped in v0.2.0: server-side AES-256-GCM metadata encryption (title, username, url, category, notes, file_name) keyed from `DB_ENCRYPTION_KEY` via HKDF, alongside client-side ShellCryption™; in-place envelopes with legacy-plaintext backward compatibility
+- [x] **SuperLobster Panel (admin plane)** — `ADMIN_TOKEN`-gated panel at `/#/super-lobster` with secrets-aware threat model (ADMIN.md): strict-metadata lobster management + cascade delete, read-only diagnostics, whitelist-only settings, failsafe Online-Backup-API backups with manifest + rotation; no download, no HTTP restore (offline Vaultwarden-style procedure + `scuttle:restore` validator)
+- [x] **Bulk operations** — multi-select checkboxes with tri-state select-all, confirmed bulk delete with in-progress state, endpoint-mapped per-type deletion; password bulk deletes cascade their linked attachments
 
 ### ✅ MVP & Scaffold (v0.1.x)
 
@@ -54,16 +58,14 @@
 
 ### 🔜 High Priority
 
-- [ ] **Per-Row Encryption** — Move from DB-level encryption to per-row encryption in preparation for multi-user support, while maintaining the client-side ShellCryption™ architecture.
-- [ ] **Multi-User Architecture** — Enhance the data model and auth flows to support multiple users seamlessly on the same instance.
+- [ ] **Multi-User Architecture** — Enhance the data model and auth flows to support multiple users seamlessly on the same instance. (Backend is already multi-user: open registration, owner_uuid scoping everywhere, tested cross-owner isolation — remaining work is frontend session model: multi-identity storage, account switcher, per-user prefs)
 - [ ] **Attachment BLOB migration `0002_*`** — move base64 attachment payloads into proper SQLite BLOB columns with streaming reads (today they ride as base64 text within the body-limit envelope)
 - [ ] **Tagging system** — tag field on item schema, add/remove tags in edit view, sidebar filter by tag
-- [ ] **Bulk operations** — multi-select checkboxes in VaultView with confirmed bulk delete
 - [ ] **Bulk import endpoint** — batch pearl import with partial-failure reporting
 
 ### 🔬 Under Consideration
 
-- [ ] **Admin control plane** — *deferred by locked decision*: an isolated metadata-only dashboard gated by its own token. Requires its own threat-model pass before any route ships. There are deliberately NO admin endpoints in v0.2.0.
+- [x] **Admin control plane** — shipped as the SuperLobster Panel (v0.3.0) after its dedicated threat-model pass (ADMIN.md). Argon2id `ADMIN_TOKEN` hashing documented as a future hardening option.
 - [ ] **Auto-lock "Retract" animation** — latch-closing visual confirmation when locking manually
 - [ ] **Monolith decomposition** — PasswordVaultView (~2150 lines) and App.tsx (~1100 lines) sliced into feature modules (mechanical edits only during parity work; this deserves its own effort)
 - [ ] **Release automation** — generated release notes and versioned tags from the CI pipeline

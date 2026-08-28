@@ -95,7 +95,8 @@ ShellGuard/
     │   │   ├── sshKeys.ts             #   SSH key CRUD
     │   │   ├── attachments.ts         #   Attachment CRUD (32mb body limit here only)
     │   │   ├── agentKeys.ts           #   LobsterKeys©™ lifecycle (create/revoke/delete)
-    │   │   └── settings.ts            #   Per-user KV preferences
+    │   │   ├── settings.ts            #   Per-user KV preferences
+    │   │   ├── admin.ts               #   SuperLobster Panel API (ADMIN_TOKEN cookie-session; ADMIN.md)
     │   ├── utils/
     │   │   ├── auditLogger.ts         #   audit.log() with extended redaction list (delta #2)
     │   │   ├── crypto.ts              #   generateString/generateId/constantTimeCompare
@@ -472,9 +473,11 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
 | `GET` | `/api/attachments` | canRead | List attachments |
-| `POST` | `/api/attachments` | canWrite | Upload base64 attachment — dedicated 32mb body limit, ~28MB payload cap |
+| `POST` | `/api/attachments` | canWrite | Upload base64 attachment — dedicated 32mb body limit, 10 MB per-file hard cap (zod: 14M-char blob) |
 | `PUT` | `/api/attachments/:id` | canEdit | Update attachment |
 | `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment |
+
+Passwords reference attachments by ID: `vault_pearls.attachments` holds a JSON array of `vault_secure_attachments` IDs (no sensitive data). Unlimited attachments per login, one file each, 10 MB max per file. Deleting a pearl cascade-deletes its linked attachments (ownership-scoped).
 
 ### Agent Keys (`routes/agentKeys.ts`) — human-only
 
@@ -492,6 +495,26 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 | `GET` | `/api/settings/:key` | human-only | Read synced preference (`appearance/theme`, `generator`, `pods`, `security`) |
 | `PUT` | `/api/settings/:key` | human-only | Write preference (JSON ≤ 256KB); audited by key name only |
 
+### SuperLobster Panel (`routes/admin.ts`) — ADMIN_TOKEN cookie-session
+
+Token-gated instance admin plane. **Disabled entirely when `ADMIN_TOKEN` is unset** (503 on auth routes). Session auth is a volatile in-memory store + `sg_admin_session` cookie (httpOnly, SameSite=Strict, 20-min sliding) — fully isolated from user Bearer tokens. Full threat model in [ADMIN.md](./ADMIN.md).
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/admin/auth` | ADMIN_TOKEN → session cookie (stricter rate limit: 5/10min) |
+| `GET` | `/api/admin/verify` | Session handshake |
+| `POST` | `/api/admin/logout` | Destroy session |
+| `GET` | `/api/admin/users` | Lobsters overview — **strict metadata only** (uuid, username, display_name, created_at, per-type counts, active agent keys, last login); never vault payload columns |
+| `DELETE` | `/api/admin/users/:uuid` | Cascade delete lobster + all owned data across 8 tables (transactional; requires `expect` body matching username/uuid; audited with before-counts) |
+| `GET` | `/api/admin/status` | Read-only instance fingerprint — encryption flags, version, retention (no secrets) |
+| `GET`/`PATCH` | `/api/admin/settings` | Whitelist-only: retention days + backup config. Non-whitelisted keys silently ignored |
+| `GET` | `/api/admin/uptime` | Uptime sessions from audit reef |
+| `GET` | `/api/admin/audit` | Recent ADMIN*/AUTH*/BACKUP* events |
+| `POST` | `/api/admin/backup` | One-shot Online Backup API snapshot of db.sqlite + audit.sqlite → `DATA_DIR/backups/` (server-side write; **no download**) |
+| `GET` | `/api/admin/backups` | List backup sets (names/sizes/timestamps only) |
+
+**No HTTP restore endpoint exists** — restores are offline file swaps at shell trust tier (ADMIN.md §5). `audit.sqlite` is never swapped by a restore (append-only reef survives).
+
 ### Static & Skill
 
 | Method | Endpoint | Auth | Description |
@@ -499,7 +522,7 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 | `GET` | `/skill.md` | ✗ Public | Agent skill document from `skills/shellguard/SKILL.md` |
 | `*` | SPA catch-all | ✗ Public | Regex fallback to `index.html` (excludes `/api`, `/assets`, `/skill.md`) |
 
-> There are **no admin endpoints** in v0.2.0. The admin control plane is deferred to the roadmap pending its own threat-model pass.
+> Prior to v0.3.0 there were **no admin endpoints**. The SuperLobster Panel (v0.3.0) ships with its own secrets-aware threat model in [ADMIN.md](./ADMIN.md) — strict metadata, whitelist settings, no downloads, no HTTP restore.
 
 ### Audit Taxonomy
 

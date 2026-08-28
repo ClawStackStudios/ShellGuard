@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 
 import { getCorsConfig } from './src/config/corsConfig.js';
-import { apiLimiter, createAgentKeyRateLimiter } from './src/server/middleware/rateLimiter.js';
+import { apiLimiter, createAgentKeyRateLimiter, adminAuthLimiter } from './src/server/middleware/rateLimiter.js';
 import { errorHandler } from './src/server/middleware/errorHandler.js';
 import { httpsRedirect } from './src/server/middleware/httpsRedirect.js';
 import { purgeExpiredTokens } from './src/server/database/index.js';
@@ -25,6 +25,8 @@ import keysRoutes        from './src/server/routes/sshKeys.js';
 import attachmentsRoutes from './src/server/routes/attachments.js';
 import agentKeyRoutes    from './src/server/routes/agentKeys.js';
 import settingsRoutes    from './src/server/routes/settings.js';
+import adminRoutes       from './src/server/routes/admin.js';
+import { performBackup } from './src/server/utils/backupManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -66,6 +68,48 @@ async function performCleanup() {
 
 performCleanup(); // Run immediately on startup
 setInterval(performCleanup, 24 * 60 * 60 * 1000); // Daily cleanup
+
+// ─── Scheduled Backups (SuperLobster / ADMIN.md §3.2) ────────────────────────
+// Reads backup_enabled / backup_interval_minutes / backup_retention_count from
+// system_settings at every tick — settings changes apply without a restart.
+// The ticker checks every 60s whether the interval has elapsed.
+const BACKUP_TICK_MS = 60 * 1000;
+async function runScheduledBackup() {
+  try {
+    const getSetting = (key: string) =>
+      (db.prepare('SELECT value FROM system_settings WHERE key = ?').get(key) as any)?.value;
+
+    if (getSetting('backup_enabled') !== 'true') return;
+
+    const intervalMin = parseInt(getSetting('backup_interval_minutes') ?? '1440', 10);
+    if (Number.isNaN(intervalMin) || intervalMin < 15) return;
+
+    const backups = (await import('./src/server/utils/backupManager.js')).listBackups();
+    const newest = backups[0];
+    const elapsedMs = newest ? Date.now() - new Date(newest.created).getTime() : Infinity;
+    if (elapsedMs < intervalMin * 60 * 1000) return; // not due yet
+
+    const retention = parseInt(getSetting('backup_retention_count') ?? '7', 10);
+    const result = await performBackup(db, auditDb, { retentionCount: retention, trigger: 'scheduled' });
+    if (result.ok) {
+      audit.log('BACKUP_COMPLETED', {
+        actor: 'SUPERLOBSTER', actor_type: 'admin', action: 'backup_completed', outcome: 'success',
+        details: { files: result.files.map(f => f.split('/').pop()), trigger: 'scheduled' },
+      });
+      console.log(`[Backup] ✅ Scheduled backup written (${result.files.length} files).`);
+    } else {
+      audit.log('BACKUP_FAILED', {
+        actor: 'SUPERLOBSTER', actor_type: 'admin', action: 'backup_failed', outcome: 'failure',
+        details: { error: result.error, trigger: 'scheduled' },
+      });
+      console.error('[Backup] ⚠️ Scheduled backup failed:', result.error);
+    }
+  } catch (err: any) {
+    console.error('[Backup] Scheduler error:', err?.message);
+  }
+}
+const backupTicker = setInterval(runScheduledBackup, BACKUP_TICK_MS);
+backupTicker.unref();
 
 // ─── Trust proxy ─────────────────────────────────────────────────────────────
 if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
@@ -141,6 +185,9 @@ app.use('/api/keys',         keysRoutes);
 app.use('/api/attachments',  attachmentsRoutes);
 app.use('/api/agent-keys',   agentKeyRoutes);
 app.use('/api/settings',     settingsRoutes);
+// SuperLobster Panel — cookie-session auth isolated from user Bearer tokens.
+// The stricter token-auth rate limiter is applied inside routes/admin.ts (T1).
+app.use('/api/admin',        adminRoutes);
 
 // Skill doc: public, no auth — registered before static files and SPA catch-all
 app.get(['/skill.md', '/SKILL.md'], (_req, res) => {

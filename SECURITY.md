@@ -206,6 +206,26 @@ The connection layer includes a `sqlcipher_export` fallback:
 
 ---
 
+## 🦞 SuperLobster Panel (Admin Plane)
+
+The instance admin plane at `/#/super-lobster` (URL-only entry — no UI links anywhere). **Completely disabled unless `ADMIN_TOKEN` is set** (503 on all admin routes). Full threat model and procedures in [ADMIN.md](./ADMIN.md).
+
+**Auth model**: `ADMIN_TOKEN` exchanged for a volatile in-memory session cookie (`sg_admin_session`, httpOnly, `SameSite=Strict`, 20-min sliding expiry) — fully isolated from user Bearer tokens. Dedicated stricter rate limiter on token auth (5 attempts / 10 min, failures only).
+
+**Secrets-aware hardening** (why this is NOT a Vaultwarden-style full-config panel):
+
+| Property | Rationale |
+|---|---|
+| **Strict metadata only** | The user list exposes identity, counts, and timestamps — never item titles, categories, URLs, or file names. In a secrets vault, a title like "My Bank" is itself security intelligence. |
+| **Whitelist-only settings** | Crypto configuration (`DB_ENCRYPTION_KEY`, `ADMIN_TOKEN`, TTLs) is env-owned. A web-panel key editor would be a data-loss path. |
+| **No backup download** | A ShellGuard `db.sqlite` contains **plaintext session tokens and Lobster Keys** (unlike Vaultwarden's E2E-encrypted ciphers). An HTTP backup-download channel would be a credential-exfiltration affordance. Backups are server-side writes only. |
+| **No HTTP restore** | Restores are offline file swaps at shell trust tier (Vaultwarden's own practice). `audit.sqlite` is never swapped — the append-only forensic reef survives any restore. |
+| **Attributable admin actions** | Every admin mutation is audit-logged under the `SUPERLOBSTER` sentinel actor with IP, UA, target, and outcome. |
+
+**The three secrets**: `ADMIN_TOKEN` opens the panel (never decrypts) · `DB_ENCRYPTION_KEY` opens the database file (the failsafe key) · the per-user `hu-` key decrypts vault secrets (lose it = lose that user's vault, same rule as Vaultwarden's master password).
+
+---
+
 ## 📊 OWASP Coverage Checklist
 
 | Threat | Status | Implementation | Details |

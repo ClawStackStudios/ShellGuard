@@ -21,7 +21,7 @@ import { isEncryptedField } from '../src/server/utils/fieldEncryption.js';
  *     posts is stored and returned byte-for-byte. The server never transforms,
  *     decrypts or re-serialises payload fields — it cannot, it has no key.
  *   - metadata (category etc.) round-trips untouched
- *   - the ~28MB base64 attachment cap rejects oversize payloads
+ *   - the ~10MB base64 attachment cap rejects oversize payloads
  */
 
 // ─── Isolation preamble ──────────────────────────────────────────────────────
@@ -255,12 +255,13 @@ describe.each(ENTITIES)('$label — CRUD × envelope × opacity', (spec) => {
 
 describe('Attachment size cap', () => {
   it(
-    'rejects an attachment whose file_data exceeds the ~28MB base64 cap',
+    'rejects an attachment whose file_data exceeds the ~10MB base64 cap',
     async () => {
-      // ≈22MB raw → ≈29.3MB of base64 chars: past the cap, still under the
-      // dedicated 32mb body limit so the app-level validator fires (not express).
+      // ≈11MB raw → ≈15.4MB of base64 chars: past the 14M-char cap (10MB raw
+      // + envelope overhead), still under the dedicated 32mb body limit so
+      // the app-level validator fires (not express).
       const payload = makeAttachmentPayload({
-        file_data: oversizedBase64(22 * 1024 * 1024),
+        file_data: oversizedBase64(11 * 1024 * 1024),
         title: 'Too Big For The Shell',
       });
 
@@ -288,5 +289,72 @@ describe('Attachment size cap', () => {
     const records = await listRecords(spec.basePath);
     const junk = records.filter((r) => r.file_data === 'definitely-not-base64 !!!');
     expect(junk.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Pearl → attachment cascade delete', () => {
+  it('deleting a pearl removes every attachment it references', async () => {
+    // Two attachments owned by the caller…
+    const att1 = await createRecord(ENTITIES[3]);
+    const att2 = await createRecord(ENTITIES[3]);
+
+    // …linked from a pearl via the attachments JSON column (IDs only).
+    const pearlPayload = makePearlPayload({
+      attachments: JSON.stringify([att1.id, att2.id]),
+    });
+    const pearl = await request(srv.app)
+      .post('/api/vault')
+      .set('Authorization', `Bearer ${token}`)
+      .send(pearlPayload);
+    expect(pearl.status).toBe(201);
+
+    const del = await request(srv.app)
+      .delete(`/api/vault/${pearlPayload.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(del.status).toBe(200);
+    expectSuccessEnvelope(del.body);
+
+    const remaining = await listRecords('/api/attachments');
+    expect(remaining.some((r) => r.id === att1.id)).toBe(false);
+    expect(remaining.some((r) => r.id === att2.id)).toBe(false);
+  });
+
+  it('deleting a pearl with a malformed attachments column still succeeds', async () => {
+    const pearlPayload = makePearlPayload({ attachments: 'not-json-at-all' });
+    const pearl = await request(srv.app)
+      .post('/api/vault')
+      .set('Authorization', `Bearer ${token}`)
+      .send(pearlPayload);
+    expect(pearl.status).toBe(201);
+
+    const del = await request(srv.app)
+      .delete(`/api/vault/${pearlPayload.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(del.status).toBe(200);
+    expectSuccessEnvelope(del.body);
+  });
+
+  it('cascade never crosses owner scope', async () => {
+    // Attachments owned by the caller…
+    const att = await createRecord(ENTITIES[3]);
+
+    // …but the pearl belongs to another owner referencing them.
+    const other = await createTestUserWithToken(srv.app);
+    const otherPearl = makePearlPayload({
+      attachments: JSON.stringify([att.id]),
+    });
+    const created = await request(srv.app)
+      .post('/api/vault')
+      .set('Authorization', `Bearer ${other.token}`)
+      .send(otherPearl);
+    expect(created.status).toBe(201);
+
+    await request(srv.app)
+      .delete(`/api/vault/${otherPearl.id}`)
+      .set('Authorization', `Bearer ${other.token}`);
+
+    // The caller's attachment must survive the other owner's cascade delete.
+    const remaining = await listRecords('/api/attachments');
+    expect(remaining.some((r) => r.id === att.id)).toBe(true);
   });
 });

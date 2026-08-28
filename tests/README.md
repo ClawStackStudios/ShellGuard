@@ -18,7 +18,7 @@ a throwaway `DATA_DIR`. The mechanism has two halves and both are required:
      const dir: string = fsLib.mkdtempSync(pathLib.join(process.cwd(), 'tests', 'data-<suite>-'));
      process.env.DATA_DIR = dir;
      process.env.NODE_ENV = 'test';
-     process.env.PORT = '4646X';            // unique per suite — server.ts listens on import
+     process.env.PORT = '5454X';            // unique per suite — server.ts listens on import
      process.env.DB_ENCRYPTION_KEY = '';
      process.env.TOKEN_TTL_DEFAULT = '30m';
      // neutralise rate limits so failure-path tests stay deterministic
@@ -36,9 +36,9 @@ a throwaway `DATA_DIR`. The mechanism has two halves and both are required:
 
    The per-suite `PORT` matters because the twin-verbatim `server.ts` calls
    `app.listen()` at module top level (CC behaviour). Parallel vitest workers
-   would otherwise race for :4646 — each suite claims its own port instead.
-   Current allocation: auth-flow 46461 · security 46462 · vault-crud 46463 ·
-   settings 46464.
+   would otherwise race for :5454 — each suite claims its own port instead.
+   Current allocation: auth-flow 54541 · security 54542 · vault-crud 54543 ·
+   settings 54544.
 
 2. **Dynamic server load + cleanup** — in `beforeAll`/`afterAll`:
 

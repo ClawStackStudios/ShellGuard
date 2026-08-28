@@ -28,7 +28,7 @@ vi.hoisted(() => {
   const dir: string = fsLib.mkdtempSync(pathLib.join(process.cwd(), 'tests', 'data-auth-flow-'));
   process.env.DATA_DIR = dir;
   process.env.NODE_ENV = 'test';
-  process.env.PORT = '46461';
+  process.env.PORT = '54541';
   process.env.DB_ENCRYPTION_KEY = '';
   process.env.TOKEN_TTL_DEFAULT = '30m';
   // Neutralise rate limits so failure-path tests stay deterministic.

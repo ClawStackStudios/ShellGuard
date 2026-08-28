@@ -8,13 +8,13 @@ services:
     stdin_open: true
     tty: true
     ports:
-      - "4545:4545"
+      - "5353:5353"
   # ─── Docker Bind Mount for SQLite Database ───────
     volumes:
       - ./data:/app/data
     environment:
       - NODE_ENV=production
-      - PORT=4545
+      - PORT=5353
       - DATA_DIR=/app/data
       - DB_ENCRYPTION_KEY=${DB_ENCRYPTION_KEY:-}
       - TRUST_PROXY=${TRUST_PROXY:-false}
@@ -24,7 +24,7 @@ services:
       - PGID=1000
       # For detailed configuration, see README.md → Running with Docker section
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4545/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:5353/api/health"]
       interval: 15s
       timeout: 10s
       retries: 5

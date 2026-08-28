@@ -16,11 +16,11 @@
 - [x] **Auth parity** — ClawChives key-hash identity ported wholesale (register/token/validate + SG-only `me`/`profile`, `lookup` dropped); constant-time comparison; fixed TTL parser (`30m`/`12h`/`24h`/`7d`/`never`/ISO/bare-minutes)
 - [x] **Zero-knowledge invariant locked** — server stores only `{v, alg, iv, ct, aad}` ShellCryption blobs with AAD binding `table:recordId`
 - [x] **Domain API parity** — hardened CRUD for pearls/notes/SSH keys/attachments with ownership scoping, audit-on-mutation, `{success,data}` envelope; LobsterKeys©™ lifecycle parity (expiry, rate limits, revoke); new server-side settings storage
-- [x] **Twin-port dev topology** — Vite `:4545` strict-port proxying `/api` → API `:4646`; single-port production serving `dist/` + API
+- [x] **Twin-port dev topology** — Vite `:5353` strict-port proxying `/api` → API `:5454`; single-port production serving `dist/` + API
 - [x] **Test harness** — vitest + supertest suites (auth-flow, security incl. cross-owner isolation, vault-crud incl. opacity invariant, settings, build-gates) with per-suite `DATA_DIR` isolation
 - [x] **Containerization** — multi-stage node:20-alpine single image, PUID/PGID entrypoint, healthcheck, compose prod/dev stacks, `.dockerignore` that keeps the lockfile
 - [x] **CI** — docker-publish workflow → `ghcr.io/clawstackstudios/shellguard`
-- [x] **Unraid template** — Community Applications XML (WebUI `:4545`, appdata bind mount, PUID 99/PGID 100 advanced defaults)
+- [x] **Unraid template** — Community Applications XML (WebUI `:5353`, appdata bind mount, PUID 99/PGID 100 advanced defaults)
 - [x] **Agent skill document** — `skills/shellguard/SKILL.md` served at `/skill.md`
 - [x] **Documentation suite** — README, ARCHITECTURE (with deltas appendix), SECURITY, QUICKSTART, CONTRIBUTING, CRUSTSECURITY, BLUEPRINT (schema v1 truthfulness)
 
@@ -54,6 +54,8 @@
 
 ### 🔜 High Priority
 
+- [ ] **Per-Row Encryption** — Move from DB-level encryption to per-row encryption in preparation for multi-user support, while maintaining the client-side ShellCryption™ architecture.
+- [ ] **Multi-User Architecture** — Enhance the data model and auth flows to support multiple users seamlessly on the same instance.
 - [ ] **Attachment BLOB migration `0002_*`** — move base64 attachment payloads into proper SQLite BLOB columns with streaming reads (today they ride as base64 text within the body-limit envelope)
 - [ ] **Tagging system** — tag field on item schema, add/remove tags in edit view, sidebar filter by tag
 - [ ] **Bulk operations** — multi-select checkboxes in VaultView with confirmed bulk delete

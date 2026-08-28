@@ -50,12 +50,12 @@ cp .env.example .env
 
 # 5. Start the frontend and backend servers together
 npm run scuttle:dev-start
-#   → Frontend: http://localhost:4545 (Vite + HMR, strict port)
-#   → Backend:  http://localhost:4646/api/health (DATA_DIR=./data-dev)
+#   → Frontend: http://localhost:5353 (Vite + HMR, strict port)
+#   → Backend:  http://localhost:5454/api/health (DATA_DIR=./data-dev)
 
 # Or run individual servers in separate terminals:
-#   Terminal 1: npm run dev:server     (API on :4646)
-#   Terminal 2: npm run dev            (UI  on :4545 with HMR)
+#   Terminal 1: npm run dev:server     (API on :5454)
+#   Terminal 2: npm run dev            (UI  on :5353 with HMR)
 ```
 
 Reset the dev reef when migrations change under you:

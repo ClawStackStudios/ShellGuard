@@ -85,7 +85,7 @@ describe.skipIf(!fs.existsSync(path.join(PROJECT_ROOT, 'Dockerfile')))('Build ga
 
   it('exposes the web port and mounts DATA_DIR=/app/data', () => {
     const raw = dockerfile();
-    expect(raw).toMatch(/EXPOSE\s+4545/);
+    expect(raw).toMatch(/EXPOSE\s+5353/);
     expect(raw).toMatch(/DATA_DIR[= ]\/app\/data/);
   });
 });
@@ -207,6 +207,6 @@ describe.skipIf(!fs.existsSync(path.join(PROJECT_ROOT, unraidFile)))('Build gate
     const raw = readIfExists(unraidFile)!;
     expect(raw).toContain('ghcr.io/clawstackstudios/shellguard');
     expect(raw).toMatch(/DB_ENCRYPTION_KEY/);
-    expect(raw).toMatch(/WebUI[\s\S]{0,80}4545/);
+    expect(raw).toMatch(/WebUI[\s\S]{0,80}5353/);
   });
 });

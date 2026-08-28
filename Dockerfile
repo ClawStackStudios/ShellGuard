@@ -52,14 +52,14 @@ COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Expose the API/UI port
-EXPOSE 4545
+EXPOSE 5353
 
 # Health check (run as the node user inside the container)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=5 \
-  CMD wget -qO- http://localhost:4545/api/health || exit 1
+  CMD wget -qO- http://localhost:5353/api/health || exit 1
 
 ENV NODE_ENV=production
-ENV PORT=4545
+ENV PORT=5353
 ENV DATA_DIR=/app/data
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8

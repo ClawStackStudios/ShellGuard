@@ -34,7 +34,7 @@ ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
 ├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.2.0)
-├── 📄 vite.config.ts                  # Vite :4545 strictPort, /api proxy → :4646, "@" alias
+├── 📄 vite.config.ts                  # Vite :5353 strictPort, /api proxy → :5454, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
 │
@@ -48,9 +48,14 @@ ShellGuard/
 │
 ├── 🗄️ migrations/
 │   ├── 0001_initial.up.sql            # Schema v1 baseline (lobsters, vault_*, settings…)
-│   └── 0001_initial.down.sql          # Rollback
+│   ├── 0001_initial.down.sql          # Rollback
+│   ├── 0002_metadata_encryption.up.sql   # Per-row metadata encryption support
+│   └── 0002_metadata_encryption.down.sql # Rollback metadata encryption
 │
-├── 🔧 scripts/scuttle-reset.ts        # Scuttles data-dev/ or data/ (--env production|development)
+├── 🔧 scripts/
+│   ├── scuttle-reset.ts               # Scuttles data-dev/ or data/ (--env production|development)
+│   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
+│   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
 ├── 🧪 tests/                          # Vitest + supertest suites, per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
@@ -58,6 +63,8 @@ ShellGuard/
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
 │   ├── vault-crud.test.ts             # Envelope shapes + opacity invariant
 │   ├── settings.test.ts
+│   ├── metadata-encryption.test.ts    # Per-row AES-256-GCM: unit crypto, API round-trip,
+│   │                                  # backward-compat passthrough
 │   └── build-gates.test.ts            # Asserts Dockerfile/config shape before CI does
 │
 └── src/
@@ -93,7 +100,11 @@ ShellGuard/
     │   │   ├── auditLogger.ts         #   audit.log() with extended redaction list (delta #2)
     │   │   ├── crypto.ts              #   generateString/generateId/constantTimeCompare
     │   │   ├── tokenExpiry.ts         #   TTL parser: 30m/12h/24h/7d/never/ISO/bare-minutes
-    │   │   └── parsers.ts             #   Row mappers (incl. parseAgentKey)
+    │   │   ├── parsers.ts             #   Row mappers (incl. parseAgentKey)
+    │   │   ├── fieldEncryption.ts     #   Per-row AES-256-GCM metadata encryption,
+    │   │   │                          #   HKDF key derivation, singleton fieldCipher
+    │   │   └── metadataGuard.ts       #   Column registry, prepareWrite/prepareRead/
+    │   │                              #   prepareReadAll helpers
     │   └── validation/schemas.ts      #   AuthSchemas + entity schemas (title ≤255, url ≤2048…)
     │
     ├── lib/                           # ◀ Client crypto & utilities
@@ -329,14 +340,19 @@ Agent keys carry a granular permission set. Route guards map HTTP verbs onto it:
   It NEVER leaves browser memory. The server holds no key material and
   therefore CANNOT decrypt anything, even under compulsion.
 
-✓ DB_ENCRYPTION_KEY (SQLCipher) is OPTIONAL defense-in-depth that covers
-  METADATA ONLY: category, type, url, mime_type, timestamps, usernames of
-  record-holders — the queryable plaintext ShellCryption intentionally
-  leaves visible. When unset the server WARNS but NEVER BLOCKS startup;
-  enabling encryption remains the operator's choice.
+✓ DB_ENCRYPTION_KEY (SQLCipher + Per-Row) is OPTIONAL defense-in-depth:
+  - SQLCipher: whole-file AES-256 encryption of the SQLite database
+  - Per-Row: AES-256-GCM encryption of metadata columns (title, username,
+    url, category, notes, file_name) stored as {v:1, alg:"SG-META", iv, ct}
+    in the same TEXT columns — no schema changes needed
+  - Both layers activate together when DB_ENCRYPTION_KEY is set
+  - When unset the server WARNS but NEVER BLOCKS startup; enabling
+    encryption remains the operator's choice
+  - Legacy plaintext metadata is backward-compatible (passes through on read)
 
 ⛔ FORBIDDEN:
   - Decrypting or re-encrypting secrets server-side
+  - Decrypting or re-encrypting metadata columns without DB_ENCRYPTION_KEY
   - Logging ciphertext, titles, urls, usernames, secrets or tokens
     (delta #2 redaction list)
   - Storing secret material outside the {v,alg,iv,ct,aad} blob shape
@@ -398,6 +414,10 @@ Query Pattern (LOCKED):
   is added or removed
 ✓ Migrations run transactionally at module load; version tracked in
   schema_migrations; startup logs "Applied version N"
+✓ Per-row field encryption initialized at startup via initFieldCipher()
+  - Reads DB_ENCRYPTION_KEY, derives AES-256 key via HKDF-SHA256
+  - Singleton fieldCipher used by all vault routes for encrypt/decrypt
+  - Null when DB_ENCRYPTION_KEY is not set (passthrough mode)
 ⚠ KNOWN TRAP (fixed here): SQLite CURRENT_TIMESTAMP and JS ISO strings do
   NOT compare correctly — token expiry uses JS ISO comparison, never raw
   SQL predicate `expires_at > CURRENT_TIMESTAMP`
@@ -509,6 +529,7 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `vault-crud.test.ts` | Envelope shapes, **opacity invariant** (server stores client blob byte-for-byte, decryptable by nobody server-side), attachment size rejection |
 | `settings.test.ts` | Per-user KV read/write, human-only enforcement |
 | `unit/errorHandler.test.ts` | Parse→400, UNIQUE→409, FK→400, prod-safe 500 |
+| `metadata-encryption.test.ts` | Per-row AES-256-GCM: unit crypto, API round-trip, backward-compat passthrough |
 | `build-gates.test.ts` | Dockerfile/config shape gates before CI publishes |
 
 Run them: `npm test` (all), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
@@ -533,6 +554,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 10 | Lockfile kept out of `.dockerignore`; `npm ci` in images | CC's exclusion is a reproducibility bug worth not inheriting |
 | 11 | PUT→`canEdit`, POST→`canWrite`, DELETE→`canDelete`, GET→`canRead` | CC permission convention; safe due to fresh start |
 | 12 | No admin routes/`requireAdmin`/admin UI this cycle | Deferred per locked decision — see [ROADMAP.md](./ROADMAP.md) |
+| 13 | Per-row metadata encryption (AES-256-GCM) of title/username/url/category/notes/file_name via DB_ENCRYPTION_KEY | Defense-in-depth: agents see decrypted metadata but never secrets; stolen DB files have encrypted metadata even without SQLCipher |
 
 ---
 

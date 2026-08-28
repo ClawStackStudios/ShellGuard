@@ -15,7 +15,7 @@
 - [Security Model Overview](#-security-model-overview)
 - [Key Types](#-key-types)
 - [Security Practices](#-security-practices)
-- [Database Encryption](#️-database-encryption)
+- [Encryption Keys & Database Encryption](#-encryption-keys--database-encryption)
 - [OWASP Coverage Checklist](#-owasp-coverage-checklist)
 - [Attack Scenarios & Mitigations](#-attack-scenarios--mitigations)
 - [Reporting a Vulnerability](#-reporting-a-vulnerability)
@@ -27,7 +27,7 @@
 
 ## 🔑 Security Model Overview
 
-ShellGuard stacks **two independent layers of encryption**, and only one of them involves the server:
+ShellGuard stacks **three independent layers of encryption**, and only two of them involve the server:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -35,16 +35,26 @@ ShellGuard stacks **two independent layers of encryption**, and only one of them
 │                                                              │
 │    HKDF-SHA-256(hu- key, salt = uuid) → AES-GCM-256 key      │
 │    • Derived in YOUR BROWSER, lives in memory for a session  │
-│    • Encrypts every secret field client-side                 │
-│    • Server stores only {v, alg, iv, ct, aad} blobs          │
+│    • Encrypts secret fields client-side:                     │
+│      secret, totp_secret, content, key_value, file_data      │
+│    • Server stores only {v, alg:"AES-GCM-256", iv, ct, aad}  │
 │    • AAD binds table:recordId → blobs can't be shuffled      │
-│    • The server CANNOT decrypt your pearls. Ever.            │
+│    • The server CANNOT decrypt your secrets. Ever.           │
 │                                                              │
-│  LAYER 2 — SQLCipher at rest (optional defense-in-depth)     │
+│  LAYER 2 — Per-Row Metadata Encryption (server-side)         │
+│                                                              │
+│    HKDF-SHA-256(DB_ENCRYPTION_KEY) → AES-256-GCM key         │
+│    • Encrypts metadata columns in-place: title, username,    │
+│      url, category, notes, file_name                         │
+│    • Stored as {v:1, alg:"SG-META", iv, ct} in same columns  │
+│    • Backward-compatible: legacy plaintext passes through    │
+│    • When DB_ENCRYPTION_KEY is unset → no-op passthrough     │
+│    • Agents see decrypted metadata but NEVER see secrets     │
+│                                                              │
+│  LAYER 3 — SQLCipher at rest (optional defense-in-depth)     │
 │                                                              │
 │    DB_ENCRYPTION_KEY → whole-file AES-256                    │
-│    • Covers METADATA ONLY in practice: categories, types,    │
-│      urls, mime types, timestamps, settings                  │
+│    • Encrypts the entire SQLite database file                │
 │    • Strongly recommended for production                     │
 │    • Unset ⇒ server WARNS but NEVER BLOCKS — your choice     │
 └──────────────────────────────────────────────────────────────┘
@@ -72,9 +82,19 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 
 | Prefix | Type | Scope | Storage |
 |---|---|---|---|
-| `hu-` | Human Identity Key (ShellKey©™) | One-Field login lookup; seeds ShellCryption | Server DB (`key_hash` UNIQUE index, hash only) |
+| `hu-` | Human Identity Key (ShellKey©™) | One-Field login lookup; **seeds BOTH authentication AND ShellCryption** — the single most critical piece of data in your vault | Server DB (`key_hash` UNIQUE index, hash only) |
 | `lb-` | Lobster/Agent Key | Scoped automated access | Server DB (`lobster_keys`, hashed, revocable) |
 | `api-` | REST Session Token | API session access, TTL-bound | Server DB (`api_tokens`), short-lived |
+
+> [!CAUTION]
+> **Your `hu-` key is your identity AND your encryption key. Losing it means ALL encrypted data is permanently unrecoverable.** There is no password reset, no recovery flow, no backdoor. This is by design — zero-knowledge means zero recovery.
+>
+> **Back up your `hu-` key to at least 2 secure, accessible locations:**
+> - Encrypted USB drive stored in a physical safe
+> - Printed paper copy in a secure location
+> - Your personal password manager (NOT on the server)
+>
+> Treat it like the master password to your entire digital life — because that's exactly what it is.
 
 > [!TIP]
 > See [ARCHITECTURE.md § Key System Architecture](./ARCHITECTURE.md) for full technical details on generation entropy, hashing and rotation.
@@ -118,7 +138,7 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 - Single multi-stage image on **node:20-alpine**; CI (GitHub Actions) is the only image publisher to GHCR.
 - The container drops privileges via `su-exec` after remapping `PUID`/`PGID` and `chown`ing `DATA_DIR` — run as non-root on your host's terms.
 - Data lives in a bind mount (`./data:/app/data`); database files get `0600` permissions and `077` umask from the connection layer.
-- Only port `4545` is exposed; the frontend never talks to the database directly.
+- Only port `5353` is exposed; the frontend never talks to the database directly.
 - Container `HEALTHCHECK` hits `/api/health` so orchestrators notice a cracked shell.
 - `TRUST_PROXY=false` by default — flip it only behind a proxy you control, so rate limiting sees real client IPs.
 
@@ -126,16 +146,16 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 
 ---
 
-## 🗝️ Database Encryption
+## 🗝️ Encryption Keys & Database Encryption
 
-ShellGuard supports **AES-256 whole-file encryption at rest** via SQLCipher (`better-sqlite3-multiple-ciphers`). This protects the metadata that zero-knowledge deliberately leaves queryable.
+ShellGuard supports **AES-256 whole-file encryption at rest** via SQLCipher (`better-sqlite3-multiple-ciphers`) **and per-row metadata encryption** via AES-256-GCM. The single `DB_ENCRYPTION_KEY` governs both layers — set it once, get both protections.
 
 > [!IMPORTANT]
 > **Optionality is a feature, not an oversight.**
 >
 > - Setting `DB_ENCRYPTION_KEY` is **strongly recommended for production** deployments.
 > - It is **never required**: without it the server logs a warning at startup and runs normally — we do not block your self-hosted reef because you chose plaintext.
-> - Remember what it does and doesn't cover: your secret fields are already ciphertext thanks to ShellCryption; this key additionally scrambles the *metadata* (categories, urls, timestamps, mime types, settings). That metadata is more revealing about a vault than most people assume.
+> - Remember what it does and doesn't cover: your secret fields are already ciphertext thanks to ShellCryption; this key additionally scrambles the *metadata* (title, username, url, category, notes, file_name) via per-row AES-256-GCM encryption, and encrypts the entire database file via SQLCipher. That metadata is more revealing about a vault than most people assume.
 
 ### Enabling Encryption
 
@@ -164,6 +184,14 @@ docker compose up -d --wait
 export DB_ENCRYPTION_KEY=your-generated-key-here
 npm run start:api
 ```
+
+### Per-Row Metadata Encryption
+
+When `DB_ENCRYPTION_KEY` is set, ShellGuard additionally encrypts metadata columns (title, username, url, category, notes, file_name) with AES-256-GCM at the field level. This means:
+
+- **Without the key**: An attacker who obtains `db.sqlite` sees only SG-META ciphertext in metadata columns AND ShellCryption blobs in secret columns. Nothing is readable.
+- **With the key but without the `hu-` key**: Metadata is readable (server needs this for agent access), but secrets remain opaque ShellCryption blobs.
+- **Legacy data**: Existing plaintext metadata is transparently readable. It gets encrypted on the next update, or via the batch encrypt script (`scripts/encrypt-existing-metadata.ts`).
 
 ### Re-keying & Rotation
 
@@ -208,7 +236,9 @@ These are written specifically for a **vault**: assume the attacker wants your p
 
 **Risk**: Attacker has the data file offline.
 
-**Reality check**: Secret fields are still ShellCryption blobs — `{v, alg, iv, ct, aad}` JSON that is undecryptable without your `hu-`-derived key, which exists nowhere on the server. However, the attacker gets **metadata in plaintext**: item categories/types, entry URLs, attachment names/mime types, timestamps, usernames-as-metadata, settings. For a vault, that inventory alone tells them which bank you use and when you last rotated.
+**Reality check**: Secret fields are still ShellCryption blobs — `{v, alg:"AES-GCM-256", iv, ct, aad}` JSON that is undecryptable without your `hu-`-derived key, which exists nowhere on the server. However, the attacker gets **metadata in plaintext**: item categories/types, entry URLs, attachment names/mime types, timestamps, usernames-as-metadata, settings. For a vault, that inventory alone tells them which bank you use and when you last rotated.
+
+**Note**: If `DB_ENCRYPTION_KEY` was previously set and then removed, metadata columns that were updated while the key was active will appear as SG-META ciphertext envelopes — only columns that were never touched while the key was active remain plaintext.
 
 **Mitigations**:
 - Enable `DB_ENCRYPTION_KEY` — this exact scenario is why it exists (see Scenario 2)
@@ -219,9 +249,12 @@ These are written specifically for a **vault**: assume the attacker wants your p
 
 **Risk**: Attacker has an encrypted file they can't open.
 
+**Reality check**: This is where the triple-layer model shines. Even if the attacker somehow defeats SQLCipher (Layer 3), they face per-row SG-META ciphertext in every metadata column (Layer 2). And even if they defeat both server-side layers, every secret field remains an opaque ShellCryption blob (Layer 1) that requires the `hu-`-derived key which exists only in your browser session. An attacker needs **all three keys** to read anything meaningful.
+
 **Mitigations**:
 - Without `DB_ENCRYPTION_KEY` the file is inert; brute-forcing AES-256 is not feasible
-- They must now steal *both* the file *and* the key — store them apart
+- Per-row encryption means even a SQLCipher bypass still yields only ciphertext in metadata columns
+- They must now steal the file, `DB_ENCRYPTION_KEY`, AND your `hu-` key — store all three apart
 - Rotate the key after any suspected host compromise (re-keying is automatic on restart)
 - Back up the encrypted file freely; back up the key separately and encrypted
 
@@ -289,17 +322,19 @@ Instead, report privately:
 
 Before exposing ShellGuard to anything beyond localhost:
 
-- [ ] Set **`DB_ENCRYPTION_KEY`** (`openssl rand -base64 32`) — optional but strongly recommended
+- [ ] Set **`DB_ENCRYPTION_KEY`** (`openssl rand -base64 32`) — activates both SQLCipher and per-row metadata encryption
 - [ ] Place the app behind **Nginx/Caddy with TLS**, or set `ENFORCE_HTTPS=true` if terminating in-process
 - [ ] Set **`TRUST_PROXY=true`** only behind your reverse proxy (correct IPs for rate limiting)
 - [ ] Set **`CORS_ORIGIN`** to your specific origin — not wildcard
-- [ ] Restrict port `4545` to localhost/LAN and proxy publicly via TLS
+- [ ] Restrict port `5353` to localhost/LAN and proxy publicly via TLS
 - [ ] Keep **`VITE_SHELLCRYPTION_ENABLED=true`** — never ship a plaintext-at-column vault
 - [ ] Set a sane **`TOKEN_TTL_DEFAULT`** for your threat model (shorter than 24h on shared networks)
 - [ ] Back up **both** `data/db.sqlite` and `data/audit.sqlite` regularly — and keep the encryption key elsewhere
 - [ ] Pin **`PUID`/`PGID`** to a non-root host user (Unraid template defaults: `PUID=99`/`PGID=100`)
 - [ ] Review audit logs for unusual agent activity; revoke idle Lobster Keys
 - [ ] Store your `hu-` identity key offline in a secure vault
+- [ ] **Back up your `hu-` identity key to at least 2 secure locations** — losing it means permanent data loss
+- [ ] **Verify per-row encryption is active** by checking startup logs for `[FieldEncryption] AES-256-GCM metadata encryption active`
 
 ---
 

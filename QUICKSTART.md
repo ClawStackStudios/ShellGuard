@@ -3,6 +3,8 @@
 
 Welcome to **ShellGuard**, the sovereign zero-knowledge secrets vault. This handbook walks you through a zero-fuss containerized deployment (or local development setup), identity registration, optional database encryption, and health verification.
 
+- **Zero-Knowledge Encryption** — Secrets are encrypted client-side with AES-GCM-256 (ShellCryption©™). Metadata is encrypted server-side with per-row AES-256-GCM. The database file itself can be encrypted with SQLCipher. Three independent layers.
+
 > [!WARNING]
 > **Fresh Start Release**: v0.2.0 scuttles all prior local data. There is no import path from older builds — export before upgrading.
 
@@ -26,8 +28,8 @@ ShellGuard compiles into a single container running the React frontend and the S
    ```
    *(Pulls from GHCR if configured via `docker-compose.dev.yml`, or builds locally with `docker compose up -d --build`.)*
 3. **Verify running state:**
-   * **Web GUI:** [http://localhost:4545](http://localhost:4545)
-   * **API Health Check:** `curl http://localhost:4545/api/health`
+   * **Web GUI:** [http://localhost:5353](http://localhost:5353)
+   * **API Health Check:** `curl http://localhost:5353/api/health`
 4. **Persist & backup:** everything lives in `./data/` on your host (`db.sqlite` + `audit.sqlite`). Keep your encryption key somewhere else entirely.
 
 ### Option B: Local Node.js Development
@@ -50,13 +52,13 @@ If you are developing features, run the twin dev servers concurrently.
    ```bash
    npm run scuttle:dev-start
    ```
-   * **Frontend (Vite + HMR):** [http://localhost:4545](http://localhost:4545)
-   * **Backend Express API:** [http://localhost:4646](http://localhost:4646)
+   * **Frontend (Vite + HMR):** [http://localhost:5353](http://localhost:5353)
+   * **Backend Express API:** [http://localhost:5454](http://localhost:5454)
 
    Or split them across terminals:
    ```bash
-   npm run dev:server    # Terminal 1 — API :4646, DATA_DIR=./data-dev
-   npm run dev           # Terminal 2 — UI  :4545, proxies /api
+   npm run dev:server    # Terminal 1 — API :5454, DATA_DIR=./data-dev
+   npm run dev           # Terminal 2 — UI  :5353, proxies /api
    ```
 
 ---
@@ -65,7 +67,7 @@ If you are developing features, run the twin dev servers concurrently.
 
 ShellGuard is entirely passwordless. Your identity and your decryption key are anchored to one high-entropy **Human Key** (`hu-`, ShellKey©™).
 
-1. Open [http://localhost:4545](http://localhost:4545).
+1. Open [http://localhost:5353](http://localhost:5353).
 2. The **Setup view** launches automatically when no identity exists.
 3. Choose a username and click **Generate Identity Key** — a 67-character `hu-` key is created in your browser.
 4. **Download the identity file** (`shellguard_identity_key.json`) and store it in a real vault (password manager, offline storage). Losing it means your pearls are unrecoverable ciphertext — there is no reset link.
@@ -112,7 +114,7 @@ The server warns (but never blocks) when the key is unset — enabling it is you
 
 ```bash
 # Container health (also wired into the Docker HEALTHCHECK)
-curl http://localhost:4545/api/health
+curl http://localhost:5353/api/health
 
 # Run the test suites
 npm test                  # all suites
@@ -128,6 +130,32 @@ Scuttle and start fresh during development:
 npm run scuttle:dev-reset   # wipes data-dev/
 npm run scuttle:reset       # DANGER: wipes production data/
 ```
+
+---
+
+## 🔐 Zero-Knowledge Architecture
+
+ShellGuard uses three layers of encryption:
+
+1. **ShellCryption©™ (client-side, always on)**: Your `hu-` key derives an AES-GCM-256 encryption key via HKDF. Passwords, TOTP seeds, SSH keys, and file data are encrypted in your browser before reaching the server. The server stores only ciphertext blobs and CANNOT decrypt them.
+
+2. **Per-Row Metadata Encryption (server-side, when DB_ENCRYPTION_KEY is set)**: Metadata columns (title, username, url, category, notes, file_name) are encrypted with AES-256-GCM at the field level. This means agents can see decrypted metadata to help organize your vault, but never see actual secrets.
+
+3. **SQLCipher (optional, whole-DB)**: The entire SQLite database file is encrypted at rest. Protects against file-level theft.
+
+Your `hu-` key is the root of trust for Layer 1. `DB_ENCRYPTION_KEY` governs Layers 2 and 3. **Losing your `hu-` key means all encrypted data is permanently unrecoverable.**
+
+---
+
+## ✅ Production Security Checklist
+
+- [ ] **Back up your `hu-` identity key** to at least 2 secure, offline locations — losing it means permanent data loss
+- [ ] **Verify per-row encryption** is active: check startup logs for `[FieldEncryption] AES-256-GCM metadata encryption active`
+- [ ] Set a strong `DB_ENCRYPTION_KEY` (`openssl rand -base64 32`) and store it separately from your data directory
+- [ ] Run behind a reverse proxy with TLS termination (nginx, Caddy, Traefik)
+- [ ] Restrict container network exposure — bind to `127.0.0.1` unless LAN access is required
+- [ ] Enable the inactivity retractor (`security/retractMinutes`) to auto-lock idle sessions
+- [ ] Review audit logs regularly (`audit.sqlite`) for unexpected mutations
 
 ---
 

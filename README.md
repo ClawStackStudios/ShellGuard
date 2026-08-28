@@ -50,10 +50,13 @@
   - [Running Locally with npm](#-running-locally-with-npm)
 - [Environment Variables](#️-environment-variables)
 - [Key System](#-key-system)
+- [Encryption Model](#-encryption-model)
+- [Encryption Keys & Database Encryption](#️-encryption-keys--database-encryption)
 - [API Reference](#-api-reference)
 - [Project Structure](#-project-structure)
 - [Available Scripts](#️-available-scripts)
 - [Related Documentation](#-related-documentation)
+- [Self-Hosted Hardening Checklist](#️-self-hosted-hardening-checklist)
 - [Contributing](#-contributing)
 - [Security](#️-security)
 
@@ -63,9 +66,10 @@
 
 ## 📌 About
 
-**ShellGuard** is a privacy-first, self-hostable **secrets vault** built for the Human-Agent ecosystem. Passwords, TOTP seeds, secure notes, SSH keys and encrypted attachments live as *pearls* behind a hardened carapace: everything sensitive is encrypted **in your browser** before the server ever sees it. No cloud. No plaintext at rest. Just your grotto.
+**ShellGuard** is a privacy-first, self-hostable **secrets vault** built for the Human-Agent ecosystem. Passwords, TOTP seeds, secure notes, SSH keys and encrypted attachments live as *pearls* behind a hardened carapace: everything sensitive is encrypted **in your browser** before the server ever sees it. No cloud. No plaintext at rest. Just your grotto. **Three layers of encryption** protect your data at every level — client-side secrets, server-side metadata, and optional whole-database encryption.
 
 - 🔐 **Zero-Knowledge ShellCryption©™** — Secrets are sealed client-side with AES-GCM-256 derived from your `hu-` key via HKDF. The server stores only opaque `{v, alg, iv, ct, aad}` blobs and mathematically cannot decrypt them.
+- 🔒 **Per-Row Metadata Encryption©™** — Server-side AES-256-GCM encrypts metadata fields (title, username, URL, category, notes, file name) in-place using `DB_ENCRYPTION_KEY`. Backward-compatible: legacy plaintext passes through; new/updated items encrypt automatically.
 - 🗝️ **ClawKeys©™ Identity** — Passwordless login with a generated `hu-` identity key; short-lived `api-` bearer tokens carry every request.
 - 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
 - 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP), secure notes, SSH keys and base64 attachments, organized into color-coded nested **pods**.
@@ -75,6 +79,33 @@
 - 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
 - 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
 - 🌊 **Reef Modernist Design** — "Bioluminescent Defense": deep abyssal surfaces, glowing shells, Sora/Geist/JetBrains Mono typography.
+
+### 🔐 Encryption at a Glance
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1 — ShellCryption©™ (client-side, zero-knowledge, always on)        │
+│                                                                             │
+│    HKDF-SHA-256(hu- key, salt = uuid) → AES-GCM-256                        │
+│    Encrypts: secret, totp_secret, content, key_value, file_data             │
+│    Server stores only {v, alg, iv, ct, aad} blobs                          │
+│    Server CANNOT decrypt. Ever.                                             │
+│                                                                             │
+│  LAYER 2 — Per-Row Metadata Encryption (server-side, DB_ENCRYPTION_KEY)    │
+│                                                                             │
+│    HKDF-SHA-256(DB_ENCRYPTION_KEY) → AES-256-GCM                           │
+│    Encrypts: title, username, url, category, notes, file_name               │
+│    Stored as {v:1, alg:"SG-META", iv, ct} in same TEXT columns             │
+│    Backward-compatible — legacy plaintext passes through                    │
+│    When DB_ENCRYPTION_KEY is not set → no-op (metadata stays plaintext)    │
+│                                                                             │
+│  LAYER 3 — SQLCipher (optional defense-in-depth)                            │
+│                                                                             │
+│    DB_ENCRYPTION_KEY → whole-file AES-256                                   │
+│    Covers entire database file at rest                                      │
+│    Optional — strongly recommended for production                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -90,7 +121,7 @@ graph TD
     end
 
     subgraph Server ["🖥️ server.ts (Express 5)"]
-        API["REST API<br/>helmet · cors · zod · rate limits<br/>Port 4646 dev / 4545 prod"]
+        API["REST API<br/>helmet · cors · zod · rate limits<br/>Port 5454 dev / 5353 prod"]
         DB[("db.sqlite<br/>WAL · SQLCipher optional")]
         AUDIT[("audit.sqlite<br/>segregated append-only logs")]
     end
@@ -141,8 +172,8 @@ docker compose up -d --build
 
 **3. Verify running state:**
 
-- **Web GUI:** [http://localhost:4545](http://localhost:4545)
-- **API Health:** `curl http://localhost:4545/api/health`
+- **Web GUI:** [http://localhost:5353](http://localhost:5353)
+- **API Health:** `curl http://localhost:5353/api/health`
 
 **Monitoring & Maintenance:**
 
@@ -154,7 +185,7 @@ docker compose up -d --build
 > **Data Sovereignty & Persistence**: All pearls, identities and audit reefs live in a bind mount on your host machine (`./data/db.sqlite`, `./data/audit.sqlite`) for maximum visibility and ease of backup. Back up both files — and keep your `DB_ENCRYPTION_KEY` somewhere safe *outside* this directory.
 
 > [!NOTE]
-> For Unraid, a Community Applications template is provided at [`shellguard-unraid-template.xml`](./shellguard-unraid-template.xml) (WebUI port `4545`, appdata path `/mnt/user/appdata/shellguard`, advanced-default `PUID=99`/`PGID=100`).
+> For Unraid, a Community Applications template is provided at [`shellguard-unraid-template.xml`](./shellguard-unraid-template.xml) (WebUI port `5353`, appdata path `/mnt/user/appdata/shellguard`, advanced-default `PUID=99`/`PGID=100`).
 
 </details>
 
@@ -174,8 +205,8 @@ cp .env.example .env
 
 # 3. Start the twin dev servers
 npm run scuttle:dev-start
-#   → Frontend (Vite + HMR): http://localhost:4545
-#   → Backend (Express API): http://localhost:4646/api/health
+#   → Frontend (Vite + HMR): http://localhost:5353
+#   → Backend (Express API): http://localhost:5454/api/health
 ```
 
 Stop the reef with `npm run scuttle:dev-stop`; scuttle the dev database with `npm run scuttle:dev-reset`.
@@ -191,7 +222,7 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 | Variable | Default | Purpose |
 |---|---|---|
 | `NODE_ENV` | `production` | Runtime mode (production or development) |
-| `PORT` | `4646` | Server port (the container sets `4545` so one port serves UI + API) |
+| `PORT` | `5454` | Server port (the container sets `5353` so one port serves UI + API) |
 | `DATA_DIR` | `/app/data` | Where `db.sqlite` + `audit.sqlite` are stored (bind mount) |
 | `DB_ENCRYPTION_KEY` | `""` | SQLCipher AES-256 key encrypting the whole database file at rest. Generate with `openssl rand -base64 32`. Optional — see [SECURITY.md § Database Encryption](./SECURITY.md) |
 | `VITE_SHELLCRYPTION_ENABLED` | `true` | Client-side field encryption. Leave `true`; `false` stores secrets in plaintext columns (never do this in production) |
@@ -225,6 +256,76 @@ ShellGuard uses a **prefix-based identity token system** — no passwords, no ac
 
 > [!CAUTION]
 > Your `hu-` key file is the **only** way into your grotto — and because it seeds your ShellCryption key, losing it means your pearls are unrecoverable ciphertext. Back it up offline.
+
+> [!WARNING]
+> **Your `hu-` key is the single most important piece of data in ShellGuard.**
+>
+> - Your `hu-` key is your **identity AND your encryption seed**. It is the **ONLY** key that can decrypt your secrets.
+> - **Losing your `hu-` key means ALL encrypted data is permanently unrecoverable.** There is no recovery, no reset, no "forgot my key" flow. This is by design.
+> - **Back up your `hu-` key to at least 2 secure, accessible locations** (e.g., encrypted USB drive, printed paper in a safe, password manager). Treat it like a master password — because it **IS** your master password.
+> - **Never store it in plain text** on your server, in your repo, or in cloud sync folders.
+> - The server only stores a **SHA-256 hash** of your key. Even a full server compromise cannot recover your `hu-` key.
+
+---
+
+## 🔐 Encryption Model
+
+ShellGuard's triple-layer encryption creates distinct security boundaries. Here is what each actor can access:
+
+| Actor | Metadata (title, url, category) | Secrets (password, TOTP, SSH key) | File Data |
+|---|---|---|---|
+| Human (browser, authenticated) | ✅ Yes (server decrypts per-row) | ✅ Yes (client ShellCryption decrypts) | ✅ Yes (client ShellCryption decrypts) |
+| Agent (`lb-` key, authenticated) | ✅ Yes (server decrypts per-row) | ❌ No (opaque ShellCryption blobs) | ❌ No (opaque ShellCryption blobs) |
+| Server process (compromised) | ✅ Yes (has `DB_ENCRYPTION_KEY`) | ❌ No (no `hu-` key) | ❌ No (no `hu-` key) |
+| Raw `db.sqlite` (no SQLCipher key) | ❌ No (SG-META ciphertext) | ❌ No (ShellCryption blobs) | ❌ No (ShellCryption blobs) |
+| Raw `db.sqlite` (with SQLCipher key) | ❌ No (SG-META ciphertext) | ❌ No (ShellCryption blobs) | ❌ No (ShellCryption blobs) |
+
+**What agents can and cannot do:**
+
+Agents authenticated with an `lb-` key can **organize** your vault — rename items, change categories, move between pods — because the server decrypts per-row metadata for authorized requests. But agents can **never** see actual passwords, TOTP seeds, SSH keys, or file contents. Those fields are opaque ShellCryption blobs that only your browser can decrypt with your `hu-`-derived key.
+
+**One key, two layers:**
+
+Per-row metadata encryption uses the same `DB_ENCRYPTION_KEY` as SQLCipher whole-file encryption. One key governs both layers — set it once and both activate together.
+
+**Backward compatibility:**
+
+Existing plaintext metadata is transparently readable. New or updated items are encrypted automatically. No migration step required — the system handles mixed plaintext/ciphertext rows seamlessly.
+
+---
+
+## 🗝️ Encryption Keys & Database Encryption
+
+`DB_ENCRYPTION_KEY` now governs **two things**:
+
+1. **SQLCipher whole-DB encryption** — encrypts the entire `db.sqlite` file at rest with AES-256
+2. **Per-row metadata encryption** — encrypts metadata columns (`title`, `username`, `url`, `category`, `notes`, `file_name`) with AES-256-GCM
+
+Both activate together when the key is set. Generate a secure key:
+
+```bash
+openssl rand -base64 32
+```
+
+**Using Docker:** set it in your compose environment:
+
+```yaml
+environment:
+  - DB_ENCRYPTION_KEY=your-generated-key-here
+```
+
+**Using npm:**
+
+```bash
+export DB_ENCRYPTION_KEY=your-generated-key-here
+npm run start:api
+```
+
+> [!IMPORTANT]
+> Secret fields (passwords, TOTP seeds, SSH keys, file data) are encrypted **separately** by ShellCryption on the client. `DB_ENCRYPTION_KEY` never touches those fields — it only protects metadata and the database file.
+
+> [!CAUTION]
+> If you lose `DB_ENCRYPTION_KEY`, the file-level metadata becomes inaccessible. Store it separately from your backups (password manager / secrets vault), never in the same directory as `data/`, and never committed to version control.
 
 ---
 
@@ -340,13 +441,13 @@ ShellGuard/
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Start only the Vite frontend (:4545, strict port, proxies `/api`) |
-| `npm run dev:server` | Start only the Express API (:4646, watch mode, `DATA_DIR=./data-dev`) |
+| `npm run dev` | Start only the Vite frontend (:5353, strict port, proxies `/api`) |
+| `npm run dev:server` | Start only the Express API (:5454, watch mode, `DATA_DIR=./data-dev`) |
 | `npm run scuttle:dev-start` | 🦞 Start frontend + backend together (development reef) |
 | `npm run scuttle:dev-stop` | Kill both dev servers |
 | `npm run scuttle:dev-reset` | Scuttle the development database (`data-dev/`) |
 | `npm run scuttle:reset` | Scuttle the production database (`data/`) — DANGER |
-| `npm run start:api` | Start only the Express API server (:4646) |
+| `npm run start:api` | Start only the Express API server (:5454) |
 | `npm run build` | Type-check + compile the frontend bundle (`tsc && vite build`) |
 | `npm run lint` | TypeScript verification (`tsc --noEmit`) |
 | `npm test` | Run the Vitest suites |
@@ -367,6 +468,26 @@ ShellGuard/
 | [**ROADMAP.md**](./ROADMAP.md) | Changelog and future molts |
 | [**CRUSTAGENT.md**](./CRUSTAGENT.md) | Agent intelligence handshake and stability locks |
 | [**DESIGN.md**](./DESIGN.md) | Reef Modernist design tokens and component language |
+
+---
+
+## 🛡️ Self-Hosted Hardening Checklist
+
+Before exposing ShellGuard to anything beyond localhost:
+
+- [ ] Set **`DB_ENCRYPTION_KEY`** (`openssl rand -base64 32`) — activates both SQLCipher and per-row metadata encryption
+- [ ] Place the app behind **Nginx/Caddy with TLS**, or set `ENFORCE_HTTPS=true` if terminating in-process
+- [ ] Set **`TRUST_PROXY=true`** only behind your reverse proxy (correct IPs for rate limiting)
+- [ ] Set **`CORS_ORIGIN`** to your specific origin — not wildcard
+- [ ] Restrict port `5353` to localhost/LAN and proxy publicly via TLS
+- [ ] Keep **`VITE_SHELLCRYPTION_ENABLED=true`** — never ship a plaintext-at-column vault
+- [ ] Set a sane **`TOKEN_TTL_DEFAULT`** for your threat model (shorter than 24h on shared networks)
+- [ ] Back up **both** `data/db.sqlite` and `data/audit.sqlite` regularly — and keep the encryption key elsewhere
+- [ ] Pin **`PUID`/`PGID`** to a non-root host user (Unraid template defaults: `PUID=99`/`PGID=100`)
+- [ ] Review audit logs for unusual agent activity; revoke idle Lobster Keys
+- [ ] Store your `hu-` identity key offline in a secure vault
+- [ ] **Back up your `hu-` identity key to at least 2 secure locations** — losing it means permanent data loss
+- [ ] **Verify per-row encryption is active** by checking startup logs for `[FieldEncryption] AES-256-GCM metadata encryption active`
 
 ---
 

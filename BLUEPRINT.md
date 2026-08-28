@@ -21,10 +21,14 @@
         │                                          │
   [ CLAWKEYS©™ ]                        [ SQLCipher (optional) ]
   hu- / lb- / api-                      DB_ENCRYPTION_KEY encrypts
-  identity + agent scoping              metadata at rest; warns-not-blocks
+  identity + agent scoping              whole-DB at rest; warns-not-blocks
 ```
 
-**Runtime topology:** development runs twin ports (Vite `:4545` strict-port proxying `/api` → API `:4646`); production serves the compiled `dist/` and the API from a single port (`:4545`) inside one container.
+- **Three layers of encryption**: client-side ShellCryption AES-GCM-256 (zero-knowledge secrets) + server-side per-row AES-256-GCM (metadata encryption) + optional SQLCipher whole-DB at rest
+- **Zero-knowledge by design**: passwords, TOTP seeds, SSH keys, and file data are encrypted client-side and the server never sees plaintext. When `DB_ENCRYPTION_KEY` is set, metadata columns (title, username, url, category, notes, file_name) are also encrypted at the field level with AES-256-GCM.
+- **Agent isolation**: AI agents can organize vault items (rename, categorize, move) but NEVER see actual passwords, TOTP seeds, SSH keys, or file contents — those remain opaque ShellCryption blobs
+
+**Runtime topology:** development runs twin ports (Vite `:5353` strict-port proxying `/api` → API `:5454`); production serves the compiled `dist/` and the API from a single port (`:5353`) inside one container.
 
 ## 🐚 Data Reefs (Schema v1)
 

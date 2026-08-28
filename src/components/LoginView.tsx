@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ArrowLeft, 
@@ -17,15 +17,17 @@ import {
 import { restAdapter } from "../services/api/restAdapter.ts";
 import { hashToken } from "../lib/crypto.ts";
 import { deriveShellKey } from "../lib/shellCryption.ts";
+import { Lobster } from "../types.ts";
 
 interface LoginViewProps {
   key?: string;
   onSuccess: (l: any, t: string, sk: CryptoKey, rk: string) => void;
   onSwitch: () => void;
   onBack?: () => void;
+  targetLobster?: Lobster | null;
 }
 
-export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
+export function LoginView({ onSuccess, onSwitch, onBack, targetLobster }: LoginViewProps) {
   const [mode, setMode] = useState<"upload" | "paste">("upload");
   const [fileError, setFileError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -36,9 +38,16 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
   
   // Paste mode states
   const [pasteKey, setPasteKey] = useState("");
-  const [pasteUuid, setPasteUuid] = useState("");
-  const [pasteUsername, setPasteUsername] = useState("");
+  const [pasteUuid, setPasteUuid] = useState(targetLobster?.uuid || "");
+  const [pasteUsername, setPasteUsername] = useState(targetLobster?.username || "");
   const [pasteError, setPasteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (targetLobster) {
+      setPasteUuid(targetLobster.uuid);
+      setPasteUsername(targetLobster.username);
+    }
+  }, [targetLobster]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,6 +69,10 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
 
       if (!identity.uuid || !identity.token || !identity.username) {
         throw new Error("Invalid identity file format.");
+      }
+
+      if (targetLobster && identity.uuid !== targetLobster.uuid) {
+        throw new Error(`Identity file belongs to user ${identity.username}, expected ${targetLobster.username}`);
       }
 
       const keyHash = await hashToken(identity.token);
@@ -93,11 +106,14 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
     try {
       const keyHash = await hashToken(pasteKey);
 
-      // The API resolves the identity from the key hash itself — no lookup hop.
       const pearl = await restAdapter.POST("/api/auth/token", {
         ...(pasteUuid ? { uuid: pasteUuid } : {}),
         keyHash
       });
+
+      if (targetLobster && pearl.user.uuid !== targetLobster.uuid) {
+        throw new Error(`ShellKey belongs to ${pearl.user.username}, expected ${targetLobster.username}`);
+      }
 
       const sk = await deriveShellKey(pasteKey, pearl.user.uuid);
       onSuccess({
@@ -112,6 +128,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
   };
 
   const isPasteKeyValid = pasteKey.startsWith("hu-") && pasteKey.length === 67;
+  const targetDisplayName = targetLobster ? (targetLobster.displayName || targetLobster.username) : null;
 
   return (
     <motion.div 
@@ -131,22 +148,26 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
         <div className="w-16 h-16 bg-gradient-to-br from-lobster-red to-[#e4048a] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-lobster-red/20">
           <span className="text-3xl select-none">🦞</span>
         </div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Claw In to ShellGuard</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Authenticate with your sovereign identity key</p>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+          {targetDisplayName ? `Unlock ${targetDisplayName}` : "Claw In to ShellGuard"}
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {targetDisplayName ? `Re-authenticate ${targetLobster?.username}` : "Authenticate with your sovereign identity key"}
+        </p>
       </div>
 
       {/* ── Mode toggle tabs ── */}
-      <div className="flex rounded-xl border border-theme-subtle border overflow-hidden mb-6">
+      <div className="flex rounded-xl border border-theme-subtle overflow-hidden mb-6">
         <button 
           onClick={() => setMode("upload")} 
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium  ${mode === "upload" ? "bg-claw-cyan text-white" : "text-theme-muted hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium ${mode === "upload" ? "bg-claw-cyan text-white" : "text-theme-muted hover:bg-slate-50 dark:hover:bg-slate-800"}`}
         >
           <Upload className="w-4 h-4" />
           Upload File
         </button>
         <button 
           onClick={() => setMode("paste")} 
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium  ${mode === "paste" ? "bg-claw-cyan text-white" : "text-theme-muted hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium ${mode === "paste" ? "bg-claw-cyan text-white" : "text-theme-muted hover:bg-slate-50 dark:hover:bg-slate-800"}`}
         >
           <Key className="w-4 h-4" />
           Paste ShellKey©™
@@ -166,7 +187,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Your Identity File</label>
             <div className="mt-2">
-              <label className={`flex items-center justify-center gap-3 w-full p-6 border-2 border-dashed rounded-xl cursor-pointer  ${selectedFile ? 'border-claw-cyan bg-claw-cyan/5' : 'border-slate-300 dark:border-slate-700 hover:border-claw-cyan hover:bg-claw-cyan/5'}`}>
+              <label className={`flex items-center justify-center gap-3 w-full p-6 border-2 border-dashed rounded-xl cursor-pointer ${selectedFile ? 'border-claw-cyan bg-claw-cyan/5' : 'border-slate-300 dark:border-slate-700 hover:border-claw-cyan hover:bg-claw-cyan/5'}`}>
                 {selectedFile ? (
                   <CheckCircle className="w-8 h-8 text-claw-cyan" />
                 ) : (
@@ -200,7 +221,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
           <button 
             onClick={handleUploadLogin}
             disabled={isLoggingIn || !selectedFile}
-            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-claw-cyan to-deep-teal text-white text-base font-medium rounded-md shadow-lg shadow-cyan-200 dark:shadow-cyan-900/40  disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-claw-cyan to-deep-teal text-white text-base font-medium rounded-md shadow-lg shadow-cyan-200 dark:shadow-cyan-900/40 disabled:opacity-50 cursor-pointer"
           >
             {isLoggingIn ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Verifying Identity...</>
@@ -218,7 +239,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
               onChange={(e) => setPasteKey(e.target.value)}
               placeholder="hu-..."
               rows={3}
-              className="mt-1 w-full px-3 py-2 text-sm font-mono bg-white dark:bg-slate-800 border border-theme-subtle border rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-claw-cyan resize-none"
+              className="mt-1 w-full px-3 py-2 text-sm font-mono bg-white dark:bg-slate-800 border border-theme-subtle rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-claw-cyan resize-none"
               spellCheck={false}
             />
             {isPasteKeyValid && (
@@ -244,7 +265,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
           <button 
             type="button" 
             onClick={() => setIsAdvancedOpen(!isAdvancedOpen)} 
-            className="text-xs text-theme-muted hover:text-claw-cyan  flex items-center"
+            className="text-xs text-theme-muted hover:text-claw-cyan flex items-center cursor-pointer"
           >
             {isAdvancedOpen ? "Hide Advanced Options" : "Show Advanced Options (UUID/Username)"}
           </button>
@@ -285,7 +306,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
           <button 
             onClick={handlePasteLogin}
             disabled={isLoggingIn || !pasteKey || !pasteUuid}
-            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-claw-cyan to-deep-teal text-white text-base font-medium rounded-md shadow-lg shadow-cyan-200 dark:shadow-cyan-900/40  disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-claw-cyan to-deep-teal text-white text-base font-medium rounded-md shadow-lg shadow-cyan-200 dark:shadow-cyan-900/40 disabled:opacity-50 cursor-pointer"
           >
             {isLoggingIn ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Verifying Identity...</>
@@ -296,9 +317,9 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
         </div>
       )}
 
-      <div className="mt-8 pt-8 border-t border-theme-subtle border text-center">
+      <div className="mt-8 pt-8 border-t border-theme-subtle text-center">
         <p className="text-slate-500 text-sm">New to the reef?</p>
-        <button onClick={onSwitch} className="text-claw-cyan font-bold mt-2 hover:underline">Molt a New Identity</button>
+        <button onClick={onSwitch} className="text-claw-cyan font-bold mt-2 hover:underline cursor-pointer">Molt a New Identity</button>
       </div>
     </motion.div>
   );

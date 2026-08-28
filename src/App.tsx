@@ -67,11 +67,37 @@ import { PendingAttachment } from "./lib/attachmentUtils.ts";
 import { VaultItem, Agent, Lobster, VaultItemType } from "./types.ts";
 import { GeneratorConfig, getGlobalGeneratorConfig, setGlobalGeneratorConfig } from "./lib/generator.ts";
 import { GeneratorOptions } from "./components/Generator/GeneratorOptions.tsx";
+import { 
+  getStoredLobsters, 
+  saveStoredLobsters, 
+  getActiveLobsterId, 
+  setActiveLobsterId, 
+  getSessions, 
+  setSessionForUser, 
+  removeSessionForUser, 
+  activateUserSession, 
+  migrateLegacySession 
+} from "./lib/sessionManager.ts";
 
 export default function App() {
   const [isMolting, setIsMolting] = useState(true);
-  const [lobster, setLobster] = useState<Lobster | null>(null);
+  const [lobsters, setLobsters] = useState<Lobster[]>([]);
+  const [activeLobsterId, setActiveLobsterIdState] = useState<string | null>(null);
+  const [targetUnlockLobster, setTargetUnlockLobster] = useState<Lobster | null>(null);
   const [shellKey, setShellKey] = useState<CryptoKey | null>(null);
+
+  const lobster = useMemo(() => {
+    return lobsters.find(l => l.uuid === activeLobsterId) || null;
+  }, [lobsters, activeLobsterId]);
+
+  const activeSessions = useMemo(() => {
+    const sessions = getSessions();
+    const map: Record<string, boolean> = {};
+    for (const l of lobsters) {
+      map[l.uuid] = Boolean(sessions[l.uuid]);
+    }
+    return map;
+  }, [lobsters, activeLobsterId, shellKey]);
   const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export">("landing");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
@@ -111,13 +137,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  if (isSuperLobster) {
-    return (
-      <SuperLobsterProvider>
-        <SuperLobsterGate />
-      </SuperLobsterProvider>
-    );
-  }
+  // NOTE: isSuperLobster early return is deferred to AFTER all hooks — see below.
 
   // Global keyboard shortcuts for quick search
   useEffect(() => {
@@ -201,78 +221,7 @@ export default function App() {
     return stored ? parseInt(stored, 10) : 15;
   });
 
-  const handleLogout = useCallback(() => {
-    sessionStorage.removeItem(SESSION_KEYS.TOKEN);
-    sessionStorage.removeItem("sg_raw_key");
-    localStorage.removeItem("sg_lobster");
-    setLobster(null);
-    setShellKey(null);
-    setView("landing");
-  }, []);
-
-  // Inactivity timer effect
-  useEffect(() => {
-    if (!shellKey || inactivityTimeout <= 0) return;
-
-    let timeoutId: NodeJS.Timeout;
-
-    const resetTimer = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        handleLogout();
-      }, inactivityTimeout * 60 * 1000);
-    };
-
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    events.forEach(event => document.addEventListener(event, resetTimer, true));
-
-    resetTimer();
-
-    return () => {
-      clearTimeout(timeoutId);
-      events.forEach(event => document.removeEventListener(event, resetTimer, true));
-    };
-  }, [shellKey, inactivityTimeout, handleLogout]);
-
-  // 🐚 Initial scuttle to check auth
-  useEffect(() => {
-    const token = sessionStorage.getItem(SESSION_KEYS.TOKEN);
-    const storedLobsterStr = localStorage.getItem("sg_lobster");
-    const rawKey = sessionStorage.getItem("sg_raw_key");
-    
-    if (token && storedLobsterStr && rawKey) {
-      const storedLobster = JSON.parse(storedLobsterStr);
-      setLobster(storedLobster);
-      if (!shellKey) {
-        deriveShellKey(rawKey, storedLobster.uuid).then((sk) => {
-          setShellKey(sk);
-          setView("vault");
-        }).catch(() => {
-          handleLogout();
-        });
-      } else {
-        setView("vault");
-        scuttleVault(shellKey);
-        // Refresh user profile display name if available
-        restAdapter.GET("/api/auth/me").then((profile: any) => {
-          if (profile?.displayName) {
-            const updated: Lobster = { ...storedLobster, displayName: profile.displayName };
-            setLobster(updated);
-            localStorage.setItem("sg_lobster", JSON.stringify(updated));
-          }
-        }).catch(() => {
-          handleLogout();
-        });
-      }
-    } else {
-      if (token || storedLobsterStr || rawKey) {
-        handleLogout();
-      }
-    }
-    setIsMolting(false);
-  }, [shellKey, handleLogout]);
-
-  const scuttleVault = async (key: CryptoKey) => {
+  const scuttleVault = useCallback(async (key: CryptoKey) => {
     try {
       const [reefLogins, reefNotes, reefKeys, reefAttachments] = await Promise.all([
         restAdapter.GET("/api/vault").catch(() => []),
@@ -325,16 +274,131 @@ export default function App() {
     } catch (err: any) {
       setError(err.message);
     }
-  };
+  }, []);
 
-  const scuttleAgents = async () => {
+  const scuttleAgents = useCallback(async () => {
     try {
       const reef = await restAdapter.GET("/api/agent-keys");
       setAgents(reef);
     } catch (err: any) {
       setError(err.message);
     }
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    if (activeLobsterId) {
+      removeSessionForUser(activeLobsterId);
+    }
+    setShellKey(null);
+    const currentTarget = lobsters.find(l => l.uuid === activeLobsterId);
+    if (currentTarget) {
+      setTargetUnlockLobster(currentTarget);
+      setView("login");
+    } else {
+      setView("landing");
+    }
+  }, [activeLobsterId, lobsters]);
+
+  const handleSwitchAccount = async (uuid: string) => {
+    const session = activateUserSession(uuid);
+    setActiveLobsterIdState(uuid);
+    const target = lobsters.find((l) => l.uuid === uuid) || null;
+
+    if (session) {
+      try {
+        const sk = await deriveShellKey(session.rawKey, uuid);
+        setShellKey(sk);
+        setView("vault");
+        scuttleVault(sk);
+      } catch {
+        removeSessionForUser(uuid);
+        setShellKey(null);
+        setTargetUnlockLobster(target);
+        setView("login");
+      }
+    } else {
+      setShellKey(null);
+      setTargetUnlockLobster(target);
+      setView("login");
+    }
   };
+
+  const handleAddAccount = () => {
+    setTargetUnlockLobster(null);
+    setView("login");
+  };
+
+  const handleRemoveAccount = (uuid: string) => {
+    removeSessionForUser(uuid);
+    const nextLobsters = lobsters.filter((l) => l.uuid !== uuid);
+    setLobsters(nextLobsters);
+    saveStoredLobsters(nextLobsters);
+
+    if (activeLobsterId === uuid) {
+      if (nextLobsters.length > 0) {
+        handleSwitchAccount(nextLobsters[0].uuid);
+      } else {
+        setActiveLobsterId(null);
+        setActiveLobsterIdState(null);
+        setShellKey(null);
+        setView("landing");
+      }
+    }
+  };
+
+  // Inactivity timer effect
+  useEffect(() => {
+    if (!shellKey || inactivityTimeout <= 0) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        handleLogout();
+      }, inactivityTimeout * 60 * 1000);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => document.addEventListener(event, resetTimer, true));
+
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach(event => document.removeEventListener(event, resetTimer, true));
+    };
+  }, [shellKey, inactivityTimeout, handleLogout]);
+
+  // 🐚 Initial scuttle to check auth
+  useEffect(() => {
+    const { lobsters: migratedLobsters, activeId } = migrateLegacySession();
+    setLobsters(migratedLobsters);
+    setActiveLobsterIdState(activeId);
+
+    if (activeId) {
+      const session = activateUserSession(activeId);
+      if (session) {
+        deriveShellKey(session.rawKey, activeId)
+          .then((sk) => {
+            setShellKey(sk);
+            setView("vault");
+          })
+          .catch(() => {
+            handleLogout();
+          });
+      } else {
+        const target = migratedLobsters.find((l) => l.uuid === activeId);
+        setTargetUnlockLobster(target || null);
+        setView("login");
+      }
+    } else {
+      setView("landing");
+    }
+    setIsMolting(false);
+  }, []);
+
+
 
   /**
    * ShellCrypt + upload a staged attachment file to /api/attachments.
@@ -515,14 +579,32 @@ export default function App() {
   };
 
   const handleLoginSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
-    setLobster(l);
-    sessionStorage.setItem(SESSION_KEYS.TOKEN, t);
-    sessionStorage.setItem("sg_raw_key", rk);
-    localStorage.setItem("sg_lobster", JSON.stringify(l));
+    setSessionForUser(l.uuid, t, rk);
+    setActiveLobsterId(l.uuid);
+    setActiveLobsterIdState(l.uuid);
+
+    setLobsters((prev) => {
+      const exists = prev.some((item) => item.uuid === l.uuid);
+      const next = exists
+        ? prev.map((item) => (item.uuid === l.uuid ? { ...item, ...l } : item))
+        : [...prev, l];
+      saveStoredLobsters(next);
+      return next;
+    });
+
     setShellKey(sk);
+    setTargetUnlockLobster(null);
     setView("vault");
-    // The useEffect will handle scuttleVault(sk) when shellKey is set
   };
+
+  // ── All hooks are declared above — safe to do conditional returns now ──────
+  if (isSuperLobster) {
+    return (
+      <SuperLobsterProvider>
+        <SuperLobsterGate />
+      </SuperLobsterProvider>
+    );
+  }
 
   if (isMolting) {
     return (
@@ -581,9 +663,13 @@ export default function App() {
             )}
 
             <LoginView 
-              key="login"
+              key={targetUnlockLobster ? targetUnlockLobster.uuid : "login"}
+              targetLobster={targetUnlockLobster}
               onSuccess={handleLoginSuccess} 
-              onSwitch={() => setView("setup")} 
+              onSwitch={() => {
+                setTargetUnlockLobster(null);
+                setView("setup");
+              }} 
               onBack={() => setView("landing")}
             />
           </AnimatePresence>
@@ -639,8 +725,28 @@ export default function App() {
       >
         <Header
           user={lobster}
+          lobsters={lobsters}
+          activeSessions={activeSessions}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           view={view}
+          onSwitchAccount={handleSwitchAccount}
+          onAddAccount={handleAddAccount}
+          onRemoveAccount={handleRemoveAccount}
+          // Search props
+          searchQuery={headerSearchQuery}
+          onSearchQueryChange={setHeaderSearchQuery}
+          isSearchFocused={isSearchFocused}
+          onSearchFocusChange={setIsSearchFocused}
+          matchingVaultItems={matchingVaultItems}
+          onSelectSearchResult={handleSelectSearchResult}
+          onSearchSubmit={handleSearchSubmit}
+          searchInputRef={searchInputRef}
+          searchDropdownRef={searchDropdownRef}
+          // Add menu props
+          isHeaderAddMenuOpen={isHeaderAddMenuOpen}
+          onHeaderAddMenuToggle={() => setIsHeaderAddMenuOpen(!isHeaderAddMenuOpen)}
+          onOpenAdd={handleOpenAdd}
+          headerAddMenuRef={headerAddMenuRef}
         />
 
         {/* Scrollable Content Area */}
@@ -710,8 +816,11 @@ export default function App() {
                     tab={view === "settings" ? "profile" : "generator"}
                     lobster={lobster} 
                     onUpdateLobster={(updated) => {
-                      setLobster(updated);
-                      localStorage.setItem("sg_lobster", JSON.stringify(updated));
+                      setLobsters((prev) => {
+                        const next = prev.map((l) => (l.uuid === updated.uuid ? updated : l));
+                        saveStoredLobsters(next);
+                        return next;
+                      });
                     }} 
                     inactivityTimeout={inactivityTimeout}
                     setInactivityTimeout={setInactivityTimeout}

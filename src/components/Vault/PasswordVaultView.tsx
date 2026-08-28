@@ -68,6 +68,8 @@ import {
 
 interface PasswordVaultViewProps {
   items: VaultItem[];
+  isLocked?: boolean;
+  onUnlock?: () => void;
   onAdd: (item: {
     title: string;
     secret: string;
@@ -116,6 +118,8 @@ export function PasswordVaultView({
   onUpdate, 
   onDelete,
   onDeleteMultiple,
+  isLocked = false,
+  onUnlock,
   selectedFolder = "all",
   onSelectFolder,
   searchQuery: externalSearchQuery,
@@ -546,6 +550,35 @@ export function PasswordVaultView({
       setIsBulkDeletingInProgress(false);
     }
   };
+
+  if (isLocked) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center py-20 px-4 text-center mt-10">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-theme-surface/60 border border-theme-subtle rounded-3xl p-8 max-w-sm w-full shadow-lg backdrop-blur-sm mx-auto"
+        >
+          <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-10 h-10 text-amber-500" />
+          </div>
+          <h2 className="text-2xl font-black text-theme-main tracking-tight mb-2">
+            Vault Locked
+          </h2>
+          <p className="text-theme-muted text-sm mb-8">
+            Your session is locked. You must provide your ShellKey to view this vault.
+          </p>
+          <button
+            onClick={onUnlock}
+            className="w-full py-3.5 bg-theme-main hover:bg-theme-main/90 text-theme-base font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Key className="w-4 h-4" />
+            UNLOCK VAULT
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

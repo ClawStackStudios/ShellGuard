@@ -25,6 +25,7 @@ interface HeaderProps {
   onSwitchAccount?: (uuid: string) => void;
   onAddAccount?: () => void;
   onRemoveAccount?: (uuid: string) => void;
+  onLockAccount?: (uuid: string) => void;
   // Search
   searchQuery?: string;
   onSearchQueryChange?: (q: string) => void;
@@ -51,6 +52,7 @@ export function Header({
   onSwitchAccount,
   onAddAccount,
   onRemoveAccount,
+  onLockAccount,
   searchQuery = "",
   onSearchQueryChange,
   isSearchFocused = false,
@@ -267,7 +269,17 @@ export function Header({
                                   Active
                                 </span>
                               ) : isUnlocked ? (
-                                <Unlock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onLockAccount) onLockAccount(acc.uuid);
+                                  }}
+                                  className="p-1 hover:bg-emerald-500/20 rounded-md transition-colors -mr-1"
+                                  title="Lock Account"
+                                >
+                                  <Unlock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                </button>
                               ) : (
                                 <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                               )}

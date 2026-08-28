@@ -24,10 +24,9 @@ interface LoginViewProps {
   onSuccess: (l: any, t: string, sk: CryptoKey, rk: string) => void;
   onSwitch: () => void;
   onBack?: () => void;
-  targetLobster?: Lobster | null;
 }
 
-export function LoginView({ onSuccess, onSwitch, onBack, targetLobster }: LoginViewProps) {
+export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
   const [mode, setMode] = useState<"upload" | "paste">("upload");
   const [fileError, setFileError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -38,16 +37,7 @@ export function LoginView({ onSuccess, onSwitch, onBack, targetLobster }: LoginV
   
   // Paste mode states
   const [pasteKey, setPasteKey] = useState("");
-  const [pasteUuid, setPasteUuid] = useState(targetLobster?.uuid || "");
-  const [pasteUsername, setPasteUsername] = useState(targetLobster?.username || "");
   const [pasteError, setPasteError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (targetLobster) {
-      setPasteUuid(targetLobster.uuid);
-      setPasteUsername(targetLobster.username);
-    }
-  }, [targetLobster]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,10 +59,6 @@ export function LoginView({ onSuccess, onSwitch, onBack, targetLobster }: LoginV
 
       if (!identity.uuid || !identity.token || !identity.username) {
         throw new Error("Invalid identity file format.");
-      }
-
-      if (targetLobster && identity.uuid !== targetLobster.uuid) {
-        throw new Error(`Identity file belongs to user ${identity.username}, expected ${targetLobster.username}`);
       }
 
       const keyHash = await hashToken(identity.token);
@@ -107,13 +93,8 @@ export function LoginView({ onSuccess, onSwitch, onBack, targetLobster }: LoginV
       const keyHash = await hashToken(pasteKey);
 
       const pearl = await restAdapter.POST("/api/auth/token", {
-        ...(pasteUuid ? { uuid: pasteUuid } : {}),
         keyHash
       });
-
-      if (targetLobster && pearl.user.uuid !== targetLobster.uuid) {
-        throw new Error(`ShellKey belongs to ${pearl.user.username}, expected ${targetLobster.username}`);
-      }
 
       const sk = await deriveShellKey(pasteKey, pearl.user.uuid);
       onSuccess({
@@ -128,7 +109,6 @@ export function LoginView({ onSuccess, onSwitch, onBack, targetLobster }: LoginV
   };
 
   const isPasteKeyValid = pasteKey.startsWith("hu-") && pasteKey.length === 67;
-  const targetDisplayName = targetLobster ? (targetLobster.displayName || targetLobster.username) : null;
 
   return (
     <motion.div 
@@ -149,10 +129,10 @@ export function LoginView({ onSuccess, onSwitch, onBack, targetLobster }: LoginV
           <span className="text-3xl select-none">🦞</span>
         </div>
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
-          {targetDisplayName ? `Unlock ${targetDisplayName}` : "Claw In to ShellGuard"}
+          Claw In to ShellGuard
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {targetDisplayName ? `Re-authenticate ${targetLobster?.username}` : "Authenticate with your sovereign identity key"}
+          Authenticate with your sovereign identity key
         </p>
       </div>
 

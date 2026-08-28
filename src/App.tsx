@@ -46,6 +46,7 @@ import { LoginView } from "./components/LoginView.tsx";
 import { SetupView } from "./components/SetupView.tsx";
 import { Sidebar } from "./components/Layout/Sidebar.tsx";
 import { Header } from "./components/Layout/Header.tsx";
+import { QuickLoginModal, AuthModalConfig } from "./components/QuickLoginModal.tsx";
 import { PasswordVaultView } from "./components/Vault/PasswordVaultView.tsx";
 import { SuperLobsterProvider, useSuperLobster } from "./components/Admin/SuperLobsterContext.tsx";
 import { SuperLobsterLogin } from "./components/Admin/SuperLobsterLogin.tsx";
@@ -83,8 +84,8 @@ export default function App() {
   const [isMolting, setIsMolting] = useState(true);
   const [lobsters, setLobsters] = useState<Lobster[]>([]);
   const [activeLobsterId, setActiveLobsterIdState] = useState<string | null>(null);
-  const [targetUnlockLobster, setTargetUnlockLobster] = useState<Lobster | null>(null);
   const [shellKey, setShellKey] = useState<CryptoKey | null>(null);
+  const [authModalConfig, setAuthModalConfig] = useState<AuthModalConfig | null>(null);
 
   const lobster = useMemo(() => {
     return lobsters.find(l => l.uuid === activeLobsterId) || null;
@@ -124,9 +125,6 @@ export default function App() {
   };
 
   // ── SuperLobster Panel (admin plane) ─────────────────────────────────────────
-  // URL-only entry via #/super-lobster — zero-discovery stance (ADMIN.md T9).
-  // Completely independent of user auth: the panel runs before the molting /
-  // auth gates and never touches vault state or the user shellKey.
   const [isSuperLobster, setIsSuperLobster] = useState(
     typeof window !== 'undefined' && window.location.hash === '#/super-lobster'
   );
@@ -136,8 +134,6 @@ export default function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-
-  // NOTE: isSuperLobster early return is deferred to AFTER all hooks — see below.
 
   // Global keyboard shortcuts for quick search
   useEffect(() => {
@@ -290,14 +286,12 @@ export default function App() {
       removeSessionForUser(activeLobsterId);
     }
     setShellKey(null);
-    const currentTarget = lobsters.find(l => l.uuid === activeLobsterId);
-    if (currentTarget) {
-      setTargetUnlockLobster(currentTarget);
-      setView("login");
-    } else {
-      setView("landing");
-    }
-  }, [activeLobsterId, lobsters]);
+    setActiveLobsterId(null);
+    setActiveLobsterIdState(null);
+    setAuthModalConfig(null);
+    setView("landing");
+  }, [activeLobsterId]);
+
 
   const handleSwitchAccount = async (uuid: string) => {
     const session = activateUserSession(uuid);
@@ -313,19 +307,16 @@ export default function App() {
       } catch {
         removeSessionForUser(uuid);
         setShellKey(null);
-        setTargetUnlockLobster(target);
-        setView("login");
+        setAuthModalConfig({ mode: "unlock", target });
       }
     } else {
       setShellKey(null);
-      setTargetUnlockLobster(target);
-      setView("login");
+      setAuthModalConfig({ mode: "unlock", target });
     }
   };
 
   const handleAddAccount = () => {
-    setTargetUnlockLobster(null);
-    setView("login");
+    setAuthModalConfig({ mode: "add" });
   };
 
   const handleRemoveAccount = (uuid: string) => {
@@ -344,6 +335,12 @@ export default function App() {
         setView("landing");
       }
     }
+  };
+
+  const handleLockAccount = (uuid: string) => {
+    removeSessionForUser(uuid);
+    // Force a re-render so the header updates the icon immediately
+    setLobsters([...lobsters]);
   };
 
   // Inactivity timer effect
@@ -389,21 +386,25 @@ export default function App() {
           });
       } else {
         const target = migratedLobsters.find((l) => l.uuid === activeId);
-        setTargetUnlockLobster(target || null);
-        setView("login");
+        if (target) {
+          setAuthModalConfig({ mode: "unlock", target });
+        }
+        setView("vault");
       }
+    } else if (migratedLobsters.length > 0) {
+      // If no active session, but we know accounts, default to the first one as locked
+      const target = migratedLobsters[0];
+      setActiveLobsterIdState(target.uuid);
+      setAuthModalConfig({ mode: "unlock", target });
+      setView("vault");
     } else {
       setView("landing");
     }
     setIsMolting(false);
   }, []);
 
-
-
   /**
    * ShellCrypt + upload a staged attachment file to /api/attachments.
-   * file_data is encrypted under AAD `vault_secure_attachments:{id}`; the
-   * server separately per-row encrypts title/file_name/category metadata.
    */
   const uploadAttachmentRecord = async (key: CryptoKey, att: PendingAttachment): Promise<string> => {
     const encryptedFile = await encryptField(att.dataUrl, key, "vault_secure_attachments", att.id);
@@ -444,7 +445,6 @@ export default function App() {
         const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
         await restAdapter.POST("/api/attachments", { id, title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
       } else {
-        // Password pearls: upload staged attachments first, then link their IDs.
         let attachmentIdsJson = item.attachments || "[]";
         if (item.newAttachments && item.newAttachments.length > 0) {
           const uploadedIds: string[] = [];
@@ -502,7 +502,6 @@ export default function App() {
         const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
         await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
       } else {
-        // Password pearls: upload staged files, unlink removed ones, then PUT.
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
             await uploadAttachmentRecord(shellKey, att);
@@ -510,9 +509,7 @@ export default function App() {
         }
         if (item.removedAttachmentIds && item.removedAttachmentIds.length > 0) {
           for (const attId of item.removedAttachmentIds) {
-            await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {
-              /* already gone — unlinking is best-effort */
-            });
+            await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {});
           }
         }
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
@@ -593,15 +590,13 @@ export default function App() {
     });
 
     setShellKey(sk);
-    setTargetUnlockLobster(null);
     setView("vault");
   };
 
-  // ── All hooks are declared above — safe to do conditional returns now ──────
   if (isSuperLobster) {
     return (
       <SuperLobsterProvider>
-        <SuperLobsterGate />
+        <SuperLobsterPanel />
       </SuperLobsterProvider>
     );
   }
@@ -620,31 +615,33 @@ export default function App() {
     );
   }
 
-  // Render Landing, Login, or Setup if not authenticated
-  if (!lobster) {
-    if (view === "landing") {
-      return (
-        <LandingView 
-          onClawIn={() => setView("login")} 
-          onHatch={() => setView("setup")} 
-        />
-      );
-    }
+  const isLocked = Boolean(lobster && !shellKey);
+  const isModalOpen = Boolean(authModalConfig || isLocked);
+  const activeModalConfig = authModalConfig || (isLocked && lobster ? { mode: "unlock" as const, target: lobster } : null);
 
-    if (view === "setup") {
-      return (
-        <SetupView 
-          onSuccess={handleLoginSuccess} 
-          onSwitch={() => setView("login")} 
-        />
-      );
-    }
+  const handleAuthModalSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
+    handleLoginSuccess(l, t, sk, rk);
+    setAuthModalConfig(null);
+  };
 
+  const handleAuthModalClose = () => {
+    // We intentionally stay on the dashboard even if locked, so they can use the Header dropdown
+    setAuthModalConfig(null);
+  };
+
+  if (view === "landing" || view === "login" || view === "setup") {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-ocean text-slate-900 dark:text-slate-50 antialiased flex flex-col justify-center items-center p-4 sm:p-6 overflow-auto relative selection:bg-[#e4048a]/30">
-        {/* Ambient Background Glows */}
         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#e4048a]/10 dark:bg-[#e4048a]/5 blur-[100px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-[#06b6d4]/10 dark:bg-[#06b6d4]/5 blur-[100px] pointer-events-none" />
+
+        {activeModalConfig && (
+          <QuickLoginModal 
+            config={activeModalConfig} 
+            onSuccess={handleAuthModalSuccess} 
+            onClose={handleAuthModalClose} 
+          />
+        )}
 
         <div className="w-full max-w-md my-8 relative z-10">
           <AnimatePresence mode="wait">
@@ -662,16 +659,26 @@ export default function App() {
               </motion.div>
             )}
 
-            <LoginView 
-              key={targetUnlockLobster ? targetUnlockLobster.uuid : "login"}
-              targetLobster={targetUnlockLobster}
-              onSuccess={handleLoginSuccess} 
-              onSwitch={() => {
-                setTargetUnlockLobster(null);
-                setView("setup");
-              }} 
-              onBack={() => setView("landing")}
-            />
+            {view === "landing" && (
+              <LandingView 
+                onClawIn={() => setView("login")} 
+                onHatch={() => setView("setup")} 
+              />
+            )}
+            {view === "setup" && (
+              <SetupView 
+                onSuccess={handleLoginSuccess} 
+                onSwitch={() => setView("login")} 
+                onCancel={lobster ? () => setView("vault") : undefined}
+              />
+            )}
+            {view === "login" && (
+              <LoginView 
+                onSuccess={handleLoginSuccess} 
+                onSwitch={() => setView("setup")} 
+                onBack={() => setView("landing")}
+              />
+            )}
           </AnimatePresence>
         </div>
       </div>
@@ -683,6 +690,13 @@ export default function App() {
 
   return (
     <div className="h-screen bg-theme-surface text-theme-main overflow-hidden font-sans selection:bg-claw-cyan/30 flex">
+      {activeModalConfig && (
+        <QuickLoginModal 
+          config={activeModalConfig} 
+          onSuccess={handleAuthModalSuccess} 
+          onClose={handleAuthModalClose} 
+        />
+      )}
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
@@ -732,6 +746,7 @@ export default function App() {
           onSwitchAccount={handleSwitchAccount}
           onAddAccount={handleAddAccount}
           onRemoveAccount={handleRemoveAccount}
+          onLockAccount={handleLockAccount}
           // Search props
           searchQuery={headerSearchQuery}
           onSearchQueryChange={setHeaderSearchQuery}
@@ -771,6 +786,8 @@ export default function App() {
                 <motion.div key="vault" className="w-full">
                   <PasswordVaultView 
                     items={vaultItems} 
+                    isLocked={isLocked}
+                    onUnlock={() => setAuthModalConfig({ mode: "unlock", target: lobster })}
                     onAdd={lockTheClaw} 
                     onUpdate={updateTheClaw}
                     selectedFolder={selectedFolder}

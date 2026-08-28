@@ -27,9 +27,10 @@ import { InteractiveBrand } from "./Branding/InteractiveBrand.tsx";
 interface SetupViewProps {
   onSuccess: (lobster: { uuid: string; username: string; displayName?: string }, token: string, shellKey: CryptoKey, rk: string) => void;
   onSwitch: () => void;
+  onCancel?: () => void;
 }
 
-export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
+export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
   const [step, setStep] = useState<"hatching" | "verification" | "success">("hatching");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -403,6 +404,15 @@ export function SetupView({ onSuccess, onSwitch }: SetupViewProps) {
                 <Key className="w-3.5 h-3.5" />
                 EXISTING BURROW
               </button>
+              {onCancel && (
+                <button 
+                  onClick={onCancel}
+                  className="hover:text-slate-700 dark:hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 focus:outline-none ml-2"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  CANCEL
+                </button>
+              )}
             </div>
             <p className="text-[10px] text-center text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] font-medium mt-6">
               STABILIZED BY CRUSTAGENT©™ — 2026

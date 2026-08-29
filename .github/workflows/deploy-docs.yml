@@ -1,12 +1,9 @@
-name: Deploy Documentation
+name: Deploy Documentation 📚
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'docs/**'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,28 +15,31 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  VITEPRESS_BASE: /ShellGuard/
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout repository 🛡️
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Setup Node.js ⚙️
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
+      - name: Install dependencies 📦
         run: npm ci
 
-      - name: Build VitePress Documentation
+      - name: Build VitePress Documentation 🏗️
         run: npm run docs:build
 
-      - name: Upload GitHub Pages artifact
+      - name: Upload GitHub Pages artifact 🚀
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist
@@ -52,6 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages 🌐
         id: deployment
         uses: actions/deploy-pages@v4

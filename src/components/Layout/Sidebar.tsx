@@ -161,7 +161,7 @@ export function Sidebar({
             
             <button 
               onClick={() => { setView('settings'); if (window.innerWidth < 1024) onClose(); }}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all ${view === "settings" ? "bg-claw-cyan/10 text-claw-cyan" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] ${view === "settings" ? "bg-claw-cyan/10 dark:bg-claw-cyan/20 text-claw-cyan shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
               title={isCollapsed ? "Profile" : undefined}
             >
               <User className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
@@ -170,7 +170,7 @@ export function Sidebar({
 
             <button 
               onClick={() => { setView('settings_agents'); scuttleAgents(); if (window.innerWidth < 1024) onClose(); }}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all ${view === "settings_agents" || view === "agents" ? "bg-lobster-red/10 text-lobster-red" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] ${view === "settings_agents" || view === "agents" ? "bg-lobster-red/10 dark:bg-lobster-red/20 text-lobster-red shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
               title={isCollapsed ? "Lobster Keys" : undefined}
             >
               <Bot className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
@@ -179,7 +179,7 @@ export function Sidebar({
 
             <button 
               onClick={() => { setView('settings_generator'); if (window.innerWidth < 1024) onClose(); }}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all ${view === "settings_generator" ? "bg-claw-cyan/10 text-claw-cyan" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] ${view === "settings_generator" ? "bg-claw-cyan/10 dark:bg-claw-cyan/20 text-claw-cyan shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
               title={isCollapsed ? "Generator Settings" : undefined}
             >
               <Zap className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
@@ -188,7 +188,7 @@ export function Sidebar({
 
             <button 
               onClick={() => { setView('settings_import_export'); if (window.innerWidth < 1024) onClose(); }}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all ${view === "settings_import_export" ? "bg-claw-cyan/10 text-claw-cyan" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] ${view === "settings_import_export" ? "bg-claw-cyan/10 dark:bg-claw-cyan/20 text-claw-cyan shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
               title={isCollapsed ? "Import & Export" : undefined}
             >
               <ArrowUpDown className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
@@ -347,10 +347,10 @@ export function Sidebar({
             </div>
 
             {/* Divider line under search bar */}
-            <div className="pt-2.5 mt-2.5 border-t border-theme-subtle space-y-1.5">
+            <div className="pt-2.5 mt-2.5 border-t border-theme-subtle flex-1 flex flex-col min-h-0 space-y-1.5">
               <button 
                 onClick={() => { setView('vault'); setSelectedFolder('all'); scuttleVault(); if (window.innerWidth < 1024) onClose(); }}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all ${view === "vault" && selectedFolder === "all" ? "bg-claw-cyan/10 text-claw-cyan" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] ${view === "vault" && selectedFolder === "all" ? "bg-claw-cyan/10 dark:bg-claw-cyan/20 text-claw-cyan shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
                 title={isCollapsed ? "Passwords" : undefined}
               >
                 <Key className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
@@ -359,7 +359,7 @@ export function Sidebar({
 
               <button 
                 onClick={() => { setView('generator'); if (window.innerWidth < 1024) onClose(); }}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all ${view === "generator" ? "bg-claw-cyan/10 text-claw-cyan" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] ${view === "generator" ? "bg-claw-cyan/10 dark:bg-claw-cyan/20 text-claw-cyan shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
                 title={isCollapsed ? "Password Generator" : undefined}
               >
                 <Zap className="w-5 h-5 md:w-4 md:h-4 shrink-0" />

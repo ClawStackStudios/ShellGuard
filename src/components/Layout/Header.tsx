@@ -10,7 +10,9 @@ import {
   AlertTriangle, 
   X,
   Search,
-  Shield
+  Shield,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ThemeToggle } from "../Theme/ThemeToggle.tsx";
@@ -21,6 +23,8 @@ interface HeaderProps {
   lobsters?: Lobster[];
   activeSessions?: Record<string, boolean>;
   onToggleSidebar?: () => void;
+  isSidebarCollapsed?: boolean;
+  onToggleDesktopSidebar?: () => void;
   view: string;
   onSwitchAccount?: (uuid: string) => void;
   onAddAccount?: () => void;
@@ -48,6 +52,8 @@ export function Header({
   lobsters = [], 
   activeSessions = {}, 
   onToggleSidebar, 
+  isSidebarCollapsed = false,
+  onToggleDesktopSidebar,
   view,
   onSwitchAccount,
   onAddAccount,
@@ -107,16 +113,27 @@ export function Header({
 
   return (
     <header className="bg-theme-base/90 backdrop-blur-md border-b-2 border-purple-600 dark:border-red-500 px-4 md:px-6 py-2 md:py-3 flex-shrink-0 h-16 transition-colors duration-300 z-30 relative">
-      <div className="flex items-center justify-between gap-4 h-full max-w-7xl mx-auto">
+      <div className="flex items-center justify-between gap-4 h-full w-full">
         {/* Left Side: Toggle & Breadcrumbs */}
         <div className="flex items-center gap-2 md:gap-4">
           {onToggleSidebar && (
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="lg:hidden text-theme-main p-2 h-10 w-10 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              className="lg:hidden text-theme-main p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer shrink-0"
             >
               <Menu className="w-5 h-5" />
+            </button>
+          )}
+
+          {onToggleDesktopSidebar && (
+            <button
+              type="button"
+              onClick={onToggleDesktopSidebar}
+              className="hidden lg:flex text-theme-muted hover:text-theme-main p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer shrink-0"
+              title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isSidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
             </button>
           )}
           

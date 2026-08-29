@@ -562,6 +562,13 @@ export default function App() {
     const itemsToUpdate = vaultItems.filter(
       (i) => (i.category || "Personal") === oldPod || (i.category || "Personal").startsWith(oldPod + "/")
     );
+    
+    if (itemsToUpdate.length === 0) {
+      // Force a re-render so the UI updates to reflect the renamed color in localStorage
+      setVaultItems([...vaultItems]);
+      return;
+    }
+
     for (const item of itemsToUpdate) {
       const currentCat = item.category || "Personal";
       const updatedCat = currentCat === oldPod ? newPod : currentCat.replace(new RegExp(`^${oldPod}/`), `${newPod}/`);
@@ -582,6 +589,13 @@ export default function App() {
   const handleDeletePod = async (podToDelete: string) => {
     if (!shellKey) return;
     const itemsToUpdate = vaultItems.filter((i) => (i.category || "Personal") === podToDelete);
+    
+    if (itemsToUpdate.length === 0) {
+      // Force a re-render so the UI updates to reflect the removed color in localStorage
+      setVaultItems([...vaultItems]);
+      return;
+    }
+
     for (const item of itemsToUpdate) {
       await updateTheClaw(item.id, {
         title: item.title,
@@ -767,6 +781,8 @@ export default function App() {
           lobsters={lobsters}
           activeSessions={activeSessions}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleDesktopSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           view={view}
           onSwitchAccount={handleSwitchAccount}
           onAddAccount={handleAddAccount}

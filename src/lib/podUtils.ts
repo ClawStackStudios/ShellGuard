@@ -26,12 +26,7 @@ export const POD_COLOR_PALETTE = [
 
 export const DEFAULT_ROOT_PODS = [
   "Personal",
-  "Work",
-  "Custom",
-  "Test Folder",
-  "VPN Shit",
-  "Server Operating Systems",
-  "Router Operating Systems"
+  "Work"
 ];
 
 export const DEFAULT_ROOT_CATEGORIES = DEFAULT_ROOT_PODS;
@@ -44,12 +39,7 @@ export const DEFAULT_SUGGESTED_PODS = [
   "Work",
   "Work/Finance",
   "Work/Engineering",
-  "Work/Clients",
-  "Custom",
-  "Test Folder",
-  "VPN Shit",
-  "Server Operating Systems",
-  "Router Operating Systems"
+  "Work/Clients"
 ];
 
 export const DEFAULT_SUGGESTED_FOLDERS = DEFAULT_SUGGESTED_PODS;
@@ -57,13 +47,8 @@ export const DEFAULT_SUGGESTED_FOLDERS = DEFAULT_SUGGESTED_PODS;
 const POD_COLOR_STORAGE_KEY = "shellguard_pod_colors";
 
 const INITIAL_DEFAULT_COLORS: Record<string, string> = {
-  "Test Folder": "#06b6d4",
-  "VPN Shit": "#38bdf8",
-  "Server Operating Systems": "#38bdf8",
-  "Router Operating Systems": "#38bdf8",
-  "Personal": "#38bdf8",
-  "Work": "#a855f7",
-  "Custom": "#10b981"
+  "Personal": "#06b6d4",
+  "Work": "#a855f7"
 };
 
 /**
@@ -182,7 +167,6 @@ export function getAllUniquePods(items: VaultItem[], includeDefaults: boolean = 
 
   if (includeDefaults) {
     DEFAULT_ROOT_PODS.forEach(c => podSet.add(c));
-    DEFAULT_SUGGESTED_PODS.forEach(c => podSet.add(c));
   }
 
   // Also include any explicitly stored pods

@@ -59,11 +59,14 @@ export function downloadIdentityFile(username: string, uuid: string, token: stri
     token,
     createdAt: new Date().toISOString()
   };
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(identity, null, 2));
+  const jsonStr = JSON.stringify(identity, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
-  anchor.setAttribute("href", dataStr);
+  anchor.setAttribute("href", url);
   anchor.setAttribute("download", `shellguard_identity_${username}.json`);
   document.body.appendChild(anchor);
   anchor.click();
-  anchor.remove();
+  document.body.removeChild(anchor);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }

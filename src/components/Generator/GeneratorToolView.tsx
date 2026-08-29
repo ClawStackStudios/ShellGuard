@@ -50,6 +50,7 @@ import { VaultItemType } from '../../types.ts';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GeneratorToolViewProps {
+  currentUser?: { username?: string; displayName?: string };
   onSaveToVault?: (item: {
     title: string;
     secret: string;
@@ -71,8 +72,15 @@ interface HistoryItem {
 
 const SESSION_HISTORY_KEY = "sg_generator_session_history";
 
-export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
-  const [config, setConfig] = useState<GeneratorConfig>(getGlobalGeneratorConfig());
+export function GeneratorToolView({ currentUser, onSaveToVault }: GeneratorToolViewProps) {
+  const defaultAccountName = currentUser?.username || currentUser?.displayName || "User";
+  const [config, setConfig] = useState<GeneratorConfig>(() => {
+    const globalConfig = getGlobalGeneratorConfig();
+    if (!globalConfig.totpAccount || globalConfig.totpAccount === "User") {
+      return { ...globalConfig, totpAccount: defaultAccountName };
+    }
+    return globalConfig;
+  });
   const [generated, setGenerated] = useState("");
   const [generationKey, setGenerationKey] = useState<number>(0);
   const [copied, setCopied] = useState(false);
@@ -134,9 +142,9 @@ export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
     return formatTotpUri(
       generated, 
       config.totpIssuer || "ShellGuard", 
-      config.totpAccount || "User"
+      config.totpAccount || defaultAccountName
     );
-  }, [generated, config.totpIssuer, config.totpAccount]);
+  }, [generated, config.totpIssuer, config.totpAccount, defaultAccountName]);
 
   useEffect(() => {
     handleGenerate(config);
@@ -179,7 +187,7 @@ export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
       try {
         const totp = new OTPAuth.TOTP({
           issuer: config.totpIssuer || "ShellGuard",
-          label: config.totpAccount || "User",
+          label: config.totpAccount || defaultAccountName,
           algorithm: "SHA1",
           digits: 6,
           period: 30,
@@ -683,7 +691,7 @@ export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
         </AnimatePresence>
 
         {/* 5. Generator Studio Configuration Tabs & Controls */}
-        <GeneratorOptions config={config} onChange={handleConfigChange} />
+        <GeneratorOptions config={config} onChange={handleConfigChange} defaultAccount={defaultAccountName} />
       </div>
 
       {/* ── Progressive Session History (Recent Passwords Drawer) ── */}

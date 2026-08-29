@@ -16,9 +16,10 @@ import { motion, AnimatePresence } from 'motion/react';
 interface GeneratorOptionsProps {
   config: GeneratorConfig;
   onChange: (config: GeneratorConfig) => void;
+  defaultAccount?: string;
 }
 
-export function GeneratorOptions({ config, onChange }: GeneratorOptionsProps) {
+export function GeneratorOptions({ config, onChange, defaultAccount }: GeneratorOptionsProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const update = (updates: Partial<GeneratorConfig>) => {
@@ -40,6 +41,8 @@ export function GeneratorOptions({ config, onChange }: GeneratorOptionsProps) {
   const passwordLengthPresets = [12, 16, 24, 32, 64];
   const passphraseWordPresets = [3, 4, 5, 6, 8];
   const separatorOptions = ["-", "_", ".", " ", "#"];
+
+  const effectiveAccount = config.totpAccount !== undefined ? config.totpAccount : (defaultAccount || "User");
 
   return (
     <div className="space-y-5">
@@ -331,9 +334,9 @@ export function GeneratorOptions({ config, onChange }: GeneratorOptionsProps) {
               </label>
               <input
                 type="text"
-                value={config.totpAccount || "User"}
+                value={effectiveAccount}
                 onChange={(e) => update({ totpAccount: e.target.value })}
-                placeholder="e.g. user@domain.com"
+                placeholder={`e.g. ${defaultAccount || "user@domain.com"}`}
                 className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3.5 py-2.5 text-sm text-theme-main outline-none focus:border-claw-cyan transition-all"
               />
             </div>

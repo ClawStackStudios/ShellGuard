@@ -848,7 +848,7 @@ export default function App() {
               )}
               {view === "generator" && (
                 <motion.div key="generator" className="w-full">
-                  <GeneratorToolView onSaveToVault={lockTheClaw} />
+                  <GeneratorToolView onSaveToVault={lockTheClaw} currentUser={lobster} />
                 </motion.div>
               )}
               {(view === "settings" || view === "settings_generator") && (
@@ -979,7 +979,7 @@ function SettingsView({
             <p className="text-sm text-slate-500 mt-1">Configure global defaults for the password generator used across ShellGuard.</p>
           </div>
           <div className="p-6">
-            <GeneratorOptions config={genConfig} onChange={handleGenConfigChange} />
+            <GeneratorOptions config={genConfig} onChange={handleGenConfigChange} defaultAccount={lobster?.username} />
           </div>
         </div>
       ) : (

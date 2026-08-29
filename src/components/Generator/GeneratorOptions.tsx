@@ -43,47 +43,36 @@ export function GeneratorOptions({ config, onChange }: GeneratorOptionsProps) {
 
   return (
     <div className="space-y-5">
-      {/* ── Mode Selector Tabs (Segmented Navigation) ── */}
-      <div className="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-2xl border border-theme-subtle flex gap-1">
-        <button
-          type="button"
-          onClick={() => update({ type: "password" })}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            config.type === 'password'
-              ? 'bg-claw-cyan text-white shadow-md shadow-cyan-500/20'
-              : 'text-theme-muted hover:text-theme-main hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
-          }`}
-        >
-          <Hash size={16} />
-          <span>Password</span>
-        </button>
+      {/* ── Mode Selector Tabs for Password vs Passphrase (when in Password mode) ── */}
+      {config.type !== 'totp' && (
+        <div className="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-2xl border border-theme-subtle flex gap-1">
+          <button
+            type="button"
+            onClick={() => update({ type: "password" })}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              config.type === 'password'
+                ? 'bg-claw-cyan text-white shadow-md shadow-cyan-500/20'
+                : 'text-theme-muted hover:text-theme-main hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+            }`}
+          >
+            <Hash size={15} />
+            <span>Password</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => update({ type: "passphrase" })}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            config.type === 'passphrase'
-              ? 'bg-claw-cyan text-white shadow-md shadow-cyan-500/20'
-              : 'text-theme-muted hover:text-theme-main hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
-          }`}
-        >
-          <WholeWord size={16} />
-          <span>Passphrase</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => update({ type: "totp" })}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            config.type === 'totp'
-              ? 'bg-claw-cyan text-white shadow-md shadow-cyan-500/20'
-              : 'text-theme-muted hover:text-theme-main hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
-          }`}
-        >
-          <QrCode size={16} />
-          <span>2FA TOTP Key</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => update({ type: "passphrase" })}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              config.type === 'passphrase'
+                ? 'bg-claw-cyan text-white shadow-md shadow-cyan-500/20'
+                : 'text-theme-muted hover:text-theme-main hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+            }`}
+          >
+            <WholeWord size={15} />
+            <span>Passphrase</span>
+          </button>
+        </div>
+      )}
 
       {/* ── Mode 1: Random Password Controls ── */}
       {config.type === 'password' && (
@@ -329,9 +318,9 @@ export function GeneratorOptions({ config, onChange }: GeneratorOptionsProps) {
               </label>
               <input
                 type="text"
-                value={config.totpIssuer || "SeaGuard"}
+                value={config.totpIssuer || "ShellGuard"}
                 onChange={(e) => update({ totpIssuer: e.target.value })}
-                placeholder="e.g. SeaGuard, GitHub, AWS"
+                placeholder="e.g. ShellGuard, GitHub, AWS"
                 className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3.5 py-2.5 text-sm text-theme-main outline-none focus:border-claw-cyan transition-all"
               />
             </div>

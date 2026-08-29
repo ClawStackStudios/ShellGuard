@@ -133,7 +133,7 @@ export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
     if (!generated) return "";
     return formatTotpUri(
       generated, 
-      config.totpIssuer || "SeaGuard", 
+      config.totpIssuer || "ShellGuard", 
       config.totpAccount || "User"
     );
   }, [generated, config.totpIssuer, config.totpAccount]);
@@ -178,7 +178,7 @@ export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
     const updateTotp = () => {
       try {
         const totp = new OTPAuth.TOTP({
-          issuer: config.totpIssuer || "SeaGuard",
+          issuer: config.totpIssuer || "ShellGuard",
           label: config.totpAccount || "User",
           algorithm: "SHA1",
           digits: 6,
@@ -345,32 +345,75 @@ export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-black text-theme-main flex items-center gap-2.5">
-            <Zap className="text-claw-cyan" size={24} />
-            <span>Password Generator</span>
+            {config.type === 'totp' ? (
+              <>
+                <QrCode className="text-claw-cyan" size={24} />
+                <span>2FA TOTP Generator</span>
+              </>
+            ) : (
+              <>
+                <Zap className="text-claw-cyan" size={24} />
+                <span>Password Generator</span>
+              </>
+            )}
           </h2>
           <p className="text-xs text-theme-muted mt-0.5">
-            Generate cryptographically secure passwords, passphrases, and 2FA tokens.
+            {config.type === 'totp'
+              ? "Generate cryptographic RFC 6238 two-factor authentication seed keys and rolling codes."
+              : "Generate cryptographically secure passwords, passphrases, and credentials."}
           </p>
         </div>
 
-        {/* History Quick Toggle Button */}
-        {history.length > 0 && (
+        {/* Action Button Cluster (Dynamic Mode Switcher to left of Recent) */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Dynamic TOTP / Password Switch Button */}
           <button
             type="button"
-            onClick={() => setShowHistory(!showHistory)}
-            className={`self-start sm:self-auto px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-              showHistory
-                ? 'bg-claw-cyan/15 border-claw-cyan/40 text-claw-cyan'
-                : 'bg-theme-surface border-theme-subtle text-theme-muted hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800'
+            onClick={() => {
+              const nextType: "password" | "totp" = config.type === 'totp' ? 'password' : 'totp';
+              const updatedConfig: GeneratorConfig = { ...config, type: nextType };
+              setConfig(updatedConfig);
+              setGlobalGeneratorConfig(updatedConfig);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border shadow-sm active:scale-95 ${
+              config.type === 'totp'
+                ? 'bg-claw-cyan/15 border-claw-cyan/40 text-claw-cyan hover:bg-claw-cyan/25'
+                : 'bg-theme-surface border-theme-subtle text-theme-muted hover:text-claw-cyan hover:border-claw-cyan/40 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
+            title={config.type === 'totp' ? "Switch to Password Generator" : "Switch to 2FA TOTP Generator"}
           >
-            <History size={14} />
-            <span>Recent ({history.length})</span>
+            {config.type === 'totp' ? (
+              <>
+                <Zap size={14} className="text-claw-cyan" />
+                <span>Password</span>
+              </>
+            ) : (
+              <>
+                <QrCode size={14} className="text-claw-cyan" />
+                <span>TOTP</span>
+              </>
+            )}
           </button>
-        )}
+
+          {/* History Quick Toggle Button */}
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowHistory(!showHistory)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                showHistory
+                  ? 'bg-claw-cyan/15 border-claw-cyan/40 text-claw-cyan'
+                  : 'bg-theme-surface border-theme-subtle text-theme-muted hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <History size={14} />
+              <span>Recent ({history.length})</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Active Clipboard Auto-Purge Countdown Banner ── */}
@@ -626,7 +669,7 @@ export function GeneratorToolView({ onSaveToVault }: GeneratorToolViewProps) {
                     
                     <a
                       href={qrCodeDataUrl}
-                      download={`seaguard-totp-qr-${Date.now()}.png`}
+                      download={`shellguard-totp-qr-${Date.now()}.png`}
                       className="px-3 py-1.5 text-xs font-bold rounded-lg border bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 transition-all flex items-center gap-1.5"
                     >
                       <Download size={13} />

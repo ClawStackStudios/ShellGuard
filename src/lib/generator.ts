@@ -28,7 +28,7 @@ export const defaultGeneratorConfig: GeneratorConfig = {
   capitalize: true,
   includeNumber: true,
   totpLength: 32,
-  totpIssuer: "SeaGuard",
+  totpIssuer: "ShellGuard",
   totpAccount: "User",
   autoClearClipboard: true,
   clipboardClearSeconds: 30,
@@ -38,7 +38,11 @@ export const getGlobalGeneratorConfig = (): GeneratorConfig => {
   const stored = localStorage.getItem("sg_generator_config");
   if (stored) {
     try {
-      return { ...defaultGeneratorConfig, ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored);
+      if (parsed.totpIssuer === "SeaGuard") {
+        parsed.totpIssuer = "ShellGuard";
+      }
+      return { ...defaultGeneratorConfig, ...parsed };
     } catch (e) {
       return defaultGeneratorConfig;
     }
@@ -193,14 +197,14 @@ export const isTotpSecret = (value: string): boolean => {
 
 export const formatTotpUri = (
   secret: string, 
-  issuer: string = "SeaGuard", 
+  issuer: string = "ShellGuard", 
   account: string = "Vault"
 ): string => {
   if (!secret) return "";
   const trimmed = secret.trim();
   if (trimmed.startsWith("otpauth://")) return trimmed;
   const cleanSecret = trimmed.replace(/[\s-]/g, "").toUpperCase();
-  const safeIssuer = encodeURIComponent(issuer.trim() || "SeaGuard");
+  const safeIssuer = encodeURIComponent(issuer.trim() || "ShellGuard");
   const safeAccount = encodeURIComponent(account.trim() || "Vault");
   return `otpauth://totp/${safeIssuer}:${safeAccount}?secret=${cleanSecret}&issuer=${safeIssuer}&algorithm=SHA1&digits=6&period=30`;
 };

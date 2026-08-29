@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.0.1.2] - 2026-08-29
+
+### Fixed
+- **Insecure Origin UUID & Entropy Fallback** — Added multi-tier RFC 4122 v4 UUID generator and secure entropy fallback in `src/lib/crypto.ts` for non-secure HTTP browser origins where `window.crypto.randomUUID` is undefined.
+- **LAN HTTP Insecure File Downloads** — Replaced raw `data:` URI links with in-memory `Blob` and `URL.createObjectURL(blob)` in `downloadIdentityFile` and `downloadAttachment` to eliminate Chromium insecure-connection download blocks.
+
 ## [0.0.1] - 2026-08-29
 
 ### Added

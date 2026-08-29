@@ -12,7 +12,10 @@ import {
   ArrowRight, 
   Sparkles,
   Layers,
-  Fingerprint
+  Terminal,
+  Paperclip,
+  Copy,
+  Check
 } from "lucide-react";
 
 interface LandingViewProps {
@@ -20,9 +23,160 @@ interface LandingViewProps {
   onHatch: () => void;
 }
 
-export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
-  const [activeTab, setActiveTab] = useState<"human" | "agent">("human");
+// ── Key Badge Pill Helper (CaraBase Pattern) ───────────────────────────────────
+function KeyPill({ prefix, label, color }: { prefix: string; label: string; color: string }) {
+  return (
+    <div className="bg-theme-base/90 rounded-2xl p-5 border border-theme-subtle shadow-sm">
+      <div className={`font-mono font-bold text-base mb-1.5 ${color}`}>
+        {prefix}<span className="text-theme-muted text-xs font-normal"> [hex]</span>
+      </div>
+      <p className="text-xs text-theme-muted leading-relaxed">{label}</p>
+    </div>
+  );
+}
 
+// ── Compact Auth Gateway (ClawChives Pattern Port) ──────────────────────────────
+function AuthGateway({ onHatch }: { onHatch: () => void }) {
+  const [gatewayMode, setGatewayMode] = useState<"human" | "agent">("human");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopySkill = () => {
+    const url = `${window.location.origin}/skill.md`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <section className="py-20 px-4 sm:px-6 lg:px-8 flex justify-center relative z-10" id="gateway">
+      <div className="w-full max-w-md space-y-6">
+        {/* Toggle Pill Bar */}
+        <div className="flex justify-center gap-2 p-1.5 bg-theme-surface border border-theme-subtle rounded-full backdrop-blur-sm shadow-inner">
+          <button
+            onClick={() => setGatewayMode("human")}
+            className={`flex-1 px-4 py-2.5 text-xs font-bold rounded-full transition-all uppercase tracking-widest cursor-pointer ${
+              gatewayMode === "human"
+                ? "bg-[#e4048a] text-white shadow-lg shadow-[#e4048a]/20"
+                : "text-theme-muted hover:text-theme-main"
+            }`}
+          >
+            👤 I'm a Human
+          </button>
+          <button
+            onClick={() => setGatewayMode("agent")}
+            className={`flex-1 px-4 py-2.5 text-xs font-bold rounded-full transition-all uppercase tracking-widest cursor-pointer ${
+              gatewayMode === "agent"
+                ? "bg-[#06b6d4] text-white shadow-lg shadow-[#06b6d4]/20"
+                : "text-theme-muted hover:text-theme-main"
+            }`}
+          >
+            🤖 I'm a Lobster
+          </button>
+        </div>
+
+        {/* Card Body */}
+        <div className="bg-theme-surface border border-theme-subtle rounded-3xl p-8 shadow-xl relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            {gatewayMode === "human" ? (
+              <motion.div 
+                key="gateway-human"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h3 className="text-theme-main font-bold mb-6 text-center text-xs uppercase tracking-widest leading-relaxed">
+                  Join the <br /> <span className="text-[#e4048a]">Reef</span> 🌊
+                </h3>
+                <div className="text-sm text-theme-muted space-y-4 px-1">
+                  <p className="flex items-center">
+                    <span className="w-6 h-6 flex items-center justify-center bg-[#e4048a]/15 text-[#e4048a] rounded-md font-black mr-3 text-xs flex-shrink-0 font-mono">1</span>
+                    Generate your sovereign 67-character <code className="text-[#e4048a] font-mono ml-1 font-bold">hu-</code> Key
+                  </p>
+                  <p className="flex items-center">
+                    <span className="w-6 h-6 flex items-center justify-center bg-[#e4048a]/15 text-[#e4048a] rounded-md font-black mr-3 text-xs flex-shrink-0 font-mono">2</span>
+                    Store it somewhere safe (Zero-Knowledge Offline)
+                  </p>
+                  <p className="flex items-center">
+                    <span className="w-6 h-6 flex items-center justify-center bg-[#e4048a]/15 text-[#e4048a] rounded-md font-black mr-3 text-xs flex-shrink-0 font-mono">3</span>
+                    Drag &amp; Drop your Access File to authenticate
+                  </p>
+                </div>
+                <button
+                  onClick={onHatch}
+                  className="w-full mt-8 py-3.5 bg-[#e4048a] hover:bg-[#be185d] text-white font-bold rounded-2xl shadow-lg shadow-[#e4048a]/20 transition-all active:scale-95 cursor-pointer text-sm"
+                >
+                  Hatch Your ShellGuard
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="gateway-agent"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h3 className="text-theme-main font-bold mb-4 text-center text-xs uppercase tracking-widest leading-relaxed">
+                  Integrate your <br /> <span className="text-[#06b6d4]">Lobsters</span> 🦞
+                </h3>
+                <h4 className="text-theme-main font-bold mb-4 text-center text-xs uppercase tracking-widest">
+                  Give This To Your<br /><span className="text-[#06b6d4]">Lobster</span>
+                </h4>
+                
+                {/* GET /skill.md Code Pill with Copy */}
+                <div className="bg-theme-base rounded-2xl p-4 mb-4 border border-theme-subtle shadow-inner flex items-center justify-between group relative overflow-hidden">
+                  <code className="text-[#06b6d4] text-[11px] font-mono whitespace-nowrap overflow-hidden text-ellipsis flex-1 relative z-10 selection:bg-[#06b6d4]/20 font-bold">
+                    GET /skill.md
+                  </code>
+                  <button
+                    onClick={handleCopySkill}
+                    className="ml-2 px-2.5 py-1 text-[10px] font-bold text-[#06b6d4] hover:bg-[#06b6d4]/10 rounded-lg transition-colors flex-shrink-0 border border-[#06b6d4]/30 cursor-pointer flex items-center gap-1 relative z-10"
+                    title="Copy skill URL"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3 h-3 text-[#10b981]" />
+                        <span className="text-[#10b981]">COPIED</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>COPY</span>
+                      </>
+                    )}
+                  </button>
+                  <div className="absolute inset-0 bg-[#06b6d4]/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                </div>
+                
+                <div className="text-xs text-theme-muted space-y-3 px-1 mb-4">
+                  <p className="text-center italic">
+                    Give this URL to your Lobster to understand ShellGuard
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => window.open('/skill.md', '_blank')}
+                  className="w-full px-3 py-2.5 text-xs font-bold rounded-xl bg-[#06b6d4]/10 text-[#06b6d4] hover:bg-[#06b6d4]/20 border border-[#06b6d4]/20 transition-all cursor-pointer mb-2 flex items-center justify-center gap-1.5"
+                >
+                  <span>Preview Skill Document →</span>
+                </button>
+                <button
+                  onClick={onHatch}
+                  className="w-full mt-4 py-3.5 bg-[#06b6d4] hover:bg-[#0891b2] text-white font-bold rounded-2xl shadow-lg shadow-[#06b6d4]/20 transition-all active:scale-95 cursor-pointer text-sm"
+                >
+                  Secure Agent Identity
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
   const handleScrollToFeatures = () => {
     const element = document.getElementById("features");
     if (element) {
@@ -136,203 +290,305 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
           </div>
         </section>
 
-        {/* FEATURE GRID */}
-        <section className="py-24 bg-theme-surface/40 border-y border-theme-subtle px-4 sm:px-6 lg:px-8" id="features">
+        {/* ── CLAWCHIVES AUTH GATEWAY PORT ── */}
+        <AuthGateway onHatch={onHatch} />
+
+        {/* CARABASE-ALIGNED FEATURE GRID */}
+        <section className="py-24 bg-theme-surface/40 border-y border-theme-subtle px-4 sm:px-6 lg:px-8 relative" id="features">
           <div className="max-w-7xl mx-auto">
+            
+            {/* Section Header */}
             <div className="text-center mb-16 max-w-2xl mx-auto">
+              <div className="inline-flex items-center gap-2 bg-[#06b6d4]/10 border border-[#06b6d4]/30 px-3.5 py-1 rounded-full text-[#06b6d4] text-xs font-mono font-bold mb-4 shadow-sm">
+                <span>⚡</span> REEF INTEGRITY &amp; DEFENSE
+              </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 tracking-tight">
-                Sovereign Vault Integrity
+                Sovereign Vault Architecture
               </h2>
               <p className="text-theme-muted text-sm sm:text-base leading-relaxed">
                 Zero-knowledge mathematics running in your browser memory and self-hosted disk burrows.
               </p>
             </div>
 
+            {/* 6-Card CaraBase Rounded Squares Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Card 1 */}
-              <div className="glass-card rounded-3xl p-8 border border-theme-subtle hover:border-[#e4048a]/40 hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col justify-between">
+              
+              {/* Card 1: Human Curated */}
+              <div className="glass-card rounded-[28px] p-8 border border-theme-subtle hover:border-[#e4048a]/50 hover:shadow-xl hover:shadow-[#e4048a]/5 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#e4048a]/5 rounded-full blur-2xl group-hover:bg-[#e4048a]/10 transition-colors pointer-events-none" />
                 <div>
-                  <div className="w-12 h-12 bg-[#e4048a]/15 rounded-2xl flex items-center justify-center border border-[#e4048a]/30 mb-6 text-[#e4048a]">
-                    <Users className="w-6 h-6" />
+                  {/* Top Metadata Row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="relative">
+                      <div className="w-13 h-13 bg-gradient-to-br from-[#e4048a]/20 to-[#e4048a]/5 rounded-2xl flex items-center justify-center border border-[#e4048a]/35 text-[#e4048a] shadow-sm">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <span className="absolute -bottom-1.5 -right-1.5 text-xs bg-theme-surface border border-theme-subtle rounded-md px-1 py-0.5 shadow-sm">👥</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#e4048a]/10 text-[#e4048a] border border-[#e4048a]/25">
+                      BIOMETRIC &amp; LOCAL
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-theme-main mb-3">Human Curated</h3>
+
+                  <h3 className="text-xl font-bold text-theme-main mb-2 tracking-tight group-hover:text-[#e4048a] transition-colors">
+                    Human Curated
+                  </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Designed for carbon-based lifeforms first. Intuitive, fast, and frictionless secret management with biometric unlock.
+                    Designed for carbon-based lifeforms first. Intuitive secret management with <strong className="text-theme-main">biometric unlock</strong> and client-held <code className="text-xs font-mono text-[#e4048a]">hu-</code> sovereign access keys.
                   </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-theme-subtle flex items-center justify-between text-xs font-mono text-theme-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#e4048a]" />
+                    Web Crypto API
+                  </span>
+                  <span>Memory-Only</span>
                 </div>
               </div>
 
-              {/* Card 2 */}
-              <div className="glass-card rounded-3xl p-8 border border-theme-subtle hover:border-[#06b6d4]/40 hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col justify-between">
+              {/* Card 2: Lobster Powered */}
+              <div className="glass-card rounded-[28px] p-8 border border-theme-subtle hover:border-[#06b6d4]/50 hover:shadow-xl hover:shadow-[#06b6d4]/5 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#06b6d4]/5 rounded-full blur-2xl group-hover:bg-[#06b6d4]/10 transition-colors pointer-events-none" />
                 <div>
-                  <div className="w-12 h-12 bg-[#06b6d4]/15 rounded-2xl flex items-center justify-center border border-[#06b6d4]/30 mb-6 text-[#06b6d4]">
-                    <Bot className="w-6 h-6" />
+                  {/* Top Metadata Row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="relative">
+                      <div className="w-13 h-13 bg-gradient-to-br from-[#06b6d4]/20 to-[#06b6d4]/5 rounded-2xl flex items-center justify-center border border-[#06b6d4]/35 text-[#06b6d4] shadow-sm">
+                        <Bot className="w-6 h-6" />
+                      </div>
+                      <span className="absolute -bottom-1.5 -right-1.5 text-xs bg-theme-surface border border-theme-subtle rounded-md px-1 py-0.5 shadow-sm">🤖</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#06b6d4]/10 text-[#06b6d4] border border-[#06b6d4]/25">
+                      AUTONOMOUS AGENTS
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-theme-main mb-3">Lobster Powered</h3>
+
+                  <h3 className="text-xl font-bold text-theme-main mb-2 tracking-tight group-hover:text-[#06b6d4] transition-colors">
+                    Lobster Powered
+                  </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Exposes dedicated LobsterKeys (<code className="font-mono text-xs text-[#06b6d4]">lb-</code>) so your autonomous sub-agents securely fetch credentials without master key exposure.
+                    Exposes dedicated <code className="font-mono text-xs text-[#06b6d4] bg-[#06b6d4]/10 px-1.5 py-0.5 rounded font-bold">lb-</code> keys so your autonomous sub-agents securely fetch credentials without master key exposure.
                   </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-theme-subtle flex items-center justify-between text-xs font-mono text-theme-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#06b6d4]" />
+                    SHA-256 Hashing
+                  </span>
+                  <span>Granular Scopes</span>
                 </div>
               </div>
 
-              {/* Card 3 */}
-              <div className="glass-card rounded-3xl p-8 border border-theme-subtle hover:border-[#10b981]/40 hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col justify-between">
+              {/* Card 3: Triple-Layer Defense */}
+              <div className="glass-card rounded-[28px] p-8 border border-theme-subtle hover:border-[#10b981]/50 hover:shadow-xl hover:shadow-[#10b981]/5 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#10b981]/5 rounded-full blur-2xl group-hover:bg-[#10b981]/10 transition-colors pointer-events-none" />
                 <div>
-                  <div className="w-12 h-12 bg-[#10b981]/15 rounded-2xl flex items-center justify-center border border-[#10b981]/30 mb-6 text-[#10b981]">
-                    <Layers className="w-6 h-6" />
+                  {/* Top Metadata Row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="relative">
+                      <div className="w-13 h-13 bg-gradient-to-br from-[#10b981]/20 to-[#10b981]/5 rounded-2xl flex items-center justify-center border border-[#10b981]/35 text-[#10b981] shadow-sm">
+                        <Layers className="w-6 h-6" />
+                      </div>
+                      <span className="absolute -bottom-1.5 -right-1.5 text-xs bg-theme-surface border border-theme-subtle rounded-md px-1 py-0.5 shadow-sm">🔐</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/25">
+                      DEFENSE-IN-DEPTH
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-theme-main mb-3">Triple-Layer Defense</h3>
+
+                  <h3 className="text-xl font-bold text-theme-main mb-2 tracking-tight group-hover:text-[#10b981] transition-colors">
+                    Triple-Layer Defense
+                  </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Client-side Web Crypto (HKDF + AES-GCM-256), per-row server metadata encryption, and SQLCipher whole-database encryption.
+                    Client-side <strong className="text-theme-main">ShellCryption©™</strong> (HKDF + AES-GCM-256), server-side <strong className="text-[#10b981]">Per-Row Metadata AES</strong>, and <strong className="text-theme-main">SQLCipher</strong> whole-DB encryption.
                   </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-theme-subtle flex items-center justify-between text-xs font-mono text-theme-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+                    3 Independent Layers
+                  </span>
+                  <span>Zero-Knowledge</span>
                 </div>
               </div>
 
-              {/* Card 4 */}
-              <div className="glass-card rounded-3xl p-8 border border-theme-subtle hover:border-purple-500/40 hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col justify-between">
+              {/* Card 4: Your Own Shell */}
+              <div className="glass-card rounded-[28px] p-8 border border-theme-subtle hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors pointer-events-none" />
                 <div>
-                  <div className="w-12 h-12 bg-purple-500/15 rounded-2xl flex items-center justify-center border border-purple-500/30 mb-6 text-purple-400">
-                    <Waves className="w-6 h-6" />
+                  {/* Top Metadata Row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="relative">
+                      <div className="w-13 h-13 bg-gradient-to-br from-purple-500/20 to-purple-500/5 rounded-2xl flex items-center justify-center border border-purple-500/35 text-purple-400 shadow-sm">
+                        <Waves className="w-6 h-6" />
+                      </div>
+                      <span className="absolute -bottom-1.5 -right-1.5 text-xs bg-theme-surface border border-theme-subtle rounded-md px-1 py-0.5 shadow-sm">🐚</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/25">
+                      SOVEREIGN SELF-HOST
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-theme-main mb-3">Your Own Shell</h3>
+
+                  <h3 className="text-xl font-bold text-theme-main mb-2 tracking-tight group-hover:text-purple-400 transition-colors">
+                    Your Own Shell
+                  </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Run locally or self-host on Docker or Unraid. Zero third-party telemetry, zero cloud lock-in. You hold the master keys.
+                    Run locally or deploy to <strong className="text-theme-main">Docker Compose</strong> and <strong className="text-purple-400">Unraid Community Applications</strong>. Zero third-party telemetry, zero vendor lock-in.
                   </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-theme-subtle flex items-center justify-between text-xs font-mono text-theme-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                    Unraid XML Template
+                  </span>
+                  <span>Port :6464</span>
                 </div>
               </div>
 
-              {/* Card 5 */}
-              <div className="glass-card rounded-3xl p-8 border border-theme-subtle hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col justify-between">
+              {/* Card 5: Password Attachments */}
+              <div className="glass-card rounded-[28px] p-8 border border-theme-subtle hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors pointer-events-none" />
                 <div>
-                  <div className="w-12 h-12 bg-emerald-500/15 rounded-2xl flex items-center justify-center border border-emerald-500/30 mb-6 text-emerald-400">
-                    <Shield className="w-6 h-6" />
+                  {/* Top Metadata Row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="relative">
+                      <div className="w-13 h-13 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 rounded-2xl flex items-center justify-center border border-emerald-500/35 text-emerald-400 shadow-sm">
+                        <Paperclip className="w-6 h-6" />
+                      </div>
+                      <span className="absolute -bottom-1.5 -right-1.5 text-xs bg-theme-surface border border-theme-subtle rounded-md px-1 py-0.5 shadow-sm">📎</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                      10MB REFERENCE MODEL
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-theme-main mb-3">Password Attachments</h3>
+
+                  <h3 className="text-xl font-bold text-theme-main mb-2 tracking-tight group-hover:text-emerald-400 transition-colors">
+                    Password Attachments
+                  </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Attach recovery files, keys, and license documents (up to 10 MB each) directly to pearls with zero-knowledge encryption.
+                    Attach recovery keys, license documents, and SSH certs (<strong className="text-theme-main">10 MB limit</strong>) directly to pearls with <strong className="text-emerald-400">atomic cascade deletion</strong>.
                   </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-theme-subtle flex items-center justify-between text-xs font-mono text-theme-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Encrypted Attachment BLOBs
+                  </span>
+                  <span>Direct Download</span>
                 </div>
               </div>
 
-              {/* Card 6 */}
-              <div className="glass-card rounded-3xl p-8 border border-theme-subtle hover:border-[#e4048a]/40 hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col justify-between">
+              {/* Card 6: The Grotto & Pods */}
+              <div className="glass-card rounded-[28px] p-8 border border-theme-subtle hover:border-[#e4048a]/50 hover:shadow-xl hover:shadow-[#e4048a]/5 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#e4048a]/5 rounded-full blur-2xl group-hover:bg-[#e4048a]/10 transition-colors pointer-events-none" />
                 <div>
-                  <div className="w-12 h-12 bg-[#e4048a]/15 rounded-2xl flex items-center justify-center border border-[#e4048a]/30 mb-6 text-[#e4048a]">
-                    <Lock className="w-6 h-6" />
+                  {/* Top Metadata Row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="relative">
+                      <div className="w-13 h-13 bg-gradient-to-br from-[#e4048a]/20 to-[#e4048a]/5 rounded-2xl flex items-center justify-center border border-[#e4048a]/35 text-[#e4048a] shadow-sm">
+                        <Lock className="w-6 h-6" />
+                      </div>
+                      <span className="absolute -bottom-1.5 -right-1.5 text-xs bg-theme-surface border border-theme-subtle rounded-md px-1 py-0.5 shadow-sm">⚡</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#e4048a]/10 text-[#e4048a] border border-[#e4048a]/25">
+                      HIERARCHICAL REEF
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-theme-main mb-3">Granular Scoping</h3>
+
+                  <h3 className="text-xl font-bold text-theme-main mb-2 tracking-tight group-hover:text-[#e4048a] transition-colors">
+                    The Grotto &amp; Pods
+                  </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Assign exact read, write, edit, or delete permissions per agent. Revoke compromised keys in one click with instant invalidation.
+                    Color-coded pods for <strong className="text-theme-main">Personal, Work, Finance, &amp; Infra</strong> credentials with a built-in zero-knowledge <strong className="text-[#e4048a]">TOTP authenticator</strong>.
                   </p>
                 </div>
+
+                <div className="mt-6 pt-4 border-t border-theme-subtle flex items-center justify-between text-xs font-mono text-theme-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#e4048a]" />
+                    Rolling TOTP Codes
+                  </span>
+                  <span>Pearl Generator</span>
+                </div>
               </div>
+
             </div>
           </div>
         </section>
 
-        {/* IDENTITY TABBED WORK STEPPER */}
-        <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" id="identity">
-          <div className="max-w-3xl mx-auto flex flex-col items-center">
-            
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-black mb-3">
-                How Identity Works
+        {/* ── SECURITY POSTURE (CARABASE PATTERN PORT) ── */}
+        <section id="security" className="py-24 px-4 sm:px-6 lg:px-8 bg-theme-surface/50 border-y border-theme-subtle relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16 max-w-2xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 bg-[#e4048a]/10 text-[#e4048a] border border-[#e4048a]/30 font-mono shadow-sm">
+                <span>🛡️</span> Security Posture
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 tracking-tight">
+                <span className="text-[#e4048a]">Shell-Hardened</span> by Default
               </h2>
-              <p className="text-theme-muted text-sm sm:text-base">
-                Select your persona to see the cryptographic flow.
+              <p className="text-theme-muted text-sm sm:text-base leading-relaxed">
+                ShellGuard is built zero-knowledge-first. Every seam between browser memory and disk storage is hardened.
               </p>
             </div>
 
-            {/* Toggle Switch */}
-            <div className="inline-flex bg-theme-surface border border-theme-subtle p-1.5 rounded-2xl mb-12 w-full max-w-sm shadow-inner">
-              <button 
-                onClick={() => setActiveTab("human")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${activeTab === "human" ? "bg-[#e4048a] text-white shadow-md shadow-[#e4048a]/20" : "text-theme-muted hover:text-theme-main"}`}
-              >
-                <Fingerprint className="w-4 h-4" />
-                <span>Human Identity</span>
-              </button>
-              <button 
-                onClick={() => setActiveTab("agent")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${activeTab === "agent" ? "bg-[#06b6d4] text-white shadow-md shadow-[#06b6d4]/20" : "text-theme-muted hover:text-theme-main"}`}
-              >
-                <Bot className="w-4 h-4" />
-                <span>Agent Key</span>
-              </button>
+            {/* Key Hierarchy */}
+            <div className="grid md:grid-cols-3 gap-4 mb-12">
+              <KeyPill 
+                prefix="hu-" 
+                color="text-emerald-400" 
+                label="Human root identity. Client HKDF-SHA256 derived. Never sent plaintext to the server. Loss = non-recoverable — true sovereign ownership." 
+              />
+              <KeyPill 
+                prefix="api-" 
+                color="text-amber-400" 
+                label="Ephemeral Bearer token. Stored in client memory only — cleared on lock/logout. Issued after cryptographic challenge, revocable instantly." 
+              />
+              <KeyPill 
+                prefix="lb-" 
+                color="text-[#06b6d4]" 
+                label="Lobster Key. Scoped, rate-limited, time-bounded permissions (canRead / canWrite / canEdit / canDelete). Instant one-click revocation." 
+              />
             </div>
 
-            {/* Stepper Card */}
-            <AnimatePresence mode="wait">
-              {activeTab === "human" ? (
-                <motion.div 
-                  key="human-tab"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-full p-8 sm:p-10 rounded-3xl bg-theme-surface border border-theme-subtle shadow-2xl shadow-black/5 relative overflow-hidden"
-                >
-                  <div className="text-center mb-8">
-                    <p className="text-theme-muted text-[10px] tracking-widest uppercase font-bold mb-1 font-mono">Join the Reef</p>
-                    <h4 className="text-[#e4048a] font-black tracking-wider text-xl uppercase">Human Molting Flow 🌊</h4>
-                  </div>
-                  <div className="space-y-6 mb-10">
-                    <div className="flex items-start gap-4">
-                      <span className="w-8 h-8 rounded-xl bg-[#e4048a]/15 text-[#e4048a] text-xs font-bold flex items-center justify-center border border-[#e4048a]/30 font-mono shrink-0">1</span>
-                      <p className="text-theme-main text-sm mt-1">Generate your sovereign 67-character <code className="font-mono text-xs text-[#e4048a]">hu-</code> Key and download your encrypted Vault Access File.</p>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <span className="w-8 h-8 rounded-xl bg-[#e4048a]/15 text-[#e4048a] text-xs font-bold flex items-center justify-center border border-[#e4048a]/30 font-mono shrink-0">2</span>
-                      <p className="text-theme-main text-sm mt-1">Store your key strictly offline. The server never receives or stores your plaintext key.</p>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <span className="w-8 h-8 rounded-xl bg-[#e4048a]/15 text-[#e4048a] text-xs font-bold flex items-center justify-center border border-[#e4048a]/30 font-mono shrink-0">3</span>
-                      <p className="text-theme-main text-sm mt-1">Drop your Vault Access File or paste your key to authenticate and derive your client-side encryption cipher.</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={onHatch}
-                    className="w-full py-4 bg-[#e4048a] hover:bg-[#be185d] text-white font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-[#e4048a]/20 cursor-pointer text-sm"
-                  >
-                    Hatch Human Vault
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="agent-tab"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-full p-8 sm:p-10 rounded-3xl bg-theme-surface border border-theme-subtle shadow-2xl shadow-black/5 relative overflow-hidden"
-                >
-                  <div className="text-center mb-8">
-                    <p className="text-theme-muted text-[10px] tracking-widest uppercase font-bold mb-1 font-mono">Autonomous Integration</p>
-                    <h4 className="text-[#06b6d4] font-black tracking-wider text-xl uppercase">LobsterKey API Flow 🤖</h4>
-                  </div>
-                  <div className="space-y-6 mb-10">
-                    <div className="flex items-start gap-4">
-                      <span className="w-8 h-8 rounded-xl bg-[#06b6d4]/15 text-[#06b6d4] text-xs font-bold flex items-center justify-center border border-[#06b6d4]/30 font-mono shrink-0">1</span>
-                      <p className="text-theme-main text-sm mt-1">Issue a scoped <code className="font-mono text-xs text-[#06b6d4]">lb-</code> key from your ShellGuard dashboard with custom read/write permissions.</p>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <span className="w-8 h-8 rounded-xl bg-[#06b6d4]/15 text-[#06b6d4] text-xs font-bold flex items-center justify-center border border-[#06b6d4]/30 font-mono shrink-0">2</span>
-                      <p className="text-theme-main text-sm mt-1">The agent SHA-256 hashes the key and calls <code className="font-mono text-xs text-[#06b6d4]">POST /api/auth/token</code> to exchange for an ephemeral Bearer token.</p>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <span className="w-8 h-8 rounded-xl bg-[#06b6d4]/15 text-[#06b6d4] text-xs font-bold flex items-center justify-center border border-[#06b6d4]/30 font-mono shrink-0">3</span>
-                      <p className="text-theme-main text-sm mt-1">The agent queries credentials or notes programmatically via REST while respecting rate limits and audit logs.</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={handleScrollToFeatures}
-                    className="w-full py-4 bg-[#06b6d4] hover:bg-[#0891b2] text-white font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-[#06b6d4]/20 cursor-pointer text-sm"
-                  >
-                    View Agent Architecture
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Auth Flow Terminal */}
+            <div className="bg-slate-950 rounded-2xl p-6 sm:p-8 border border-slate-800 font-mono text-xs sm:text-sm overflow-x-auto mb-10 shadow-2xl text-slate-300">
+              <div className="text-slate-500 text-xs uppercase tracking-widest mb-4 font-bold flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-[#e4048a]" />
+                <span>// ShellGuard Zero-Knowledge Auth Flow</span>
+              </div>
+              <div className="space-y-2 text-slate-400">
+                <div><span className="text-emerald-400">Client </span>→ generates(hu-key) → derives(AES-GCM-256 cipher) → hashes(SHA-256) → POST /api/auth/register</div>
+                <div><span className="text-amber-400">Reef   </span>→ stores(uuid, username, keyHash) → 201 Created</div>
+                <div><span className="text-emerald-400">Client </span>→ hashes(hu-key) → POST /api/auth/token → receives(api-token)</div>
+                <div><span className="text-emerald-400">Client </span>→ Authorization: Bearer api-token + ShellCryption in-memory</div>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-emerald-400 flex flex-wrap gap-4 font-sans font-medium">
+                <span>✅ hu- keys NEVER sent plaintext</span>
+                <span>✅ Constant-time SHA-256 comparison</span>
+                <span>✅ Per-row metadata AES-256 + SQLCipher at rest</span>
+              </div>
+            </div>
+
+            {/* Security Checklist (4-card grid) */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                ['🛡️', 'Triple-Layer Defense', 'Client ShellCryption (AES-GCM-256), Server Per-Row AES, and SQLCipher whole-DB encryption.'],
+                ['🔍', 'Audit Trail Ledger', 'Every secret access, export, and mutation logged with actor, IP, outcome, and timestamp.'],
+                ['🚦', 'Rate Limiting & Armor', 'Auth endpoints protected against brute-force; Lobster agent queries throttled per key.'],
+                ['🧬', 'Cascade Invariants', 'Atomic cascade deletion of all 10MB password attachments and pearls upon vault purge.'],
+              ].map(([icon, title, desc]) => (
+                <div key={title} className="bg-theme-surface rounded-2xl p-6 border border-theme-subtle shadow-sm hover:border-[#e4048a]/40 transition-all">
+                  <div className="text-2xl mb-3">{icon}</div>
+                  <div className="font-bold text-theme-main text-sm mb-1.5">{title}</div>
+                  <div className="text-theme-muted text-xs leading-relaxed">{desc}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -394,7 +650,8 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
           <div className="flex gap-6 text-theme-muted text-xs font-mono">
             <a className="hover:text-[#e4048a] transition-colors" href="#hero">Security</a>
             <a className="hover:text-[#e4048a] transition-colors" href="#features">Features</a>
-            <a className="hover:text-[#e4048a] transition-colors" href="#identity">Identity</a>
+            <a className="hover:text-[#e4048a] transition-colors" href="#security">Posture</a>
+            <a className="hover:text-[#e4048a] transition-colors" href="#gateway">Gateway</a>
           </div>
         </div>
       </footer>

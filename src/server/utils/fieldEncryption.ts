@@ -51,7 +51,7 @@ interface EncryptedEnvelope {
  */
 export function deriveMetadataKey(encryptionKeyB64: string): Buffer {
   const rawKey = Buffer.from(encryptionKeyB64, 'base64');
-  return crypto.hkdfSync('sha256', rawKey, HKDF_SALT, HKDF_INFO, KEY_LENGTH);
+  return Buffer.from(crypto.hkdfSync('sha256', rawKey, HKDF_SALT, HKDF_INFO, KEY_LENGTH));
 }
 
 // ── Encrypt / Decrypt ────────────────────────────────────────────────────────

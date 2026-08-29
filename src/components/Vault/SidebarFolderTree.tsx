@@ -23,9 +23,10 @@ interface SidebarFolderTreeProps {
   selectedFolder: string;
   onSelectFolder: (podPath: string) => void;
   onAddNewFolder?: (podPath: string) => void;
-  onRenameFolder?: (oldPath: string, newPath: string) => void;
-  onDeleteFolder?: (podPath: string) => void;
+  onRenameFolder?: (oldPath: string, newPath: string) => Promise<void> | void;
+  onDeleteFolder?: (podPath: string) => Promise<void> | void;
   isCollapsed?: boolean;
+  isLocked?: boolean;
 }
 
 export function SidebarFolderTree({
@@ -35,7 +36,8 @@ export function SidebarFolderTree({
   onAddNewFolder,
   onRenameFolder,
   onDeleteFolder,
-  isCollapsed = false
+  isCollapsed = false,
+  isLocked = false
 }: SidebarFolderTreeProps) {
   const [podSearch, setPodSearch] = useState("");
   
@@ -56,6 +58,7 @@ export function SidebarFolderTree({
   }, [rootNodes, podSearch]);
 
   const handleOpenCreateModal = () => {
+    if (isLocked) return;
     setModalMode("create");
     setEditingTargetPod("");
     setModalPodName("");
@@ -65,14 +68,16 @@ export function SidebarFolderTree({
 
   const handleOpenEditModal = (e: React.MouseEvent, pod: PodNode) => {
     e.stopPropagation();
+    if (isLocked) return;
     setModalMode("edit");
     setEditingTargetPod(pod.path);
-    setModalPodName(pod.name);
+    setModalPodName(pod.path); // Use full path for editing to preserve hierarchy
     setModalSelectedColor(pod.color || getPodColor(pod.path));
     setIsPodModalOpen(true);
   };
 
-  const handleSaveModal = (normalizedName: string, color: string) => {
+  const handleSaveModal = async (normalizedName: string, color: string) => {
+    if (isLocked) return;
     setPodColor(normalizedName, color);
 
     if (modalMode === "create") {
@@ -84,23 +89,25 @@ export function SidebarFolderTree({
       // Edit mode
       if (editingTargetPod && editingTargetPod !== normalizedName) {
         if (onRenameFolder) {
-          onRenameFolder(editingTargetPod, normalizedName);
+          await onRenameFolder(editingTargetPod, normalizedName);
         }
         deletePodColor(editingTargetPod);
         setPodColor(normalizedName, color);
-        if (selectedFolder === editingTargetPod) {
+        if (selectedFolder === editingTargetPod || selectedFolder.startsWith(editingTargetPod + "/")) {
           onSelectFolder(normalizedName);
         }
       }
     }
   };
 
-  const handleDeletePod = (podToDelete: string) => {
-    deletePodColor(podToDelete);
+  const handleDeletePod = async (podToDelete: string) => {
+    if (isLocked) return;
+    const norm = normalizePod(podToDelete);
+    deletePodColor(norm);
     if (onDeleteFolder) {
-      onDeleteFolder(podToDelete);
+      await onDeleteFolder(norm);
     }
-    if (selectedFolder === podToDelete) {
+    if (selectedFolder === norm || selectedFolder.startsWith(norm + "/")) {
       onSelectFolder("all");
     }
   };
@@ -108,22 +115,9 @@ export function SidebarFolderTree({
   if (isCollapsed) {
     return (
       <div className="py-2 flex flex-col items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onSelectFolder("all")}
-          className={`p-2 rounded-2xl transition-colors cursor-pointer ${
-            selectedFolder === "all"
-              ? "bg-claw-cyan/15 text-claw-cyan"
-              : "text-theme-muted hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
-          title={`All Items (${totalAllCount})`}
-        >
-          <Layers size={18} />
-        </button>
-
         {/* Global Page-Level Pod Modal */}
         <PodModal
-          isOpen={isPodModalOpen}
+          isOpen={isPodModalOpen && !isLocked}
           mode={modalMode}
           initialPodName={modalPodName}
           initialColor={modalSelectedColor}
@@ -131,25 +125,39 @@ export function SidebarFolderTree({
           onSave={handleSaveModal}
           onDelete={handleDeletePod}
         />
+
+        {/* Create Pod Icon Button */}
+        {!isLocked && (
+          <button
+            type="button"
+            onClick={handleOpenCreateModal}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-claw-cyan transition-all cursor-pointer shadow-xs active:scale-95"
+            title="Create New Pod"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col space-y-2 pt-2">
+    <div className="flex flex-col flex-1 min-h-0 space-y-2 pt-2">
       {/* ── PODS Header (ClawChives Style: uppercase tracked + Plus action) ── */}
       <div className="flex items-center justify-between px-3 pt-1">
         <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400">
           PODS
         </span>
-        <button
-          type="button"
-          onClick={handleOpenCreateModal}
-          className="p-1 text-slate-400 hover:text-claw-cyan hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
-          title="Create New Pod"
-        >
-          <Plus size={16} />
-        </button>
+        {!isLocked && (
+          <button
+            type="button"
+            onClick={handleOpenCreateModal}
+            className="p-1 text-slate-400 hover:text-claw-cyan hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-all duration-200 active:scale-95 cursor-pointer"
+            title="Create New Pod"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
 
       {/* ── Search Pods Input (ClawChives pill curvature) ── */}
@@ -176,7 +184,7 @@ export function SidebarFolderTree({
       </div>
 
       {/* ── Pods List (ClawChives Faithfully Recreated) ── */}
-      <div className="space-y-1 overflow-y-auto max-h-64 px-1 pr-1 custom-scrollbar">
+      <div className="space-y-1 overflow-y-auto flex-1 min-h-0 px-1 pr-1 custom-scrollbar">
         {filteredPods.map((node) => {
           const isSelected = selectedFolder === node.path;
           const nodeColor = node.color || getPodColor(node.path);
@@ -185,9 +193,9 @@ export function SidebarFolderTree({
             <div
               key={node.path}
               onClick={() => onSelectFolder(node.path)}
-              className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all ${
+              className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
                 isSelected
-                  ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-xs border border-claw-cyan/20"
+                  ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-sm border border-claw-cyan/20"
                   : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
               }`}
               title={`${node.name} (${node.totalCount} items)`}
@@ -214,14 +222,16 @@ export function SidebarFolderTree({
                 </span>
 
                 {/* Edit Pencil Icon (matches ClawChives screenshot 1) */}
-                <button
-                  type="button"
-                  onClick={(e) => handleOpenEditModal(e, node)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-claw-cyan hover:text-cyan-400 hover:bg-claw-cyan/10 rounded-lg transition-all cursor-pointer"
-                  title="Edit Pod"
-                >
-                  <Pencil size={13} />
-                </button>
+                {!isLocked && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenEditModal(e, node)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-claw-cyan hover:text-cyan-400 hover:bg-claw-cyan/10 rounded-lg transition-all cursor-pointer"
+                    title="Edit Pod"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                )}
               </div>
             </div>
           );

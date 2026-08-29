@@ -28,9 +28,10 @@ function parsePermissions(raw: any): Record<string, boolean> {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface LobsterKeyCardProps {
+  key?: React.Key;
   lobster: LobsterKey;
-  onRevoke: (id: string) => void;
-  onDelete: (id: string) => void;
+  onRevoke: (id: string) => void | Promise<void>;
+  onDelete: (id: string) => void | Promise<void>;
 }
 
 export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardProps) {

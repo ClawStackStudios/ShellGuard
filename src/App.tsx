@@ -78,8 +78,11 @@ import {
   setSessionForUser, 
   removeSessionForUser, 
   activateUserSession, 
-  migrateLegacySession 
+  migrateLegacySession,
+  getNavIntent,
+  setNavIntent
 } from "./lib/sessionManager.ts";
+import { normalizePod } from "./lib/podUtils.ts";
 
 export default function App() {
   const [isMolting, setIsMolting] = useState(true);
@@ -100,6 +103,8 @@ export default function App() {
     }
     return map;
   }, [lobsters, activeLobsterId, shellKey]);
+
+  const isLocked = Boolean(lobster && !shellKey);
   const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export">("landing");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
@@ -255,36 +260,36 @@ export default function App() {
           if (p.totp_secret) {
             try { decryptedTotp = await decryptField(p.totp_secret, key, "vault_pearls_totp", p.id); } catch (e) { decryptedTotp = "⚠️ [Decryption Failed]"; }
           }
-          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: "password", category: p.category || "Personal" };
+          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: "password", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: "password", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: "password", category: p.category || "" };
         }
       }));
 
       const decryptedNotes = await Promise.all(reefNotes.map(async (p: any) => {
         try {
           const content = await decryptField(p.content, key, "vault_secure_notes", p.id);
-          return { ...p, secret: content, type: "note", category: p.category || "Personal" };
+          return { ...p, secret: content, type: "note", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "" };
         }
       }));
 
       const decryptedKeys = await Promise.all(reefKeys.map(async (p: any) => {
         try {
           const kv = await decryptField(p.key_value, key, "vault_ssh_keys", p.id);
-          return { ...p, secret: kv, type: "key", category: p.category || "Personal" };
+          return { ...p, secret: kv, type: "key", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "key", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "key", category: p.category || "" };
         }
       }));
 
       const decryptedAttachments = await Promise.all(reefAttachments.map(async (p: any) => {
         try {
           const fd = await decryptField(p.file_data, key, "vault_secure_attachments", p.id);
-          return { ...p, secret: fd, type: "attachment", category: p.category || "Personal" };
+          return { ...p, secret: fd, type: "attachment", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "attachment", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "attachment", category: p.category || "" };
         }
       }));
 
@@ -311,6 +316,7 @@ export default function App() {
     setActiveLobsterId(null);
     setActiveLobsterIdState(null);
     setAuthModalConfig(null);
+    setNavIntent("landing");
     setView("landing");
   }, [activeLobsterId]);
 
@@ -324,16 +330,21 @@ export default function App() {
       try {
         const sk = await deriveShellKey(session.rawKey, uuid);
         setShellKey(sk);
+        setNavIntent("dashboard");
         setView("vault");
         scuttleVault(sk);
       } catch {
         removeSessionForUser(uuid);
         setShellKey(null);
+        setNavIntent("dashboard");
         setAuthModalConfig({ mode: "unlock", target });
+        setView("vault");
       }
     } else {
       setShellKey(null);
+      setNavIntent("dashboard");
       setAuthModalConfig({ mode: "unlock", target });
+      setView("vault");
     }
   };
 
@@ -354,6 +365,7 @@ export default function App() {
         setActiveLobsterId(null);
         setActiveLobsterIdState(null);
         setShellKey(null);
+        setNavIntent("landing");
         setView("landing");
       }
     }
@@ -361,6 +373,15 @@ export default function App() {
 
   const handleLockAccount = (uuid: string) => {
     removeSessionForUser(uuid);
+    if (activeLobsterId === uuid) {
+      setShellKey(null);
+      setNavIntent("dashboard");
+      const target = lobsters.find((l) => l.uuid === uuid) || lobster;
+      if (target) {
+        setAuthModalConfig({ mode: "unlock", target });
+      }
+      setView("vault");
+    }
     // Force a re-render so the header updates the icon immediately
     setLobsters([...lobsters]);
   };
@@ -394,6 +415,7 @@ export default function App() {
     const { lobsters: migratedLobsters, activeId } = migrateLegacySession();
     setLobsters(migratedLobsters);
     setActiveLobsterIdState(activeId);
+    const navIntent = getNavIntent();
 
     if (activeId) {
       const session = activateUserSession(activeId);
@@ -401,20 +423,22 @@ export default function App() {
         deriveShellKey(session.rawKey, activeId)
           .then((sk) => {
             setShellKey(sk);
+            setNavIntent("dashboard");
             setView("vault");
           })
           .catch(() => {
             handleLogout();
           });
       } else {
-        const target = migratedLobsters.find((l) => l.uuid === activeId);
-        if (target) {
+        if (navIntent === "dashboard" && migratedLobsters.length > 0) {
+          const target = migratedLobsters.find((l) => l.uuid === activeId) || migratedLobsters[0];
           setAuthModalConfig({ mode: "unlock", target });
+          setView("vault");
+        } else {
+          setView("landing");
         }
-        setView("vault");
       }
-    } else if (migratedLobsters.length > 0) {
-      // If no active session, but we know accounts, default to the first one as locked
+    } else if (migratedLobsters.length > 0 && navIntent === "dashboard") {
       const target = migratedLobsters[0];
       setActiveLobsterIdState(target.uuid);
       setAuthModalConfig({ mode: "unlock", target });
@@ -453,7 +477,7 @@ export default function App() {
     attachments?: string;
     newAttachments?: PendingAttachment[];
   }) => {
-    if (!shellKey) return;
+    if (!shellKey || isLocked) return;
     try {
       const id = generateUUID();
       
@@ -499,20 +523,24 @@ export default function App() {
     }
   };
 
-  const updateTheClaw = async (id: string, item: {
-    title: string;
-    secret: string;
-    username: string;
-    url: string;
-    category: string;
-    type: VaultItemType;
-    notes?: string;
-    totp_secret?: string;
-    attachments?: string;
-    newAttachments?: PendingAttachment[];
-    removedAttachmentIds?: string[];
-  }) => {
-    if (!shellKey) return;
+  const updateTheClaw = async (
+    id: string, 
+    item: {
+      title: string;
+      secret: string;
+      username: string;
+      url: string;
+      category: string;
+      type: VaultItemType;
+      notes?: string;
+      totp_secret?: string;
+      attachments?: string;
+      newAttachments?: PendingAttachment[];
+      removedAttachmentIds?: string[];
+    },
+    skipScuttle: boolean = false
+  ) => {
+    if (!shellKey || isLocked) return;
     try {
       if (item.type === 'note') {
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
@@ -551,56 +579,118 @@ export default function App() {
           attachments: item.attachments || "[]"
         });
       }
-      scuttleVault(shellKey);
+      if (!skipScuttle) {
+        scuttleVault(shellKey);
+      }
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   const handleRenamePod = async (oldPod: string, newPod: string) => {
-    if (!shellKey) return;
-    const itemsToUpdate = vaultItems.filter(
-      (i) => (i.category || "Personal") === oldPod || (i.category || "Personal").startsWith(oldPod + "/")
+    if (!shellKey || isLocked) return;
+    const normOld = normalizePod(oldPod);
+    const normNew = normalizePod(newPod);
+    if (normOld === normNew) return;
+
+    const itemsToUpdate = vaultItems.filter((i) => {
+      const currentCat = normalizePod(i.category);
+      return currentCat === normOld || currentCat.startsWith(normOld + "/");
+    });
+    
+    // Optimistically update local state immediately so UI refreshes without delay
+    setVaultItems((prev) =>
+      prev.map((item) => {
+        const currentCat = normalizePod(item.category);
+        if (currentCat === normOld) {
+          return { ...item, category: normNew };
+        }
+        if (currentCat.startsWith(normOld + "/")) {
+          return { ...item, category: currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`) };
+        }
+        return item;
+      })
     );
-    for (const item of itemsToUpdate) {
-      const currentCat = item.category || "Personal";
-      const updatedCat = currentCat === oldPod ? newPod : currentCat.replace(new RegExp(`^${oldPod}/`), `${newPod}/`);
-      await updateTheClaw(item.id, {
-        title: item.title,
-        secret: item.secret,
-        username: item.username || "",
-        url: item.url || "",
-        category: updatedCat,
-        type: item.type,
-        notes: item.notes,
-        totp_secret: item.totp_secret,
-        attachments: item.attachments
-      });
+
+    if (itemsToUpdate.length === 0) {
+      return;
     }
+
+    for (const item of itemsToUpdate) {
+      const currentCat = normalizePod(item.category);
+      const updatedCat = currentCat === normOld ? normNew : currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`);
+      await updateTheClaw(
+        item.id, 
+        {
+          title: item.title,
+          secret: item.secret,
+          username: item.username || "",
+          url: item.url || "",
+          category: updatedCat,
+          type: item.type,
+          notes: item.notes,
+          totp_secret: item.totp_secret,
+          attachments: item.attachments
+        },
+        true
+      );
+    }
+
+    // Single server sync after all items are updated
+    await scuttleVault(shellKey);
   };
 
   const handleDeletePod = async (podToDelete: string) => {
-    if (!shellKey) return;
-    const itemsToUpdate = vaultItems.filter((i) => (i.category || "Personal") === podToDelete);
-    for (const item of itemsToUpdate) {
-      await updateTheClaw(item.id, {
-        title: item.title,
-        secret: item.secret,
-        username: item.username || "",
-        url: item.url || "",
-        category: "Personal",
-        type: item.type,
-        notes: item.notes,
-        totp_secret: item.totp_secret,
-        attachments: item.attachments
-      });
+    if (!shellKey || isLocked) return;
+    const targetPod = normalizePod(podToDelete);
+
+    const itemsToUpdate = vaultItems.filter((i) => {
+      const currentCat = normalizePod(i.category);
+      return currentCat === targetPod || currentCat.startsWith(targetPod + "/");
+    });
+    
+    // Optimistically update local state immediately so the pod disappears from the tree instantly
+    setVaultItems((prev) =>
+      prev.map((item) => {
+        const currentCat = normalizePod(item.category);
+        if (currentCat === targetPod || currentCat.startsWith(targetPod + "/")) {
+          return { ...item, category: "" };
+        }
+        return item;
+      })
+    );
+
+    if (itemsToUpdate.length === 0) {
+      return;
     }
+
+    for (const item of itemsToUpdate) {
+      await updateTheClaw(
+        item.id, 
+        {
+          title: item.title,
+          secret: item.secret,
+          username: item.username || "",
+          url: item.url || "",
+          category: "",
+          type: item.type,
+          notes: item.notes,
+          totp_secret: item.totp_secret,
+          attachments: item.attachments
+        },
+        true
+      );
+    }
+
+    // Single server sync after all items are updated
+    await scuttleVault(shellKey);
   };
 
   const handleLoginSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
     setSessionForUser(l.uuid, t, rk);
     setActiveLobsterId(l.uuid);
     setActiveLobsterIdState(l.uuid);
+    setNavIntent("dashboard");
 
     setLobsters((prev) => {
       const exists = prev.some((item) => item.uuid === l.uuid);
@@ -637,7 +727,6 @@ export default function App() {
     );
   }
 
-  const isLocked = Boolean(lobster && !shellKey);
   const isModalOpen = Boolean(authModalConfig || isLocked);
   const activeModalConfig = authModalConfig || (isLocked && lobster ? { mode: "unlock" as const, target: lobster } : null);
 
@@ -694,14 +783,24 @@ export default function App() {
               <SetupView 
                 onSuccess={handleLoginSuccess} 
                 onSwitch={() => setView("login")} 
-                onCancel={lobster ? () => setView("vault") : undefined}
+                onCancel={() => {
+                  if (lobster && getNavIntent() === "dashboard") {
+                    setView("vault");
+                  } else {
+                    setNavIntent("landing");
+                    setView("landing");
+                  }
+                }}
               />
             )}
             {view === "login" && (
               <LoginView 
                 onSuccess={handleLoginSuccess} 
                 onSwitch={() => setView("setup")} 
-                onBack={() => setView("landing")}
+                onBack={() => {
+                  setNavIntent("landing");
+                  setView("landing");
+                }}
               />
             )}
           </AnimatePresence>
@@ -745,6 +844,7 @@ export default function App() {
           setIsCollapsed={setIsSidebarCollapsed}
           onClose={() => setIsSidebarOpen(false)}
           onLogout={handleLogout}
+          isLocked={isLocked}
           vaultItems={vaultItems}
           selectedFolder={selectedFolder}
           setSelectedFolder={setSelectedFolder}
@@ -767,7 +867,10 @@ export default function App() {
           lobsters={lobsters}
           activeSessions={activeSessions}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleDesktopSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           view={view}
+          isLocked={isLocked}
           onSwitchAccount={handleSwitchAccount}
           onAddAccount={handleAddAccount}
           onRemoveAccount={handleRemoveAccount}
@@ -824,6 +927,7 @@ export default function App() {
                     isAdding={isAddingVaultItem}
                     onToggleIsAdding={setIsAddingVaultItem}
                     onDelete={async (id, type) => { 
+                      if (!shellKey || isLocked) return;
                       const endpoint = type === 'password' ? '/api/vault' : 
                                        type === 'note' ? '/api/notes' : 
                                        type === 'key' ? '/api/keys' : '/api/attachments';
@@ -831,6 +935,7 @@ export default function App() {
                       if(shellKey) scuttleVault(shellKey); 
                     }} 
                     onDeleteMultiple={async (selectedList) => {
+                      if (!shellKey || isLocked) return;
                       for (const item of selectedList) {
                         const endpoint = item.type === 'password' ? '/api/vault' : 
                                          item.type === 'note' ? '/api/notes' : 
@@ -881,7 +986,7 @@ export default function App() {
                           secret: item.secret || "",
                           username: item.username || "",
                           url: item.url || "",
-                          category: item.category || "Personal",
+                          category: item.category || "",
                           type: (item.type as VaultItemType) || "password",
                           notes: item.notes || "",
                           totp_secret: item.totp_secret || "",

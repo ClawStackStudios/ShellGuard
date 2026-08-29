@@ -45,7 +45,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     const headers = ["Title", "Category", "Type", "Username", "URL/Notes"];
     const rows = items.map(i => [
       `"${(i.title || "").replace(/"/g, '""')}"`,
-      `"${(i.category || "Personal").replace(/"/g, '""')}"`,
+      `"${(i.category || "").replace(/"/g, '""')}"`,
       `"${(i.type || "password").replace(/"/g, '""')}"`,
       `"${(i.username || "").replace(/"/g, '""')}"`,
       `"${(i.url || i.notes || "").replace(/"/g, '""')}"`

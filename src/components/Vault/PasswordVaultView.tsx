@@ -198,7 +198,7 @@ export function PasswordVaultView({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [url, setUrl] = useState("");
-  const [category, setCategory] = useState("Personal");
+  const [category, setCategory] = useState(selectedFolder !== "all" ? selectedFolder : "");
   const [notes, setNotes] = useState("");
   const [showNoteField, setShowNoteField] = useState(false);
   const [totpSecret, setTotpSecret] = useState("");
@@ -219,7 +219,7 @@ export function PasswordVaultView({
   const [editUsername, setEditUsername] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [editUrl, setEditUrl] = useState("");
-  const [editCategory, setEditCategory] = useState("Personal");
+  const [editCategory, setEditCategory] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editShowNoteField, setEditShowNoteField] = useState(false);
   const [editTotpSecret, setEditTotpSecret] = useState("");
@@ -314,7 +314,7 @@ export function PasswordVaultView({
     setUsername("");
     setPassword("");
     setUrl("");
-    setCategory("Personal");
+    setCategory(selectedFolder !== "all" ? selectedFolder : "");
     setNotes("");
     setShowNoteField(false);
     setTotpSecret("");
@@ -336,7 +336,7 @@ export function PasswordVaultView({
     setEditUsername(item.username || "");
     setEditPassword(item.secret || "");
     setEditUrl(item.url || "");
-    setEditCategory(item.category || "Personal");
+    setEditCategory(item.category || "");
     setEditNotes(item.notes || "");
     setEditShowNoteField(!!item.notes);
     setEditTotpSecret(item.totp_secret || "");
@@ -367,7 +367,7 @@ export function PasswordVaultView({
         username: username.trim(),
         secret: password,
         url: url.trim(),
-        category: category || "Personal",
+        category: category.trim(),
         type: activeTypeTab,
         notes: showNoteField ? notes.trim() : "",
         totp_secret: showTotpField ? totpSecret.trim() : "",
@@ -391,7 +391,7 @@ export function PasswordVaultView({
         username: editUsername.trim(),
         secret: editPassword,
         url: editUrl.trim(),
-        category: editCategory || "Personal",
+        category: editCategory.trim(),
         type: editingItem.type || "password",
         notes: editShowNoteField ? editNotes.trim() : "",
         totp_secret: editShowTotpField ? editTotpSecret.trim() : "",
@@ -665,7 +665,7 @@ export function PasswordVaultView({
                       {it.username && <span className="text-theme-muted truncate">({it.username})</span>}
                     </div>
                     <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-mono flex-shrink-0">
-                      {it.category || "Personal"}
+                      {it.category || "Uncategorized"}
                     </span>
                   </div>
                 ))}
@@ -2008,18 +2008,20 @@ export function PasswordVaultView({
                         </h4>
 
                         {/* Interactive Pod Badge */}
-                        <button
-                          type="button"
-                          onClick={() => handleSetCategory(item.category || "Personal")}
-                          className="px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-claw-cyan/10 hover:text-claw-cyan dark:bg-slate-800 text-[10px] font-semibold text-slate-500 tracking-wider border border-theme-subtle transition-colors flex items-center gap-1.5 cursor-pointer"
-                          title={`Filter by Pod: ${item.category || "Personal"}`}
-                        >
-                          <span 
-                            className="w-1.5 h-1.5 rounded-full flex-shrink-0" 
-                            style={{ backgroundColor: getPodColor(item.category || "Personal") }} 
-                          />
-                          <span>{item.category || "Personal"}</span>
-                        </button>
+                        {item.category && item.category.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetCategory(item.category!)}
+                            className="px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-claw-cyan/10 hover:text-claw-cyan dark:bg-slate-800 text-[10px] font-semibold text-slate-500 tracking-wider border border-theme-subtle transition-colors flex items-center gap-1.5 cursor-pointer"
+                            title={`Filter by Pod: ${item.category}`}
+                          >
+                            <span 
+                              className="w-1.5 h-1.5 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: getPodColor(item.category) }} 
+                            />
+                            <span>{item.category}</span>
+                          </button>
+                        )}
 
                         {/* Secret Age Badge */}
                         <PasswordAgeBadge

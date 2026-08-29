@@ -12,7 +12,8 @@ import {
   Download, 
   ArrowLeft, 
   Key, 
-  CheckCircle2 
+  CheckCircle2,
+  X
 } from "lucide-react";
 import { 
   generateUUID, 

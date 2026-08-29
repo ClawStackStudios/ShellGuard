@@ -24,47 +24,17 @@ export const POD_COLOR_PALETTE = [
   "#f59e0b", // Amber / Gold
 ];
 
-export const DEFAULT_ROOT_PODS = [
-  "Personal",
-  "Work",
-  "Custom",
-  "Test Folder",
-  "VPN Shit",
-  "Server Operating Systems",
-  "Router Operating Systems"
-];
+export const DEFAULT_ROOT_PODS: string[] = [];
 
 export const DEFAULT_ROOT_CATEGORIES = DEFAULT_ROOT_PODS;
 
-export const DEFAULT_SUGGESTED_PODS = [
-  "Personal",
-  "Personal/Banking",
-  "Personal/Shopping",
-  "Personal/Social",
-  "Work",
-  "Work/Finance",
-  "Work/Engineering",
-  "Work/Clients",
-  "Custom",
-  "Test Folder",
-  "VPN Shit",
-  "Server Operating Systems",
-  "Router Operating Systems"
-];
+export const DEFAULT_SUGGESTED_PODS: string[] = [];
 
 export const DEFAULT_SUGGESTED_FOLDERS = DEFAULT_SUGGESTED_PODS;
 
 const POD_COLOR_STORAGE_KEY = "shellguard_pod_colors";
 
-const INITIAL_DEFAULT_COLORS: Record<string, string> = {
-  "Test Folder": "#06b6d4",
-  "VPN Shit": "#38bdf8",
-  "Server Operating Systems": "#38bdf8",
-  "Router Operating Systems": "#38bdf8",
-  "Personal": "#38bdf8",
-  "Work": "#a855f7",
-  "Custom": "#10b981"
-};
+const INITIAL_DEFAULT_COLORS: Record<string, string> = {};
 
 /**
  * Retrieves all stored pod colors
@@ -73,19 +43,21 @@ export function getStoredPodColors(): Record<string, string> {
   try {
     const raw = localStorage.getItem(POD_COLOR_STORAGE_KEY);
     if (raw) {
-      return { ...INITIAL_DEFAULT_COLORS, ...JSON.parse(raw) };
+      return JSON.parse(raw);
     }
   } catch (e) {
     console.error("Error reading pod colors:", e);
   }
-  return { ...INITIAL_DEFAULT_COLORS };
+  return {};
 }
 
 /**
  * Gets the color for a specific Pod
  */
-export function getPodColor(podName: string): string {
+export function getPodColor(podName?: string): string {
+  if (!podName) return POD_COLOR_PALETTE[0];
   const norm = normalizePod(podName);
+  if (!norm) return POD_COLOR_PALETTE[0];
   const colors = getStoredPodColors();
   if (colors[norm]) return colors[norm];
 
@@ -109,6 +81,7 @@ export function getPodColor(podName: string): string {
  */
 export function setPodColor(podName: string, color: string): void {
   const norm = normalizePod(podName);
+  if (!norm) return;
   const colors = getStoredPodColors();
   colors[norm] = color;
   try {
@@ -123,6 +96,7 @@ export function setPodColor(podName: string, color: string): void {
  */
 export function deletePodColor(podName: string): void {
   const norm = normalizePod(podName);
+  if (!norm) return;
   const colors = getStoredPodColors();
   delete colors[norm];
   try {
@@ -136,13 +110,13 @@ export function deletePodColor(podName: string): void {
  * Normalizes pod name strings (trims spaces, trims leading/trailing slashes, consolidates multiple slashes)
  */
 export function normalizePod(pod?: string): string {
-  if (!pod) return "Personal";
+  if (!pod) return "";
   const cleaned = pod
     .trim()
     .replace(/\\+/g, "/")
     .replace(/\/+/g, "/")
     .replace(/^\/+|\/+$/g, "");
-  return cleaned || "Personal";
+  return cleaned || "";
 }
 
 export const normalizeCategory = normalizePod;
@@ -152,6 +126,7 @@ export const normalizeCategory = normalizePod;
  */
 export function getPodSegments(pod?: string): string[] {
   const norm = normalizePod(pod);
+  if (!norm) return [];
   return norm.split("/").filter(Boolean);
 }
 
@@ -166,6 +141,9 @@ export function isItemInPod(itemCategory?: string, targetPod: string = "all"): b
   const normItem = normalizePod(itemCategory);
   const normTarget = normalizePod(targetPod);
 
+  if (!normTarget) return true;
+  if (!normItem) return false;
+
   if (normItem === normTarget) return true;
   if (normItem.startsWith(normTarget + "/")) return true;
 
@@ -175,22 +153,22 @@ export function isItemInPod(itemCategory?: string, targetPod: string = "all"): b
 export const isItemInFolder = isItemInPod;
 
 /**
- * Extracts all unique pod paths from a list of items plus defaults
+ * Extracts all unique pod paths from a list of items plus explicitly created pods
  */
-export function getAllUniquePods(items: VaultItem[], includeDefaults: boolean = true): string[] {
+export function getAllUniquePods(items: VaultItem[] = [], _includeDefaults?: boolean): string[] {
   const podSet = new Set<string>();
 
-  if (includeDefaults) {
-    DEFAULT_ROOT_PODS.forEach(c => podSet.add(c));
-    DEFAULT_SUGGESTED_PODS.forEach(c => podSet.add(c));
-  }
-
-  // Also include any explicitly stored pods
+  // Include any explicitly created and stored pods from localStorage
   const storedColors = getStoredPodColors();
-  Object.keys(storedColors).forEach(p => podSet.add(p));
+  Object.keys(storedColors).forEach(p => {
+    const norm = normalizePod(p);
+    if (norm) podSet.add(norm);
+  });
 
   items.forEach(item => {
+    if (!item.category || !item.category.trim()) return;
     const norm = normalizePod(item.category);
+    if (!norm) return;
     // Add all ancestor paths as well
     const parts = norm.split("/");
     let current = "";

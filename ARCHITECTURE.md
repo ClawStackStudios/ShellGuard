@@ -34,7 +34,7 @@ ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
 ├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.2.0)
-├── 📄 vite.config.ts                  # Vite :5353 strictPort, /api proxy → :5454, "@" alias
+├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
 │

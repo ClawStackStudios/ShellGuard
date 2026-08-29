@@ -11,10 +11,10 @@
   <Project>https://github.com/ClawStackStudios/ShellGuard</Project>
   <Overview>&#x1F6E1;&#xFE0F; ShellGuard is a zero-knowledge, self-hostable secrets vault designed for the Human-Agent ecosystem. Your secrets are encrypted client-side with ShellCryption&#169;&#8482; (AES-GCM-256) before they ever leave your browser &#8212; the server stores only opaque ciphertext in SQLite. Issue scoped LobsterKeys&#169;&#8482; to sovereign AI agents with granular read/write/edit/delete permissions, protected by SQLCipher metadata-at-rest encryption and an append-only audit trail.</Overview>
   <Category>Security:Other</Category>
-  <WebUI>http://[IP]:[PORT:5353]/</WebUI>
+  <WebUI>http://[IP]:[PORT:6464]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/ClawStackStudios/ShellGuard/main/shellguard-unraid-template.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/ClawStackStudios/ShellGuard/main/public/assets/thumbnail-icon.png</Icon>
-  <ExtraParams>--health-cmd="wget -qO- http://localhost:5353/api/health" --health-interval=15s --health-timeout=10s --health-retries=5 --health-start-period=15s</ExtraParams>
+  <ExtraParams>--health-cmd="wget -qO- http://localhost:6464/api/health" --health-interval=15s --health-timeout=10s --health-retries=5 --health-start-period=15s</ExtraParams>
   <PostArgs/>
   <CPUset/>
   <DateInstalled/>
@@ -22,7 +22,7 @@
   <DonateLink/>
   <Requires/>
   <Config Name="Database Location" Target="/app/data" Default="/mnt/user/appdata/shellguard" Mode="rw" Description="Location of the ShellGuard SQLite databases (db.sqlite + audit.sqlite)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/shellguard</Config>
-  <Config Name="Web GUI" Target="5353" Default="5353" Mode="tcp" Description="The Default Port for the Web GUI" Type="Port" Display="always" Required="true" Mask="false">5353</Config>
+  <Config Name="Web GUI" Target="6464" Default="6464" Mode="tcp" Description="The Default Port for the Web GUI" Type="Port" Display="always" Required="true" Mask="false">6464</Config>
   <Config Name="DB Encryption Key" Target="DB_ENCRYPTION_KEY" Default="" Mode="" Description="OPTIONAL but strongly recommended in production. SQLCipher key encrypting database metadata at rest (secrets are always client-side encrypted regardless). Generate one with: openssl rand -base64 32. Changing it after first start requires re-keying the database." Type="Variable" Display="always" Required="false" Mask="true"/>
   <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Linux Group ID for file permissions" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
   <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="Linux User ID for file permissions" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>

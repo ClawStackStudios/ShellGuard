@@ -40,6 +40,9 @@ Every mutation follows this gauntlet (no shortcuts):
 - **Backward compatibility**: `isEncryptedField()` check — non-SG-META values pass through unchanged.
 - **Singleton cipher**: `fieldCipher` initialized once at startup, null when `DB_ENCRYPTION_KEY` unset.
 - **Ownership scoping**: Every query filters `owner_uuid`. Missing scope = security bug.
+- **Reference-model attachments**: pearls link files via a JSON ID array in `attachments`; each file lives in its own `vault_secure_attachments` row (ShellCrypted file_data, per-row encrypted metadata). Pearl DELETE cascade-deletes linked attachments with ownership scope.
+- **SuperLobster admin plane**: separate cookie-session auth (`sg_admin_session`, volatile in-memory store) — never the user Bearer restAdapter. Strict-metadata user list, whitelist settings, server-side-only backups. Admin actor sentinel: `SUPERLOBSTER`.
+- **Online Backup API backups**: `db.backup()` from better-sqlite3-multiple-ciphers — WAL-safe, live-consistent; SQLCipher copies stay encrypted with the same key.
 - **Audit on mutation**: Every write emits to segregated `audit.sqlite` with extended redaction.
 - **Envelope contract**: All responses use `{success, data}`. RestAdapter unwraps centrally.
 

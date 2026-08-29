@@ -15,7 +15,7 @@ It ensures that your pearls are hardened behind ShellCryption©™ and accessibl
 - **Backend:** Express 5 (`server.ts`, twin of ClawChives layout) — helmet, cors config, zod validation, rate limiters, centralized error handler
 - **Database:** SQLite via `better-sqlite3-multiple-ciphers` — `DATA_DIR` holding `db.sqlite` + segregated append-only `audit.sqlite`; transactional migrations in `migrations/`
 - **Identity:** ClawKeys©™ (`hu-` humans, `lb-` agents, `api-` sessions) — key-hash only, constant-time compare
-- **Runtime topology:** dev = twin ports (UI :5353 → API :5454); prod = single container, single port (:5353), PUID/PGID entrypoint
+- **Runtime topology:** dev = twin ports (UI :6464 → API :6565); prod = single container, single port (:6464), PUID/PGID entrypoint
 
 ## 🔐 Stability Locks (NEVER BREAK THESE)
 

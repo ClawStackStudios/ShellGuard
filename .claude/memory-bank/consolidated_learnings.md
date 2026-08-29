@@ -28,7 +28,7 @@
 
 **Pattern: Test Isolation with `vi.hoisted()`**
 - Set `DATA_DIR`, `PORT`, and env vars in `vi.hoisted()` BEFORE dynamic server import.
-- Each test suite gets a unique PORT (e.g., 54541-54544) to avoid conflicts in parallel workers.
+- Each test suite gets a unique PORT (e.g., 64641-64645) to avoid conflicts in parallel workers.
 - Database singleton evaluates at module load — hoisting order is load-bearing.
 - *Rationale:* Ensures complete isolation between test suites. No shared state, no port conflicts.
 
@@ -63,9 +63,9 @@
 ## Project-Specific
 
 **ShellGuard Port Allocation:**
-- Development: Frontend :5353, API :5454
-- Production: Single port :5353
-- Tests: 54541 (auth-flow), 54542 (security), 54543 (vault-crud), 54544 (settings), 54548 (metadata-encryption)
+- Development: Frontend :6464, API :6565
+- Production: Single port :6464
+- Tests: 64641 (auth-flow), 64642 (security), 64643 (vault-crud), 64644 (settings), 64645 (admin), 64648 (metadata-encryption)
 
 **ShellGuard Key System:**
 - `hu-` key: 67 chars (`hu-` + 64 hex). Identity + ShellCryption seed. SHA-256 hash stored server-side only.
@@ -76,3 +76,24 @@
 - Governs BOTH SQLCipher whole-DB encryption AND per-row metadata encryption.
 - Both activate together when set. Both are no-ops when unset.
 - Generate with: `openssl rand -base64 32`
+
+---
+
+## UX Patterns
+
+**Pattern: "Locked Dashboard" vs "Logged Out Landing"**
+- When a user logs out or a session expires, but there are known accounts stored in local memory, default to a locked dashboard overlaying the app to maintain navigation context.
+- Only show a completely blank "Landing" page if zero accounts are known.
+- *Rationale:* Mimics Bitwarden's shared-device pattern. Prevents jarring navigation state loss and allows for immediate re-authentication from the exact context the user was in.
+
+**Pattern: Granular Background Account Locking**
+- If an app architecture supports multiple simultaneous unlocked sessions in `sessionStorage` (unlike traditional strict singlet-session password managers), expose granular lock controls in the account switcher.
+- *Rationale:* Major privacy win for multi-tenant users (e.g. keeping Work vault locked while Personal is active).
+
+---
+
+## React & Frontend
+
+**Anti-Pattern: Event Listener Leaks in `useEffect`**
+- Passing `addEventListener` in the return cleanup function instead of `removeEventListener` leads to massive listener leaks.
+- *Rationale:* This is especially fatal for global events like `mousemove` and `scroll` on high-frequency triggers (like inactivity timers). Always double-check cleanup functions.

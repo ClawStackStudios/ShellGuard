@@ -16,16 +16,16 @@
 - [x] **Auth parity** — ClawChives key-hash identity ported wholesale (register/token/validate + SG-only `me`/`profile`, `lookup` dropped); constant-time comparison; fixed TTL parser (`30m`/`12h`/`24h`/`7d`/`never`/ISO/bare-minutes)
 - [x] **Zero-knowledge invariant locked** — server stores only `{v, alg, iv, ct, aad}` ShellCryption blobs with AAD binding `table:recordId`
 - [x] **Domain API parity** — hardened CRUD for pearls/notes/SSH keys/attachments with ownership scoping, audit-on-mutation, `{success,data}` envelope; LobsterKeys©™ lifecycle parity (expiry, rate limits, revoke); new server-side settings storage
-- [x] **Twin-port dev topology** — Vite `:5353` strict-port proxying `/api` → API `:5454`; single-port production serving `dist/` + API
+- [x] **Twin-port dev topology** — Vite `:6464` strict-port proxying `/api` → API `:6565`; single-port production serving `dist/` + API
 - [x] **Test harness** — vitest + supertest suites (auth-flow, security incl. cross-owner isolation, vault-crud incl. opacity invariant, settings, build-gates) with per-suite `DATA_DIR` isolation
 - [x] **Containerization** — multi-stage node:20-alpine single image, PUID/PGID entrypoint, healthcheck, compose prod/dev stacks, `.dockerignore` that keeps the lockfile
 - [x] **CI** — docker-publish workflow → `ghcr.io/clawstackstudios/shellguard`
-- [x] **Unraid template** — Community Applications XML (WebUI `:5353`, appdata bind mount, PUID 99/PGID 100 advanced defaults)
+- [x] **Unraid template** — Community Applications XML (WebUI `:6464`, appdata bind mount, PUID 99/PGID 100 advanced defaults)
 - [x] **Agent skill document** — `skills/shellguard/SKILL.md` served at `/skill.md`
 - [x] **Documentation suite** — README, ARCHITECTURE (with deltas appendix), SECURITY, QUICKSTART, CONTRIBUTING, CRUSTSECURITY, BLUEPRINT (schema v1 truthfulness)
 - [x] **Password attachments rework** — reference model: each file stored as its own ShellCrypted `vault_secure_attachments` record, pearls link them via a JSON ID array; file-upload UI (click/drag, 10 MB per-file hard cap, unlimited attachments), download buttons, pearl delete cascade-deletes linked attachments
 - [x] **Per-Row Encryption** — shipped in v0.2.0: server-side AES-256-GCM metadata encryption (title, username, url, category, notes, file_name) keyed from `DB_ENCRYPTION_KEY` via HKDF, alongside client-side ShellCryption™; in-place envelopes with legacy-plaintext backward compatibility
-- [x] **SuperLobster Panel (admin plane)** — `ADMIN_TOKEN`-gated panel at `/#/super-lobster` with secrets-aware threat model (ADMIN.md): strict-metadata lobster management + cascade delete, read-only diagnostics, whitelist-only settings, failsafe Online-Backup-API backups with manifest + rotation; no download, no HTTP restore (offline Vaultwarden-style procedure + `scuttle:restore` validator)
+- [x] **SuperLobster Panel (admin plane)** — `ADMIN_TOKEN`-gated panel at `/superlobster` with secrets-aware threat model (ADMIN.md): strict-metadata lobster management + cascade delete, read-only diagnostics, whitelist-only settings, failsafe Online-Backup-API backups with manifest + rotation; no download, no HTTP restore (offline Vaultwarden-style procedure + `scuttle:restore` validator)
 - [x] **Bulk operations** — multi-select checkboxes with tri-state select-all, confirmed bulk delete with in-progress state, endpoint-mapped per-type deletion; password bulk deletes cascade their linked attachments
 
 ### ✅ MVP & Scaffold (v0.1.x)

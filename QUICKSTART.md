@@ -28,8 +28,8 @@ ShellGuard compiles into a single container running the React frontend and the S
    ```
    *(Pulls from GHCR if configured via `docker-compose.dev.yml`, or builds locally with `docker compose up -d --build`.)*
 3. **Verify running state:**
-   * **Web GUI:** [http://localhost:5353](http://localhost:5353)
-   * **API Health Check:** `curl http://localhost:5353/api/health`
+   * **Web GUI:** [http://localhost:6464](http://localhost:6464)
+   * **API Health Check:** `curl http://localhost:6464/api/health`
 4. **Persist & backup:** everything lives in `./data/` on your host (`db.sqlite` + `audit.sqlite`). Keep your encryption key somewhere else entirely.
 
 ### Option B: Local Node.js Development
@@ -52,13 +52,13 @@ If you are developing features, run the twin dev servers concurrently.
    ```bash
    npm run scuttle:dev-start
    ```
-   * **Frontend (Vite + HMR):** [http://localhost:5353](http://localhost:5353)
-   * **Backend Express API:** [http://localhost:5454](http://localhost:5454)
+   * **Frontend (Vite + HMR):** [http://localhost:6464](http://localhost:6464)
+   * **Backend Express API:** [http://localhost:6565](http://localhost:6565)
 
    Or split them across terminals:
    ```bash
-   npm run dev:server    # Terminal 1 — API :5454, DATA_DIR=./data-dev
-   npm run dev           # Terminal 2 — UI  :5353, proxies /api
+   npm run dev:server    # Terminal 1 — API :6565, DATA_DIR=./data-dev
+   npm run dev           # Terminal 2 — UI  :6464, proxies /api
    ```
 
 ---
@@ -67,7 +67,7 @@ If you are developing features, run the twin dev servers concurrently.
 
 ShellGuard is entirely passwordless. Your identity and your decryption key are anchored to one high-entropy **Human Key** (`hu-`, ShellKey©™).
 
-1. Open [http://localhost:5353](http://localhost:5353).
+1. Open [http://localhost:6464](http://localhost:6464).
 2. The **Setup view** launches automatically when no identity exists.
 3. Choose a username and click **Generate Identity Key** — a 67-character `hu-` key is created in your browser.
 4. **Download the identity file** (`shellguard_identity_key.json`) and store it in a real vault (password manager, offline storage). Losing it means your pearls are unrecoverable ciphertext — there is no reset link.
@@ -114,7 +114,7 @@ The server warns (but never blocks) when the key is unset — enabling it is you
 
 ```bash
 # Container health (also wired into the Docker HEALTHCHECK)
-curl http://localhost:5353/api/health
+curl http://localhost:6464/api/health
 
 # Run the test suites
 npm test                  # all suites
@@ -124,12 +124,67 @@ npm run test:security     # cross-owner isolation + permission bypass gates
 npm run lint
 ```
 
-Scuttle and start fresh during development:
-
 ```bash
 npm run scuttle:dev-reset   # wipes data-dev/
 npm run scuttle:reset       # DANGER: wipes production data/
 ```
+
+---
+
+## 💾 Database Backups & Restoration
+
+ShellGuard maintains a two-tiered backup strategy designed around zero-knowledge principles and a strict secrets-aware threat model.
+
+### 1. How Backups Work
+
+* **Tier 1 — User Vault Export (In-App)**: Individual users can export their secrets via **Settings → Import & Export** (CSV metadata or `hu-` key re-authenticated JSON). This is the primary user-level recovery path.
+* **Tier 2 — Instance Failsafe (SuperLobster Panel)**: Instance operators can configure scheduled snapshots (or click **Back Up Now**) in the SuperLobster Panel (`/superlobster`).
+  * **Mechanism**: Uses SQLite's native `Online Backup API` (`db.backup()`) to create atomic, WAL-consistent copies without locking live traffic.
+  * **Storage**: Snapshots land directly on the host in `DATA_DIR/backups/` (`db-YYYY-MM-DDTHH-mm-ssZ.sqlite` and `audit-*.sqlite`) alongside a cryptographic `manifest.json`.
+  * **Zero-Exfiltration Invariant**: There are **no HTTP download or restore endpoints**. Because `db.sqlite` contains server-side agent keys and session hashes, backups stay strictly on the server filesystem.
+
+### 2. How to Restore a Database (Offline Operator Procedure)
+
+Restorations are performed offline at the shell/host level (Vaultwarden-style practice):
+
+1. **Stop ShellGuard:**
+   ```bash
+   # Docker:
+   docker stop shellguard
+   # Local Node:
+   npm run scuttle:stop
+   ```
+
+2. **Validate the backup file (Read-Only Check):**
+   Use the built-in validator to verify that the backup is uncorrupted and opens with your encryption key:
+   ```bash
+   npm run scuttle:restore -- --file data/backups/db-2026-08-28T20-00-00Z.sqlite --key <DB_ENCRYPTION_KEY>
+   ```
+
+3. **Clean stale SQLite WAL files (Crucial):**
+   ```bash
+   rm -f data/db.sqlite-wal data/db.sqlite-shm
+   ```
+
+4. **Swap the database file:**
+   ```bash
+   cp data/backups/db-2026-08-28T20-00-00Z.sqlite data/db.sqlite
+   ```
+   *(Optional: you can also swap `audit.sqlite`, but leaving the live audit log untouched ensures an unbroken forensic audit trail.)*
+
+5. **Verify `DB_ENCRYPTION_KEY`:**
+   Ensure the environment variable `DB_ENCRYPTION_KEY` matches the key that was active when the backup was created.
+
+6. **Start ShellGuard:**
+   ```bash
+   # Docker:
+   docker start shellguard
+   # Local Node:
+   npm run scuttle:prod-start
+   ```
+
+> [!NOTE]
+> Users log right back in with their own `hu-` keys — no re-registration or token resetting needed. For full threat modeling and security invariants, see [ADMIN.md](./ADMIN.md).
 
 ---
 

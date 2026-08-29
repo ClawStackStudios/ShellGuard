@@ -138,7 +138,7 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 - Single multi-stage image on **node:20-alpine**; CI (GitHub Actions) is the only image publisher to GHCR.
 - The container drops privileges via `su-exec` after remapping `PUID`/`PGID` and `chown`ing `DATA_DIR` — run as non-root on your host's terms.
 - Data lives in a bind mount (`./data:/app/data`); database files get `0600` permissions and `077` umask from the connection layer.
-- Only port `5353` is exposed; the frontend never talks to the database directly.
+- Only port `6464` is exposed; the frontend never talks to the database directly.
 - Container `HEALTHCHECK` hits `/api/health` so orchestrators notice a cracked shell.
 - `TRUST_PROXY=false` by default — flip it only behind a proxy you control, so rate limiting sees real client IPs.
 
@@ -208,7 +208,7 @@ The connection layer includes a `sqlcipher_export` fallback:
 
 ## 🦞 SuperLobster Panel (Admin Plane)
 
-The instance admin plane at `/#/super-lobster` (URL-only entry — no UI links anywhere). **Completely disabled unless `ADMIN_TOKEN` is set** (503 on all admin routes). Full threat model and procedures in [ADMIN.md](./ADMIN.md).
+The instance admin plane at `/superlobster` (URL-only entry — no UI links anywhere). **Completely disabled unless `ADMIN_TOKEN` is set** (503 on all admin routes). Full threat model and procedures in [ADMIN.md](./ADMIN.md).
 
 **Auth model**: `ADMIN_TOKEN` exchanged for a volatile in-memory session cookie (`sg_admin_session`, httpOnly, `SameSite=Strict`, 20-min sliding expiry) — fully isolated from user Bearer tokens. Dedicated stricter rate limiter on token auth (5 attempts / 10 min, failures only).
 
@@ -346,7 +346,7 @@ Before exposing ShellGuard to anything beyond localhost:
 - [ ] Place the app behind **Nginx/Caddy with TLS**, or set `ENFORCE_HTTPS=true` if terminating in-process
 - [ ] Set **`TRUST_PROXY=true`** only behind your reverse proxy (correct IPs for rate limiting)
 - [ ] Set **`CORS_ORIGIN`** to your specific origin — not wildcard
-- [ ] Restrict port `5353` to localhost/LAN and proxy publicly via TLS
+- [ ] Restrict port `6464` to localhost/LAN and proxy publicly via TLS
 - [ ] Keep **`VITE_SHELLCRYPTION_ENABLED=true`** — never ship a plaintext-at-column vault
 - [ ] Set a sane **`TOKEN_TTL_DEFAULT`** for your threat model (shorter than 24h on shared networks)
 - [ ] Back up **both** `data/db.sqlite` and `data/audit.sqlite` regularly — and keep the encryption key elsewhere

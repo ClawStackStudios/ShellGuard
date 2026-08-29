@@ -28,7 +28,7 @@
 - **Zero-knowledge by design**: passwords, TOTP seeds, SSH keys, and file data are encrypted client-side and the server never sees plaintext. When `DB_ENCRYPTION_KEY` is set, metadata columns (title, username, url, category, notes, file_name) are also encrypted at the field level with AES-256-GCM.
 - **Agent isolation**: AI agents can organize vault items (rename, categorize, move) but NEVER see actual passwords, TOTP seeds, SSH keys, or file contents — those remain opaque ShellCryption blobs
 
-**Runtime topology:** development runs twin ports (Vite `:5353` strict-port proxying `/api` → API `:5454`); production serves the compiled `dist/` and the API from a single port (`:5353`) inside one container.
+**Runtime topology:** development runs twin ports (Vite `:6464` strict-port proxying `/api` → API `:6565`); production serves the compiled `dist/` and the API from a single port (`:6464`) inside one container.
 
 ## 🐚 Data Reefs (Schema v1)
 

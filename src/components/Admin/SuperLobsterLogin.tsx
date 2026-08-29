@@ -46,8 +46,15 @@ export function SuperLobsterLogin() {
         className="relative w-full max-w-md"
       >
         <a
-          href="#/"
-          className="absolute -top-2 left-0 inline-flex items-center gap-1.5 text-sm text-theme-muted hover:text-theme-main transition-colors"
+          href="/"
+          onClick={(e) => {
+            if (window.location.pathname !== '/' || window.location.hash) {
+              e.preventDefault();
+              window.history.pushState({}, '', '/');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }
+          }}
+          className="absolute -top-2 left-0 inline-flex items-center gap-1.5 text-sm text-theme-muted hover:text-theme-main transition-colors cursor-pointer"
         >
           <ArrowLeft size={14} /> Back to the reef
         </a>

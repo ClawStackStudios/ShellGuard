@@ -26,7 +26,7 @@ vi.hoisted(() => {
   const dir: string = fsLib.mkdtempSync(pathLib.join(process.cwd(), 'tests', 'data-metadata-encryption-'));
   process.env.DATA_DIR = dir;
   process.env.NODE_ENV = 'test';
-  process.env.PORT = '54548';
+  process.env.PORT = '64648';
   // Exactly 32 bytes → valid AES-256 key material after base64 decode
   process.env.DB_ENCRYPTION_KEY = Buffer.from('test-metadata-key-exactly-32bytes!').toString('base64');
   process.env.TOKEN_TTL_DEFAULT = '30m';

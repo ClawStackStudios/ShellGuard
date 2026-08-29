@@ -78,7 +78,7 @@
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically.
 - 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
 - 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
-- 🦞 **SuperLobster Panel** — Token-gated instance admin plane at `/#/super-lobster`: strict-metadata lobster management (cascade delete with type-to-confirm), read-only diagnostics, whitelist-only settings, and failsafe database backups (SQLCipher-consistent Online Backup API snapshots with manifest + rotation). Restores stay offline by design. See [ADMIN.md](./ADMIN.md).
+- 🦞 **SuperLobster Panel** — Token-gated instance admin plane at `/superlobster`: strict-metadata lobster management (cascade delete with type-to-confirm), read-only diagnostics, whitelist-only settings, and failsafe database backups (SQLCipher-consistent Online Backup API snapshots with manifest + rotation). Restores stay offline by design. See [ADMIN.md](./ADMIN.md).
 - 🌊 **Reef Modernist Design** — "Bioluminescent Defense": deep abyssal surfaces, glowing shells, Sora/Geist/JetBrains Mono typography.
 
 ### 🔐 Encryption at a Glance
@@ -122,7 +122,7 @@ graph TD
     end
 
     subgraph Server ["🖥️ server.ts (Express 5)"]
-        API["REST API<br/>helmet · cors · zod · rate limits<br/>Port 5454 dev / 5353 prod"]
+        API["REST API<br/>helmet · cors · zod · rate limits<br/>Port 6565 dev / 6464 prod"]
         DB[("db.sqlite<br/>WAL · SQLCipher optional")]
         AUDIT[("audit.sqlite<br/>segregated append-only logs")]
     end
@@ -173,8 +173,8 @@ docker compose up -d --build
 
 **3. Verify running state:**
 
-- **Web GUI:** [http://localhost:5353](http://localhost:5353)
-- **API Health:** `curl http://localhost:5353/api/health`
+- **Web GUI:** [http://localhost:6464](http://localhost:6464)
+- **API Health:** `curl http://localhost:6464/api/health`
 
 **Monitoring & Maintenance:**
 
@@ -186,7 +186,7 @@ docker compose up -d --build
 > **Data Sovereignty & Persistence**: All pearls, identities and audit reefs live in a bind mount on your host machine (`./data/db.sqlite`, `./data/audit.sqlite`) for maximum visibility and ease of backup. Back up both files — and keep your `DB_ENCRYPTION_KEY` somewhere safe *outside* this directory.
 
 > [!NOTE]
-> For Unraid, a Community Applications template is provided at [`shellguard-unraid-template.xml`](./shellguard-unraid-template.xml) (WebUI port `5353`, appdata path `/mnt/user/appdata/shellguard`, advanced-default `PUID=99`/`PGID=100`).
+> For Unraid, a Community Applications template is provided at [`shellguard-unraid-template.xml`](./shellguard-unraid-template.xml) (WebUI port `6464`, appdata path `/mnt/user/appdata/shellguard`, advanced-default `PUID=99`/`PGID=100`).
 
 </details>
 
@@ -206,8 +206,8 @@ cp .env.example .env
 
 # 3. Start the twin dev servers
 npm run scuttle:dev-start
-#   → Frontend (Vite + HMR): http://localhost:5353
-#   → Backend (Express API): http://localhost:5454/api/health
+#   → Frontend (Vite + HMR): http://localhost:6464
+#   → Backend (Express API): http://localhost:6565/api/health
 ```
 
 Stop the reef with `npm run scuttle:dev-stop`; scuttle the dev database with `npm run scuttle:dev-reset`.
@@ -223,7 +223,7 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 | Variable | Default | Purpose |
 |---|---|---|
 | `NODE_ENV` | `production` | Runtime mode (production or development) |
-| `PORT` | `5454` | Server port (the container sets `5353` so one port serves UI + API) |
+| `PORT` | `6565` | Server port (the container sets `6464` so one port serves UI + API) |
 | `DATA_DIR` | `/app/data` | Where `db.sqlite` + `audit.sqlite` are stored (bind mount) |
 | `DB_ENCRYPTION_KEY` | `""` | SQLCipher AES-256 key encrypting the whole database file at rest. Generate with `openssl rand -base64 32`. Optional — see [SECURITY.md § Database Encryption](./SECURITY.md) |
 | `VITE_SHELLCRYPTION_ENABLED` | `true` | Client-side field encryption. Leave `true`; `false` stores secrets in plaintext columns (never do this in production) |
@@ -464,13 +464,13 @@ ShellGuard/
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Start only the Vite frontend (:5353, strict port, proxies `/api`) |
-| `npm run dev:server` | Start only the Express API (:5454, watch mode, `DATA_DIR=./data-dev`) |
+| `npm run dev` | Start only the Vite frontend (:6464, strict port, proxies `/api`) |
+| `npm run dev:server` | Start only the Express API (:6565, watch mode, `DATA_DIR=./data-dev`) |
 | `npm run scuttle:dev-start` | 🦞 Start frontend + backend together (development reef) |
 | `npm run scuttle:dev-stop` | Kill both dev servers |
 | `npm run scuttle:dev-reset` | Scuttle the development database (`data-dev/`) |
 | `npm run scuttle:reset` | Scuttle the production database (`data/`) — DANGER |
-| `npm run start:api` | Start only the Express API server (:5454) |
+| `npm run start:api` | Start only the Express API server (:6565) |
 | `npm run build` | Type-check + compile the frontend bundle (`tsc && vite build`) |
 | `npm run lint` | TypeScript verification (`tsc --noEmit`) |
 | `npm test` | Run the Vitest suites |
@@ -502,7 +502,7 @@ Before exposing ShellGuard to anything beyond localhost:
 - [ ] Place the app behind **Nginx/Caddy with TLS**, or set `ENFORCE_HTTPS=true` if terminating in-process
 - [ ] Set **`TRUST_PROXY=true`** only behind your reverse proxy (correct IPs for rate limiting)
 - [ ] Set **`CORS_ORIGIN`** to your specific origin — not wildcard
-- [ ] Restrict port `5353` to localhost/LAN and proxy publicly via TLS
+- [ ] Restrict port `6464` to localhost/LAN and proxy publicly via TLS
 - [ ] Keep **`VITE_SHELLCRYPTION_ENABLED=true`** — never ship a plaintext-at-column vault
 - [ ] Set a sane **`TOKEN_TTL_DEFAULT`** for your threat model (shorter than 24h on shared networks)
 - [ ] Back up **both** `data/db.sqlite` and `data/audit.sqlite` regularly — and keep the encryption key elsewhere

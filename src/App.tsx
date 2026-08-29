@@ -125,17 +125,35 @@ export default function App() {
   };
 
   // ── SuperLobster Panel (admin plane) ─────────────────────────────────────────
-  // Two entry hashes: #/super-lobster (canonical) and #/admin-login (alias).
-  const isAdminHash = () =>
-    typeof window !== 'undefined' &&
-    (window.location.hash === '#/super-lobster' || window.location.hash === '#/admin-login');
+  // Primary route: /superlobster
+  // Supported aliases & fallbacks: /super-lobster, /admin-login, and their hash forms (#/superlobster, #/super-lobster, #/admin-login)
+  const isAdminRoute = () => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+    const hash = window.location.hash.toLowerCase();
+    return (
+      path === '/superlobster' ||
+      path === '/super-lobster' ||
+      path === '/admin-login' ||
+      hash === '#/superlobster' ||
+      hash === '#/super-lobster' ||
+      hash === '#/admin-login' ||
+      hash === '#superlobster' ||
+      hash === '#super-lobster' ||
+      hash === '#admin-login'
+    );
+  };
 
-  const [isSuperLobster, setIsSuperLobster] = useState(isAdminHash);
+  const [isSuperLobster, setIsSuperLobster] = useState(isAdminRoute);
 
   useEffect(() => {
-    const onHashChange = () => setIsSuperLobster(isAdminHash());
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
+    const onRouteUpdate = () => setIsSuperLobster(isAdminRoute());
+    window.addEventListener('popstate', onRouteUpdate);
+    window.addEventListener('hashchange', onRouteUpdate);
+    return () => {
+      window.removeEventListener('popstate', onRouteUpdate);
+      window.removeEventListener('hashchange', onRouteUpdate);
+    };
   }, []);
 
   // Global keyboard shortcuts for quick search

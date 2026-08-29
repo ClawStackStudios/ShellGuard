@@ -12,7 +12,7 @@
 |---|---|---|
 | **Vaultwarden** | `/admin` | `ADMIN_TOKEN` auth (Argon2id PHC option), 20-min sessions, Users/Orgs/Diagnostics/Settings, backup via Online Backup API, restore by offline file swap |
 | **ClawChives** | `/admin` (SuperAdmin) | `ADMIN_TOKEN` auth (SHA-256 + constant-time), volatile in-memory sessions (no JWT), React UI via `react-router-dom`, metadata-only user list, cascade user delete |
-| **ShellGuard** | `/super-lobster` (**SuperLobster Panel**) | ClawChives session model + Vaultwarden backup model, plus secrets-aware hardening: strict-metadata-only user list, no download surface, no HTTP restore endpoint |
+| **ShellGuard** | `/superlobster` (**SuperLobster Panel**) | ClawChives session model + Vaultwarden backup model, plus secrets-aware hardening: strict-metadata-only user list, no download surface, no HTTP restore endpoint |
 
 ### Why this model (and not Vaultwarden's full config editor)
 
@@ -63,7 +63,7 @@ Vaultwarden gave its admin panel full config-editing power because container ope
 
 ## 3. Feature Scope
 
-### 3.1 SuperLobster Panel — `/super-lobster` (URL-only entry, no UI links)
+### 3.1 SuperLobster Panel — `/superlobster` (URL-only entry, no UI links)
 
 | Section | Contents |
 |---|---|

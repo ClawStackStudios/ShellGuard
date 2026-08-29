@@ -6,7 +6,7 @@
 - **Framework**: Express 5 (path-to-regexp v8)
 - **Database**: SQLite via `better-sqlite3-multiple-ciphers` (SQLCipher support)
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
-- **Build**: Vite (strictPort :5353, /api proxy → :5454)
+- **Build**: Vite (strictPort :6464, /api proxy → :6565)
 - **Language**: TypeScript (strict mode)
 - **Testing**: Vitest + supertest, per-suite DATA_DIR isolation
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
@@ -18,17 +18,17 @@
 npm install
 cp .env.example .env
 npm run scuttle:dev-start
-# Frontend: http://localhost:5353 (Vite + HMR)
-# Backend:  http://localhost:5454/api/health (DATA_DIR=./data-dev)
+# Frontend: http://localhost:6464 (Vite + HMR)
+# Backend:  http://localhost:6565/api/health (DATA_DIR=./data-dev)
 ```
 
 ## Port Allocation
 
 | Environment | Frontend | API |
 |---|---|---|
-| Development | :5353 (Vite) | :5454 (Express) |
-| Production | :5353 (served by Express) | :5353 (same port) |
-| Tests | N/A | 54541-54544 (per-suite) |
+| Development | :6464 (Vite) | :6565 (Express) |
+| Production | :6464 (served by Express) | :6464 (same port) |
+| Tests | N/A | 64641-64645 (per-suite) |
 
 ## Technical Constraints
 
@@ -36,7 +36,8 @@ npm run scuttle:dev-start
 - `crypto.hkdfSync` for key derivation, `crypto.createCipheriv`/`createDecipheriv` for AES-256-GCM
 - Express 5 rejects `app.get("*")` — use regex literal for SPA catch-all
 - SQLite CURRENT_TIMESTAMP and JS ISO strings do NOT compare correctly — use JS ISO comparison
-- Body limits: 1mb global, 32mb scoped to `/api/attachments`
+- Body limits: 1mb global, 32mb scoped to `/api/attachments`; attachment hard cap is 10 MB per file (zod: 14M-char file_data blob)
+- Admin plane: `ADMIN_TOKEN` env gates the SuperLobster Panel (503 when unset); cookie `sg_admin_session` (httpOnly/SameSite=Strict/20-min sliding); admin auth rate limit 5/10min; backups in `DATA_DIR/backups/`
 
 ## Dependencies (Key)
 

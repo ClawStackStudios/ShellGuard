@@ -1,4 +1,4 @@
-# 🦞 ShellGuard — Release v0.0.1
+# 🦞 ShellGuard — Release v0.0.1.2
 
 ## *Exoskeletal Sovereign Zero-Knowledge Protection & Resilient Vault Backups*
 
@@ -16,41 +16,41 @@
 
 ## 🚀 The Core Summary
 
-Welcome to the **v0.0.1 Genesis Release** of **ShellGuard**! This initial public release represents the complete, verified realization of a sovereign, self-hosted zero-knowledge secrets vault crafted for humans and autonomous AI agents alike. Born from real-world disaster recovery principles, ShellGuard pairs military-grade triple-layer cryptographic security (client-side AES-GCM-256 + per-row AES-256-GCM metadata encryption + SQLCipher storage) with a high-performance, Bitwarden-inspired Master-Detail interface, multi-account orchestration, zero hardcoded pods, and rock-solid SQLite snapshot backups.
+Welcome to the **v0.0.1.2 Genesis Hotfix** of **ShellGuard**! This release builds directly on the v0.0.1 Genesis Release to resolve critical deployment blockers found in non-secure HTTP environments (like local Unraid server instances). We've fortified the cryptographic pipeline with a custom multi-tier RFC 4122 v4 UUID generator to bypass Chromium's `crypto.randomUUID()` restrictions on HTTP, and eliminated `data:` URI download blocks by transitioning to in-memory `Blob` object URLs. We have also introduced a strict, automated **Full Development Loop** to completely eradicate documentation rot and ensure rigorous verification gates before any code hits `main`.
 
 ---
 
 ## 💎 Key Themes & Highlights
 
-### 🛠️ 1. Bitwarden-Style Master-Detail Dashboard & Modern UI
-* **Responsive Master-Detail Split (`VaultShell`):** Transitioned away from tab-based views into a clean two-pane layout featuring `ItemListPane` (searchable/filterable stream) and `ItemDetailPane` (inspector with one-click secret reveal, custom favicons, and attachment streaming).
+### 🩹 1. Origin Safety & Deployment Resilience (v0.0.1.2)
+* **Insecure Origin UUID & Entropy Fallback:** Added a multi-tier RFC 4122 v4 UUID generator and secure entropy fallback in `src/lib/crypto.ts` for non-secure HTTP browser origins where `window.crypto.randomUUID` is undefined.
+* **LAN HTTP Insecure File Downloads:** Replaced raw `data:` URI links with in-memory `Blob` and `URL.createObjectURL(blob)` in `downloadIdentityFile` and `downloadAttachment` to eliminate Chromium insecure-connection download blocks on LAN deployments.
+* **Full Development Loop Automation:** Established strict `.agents/workflows` for `start-task` and `finish-task` to enforce branch isolation, documentation hygiene (`docs-hygiene.md`), and three-layer verification checks on all future commits.
+
+### 🛠️ 2. Bitwarden-Style Master-Detail Dashboard & Modern UI (v0.0.1)
+* **Responsive Master-Detail Split (`VaultShell`):** Transitioned away from tab-based views into a clean two-pane layout featuring `ItemListPane` (searchable/filterable stream) and `ItemDetailPane`.
 * **Live 30-Second TOTP Countdown:** Integrated dynamic visual timer rings with high-visibility countdowns that automatically copy TOTP codes upon click.
 * **Unified Modal Creation (`ItemFormModal`):** Consolidated all login, note, SSH key, and attachment forms into an unified modal overlay with inline drag-and-drop file attachment staging.
-* **Desktop Sidebar Controls:** Added collapsible desktop sidebar controls (`PanelLeftOpen`/`PanelLeftClose`) and responsive mobile navigation drawers.
 
-### 💾 2. Disaster Resilience & Dual-Layer Failsafe Backups
-* **Live SQLite Online Backup Snapshots:** SuperLobster admin plane incorporates SQLite Online Backup API integration to take point-in-time consistent physical snapshots of `db.sqlite` and `audit.sqlite` without downtime.
-* **Manifest & Key Attestation:** Every automated backup creates a tamper-evident JSON manifest recording SHA-256 file hashes, timestamps, and active encryption key identifiers.
-* **Offline CLI Recovery Protocol (`scuttle:restore`):** Backups are strictly read-only and insulated from remote tampering. Restorations are performed safely on host via the offline recovery CLI utility.
-* **Client-Side Encrypted JSON & CSV Exports:** Sovereign user-controlled vault archives export all pearls, TOTP seeds, notes, SSH keys, and encrypted attachments behind re-authentication gates.
+### 💾 3. Disaster Resilience & Dual-Layer Failsafe Backups (v0.0.1)
+* **Live SQLite Online Backup Snapshots:** SuperLobster admin plane incorporates SQLite Online Backup API integration to take point-in-time consistent physical snapshots without downtime.
+* **Manifest & Key Attestation:** Every automated backup creates a tamper-evident JSON manifest recording SHA-256 file hashes, timestamps, and active encryption keys.
+* **Client-Side Encrypted Exports:** Sovereign user-controlled vault archives export all pearls, TOTP seeds, notes, SSH keys, and encrypted attachments behind re-authentication gates.
 
-### 🦞 3. Multi-User Orchestration & In-Place Quick Unlock
-* **Seamless In-Place Re-Auth (`QuickLoginModal`):** Dropping session or locking an account displays a non-destructive modal overlay directly over the dashboard, preserving user context and avoiding disruptive page refreshes.
-* **State-Aware Navigation (`NavIntent`):** Hardened reload routing (`sg_nav_intent`) ensures explicit logouts ("Claw Out") return cleanly to the landing page, while locked sessions preserve the dashboard with quick re-login.
+### 🦞 4. Multi-User Orchestration & In-Place Quick Unlock (v0.0.1)
+* **Seamless In-Place Re-Auth (`QuickLoginModal`):** Dropping session or locking an account displays a non-destructive modal overlay directly over the dashboard, preserving user context.
 * **Reactive ShellKey Lifecycle:** Vault items and agent keys decrypt automatically the instant a cryptographic key is derived, and all in-memory plaintext credentials are immediately purged upon locking.
 
-### 🐚 4. Pure User-Driven Pod Hierarchy
-* **Zero Hardcoded Default Pods:** Completely eliminated phantom/hardcoded categories (`Personal`, `Work`). Pods exist purely when created by users or referenced by vault items.
-* **Sub-Pod Cascading & Normalization:** Strict pod category path normalization (`normalizePod`) with automatic cascading when parent pods are modified.
-* **Custom Themed In-Modal Deletion:** Replaced browser-native prompts with an animated, themed in-modal confirmation dialogue in `PodModal.tsx`.
+### 🐚 5. Pure User-Driven Pod Hierarchy (v0.0.1)
+* **Zero Hardcoded Default Pods:** Completely eliminated phantom/hardcoded categories. Pods exist purely when created by users or referenced by vault items.
 
-### 📎 5. Encrypted Attachments & LobsterKeys AI Access
-* **Reference Model Attachments:** Large files (up to 10 MB each) are encrypted client-side with independent AAD and stored in `vault_secure_attachments`, referenced by pearls as JSON ID arrays.
-* **Autonomous AI Keys (`lb-`):** Issue granular, revocable, rate-limited LobsterKeys with fine-grained access policies so AI agents can query specific secrets without full vault compromise.
+### 📎 6. Encrypted Attachments & LobsterKeys AI Access (v0.0.1)
+* **Reference Model Attachments:** Large files (up to 10 MB each) are encrypted client-side with independent AAD and stored in `vault_secure_attachments`.
+* **Autonomous AI Keys (`lb-`):** Issue granular, revocable, rate-limited LobsterKeys with fine-grained access policies so AI agents can query specific secrets.
 
-### 👑 6. SuperLobster Instance Administration Plane
-* **Token-Gated Admin Portal (`/#/super-lobster`):** Sovereign control plane gated by `ADMIN_TOKEN` featuring instance health diagnostics, real-time uptime metrics, and strict-metadata audit logging.
-* **Transactional Cascade Deletion:** Safely offboard user accounts with multi-step `expect` type-to-confirm safeguards that cleanly delete all linked pearls, notes, keys, and attachments in a single transaction.
+### 👑 7. SuperLobster Instance Administration Plane (v0.0.1)
+* **Token-Gated Admin Portal (`/#/super-lobster`):** Sovereign control plane gated by `ADMIN_TOKEN` featuring instance health diagnostics and metrics.
+* **Transactional Cascade Deletion:** Safely offboard user accounts with multi-step safeguards that cleanly delete all linked data in a single transaction.
 
 ---
 
@@ -96,22 +96,13 @@ Welcome to the **v0.0.1 Genesis Release** of **ShellGuard**! This initial public
 
 ---
 
-## 📋 Commit Ledger (Genesis -> `v0.0.1`)
+## 📋 Commit Ledger (v0.0.1 -> `v0.0.1.2`)
 
-* `f029872` — **docs:** replace ASCII art logo with updated Unicode block text in README
-* `2c4f79b` — **merge:** integrate Bitwarden-style master-detail dashboard UI
-* `8e7c16d` — **feat:** refactor dashboard UI to Bitwarden-style master-detail architecture
-* `c4d3e4b` — **merge:** integrate sidebar polish, zero-hardcoded pods, lock hardening, and attractor beacon
-* `095f19a` — **docs:** integrate attractor beacon and data survival philosophy in README
-* `916460c` — **feat:** vault lock hardening and state-aware navigation intent
-* `af07c27` — **docs:** update root changelog with pod management and sidebar polish
-* `2dfa76c` — **feat:** eliminate all hardcoded default pods and enable pure user-driven pod management
-* `930375c` — **fix:** normalize pod categories, add optimistic deletion updates, and resolve type issues
-* `6e33694` — **fix:** sidebar layout, pod management UI, and state sync bugs
-* `f1694f2` — **feat:** extract Lobster Keys tab into dedicated component and update styling
-* `2afb3b8` — **feat:** integrate current user identity into generator configuration
-* `fba8424` — **refactor:** rename default issuer to ShellGuard and optimize TOTP UI/UX workflow
-* `c14121d` — **feat:** add claw-in navigation and enhance login view with drag-and-drop file support
+* `841e0d7` — **merge:** add full development loop rules and workflows
+* `753c913` — **chore:** add full development loop rules and workflows
+* `7d513b0` — **chore:** bump version to 0.0.1.2 for deployment hotfixes
+
+*(See RELEASE-v0.0.1.md in history for earlier commits)*
 
 ---
 

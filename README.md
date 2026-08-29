@@ -74,8 +74,9 @@
 - 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
 - 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 10 MB per file), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
-- 📤 **Sovereign Exports** — Metadata CSV export and re-auth-gated decrypted JSON backup; import restores your pearls on any reef.
-- ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically.
+- 💾 **Data Survival & Resilient Backups** — Born from real-world disaster recovery: painless dual-layer backups (live-consistent Online Backup API SQLite snapshots + comprehensive client-side encrypted vault exports with attachments and keys) designed to ensure you never face a catastrophic lock-out.
+- 📤 **Sovereign Exports** — Metadata CSV export and re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments.
+- ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically without flushing offline recovery buffers.
 - 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
 - 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
 - 🦞 **SuperLobster Panel** — Token-gated instance admin plane at `/superlobster`: strict-metadata lobster management (cascade delete with type-to-confirm), read-only diagnostics, whitelist-only settings, and failsafe database backups (SQLCipher-consistent Online Backup API snapshots with manifest + rotation). Restores stay offline by design. See [ADMIN.md](./ADMIN.md).

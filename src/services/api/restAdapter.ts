@@ -27,61 +27,70 @@ export class ApiError extends Error {
   }
 }
 
+async function request<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = sessionStorage.getItem(SESSION_KEYS.TOKEN);
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const response = await fetch(`${getApiBaseUrl()}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  let pearl: any = null;
+  try {
+    pearl = await response.json();
+  } catch {
+    // Non-JSON body (e.g. empty 204) — fall through with null payload.
+  }
+
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      pearl?.error || "Bedrock failure scuttling pearl.",
+      pearl?.details
+    );
+  }
+
+  // Tolerant envelope unwrap: {success,data} → data; raw payloads unchanged.
+  if (pearl && typeof pearl === "object" && "success" in pearl && "data" in pearl) {
+    return pearl.data as T;
+  }
+  return pearl as T;
+}
+
 export const restAdapter = {
-  async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = sessionStorage.getItem(SESSION_KEYS.TOKEN);
-    const headers = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    };
+  request,
 
-    const response = await fetch(`${getApiBaseUrl()}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    let pearl: any = null;
-    try {
-      pearl = await response.json();
-    } catch {
-      // Non-JSON body (e.g. empty 204) — fall through with null payload.
-    }
-
-    if (!response.ok) {
-      throw new ApiError(
-        response.status,
-        pearl?.error || "Bedrock failure scuttling pearl.",
-        pearl?.details
-      );
-    }
-
-    // Tolerant envelope unwrap: {success,data} → data; raw payloads unchanged.
-    if (pearl && typeof pearl === "object" && "success" in pearl && "data" in pearl) {
-      return pearl.data as T;
-    }
-    return pearl as T;
+  GET<T = any>(endpoint: string) {
+    return request<T>(endpoint, { method: "GET" });
   },
 
-  GET(endpoint: string) {
-    return this.request(endpoint, { method: "GET" });
-  },
-
-  POST(endpoint: string, body: any) {
-    return this.request(endpoint, {
+  POST<T = any>(endpoint: string, body?: any) {
+    return request<T>(endpoint, {
       method: "POST",
-      body: JSON.stringify(body),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
   },
 
-  PUT(endpoint: string, body: any) {
-    return this.request(endpoint, {
+  PUT<T = any>(endpoint: string, body?: any) {
+    return request<T>(endpoint, {
       method: "PUT",
-      body: JSON.stringify(body),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
   },
 
-  DELETE(endpoint: string) {
-    return this.request(endpoint, { method: "DELETE" });
+  PATCH<T = any>(endpoint: string, body?: any) {
+    return request<T>(endpoint, {
+      method: "PATCH",
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+  },
+
+  DELETE<T = any>(endpoint: string) {
+    return request<T>(endpoint, { method: "DELETE" });
   },
 };

@@ -23,8 +23,8 @@ interface SidebarFolderTreeProps {
   selectedFolder: string;
   onSelectFolder: (podPath: string) => void;
   onAddNewFolder?: (podPath: string) => void;
-  onRenameFolder?: (oldPath: string, newPath: string) => void;
-  onDeleteFolder?: (podPath: string) => void;
+  onRenameFolder?: (oldPath: string, newPath: string) => Promise<void> | void;
+  onDeleteFolder?: (podPath: string) => Promise<void> | void;
   isCollapsed?: boolean;
 }
 
@@ -72,7 +72,7 @@ export function SidebarFolderTree({
     setIsPodModalOpen(true);
   };
 
-  const handleSaveModal = (normalizedName: string, color: string) => {
+  const handleSaveModal = async (normalizedName: string, color: string) => {
     setPodColor(normalizedName, color);
 
     if (modalMode === "create") {
@@ -84,23 +84,24 @@ export function SidebarFolderTree({
       // Edit mode
       if (editingTargetPod && editingTargetPod !== normalizedName) {
         if (onRenameFolder) {
-          onRenameFolder(editingTargetPod, normalizedName);
+          await onRenameFolder(editingTargetPod, normalizedName);
         }
         deletePodColor(editingTargetPod);
         setPodColor(normalizedName, color);
-        if (selectedFolder === editingTargetPod) {
+        if (selectedFolder === editingTargetPod || selectedFolder.startsWith(editingTargetPod + "/")) {
           onSelectFolder(normalizedName);
         }
       }
     }
   };
 
-  const handleDeletePod = (podToDelete: string) => {
-    deletePodColor(podToDelete);
+  const handleDeletePod = async (podToDelete: string) => {
+    const norm = normalizePod(podToDelete);
+    deletePodColor(norm);
     if (onDeleteFolder) {
-      onDeleteFolder(podToDelete);
+      await onDeleteFolder(norm);
     }
-    if (selectedFolder === podToDelete) {
+    if (selectedFolder === norm || selectedFolder.startsWith(norm + "/")) {
       onSelectFolder("all");
     }
   };

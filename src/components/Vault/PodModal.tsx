@@ -16,8 +16,8 @@ export interface PodModalProps {
   initialPodName?: string;
   initialColor?: string;
   onClose: () => void;
-  onSave: (podName: string, color: string) => void;
-  onDelete?: (podName: string) => void;
+  onSave: (podName: string, color: string) => Promise<void> | void;
+  onDelete?: (podName: string) => Promise<void> | void;
 }
 
 export function PodModal({
@@ -59,21 +59,22 @@ export function PodModal({
 
   if (typeof document === "undefined") return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = podName.trim();
     if (!trimmed) return;
     const normalized = normalizePod(trimmed);
     setPodColor(normalized, selectedColor);
-    onSave(normalized, selectedColor);
+    await onSave(normalized, selectedColor);
     onClose();
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!initialPodName) return;
-    deletePodColor(initialPodName);
+    const norm = normalizePod(initialPodName);
+    deletePodColor(norm);
     if (onDelete) {
-      onDelete(initialPodName);
+      await onDelete(norm);
     }
     onClose();
   };

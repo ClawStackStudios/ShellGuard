@@ -80,6 +80,7 @@ import {
   activateUserSession, 
   migrateLegacySession 
 } from "./lib/sessionManager.ts";
+import { normalizePod } from "./lib/podUtils.ts";
 
 export default function App() {
   const [isMolting, setIsMolting] = useState(true);
@@ -499,19 +500,23 @@ export default function App() {
     }
   };
 
-  const updateTheClaw = async (id: string, item: {
-    title: string;
-    secret: string;
-    username: string;
-    url: string;
-    category: string;
-    type: VaultItemType;
-    notes?: string;
-    totp_secret?: string;
-    attachments?: string;
-    newAttachments?: PendingAttachment[];
-    removedAttachmentIds?: string[];
-  }) => {
+  const updateTheClaw = async (
+    id: string, 
+    item: {
+      title: string;
+      secret: string;
+      username: string;
+      url: string;
+      category: string;
+      type: VaultItemType;
+      notes?: string;
+      totp_secret?: string;
+      attachments?: string;
+      newAttachments?: PendingAttachment[];
+      removedAttachmentIds?: string[];
+    },
+    skipScuttle: boolean = false
+  ) => {
     if (!shellKey) return;
     try {
       if (item.type === 'note') {
@@ -551,7 +556,9 @@ export default function App() {
           attachments: item.attachments || "[]"
         });
       }
-      scuttleVault(shellKey);
+      if (!skipScuttle) {
+        scuttleVault(shellKey);
+      }
     } catch (err: any) {
       setError(err.message);
     }
@@ -559,56 +566,101 @@ export default function App() {
 
   const handleRenamePod = async (oldPod: string, newPod: string) => {
     if (!shellKey) return;
-    const itemsToUpdate = vaultItems.filter(
-      (i) => (i.category || "Personal") === oldPod || (i.category || "Personal").startsWith(oldPod + "/")
-    );
+    const normOld = normalizePod(oldPod);
+    const normNew = normalizePod(newPod);
+    if (normOld === normNew) return;
+
+    const itemsToUpdate = vaultItems.filter((i) => {
+      const currentCat = normalizePod(i.category);
+      return currentCat === normOld || currentCat.startsWith(normOld + "/");
+    });
     
+    // Optimistically update local state immediately so UI refreshes without delay
+    setVaultItems((prev) =>
+      prev.map((item) => {
+        const currentCat = normalizePod(item.category);
+        if (currentCat === normOld) {
+          return { ...item, category: normNew };
+        }
+        if (currentCat.startsWith(normOld + "/")) {
+          return { ...item, category: currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`) };
+        }
+        return item;
+      })
+    );
+
     if (itemsToUpdate.length === 0) {
-      // Force a re-render so the UI updates to reflect the renamed color in localStorage
-      setVaultItems([...vaultItems]);
       return;
     }
 
     for (const item of itemsToUpdate) {
-      const currentCat = item.category || "Personal";
-      const updatedCat = currentCat === oldPod ? newPod : currentCat.replace(new RegExp(`^${oldPod}/`), `${newPod}/`);
-      await updateTheClaw(item.id, {
-        title: item.title,
-        secret: item.secret,
-        username: item.username || "",
-        url: item.url || "",
-        category: updatedCat,
-        type: item.type,
-        notes: item.notes,
-        totp_secret: item.totp_secret,
-        attachments: item.attachments
-      });
+      const currentCat = normalizePod(item.category);
+      const updatedCat = currentCat === normOld ? normNew : currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`);
+      await updateTheClaw(
+        item.id, 
+        {
+          title: item.title,
+          secret: item.secret,
+          username: item.username || "",
+          url: item.url || "",
+          category: updatedCat,
+          type: item.type,
+          notes: item.notes,
+          totp_secret: item.totp_secret,
+          attachments: item.attachments
+        },
+        true
+      );
     }
+
+    // Single server sync after all items are updated
+    await scuttleVault(shellKey);
   };
 
   const handleDeletePod = async (podToDelete: string) => {
     if (!shellKey) return;
-    const itemsToUpdate = vaultItems.filter((i) => (i.category || "Personal") === podToDelete);
+    const targetPod = normalizePod(podToDelete);
+
+    const itemsToUpdate = vaultItems.filter((i) => {
+      const currentCat = normalizePod(i.category);
+      return currentCat === targetPod || currentCat.startsWith(targetPod + "/");
+    });
     
+    // Optimistically update local state immediately so the pod disappears from the tree instantly
+    setVaultItems((prev) =>
+      prev.map((item) => {
+        const currentCat = normalizePod(item.category);
+        if (currentCat === targetPod || currentCat.startsWith(targetPod + "/")) {
+          return { ...item, category: "Personal" };
+        }
+        return item;
+      })
+    );
+
     if (itemsToUpdate.length === 0) {
-      // Force a re-render so the UI updates to reflect the removed color in localStorage
-      setVaultItems([...vaultItems]);
       return;
     }
 
     for (const item of itemsToUpdate) {
-      await updateTheClaw(item.id, {
-        title: item.title,
-        secret: item.secret,
-        username: item.username || "",
-        url: item.url || "",
-        category: "Personal",
-        type: item.type,
-        notes: item.notes,
-        totp_secret: item.totp_secret,
-        attachments: item.attachments
-      });
+      await updateTheClaw(
+        item.id, 
+        {
+          title: item.title,
+          secret: item.secret,
+          username: item.username || "",
+          url: item.url || "",
+          category: "Personal",
+          type: item.type,
+          notes: item.notes,
+          totp_secret: item.totp_secret,
+          attachments: item.attachments
+        },
+        true
+      );
     }
+
+    // Single server sync after all items are updated
+    await scuttleVault(shellKey);
   };
 
   const handleLoginSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {

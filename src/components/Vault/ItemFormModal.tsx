@@ -509,26 +509,34 @@ export function ItemFormModal({
                     <Plus size={16} /> Add Extra Field
                   </button>
                   {isExtraDropdownOpen && (
-                    <div className="absolute top-full mt-2 w-52 bg-theme-surface border border-theme-subtle rounded-xl shadow-xl z-20 py-2 left-1/2 -translate-x-1/2">
-                      {!showNoteField && type === 'password' && (
-                        <button type="button" onClick={() => { setShowNoteField(true); setIsExtraDropdownOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer">
-                          📝 Note
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsExtraDropdownOpen(false)} />
+                      <motion.div 
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                        className="absolute bottom-full mb-2 w-52 bg-theme-surface border border-theme-subtle rounded-xl shadow-2xl z-20 py-2 left-1/2 -translate-x-1/2"
+                      >
+                        {!showNoteField && type === 'password' && (
+                          <button type="button" onClick={() => { setShowNoteField(true); setIsExtraDropdownOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer">
+                            📝 Note
+                          </button>
+                        )}
+                        {!showTotpField && (
+                          <button type="button" onClick={() => { setShowTotpField(true); setIsExtraDropdownOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer">
+                            ⏱️ TOTP Secret
+                          </button>
+                        )}
+                        {!showAttachmentField && (
+                          <button type="button" onClick={() => { setShowAttachmentField(true); setIsExtraDropdownOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer">
+                            📎 Attachment
+                          </button>
+                        )}
+                        <button type="button" onClick={() => { setIsAddFieldOpen(true); setIsExtraDropdownOpen(false); setNewFieldName(""); setNewFieldValue(""); setNewFieldType("text"); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer border-t border-theme-subtle/50">
+                          ✨ Custom Field
                         </button>
-                      )}
-                      {!showTotpField && (
-                        <button type="button" onClick={() => { setShowTotpField(true); setIsExtraDropdownOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer">
-                          ⏱️ TOTP Secret
-                        </button>
-                      )}
-                      {!showAttachmentField && (
-                        <button type="button" onClick={() => { setShowAttachmentField(true); setIsExtraDropdownOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer">
-                          📎 Attachment
-                        </button>
-                      )}
-                      <button type="button" onClick={() => { setIsAddFieldOpen(true); setIsExtraDropdownOpen(false); setNewFieldName(""); setNewFieldValue(""); setNewFieldType("text"); }} className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium flex items-center gap-2 text-theme-main cursor-pointer border-t border-theme-subtle/50">
-                        ✨ Custom Field
-                      </button>
-                    </div>
+                      </motion.div>
+                    </>
                   )}
                 </div>
               </>

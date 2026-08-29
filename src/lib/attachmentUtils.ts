@@ -44,13 +44,44 @@ export function formatBytes(bytes: number): string {
 
 /**
  * Trigger a browser download from a decrypted data URL.
- * Mirrors the existing downloadIdentityFile anchor pattern.
+ * Converts data URLs to Blobs to prevent browser insecure connection blocks.
  */
 export function downloadAttachment(dataUrl: string, fileName: string) {
-  const anchor = document.createElement('a');
-  anchor.setAttribute('href', dataUrl);
-  anchor.setAttribute('download', fileName || 'attachment');
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
+  try {
+    let url = dataUrl;
+    let isBlobCreated = false;
+
+    if (dataUrl.startsWith('data:')) {
+      const parts = dataUrl.split(',');
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      url = URL.createObjectURL(blob);
+      isBlobCreated = true;
+    }
+
+    const anchor = document.createElement('a');
+    anchor.setAttribute('href', url);
+    anchor.setAttribute('download', fileName || 'attachment');
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
+    if (isBlobCreated) {
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+  } catch {
+    const anchor = document.createElement('a');
+    anchor.setAttribute('href', dataUrl);
+    anchor.setAttribute('download', fileName || 'attachment');
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  }
 }

@@ -32,13 +32,6 @@
 
 ---
 
-## ⚠️ FRESH START — Breaking Change
-
-> [!CAUTION]
-> **This release scuttles the old reef.** ShellGuard v0.2.0 migrates onto a brand-new SQLite bedrock with transactional migrations. **All previously stored local data is wiped** — the legacy `shellguard.db` file is deleted and cannot be recovered. Export anything you need from an older build *before* upgrading, then register a fresh identity on first launch. There is no legacy import path.
-
----
-
 ## 📜 Table of Contents
 
 <details>
@@ -239,9 +232,6 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 | `AUTH_RATE_WINDOW` / `AUTH_RATE_LIMIT` | `900000` / `5` | Brute-force protection window (ms) and attempt cap on auth endpoints |
 | `API_RATE_WINDOW` / `API_RATE_LIMIT` | `60000` / `100` | Global API rate-limit window (ms) and request cap |
 | `PUID` / `PGID` | `1000` | Linux UID/GID the container drops privileges to |
-
-> [!NOTE]
-> ShellGuard has **no admin control plane** in v0.2.0 — there is deliberately no `ADMIN_TOKEN`. It is queued on the [ROADMAP](./ROADMAP.md) behind its own threat-model pass.
 
 ---
 

@@ -1,6 +1,8 @@
 # Changelog — ShellGuard
 
 ## [Unreleased]
+n### Fixed
+- **Documentation:** Removed fairy tales about legacy `v0.2.0` breaking changes and data wiping, re-aligned all outdated version mentions to `v0.0.1` Genesis version.
 n### Changed
 - **Iconography:** Updated Unraid template icon and Vite app favicon to use `docs/public/assets/shellguard-icon.svg`.
 

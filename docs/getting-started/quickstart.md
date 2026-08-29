@@ -32,7 +32,7 @@ docker compose up -d --wait
 ### 4. Verify Reef Health
 ```bash
 curl http://localhost:6464/api/health
-# {"success":true,"data":{"status":"ok","version":"0.2.0","database":"connected"}}
+# {"success":true,"data":{"status":"ok","version":"0.0.1","database":"connected"}}
 ```
 Open **[http://localhost:6464](http://localhost:6464)** in your web browser.
 

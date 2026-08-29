@@ -6,9 +6,9 @@
 
 ## 📜 Changelog — Completed Molts
 
-### ✅ Architecture Parity v0.2.0 (2026-08) — SQLite Bedrock & ClawChives Twin
+### ✅ Architecture Parity v0.0.1 (2026-08) — SQLite Bedrock & ClawChives Twin
 
-> The defining molt: ShellGuard refactored onto the exact architecture of its sibling app ClawChives (bookmark manager). **Fresh start — prior local data wiped by design** (breaking change).
+> The defining molt: ShellGuard refactored onto the exact architecture of its sibling app ClawChives (bookmark manager).
 
 - [x] **SQLite bedrock** — `DATA_DIR` layout (`db.sqlite` + segregated append-only `audit.sqlite`), WAL/NORMAL/foreign_keys pragmas, `better-sqlite3-multiple-ciphers` driver with optional SQLCipher at rest
 - [x] **Transactional migrations** — `migrations/0001_initial.{up,down}.sql` define clean schema v1; runner tracks `schema_migrations`; legacy inline-DDL singleton deleted along with root `shellguard.db`
@@ -24,7 +24,7 @@
 - [x] **Agent skill document** — `skills/shellguard/SKILL.md` served at `/skill.md`
 - [x] **Documentation suite** — README, ARCHITECTURE (with deltas appendix), SECURITY, QUICKSTART, CONTRIBUTING, CRUSTSECURITY, BLUEPRINT (schema v1 truthfulness)
 - [x] **Password attachments rework** — reference model: each file stored as its own ShellCrypted `vault_secure_attachments` record, pearls link them via a JSON ID array; file-upload UI (click/drag, 10 MB per-file hard cap, unlimited attachments), download buttons, pearl delete cascade-deletes linked attachments
-- [x] **Per-Row Encryption** — shipped in v0.2.0: server-side AES-256-GCM metadata encryption (title, username, url, category, notes, file_name) keyed from `DB_ENCRYPTION_KEY` via HKDF, alongside client-side ShellCryption™; in-place envelopes with legacy-plaintext backward compatibility
+- [x] **Per-Row Encryption** — shipped in v0.0.1: server-side AES-256-GCM metadata encryption (title, username, url, category, notes, file_name) keyed from `DB_ENCRYPTION_KEY` via HKDF, alongside client-side ShellCryption™; in-place envelopes with legacy-plaintext backward compatibility
 - [x] **SuperLobster Panel (admin plane)** — `ADMIN_TOKEN`-gated panel at `/superlobster` with secrets-aware threat model (ADMIN.md): strict-metadata lobster management + cascade delete, read-only diagnostics, whitelist-only settings, failsafe Online-Backup-API backups with manifest + rotation; no download, no HTTP restore (offline Vaultwarden-style procedure + `scuttle:restore` validator)
 - [x] **Bulk operations** — multi-select checkboxes with tri-state select-all, confirmed bulk delete with in-progress state, endpoint-mapped per-type deletion; password bulk deletes cascade their linked attachments
 

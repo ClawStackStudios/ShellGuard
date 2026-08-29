@@ -1,3 +1,5 @@
+import { sha256 } from './webCryptoFallback.ts';
+
 export function generateUUID(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -46,9 +48,16 @@ export function generateLobsterKey(): string {
 export async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(token);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Fallback for non-secure contexts (e.g. LAN HTTP where crypto.subtle is undefined)
+  const hashBytes = sha256(data);
+  return Array.from(hashBytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function downloadIdentityFile(username: string, uuid: string, token: string, displayName?: string) {

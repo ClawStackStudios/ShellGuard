@@ -98,13 +98,17 @@ Welcome to the **v0.0.1.3 Genesis Hotfix** of **ShellGuard**! This release build
 
 ---
 
-## 📋 Commit Ledger (v0.0.1 -> `v0.0.1.2`)
+## 📋 Commit Ledger (v0.0.1 -> v0.0.1.3)
 
+* `50eef47` — **ci:** add GitHub Actions workflow to auto-publish releases on tag push
+* `050ff8e` — **chore:** bump version to v0.0.1.3 for deployment hotfixes and iconography
+* `c6666a3` — **docs:** re-align version tags to v0.0.1 and remove legacy migration text
+* `20be1c3` — **feat:** update Unraid and browser icons to SVG
 * `841e0d7` — **merge:** add full development loop rules and workflows
 * `753c913` — **chore:** add full development loop rules and workflows
 * `7d513b0` — **chore:** bump version to 0.0.1.2 for deployment hotfixes
 
-*(See RELEASE-v0.0.1.md in history for earlier commits)*
+*(See git history for earlier commits)*
 
 ---
 

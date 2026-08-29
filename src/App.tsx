@@ -53,6 +53,7 @@ import { SuperLobsterLogin } from "./components/Admin/SuperLobsterLogin.tsx";
 import { SuperLobsterPanel } from "./components/Admin/SuperLobsterPanel.tsx";
 import { GeneratorToolView } from "./components/Generator/GeneratorToolView.tsx";
 import { ImportExportView } from "./components/Settings/ImportExportView.tsx";
+import { LobsterKeysTab } from "./components/LobsterKeys/LobsterKeysTab.tsx";
 import { 
   generateUUID, 
   generateHumanKey, 
@@ -843,7 +844,7 @@ export default function App() {
               )}
               {(view === "settings_agents" || view === "agents") && (
                 <motion.div key="agents" className="w-full">
-                  <AgentsView agents={agents} onAdd={async (name, perms) => { await restAdapter.POST("/api/agent-keys", { name, permissions: perms }); scuttleAgents(); }} onDelete={async (id) => { await restAdapter.DELETE(`/api/agent-keys/${id}`); scuttleAgents(); }} />
+                  <LobsterKeysTab />
                 </motion.div>
               )}
               {view === "generator" && (
@@ -1030,7 +1031,7 @@ function SettingsView({
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2"
+                className="p-3 bg-claw-cyan/10 border border-claw-cyan/30 rounded-xl text-claw-cyan text-xs font-semibold flex items-center gap-2"
               >
                 <CheckCircle2 size={15} />
                 <span>Display name updated across your ShellGuard session.</span>
@@ -1123,206 +1124,6 @@ function SettingsView({
       </div>
         </>
       )}
-    </div>
-  );
-}
-
-
-function AgentsView({ agents, onAdd, onDelete }: { agents: Agent[]; onAdd: (n: string, p: any) => void; onDelete: (id: string) => void }) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [name, setName] = useState("");
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
-
-  const toggleKeyVisibility = (id: string) => {
-    setVisibleKeys(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleCopyKey = (key: string) => {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(key);
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = key;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-    }
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2500);
-  };
-
-  return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-theme-main">Lobster Keys</h2>
-          <p className="text-theme-muted mt-1 max-w-xl">
-            Manage delegated access keys for your agents and automated services. Agents use these keys to authenticate and request secrets from the vault.
-          </p>
-        </div>
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-lobster-red text-white font-bold rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 dark:shadow-red-900/20 whitespace-nowrap cursor-pointer transition-all"
-        >
-          {isAdding ? "Cancel" : <><Plus size={20} /> Forge Lobster Key</>}
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {isAdding && (
-          <motion.div 
-            key="adding"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="bg-theme-surface/50 p-6 rounded-3xl border-2 border-lobster-red shadow-sm mb-4">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-lobster-red/10 flex items-center justify-center text-lobster-red">
-                  <Bot size={20} />
-                </div>
-                <h3 className="text-xl font-bold">Forge New Lobster Key</h3>
-              </div>
-              
-              <div className="mb-6">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Agent / Service Name</label>
-                <input 
-                  type="text" 
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 focus:border-lobster-red focus:ring-1 focus:ring-lobster-red outline-none text-theme-main"
-                  placeholder="e.g. RSS_Scuttler_Bot"
-                />
-              </div>
-              
-              <div className="p-4 bg-theme-base rounded-xl border border-theme-subtle mb-6">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Default Permissions</p>
-                <div className="flex flex-wrap gap-3">
-                  <span className="text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-500 px-3 py-1.5 rounded-lg border border-green-500/20 flex items-center gap-1.5">
-                    <Check size={14} /> canRead
-                  </span>
-                  <span className="text-xs font-medium bg-claw-cyan/10 text-claw-cyan px-3 py-1.5 rounded-lg border border-claw-cyan/20 flex items-center gap-1.5">
-                    <Check size={14} /> canWrite
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setIsAdding(false)}
-                  className="px-6 py-3 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={() => { onAdd(name, { canRead: true, canWrite: true }); setName(""); setIsAdding(false); }}
-                  disabled={!name}
-                  className="px-8 py-3 bg-lobster-red hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 dark:shadow-red-900/40 disabled:opacity-50 cursor-pointer"
-                >
-                  Forge lb- Key
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="grid gap-4">
-        {agents.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-3xl bg-white/50 dark:bg-slate-900/20">
-            <Bot className="mx-auto text-slate-300 dark:text-slate-700 mb-4" size={48} />
-            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-1">No Lobster Keys Forged</h3>
-            <p className="text-slate-500 text-sm">Forge your first delegated access key above.</p>
-          </div>
-        ) : (
-          agents.map((agent) => (
-            <motion.div 
-              key={agent.id}
-              layout
-              className="bg-theme-surface/40 p-5 rounded-2xl border border-theme-subtle hover:border-lobster-red/50 flex flex-col gap-4 group shadow-sm transition-colors"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-11 h-11 bg-lobster-red/10 border border-lobster-red/20 rounded-xl flex items-center justify-center text-lobster-red flex-shrink-0">
-                    <Bot size={22} />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-bold text-base text-theme-main truncate">{agent.name}</h4>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] font-mono text-slate-400">ID: {agent.id.substring(0, 8)}</span>
-                      <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-md font-medium border border-emerald-500/20">
-                        Active Key
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => onDelete(agent.id)}
-                    className="p-2 text-slate-400 hover:text-lobster-red hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors cursor-pointer"
-                    title="Revoke Lobster Key"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-
-              {/* API Key Box with 1-Click Copy Full Key Button */}
-              <div className="bg-theme-base p-3 rounded-xl border border-theme-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex-shrink-0">API Key:</span>
-                  <div 
-                    onClick={() => handleCopyKey(agent.apiKey)}
-                    className="font-mono text-xs text-theme-main truncate bg-theme-surface hover:bg-slate-100 dark:hover:bg-slate-800/80 px-2.5 py-1.5 rounded-lg border border-theme-subtle flex-1 cursor-pointer transition-colors"
-                    title="Click to copy full key"
-                  >
-                    {visibleKeys[agent.id] ? (
-                      agent.apiKey
-                    ) : (
-                      `${agent.apiKey.substring(0, 6)}${"•".repeat(Math.max(8, agent.apiKey.length - 10))}${agent.apiKey.slice(-4)}`
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleKeyVisibility(agent.id)}
-                    className="p-1.5 text-slate-400 hover:text-theme-main rounded-lg hover:bg-theme-surface cursor-pointer transition-colors flex-shrink-0"
-                    title={visibleKeys[agent.id] ? "Hide key" : "Reveal key"}
-                  >
-                    {visibleKeys[agent.id] ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-
-                <button 
-                  type="button"
-                  onClick={() => handleCopyKey(agent.apiKey)}
-                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex-shrink-0 ${
-                    copiedKey === agent.apiKey 
-                      ? "bg-emerald-500 text-white shadow-emerald-500/20" 
-                      : "bg-lobster-red hover:bg-red-600 text-white shadow-red-500/20"
-                  }`}
-                  title="Copy full complete API Key to clipboard"
-                >
-                  {copiedKey === agent.apiKey ? (
-                    <>
-                      <Check size={14} />
-                      <span>Copied Full Key!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} />
-                      <span>Copy Full Key</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          ))
-        )}
-      </div>
     </div>
   );
 }

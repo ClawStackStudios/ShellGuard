@@ -52,20 +52,22 @@ export const createAgentKeyRateLimiter = () => {
   const MAX_CACHE_SIZE = 100; // ⚡ LRU: keep only last 100 agent keys to prevent unbounded memory growth
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    const authReq = req as AuthRequest;
-    if (
-      authReq.keyType === 'human' ||
-      !authReq.apiKey
-    ) return next();
-
+    // We cannot rely on authReq.keyType because this middleware runs BEFORE requireAuth.
+    // We must manually parse the Bearer token here.
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return next();
+    
+    const key = authHeader.substring(7).trim();
+    if (key.startsWith('hu-')) return next(); // Humans bypass this limiter
+    
     let limit: number | null = null;
     let agentApiKey: string | null = null;
 
-    if (authReq.keyType === 'agent') {
-      const agent = db.prepare('SELECT api_key, rate_limit FROM agent_keys WHERE api_key = ? AND is_active = 1').get(authReq.apiKey) as any;
+    if (key.startsWith('lb-')) {
+      const agent = db.prepare('SELECT api_key, rate_limit FROM agent_keys WHERE api_key = ? AND is_active = 1').get(key) as any;
       if (agent?.rate_limit) { limit = agent.rate_limit; agentApiKey = agent.api_key; }
-    } else if (authReq.keyType === 'api') {
-      const token = db.prepare('SELECT owner_uuid, owner_type FROM api_tokens WHERE key = ?').get(authReq.apiKey) as any;
+    } else if (key.startsWith('api-')) {
+      const token = db.prepare('SELECT owner_uuid, owner_type FROM api_tokens WHERE key = ?').get(key) as any;
       if (token?.owner_type === 'agent') {
         const agent = db.prepare('SELECT api_key, rate_limit FROM agent_keys WHERE api_key = ? AND is_active = 1').get(token.owner_uuid) as any;
         if (agent?.rate_limit) { limit = agent.rate_limit; agentApiKey = agent.api_key; }

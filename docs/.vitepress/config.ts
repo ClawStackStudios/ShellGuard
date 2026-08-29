@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'ShellGuard Docs',
   description: 'The Sovereign Zero-Knowledge Secrets Vault for Humans & AI Agents',
-  base: process.env.VITEPRESS_BASE || '/',
+  base: process.env.VITEPRESS_BASE || '/ShellGuard/',
   cleanUrls: true,
   lastUpdated: true,
   ignoreDeadLinks: [

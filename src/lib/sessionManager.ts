@@ -14,11 +14,32 @@ const STORAGE_KEYS = {
   SESSIONS: "sg_sessions",
   LEGACY_LOBSTER: "sg_lobster",
   LEGACY_RAW_KEY: "sg_raw_key",
+  NAV_INTENT: "sg_nav_intent",
 };
 
 export interface SessionData {
   token: string;
   rawKey: string;
+}
+
+export type NavIntent = "landing" | "dashboard";
+
+export function getNavIntent(): NavIntent {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.NAV_INTENT);
+    if (raw === "landing" || raw === "dashboard") return raw;
+  } catch (e) {
+    console.error("Failed to read sg_nav_intent", e);
+  }
+  return "landing";
+}
+
+export function setNavIntent(intent: NavIntent) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.NAV_INTENT, intent);
+  } catch (e) {
+    console.error("Failed to save sg_nav_intent", e);
+  }
 }
 
 export function getStoredLobsters(): Lobster[] {

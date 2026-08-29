@@ -45,6 +45,7 @@ interface HeaderProps {
   onHeaderAddMenuToggle?: () => void;
   onOpenAdd?: (type: VaultItemType) => void;
   headerAddMenuRef?: React.RefObject<HTMLDivElement>;
+  isLocked?: boolean;
 }
 
 export function Header({ 
@@ -72,6 +73,7 @@ export function Header({
   onHeaderAddMenuToggle,
   onOpenAdd,
   headerAddMenuRef,
+  isLocked = false,
 }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [removingTarget, setRemovingTarget] = useState<Lobster | null>(null);
@@ -155,7 +157,7 @@ export function Header({
         <div className="flex items-center gap-2 md:gap-3">
 
           {/* Search bar */}
-          {user && (
+          {user && !isLocked && (
             <form onSubmit={onSearchSubmit} className="relative hidden md:flex items-center">
               <Search className="w-3.5 h-3.5 absolute left-3 text-theme-muted pointer-events-none" />
               <input
@@ -171,7 +173,7 @@ export function Header({
           )}
 
           {/* Add button */}
-          {user && onOpenAdd && (
+          {user && !isLocked && onOpenAdd && (
             <div className="relative" ref={headerAddMenuRef}>
               <button
                 type="button"

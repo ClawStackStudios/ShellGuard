@@ -18,6 +18,7 @@ export interface PodModalProps {
   onClose: () => void;
   onSave: (podName: string, color: string) => Promise<void> | void;
   onDelete?: (podName: string) => Promise<void> | void;
+  isLocked?: boolean;
 }
 
 export function PodModal({
@@ -27,7 +28,8 @@ export function PodModal({
   initialColor,
   onClose,
   onSave,
-  onDelete
+  onDelete,
+  isLocked = false
 }: PodModalProps) {
   const [podName, setPodName] = useState(initialPodName);
   const [selectedColor, setSelectedColor] = useState(initialColor || POD_COLOR_PALETTE[0]);
@@ -35,12 +37,16 @@ export function PodModal({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   useEffect(() => {
+    if (isOpen && isLocked) {
+      onClose();
+      return;
+    }
     if (isOpen) {
       setPodName(initialPodName);
       setSelectedColor(initialColor || (initialPodName ? getPodColor(initialPodName) : POD_COLOR_PALETTE[0]));
       setIsConfirmingDelete(false);
     }
-  }, [isOpen, initialPodName, initialColor]);
+  }, [isOpen, isLocked, initialPodName, initialColor, onClose]);
 
   // Handle ESC key to close
   useEffect(() => {

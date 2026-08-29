@@ -26,6 +26,7 @@ interface SidebarFolderTreeProps {
   onRenameFolder?: (oldPath: string, newPath: string) => Promise<void> | void;
   onDeleteFolder?: (podPath: string) => Promise<void> | void;
   isCollapsed?: boolean;
+  isLocked?: boolean;
 }
 
 export function SidebarFolderTree({
@@ -35,7 +36,8 @@ export function SidebarFolderTree({
   onAddNewFolder,
   onRenameFolder,
   onDeleteFolder,
-  isCollapsed = false
+  isCollapsed = false,
+  isLocked = false
 }: SidebarFolderTreeProps) {
   const [podSearch, setPodSearch] = useState("");
   
@@ -56,6 +58,7 @@ export function SidebarFolderTree({
   }, [rootNodes, podSearch]);
 
   const handleOpenCreateModal = () => {
+    if (isLocked) return;
     setModalMode("create");
     setEditingTargetPod("");
     setModalPodName("");
@@ -65,6 +68,7 @@ export function SidebarFolderTree({
 
   const handleOpenEditModal = (e: React.MouseEvent, pod: PodNode) => {
     e.stopPropagation();
+    if (isLocked) return;
     setModalMode("edit");
     setEditingTargetPod(pod.path);
     setModalPodName(pod.path); // Use full path for editing to preserve hierarchy
@@ -73,6 +77,7 @@ export function SidebarFolderTree({
   };
 
   const handleSaveModal = async (normalizedName: string, color: string) => {
+    if (isLocked) return;
     setPodColor(normalizedName, color);
 
     if (modalMode === "create") {
@@ -96,6 +101,7 @@ export function SidebarFolderTree({
   };
 
   const handleDeletePod = async (podToDelete: string) => {
+    if (isLocked) return;
     const norm = normalizePod(podToDelete);
     deletePodColor(norm);
     if (onDeleteFolder) {
@@ -111,7 +117,7 @@ export function SidebarFolderTree({
       <div className="py-2 flex flex-col items-center gap-1">
         {/* Global Page-Level Pod Modal */}
         <PodModal
-          isOpen={isPodModalOpen}
+          isOpen={isPodModalOpen && !isLocked}
           mode={modalMode}
           initialPodName={modalPodName}
           initialColor={modalSelectedColor}
@@ -119,6 +125,18 @@ export function SidebarFolderTree({
           onSave={handleSaveModal}
           onDelete={handleDeletePod}
         />
+
+        {/* Create Pod Icon Button */}
+        {!isLocked && (
+          <button
+            type="button"
+            onClick={handleOpenCreateModal}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-claw-cyan transition-all cursor-pointer shadow-xs active:scale-95"
+            title="Create New Pod"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
     );
   }
@@ -130,14 +148,16 @@ export function SidebarFolderTree({
         <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400">
           PODS
         </span>
-        <button
-          type="button"
-          onClick={handleOpenCreateModal}
-          className="p-1 text-slate-400 hover:text-claw-cyan hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-all duration-200 active:scale-95 cursor-pointer"
-          title="Create New Pod"
-        >
-          <Plus size={16} />
-        </button>
+        {!isLocked && (
+          <button
+            type="button"
+            onClick={handleOpenCreateModal}
+            className="p-1 text-slate-400 hover:text-claw-cyan hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-all duration-200 active:scale-95 cursor-pointer"
+            title="Create New Pod"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
 
       {/* ── Search Pods Input (ClawChives pill curvature) ── */}
@@ -202,14 +222,16 @@ export function SidebarFolderTree({
                 </span>
 
                 {/* Edit Pencil Icon (matches ClawChives screenshot 1) */}
-                <button
-                  type="button"
-                  onClick={(e) => handleOpenEditModal(e, node)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-claw-cyan hover:text-cyan-400 hover:bg-claw-cyan/10 rounded-lg transition-all cursor-pointer"
-                  title="Edit Pod"
-                >
-                  <Pencil size={13} />
-                </button>
+                {!isLocked && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenEditModal(e, node)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-claw-cyan hover:text-cyan-400 hover:bg-claw-cyan/10 rounded-lg transition-all cursor-pointer"
+                    title="Edit Pod"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                )}
               </div>
             </div>
           );

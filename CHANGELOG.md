@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Added
+- **Vault Lock Hardening & Mutation Denial** — Strict enforcement of `isLocked` guards across all pod management (`handleRenamePod`, `handleDeletePod`, `SidebarFolderTree`, `PodModal`), item mutations (`lockTheClaw`, `updateTheClaw`, item deletion), live search dropdowns, and header `+` add action menus.
+- **Unified & State-Aware Navigation (`NavIntent`)** — Explicit `NavIntent` state tracking (`sg_nav_intent` in `sessionManager.ts`), preserving `"landing"` intent across reloads on manual logout ("Claw Out"), and preserving `"dashboard"` intent with quick unlock modal on lock/reload.
 - **Zero Hardcoded Default Pods** — Completely user-driven pod model with zero hardcoded defaults (`DEFAULT_ROOT_PODS = []`, `INITIAL_DEFAULT_COLORS = {}`). Pods are only displayed when explicitly created by the user or when assigned to vault items.
 - **Desktop Sidebar Collapse / Expand Toggle** — Added desktop sidebar toggle button with `PanelLeftOpen` and `PanelLeftClose` icons in the header.
 - **Custom In-Modal Pod Deletion Flow** — Replaced browser native `window.confirm` with an animated, themed in-modal confirmation screen in `PodModal.tsx`.

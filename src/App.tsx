@@ -78,7 +78,9 @@ import {
   setSessionForUser, 
   removeSessionForUser, 
   activateUserSession, 
-  migrateLegacySession 
+  migrateLegacySession,
+  getNavIntent,
+  setNavIntent
 } from "./lib/sessionManager.ts";
 import { normalizePod } from "./lib/podUtils.ts";
 
@@ -101,6 +103,8 @@ export default function App() {
     }
     return map;
   }, [lobsters, activeLobsterId, shellKey]);
+
+  const isLocked = Boolean(lobster && !shellKey);
   const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export">("landing");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
@@ -312,6 +316,7 @@ export default function App() {
     setActiveLobsterId(null);
     setActiveLobsterIdState(null);
     setAuthModalConfig(null);
+    setNavIntent("landing");
     setView("landing");
   }, [activeLobsterId]);
 
@@ -325,16 +330,21 @@ export default function App() {
       try {
         const sk = await deriveShellKey(session.rawKey, uuid);
         setShellKey(sk);
+        setNavIntent("dashboard");
         setView("vault");
         scuttleVault(sk);
       } catch {
         removeSessionForUser(uuid);
         setShellKey(null);
+        setNavIntent("dashboard");
         setAuthModalConfig({ mode: "unlock", target });
+        setView("vault");
       }
     } else {
       setShellKey(null);
+      setNavIntent("dashboard");
       setAuthModalConfig({ mode: "unlock", target });
+      setView("vault");
     }
   };
 
@@ -355,6 +365,7 @@ export default function App() {
         setActiveLobsterId(null);
         setActiveLobsterIdState(null);
         setShellKey(null);
+        setNavIntent("landing");
         setView("landing");
       }
     }
@@ -362,6 +373,15 @@ export default function App() {
 
   const handleLockAccount = (uuid: string) => {
     removeSessionForUser(uuid);
+    if (activeLobsterId === uuid) {
+      setShellKey(null);
+      setNavIntent("dashboard");
+      const target = lobsters.find((l) => l.uuid === uuid) || lobster;
+      if (target) {
+        setAuthModalConfig({ mode: "unlock", target });
+      }
+      setView("vault");
+    }
     // Force a re-render so the header updates the icon immediately
     setLobsters([...lobsters]);
   };
@@ -395,6 +415,7 @@ export default function App() {
     const { lobsters: migratedLobsters, activeId } = migrateLegacySession();
     setLobsters(migratedLobsters);
     setActiveLobsterIdState(activeId);
+    const navIntent = getNavIntent();
 
     if (activeId) {
       const session = activateUserSession(activeId);
@@ -402,20 +423,22 @@ export default function App() {
         deriveShellKey(session.rawKey, activeId)
           .then((sk) => {
             setShellKey(sk);
+            setNavIntent("dashboard");
             setView("vault");
           })
           .catch(() => {
             handleLogout();
           });
       } else {
-        const target = migratedLobsters.find((l) => l.uuid === activeId);
-        if (target) {
+        if (navIntent === "dashboard" && migratedLobsters.length > 0) {
+          const target = migratedLobsters.find((l) => l.uuid === activeId) || migratedLobsters[0];
           setAuthModalConfig({ mode: "unlock", target });
+          setView("vault");
+        } else {
+          setView("landing");
         }
-        setView("vault");
       }
-    } else if (migratedLobsters.length > 0) {
-      // If no active session, but we know accounts, default to the first one as locked
+    } else if (migratedLobsters.length > 0 && navIntent === "dashboard") {
       const target = migratedLobsters[0];
       setActiveLobsterIdState(target.uuid);
       setAuthModalConfig({ mode: "unlock", target });
@@ -454,7 +477,7 @@ export default function App() {
     attachments?: string;
     newAttachments?: PendingAttachment[];
   }) => {
-    if (!shellKey) return;
+    if (!shellKey || isLocked) return;
     try {
       const id = generateUUID();
       
@@ -517,7 +540,7 @@ export default function App() {
     },
     skipScuttle: boolean = false
   ) => {
-    if (!shellKey) return;
+    if (!shellKey || isLocked) return;
     try {
       if (item.type === 'note') {
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
@@ -565,7 +588,7 @@ export default function App() {
   };
 
   const handleRenamePod = async (oldPod: string, newPod: string) => {
-    if (!shellKey) return;
+    if (!shellKey || isLocked) return;
     const normOld = normalizePod(oldPod);
     const normNew = normalizePod(newPod);
     if (normOld === normNew) return;
@@ -618,7 +641,7 @@ export default function App() {
   };
 
   const handleDeletePod = async (podToDelete: string) => {
-    if (!shellKey) return;
+    if (!shellKey || isLocked) return;
     const targetPod = normalizePod(podToDelete);
 
     const itemsToUpdate = vaultItems.filter((i) => {
@@ -667,6 +690,7 @@ export default function App() {
     setSessionForUser(l.uuid, t, rk);
     setActiveLobsterId(l.uuid);
     setActiveLobsterIdState(l.uuid);
+    setNavIntent("dashboard");
 
     setLobsters((prev) => {
       const exists = prev.some((item) => item.uuid === l.uuid);
@@ -703,7 +727,6 @@ export default function App() {
     );
   }
 
-  const isLocked = Boolean(lobster && !shellKey);
   const isModalOpen = Boolean(authModalConfig || isLocked);
   const activeModalConfig = authModalConfig || (isLocked && lobster ? { mode: "unlock" as const, target: lobster } : null);
 
@@ -760,14 +783,24 @@ export default function App() {
               <SetupView 
                 onSuccess={handleLoginSuccess} 
                 onSwitch={() => setView("login")} 
-                onCancel={lobster ? () => setView("vault") : undefined}
+                onCancel={() => {
+                  if (lobster && getNavIntent() === "dashboard") {
+                    setView("vault");
+                  } else {
+                    setNavIntent("landing");
+                    setView("landing");
+                  }
+                }}
               />
             )}
             {view === "login" && (
               <LoginView 
                 onSuccess={handleLoginSuccess} 
                 onSwitch={() => setView("setup")} 
-                onBack={() => setView("landing")}
+                onBack={() => {
+                  setNavIntent("landing");
+                  setView("landing");
+                }}
               />
             )}
           </AnimatePresence>
@@ -811,6 +844,7 @@ export default function App() {
           setIsCollapsed={setIsSidebarCollapsed}
           onClose={() => setIsSidebarOpen(false)}
           onLogout={handleLogout}
+          isLocked={isLocked}
           vaultItems={vaultItems}
           selectedFolder={selectedFolder}
           setSelectedFolder={setSelectedFolder}
@@ -836,6 +870,7 @@ export default function App() {
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleDesktopSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           view={view}
+          isLocked={isLocked}
           onSwitchAccount={handleSwitchAccount}
           onAddAccount={handleAddAccount}
           onRemoveAccount={handleRemoveAccount}
@@ -892,6 +927,7 @@ export default function App() {
                     isAdding={isAddingVaultItem}
                     onToggleIsAdding={setIsAddingVaultItem}
                     onDelete={async (id, type) => { 
+                      if (!shellKey || isLocked) return;
                       const endpoint = type === 'password' ? '/api/vault' : 
                                        type === 'note' ? '/api/notes' : 
                                        type === 'key' ? '/api/keys' : '/api/attachments';
@@ -899,6 +935,7 @@ export default function App() {
                       if(shellKey) scuttleVault(shellKey); 
                     }} 
                     onDeleteMultiple={async (selectedList) => {
+                      if (!shellKey || isLocked) return;
                       for (const item of selectedList) {
                         const endpoint = item.type === 'password' ? '/api/vault' : 
                                          item.type === 'note' ? '/api/notes' : 

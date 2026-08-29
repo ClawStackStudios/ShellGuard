@@ -36,7 +36,7 @@ function KeyPill({ prefix, label, color }: { prefix: string; label: string; colo
 }
 
 // ── Compact Auth Gateway (ClawChives Pattern Port) ──────────────────────────────
-function AuthGateway({ onHatch }: { onHatch: () => void }) {
+function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () => void }) {
   const [gatewayMode, setGatewayMode] = useState<"human" | "agent">("human");
   const [copied, setCopied] = useState(false);
 
@@ -108,6 +108,14 @@ function AuthGateway({ onHatch }: { onHatch: () => void }) {
                 >
                   Hatch Your ShellGuard
                 </button>
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={onClawIn}
+                    className="text-xs text-theme-muted hover:text-[#e4048a] transition-colors cursor-pointer"
+                  >
+                    Already hatched? <span className="font-bold underline text-[#e4048a]">Claw In →</span>
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <motion.div 
@@ -291,7 +299,7 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
         </section>
 
         {/* ── CLAWCHIVES AUTH GATEWAY PORT ── */}
-        <AuthGateway onHatch={onHatch} />
+        <AuthGateway onHatch={onHatch} onClawIn={onClawIn} />
 
         {/* CARABASE-ALIGNED FEATURE GRID */}
         <section className="py-24 bg-theme-surface/40 border-y border-theme-subtle px-4 sm:px-6 lg:px-8 relative" id="features">

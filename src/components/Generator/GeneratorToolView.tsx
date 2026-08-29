@@ -126,7 +126,7 @@ export function GeneratorToolView({ currentUser, onSaveToVault }: GeneratorToolV
   const [saveTitle, setSaveTitle] = useState("");
   const [saveUsername, setSaveUsername] = useState("");
   const [saveUrl, setSaveUrl] = useState("");
-  const [saveCategory, setSaveCategory] = useState("Personal");
+  const [saveCategory, setSaveCategory] = useState("");
   const [saveNotes, setSaveNotes] = useState("");
   const [showSecretInModal, setShowSecretInModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -302,7 +302,7 @@ export function GeneratorToolView({ currentUser, onSaveToVault }: GeneratorToolV
     setSaveTitle(isCurrentSecretTotp ? (config.totpIssuer || "2FA Authenticator") : "");
     setSaveUsername(isCurrentSecretTotp ? (config.totpAccount || "") : "");
     setSaveUrl("");
-    setSaveCategory("Personal");
+    setSaveCategory("");
     setSaveNotes("");
     setSaveError(null);
     setSaveSuccess(false);
@@ -331,7 +331,7 @@ export function GeneratorToolView({ currentUser, onSaveToVault }: GeneratorToolV
         secret: secretToSave,
         username: saveUsername.trim(),
         url: saveUrl.trim(),
-        category: saveCategory || "Personal",
+        category: saveCategory.trim(),
         type: "password",
         totp_secret: isCurrentSecretTotp ? secretToSave : undefined,
         notes: saveNotes.trim(),

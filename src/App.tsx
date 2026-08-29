@@ -256,36 +256,36 @@ export default function App() {
           if (p.totp_secret) {
             try { decryptedTotp = await decryptField(p.totp_secret, key, "vault_pearls_totp", p.id); } catch (e) { decryptedTotp = "⚠️ [Decryption Failed]"; }
           }
-          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: "password", category: p.category || "Personal" };
+          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: "password", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: "password", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: "password", category: p.category || "" };
         }
       }));
 
       const decryptedNotes = await Promise.all(reefNotes.map(async (p: any) => {
         try {
           const content = await decryptField(p.content, key, "vault_secure_notes", p.id);
-          return { ...p, secret: content, type: "note", category: p.category || "Personal" };
+          return { ...p, secret: content, type: "note", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "" };
         }
       }));
 
       const decryptedKeys = await Promise.all(reefKeys.map(async (p: any) => {
         try {
           const kv = await decryptField(p.key_value, key, "vault_ssh_keys", p.id);
-          return { ...p, secret: kv, type: "key", category: p.category || "Personal" };
+          return { ...p, secret: kv, type: "key", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "key", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "key", category: p.category || "" };
         }
       }));
 
       const decryptedAttachments = await Promise.all(reefAttachments.map(async (p: any) => {
         try {
           const fd = await decryptField(p.file_data, key, "vault_secure_attachments", p.id);
-          return { ...p, secret: fd, type: "attachment", category: p.category || "Personal" };
+          return { ...p, secret: fd, type: "attachment", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "attachment", category: p.category || "Personal" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "attachment", category: p.category || "" };
         }
       }));
 
@@ -631,7 +631,7 @@ export default function App() {
       prev.map((item) => {
         const currentCat = normalizePod(item.category);
         if (currentCat === targetPod || currentCat.startsWith(targetPod + "/")) {
-          return { ...item, category: "Personal" };
+          return { ...item, category: "" };
         }
         return item;
       })
@@ -649,7 +649,7 @@ export default function App() {
           secret: item.secret,
           username: item.username || "",
           url: item.url || "",
-          category: "Personal",
+          category: "",
           type: item.type,
           notes: item.notes,
           totp_secret: item.totp_secret,
@@ -949,7 +949,7 @@ export default function App() {
                           secret: item.secret || "",
                           username: item.username || "",
                           url: item.url || "",
-                          category: item.category || "Personal",
+                          category: item.category || "",
                           type: (item.type as VaultItemType) || "password",
                           notes: item.notes || "",
                           totp_secret: item.totp_secret || "",

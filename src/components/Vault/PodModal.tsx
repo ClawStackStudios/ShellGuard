@@ -129,7 +129,7 @@ export function PodModal({
                 <h3 className="text-lg font-bold text-white">Delete Pod?</h3>
                 <p className="text-sm text-slate-400 leading-relaxed px-4">
                   Are you sure you want to delete <span className="text-rose-400 font-mono font-bold">"{initialPodName}"</span>?<br/>
-                  <span className="text-xs text-slate-500 mt-2 block">Any vault items inside this pod will be moved to the default "Personal" pod.</span>
+                  <span className="text-xs text-slate-500 mt-2 block">Any vault items inside this pod will become uncategorized.</span>
                 </p>
                 <div className="flex items-center justify-between pt-6 mt-4 border-t border-slate-800/80">
                   <button

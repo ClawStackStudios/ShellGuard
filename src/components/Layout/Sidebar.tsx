@@ -295,7 +295,7 @@ export function Sidebar({
                                       {item.username && (
                                         <span className="font-mono truncate">{item.username}</span>
                                       )}
-                                      {item.category && item.category !== "Personal" && (
+                                      {item.category && (
                                         <span className="truncate text-slate-400">· {item.category}</span>
                                       )}
                                     </div>

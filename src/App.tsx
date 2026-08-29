@@ -650,7 +650,16 @@ export default function App() {
     setAuthModalConfig(null);
   };
 
-  if (view === "landing" || view === "login" || view === "setup") {
+  if (view === "landing") {
+    return (
+      <LandingView 
+        onClawIn={() => setView("login")} 
+        onHatch={() => setView("setup")} 
+      />
+    );
+  }
+
+  if (view === "login" || view === "setup") {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-ocean text-slate-900 dark:text-slate-50 antialiased flex flex-col justify-center items-center p-4 sm:p-6 overflow-auto relative selection:bg-[#e4048a]/30">
         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#e4048a]/10 dark:bg-[#e4048a]/5 blur-[100px] pointer-events-none" />
@@ -680,12 +689,6 @@ export default function App() {
               </motion.div>
             )}
 
-            {view === "landing" && (
-              <LandingView 
-                onClawIn={() => setView("login")} 
-                onHatch={() => setView("setup")} 
-              />
-            )}
             {view === "setup" && (
               <SetupView 
                 onSuccess={handleLoginSuccess} 

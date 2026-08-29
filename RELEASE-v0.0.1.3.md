@@ -1,4 +1,4 @@
-# 🦞 ShellGuard — Release v0.0.1.2
+# 🦞 ShellGuard — Release v0.0.1.3
 
 ## *Exoskeletal Sovereign Zero-Knowledge Protection & Resilient Vault Backups*
 
@@ -16,16 +16,18 @@
 
 ## 🚀 The Core Summary
 
-Welcome to the **v0.0.1.2 Genesis Hotfix** of **ShellGuard**! This release builds directly on the v0.0.1 Genesis Release to resolve critical deployment blockers found in non-secure HTTP environments (like local Unraid server instances). We've fortified the cryptographic pipeline with a custom multi-tier RFC 4122 v4 UUID generator to bypass Chromium's `crypto.randomUUID()` restrictions on HTTP, and eliminated `data:` URI download blocks by transitioning to in-memory `Blob` object URLs. We have also introduced a strict, automated **Full Development Loop** to completely eradicate documentation rot and ensure rigorous verification gates before any code hits `main`.
+Welcome to the **v0.0.1.3 Genesis Hotfix** of **ShellGuard**! This release builds directly on the v0.0.1 Genesis Release to resolve critical deployment blockers found in non-secure HTTP environments (like local Unraid server instances). We've fortified the cryptographic pipeline with a custom multi-tier RFC 4122 v4 UUID generator to bypass Chromium's `crypto.randomUUID()` restrictions on HTTP, eliminated `data:` URI download blocks by transitioning to in-memory `Blob` object URLs, integrated official SVG iconography/favicons, cleaned up documentation hygiene, and introduced a strict, automated **Full Development Loop** to ensure continuous code and memory-bank integrity.
 
 ---
 
 ## 💎 Key Themes & Highlights
 
-### 🩹 1. Origin Safety & Deployment Resilience (v0.0.1.2)
+### 🩹 1. Origin Safety & Deployment Resilience (v0.0.1.2 - v0.0.1.3)
+* **Iconography & Favicon:** Integrated official `shellguard-icon.svg` as root `public/favicon.svg`, linked in Vite's `index.html`, and updated the Unraid container template icon path.
+* **Documentation Hygiene:** Purged legacy data-wiping migration text and outdated `v0.2.0` references across all docs.
 * **Insecure Origin UUID & Entropy Fallback:** Added a multi-tier RFC 4122 v4 UUID generator and secure entropy fallback in `src/lib/crypto.ts` for non-secure HTTP browser origins where `window.crypto.randomUUID` is undefined.
 * **LAN HTTP Insecure File Downloads:** Replaced raw `data:` URI links with in-memory `Blob` and `URL.createObjectURL(blob)` in `downloadIdentityFile` and `downloadAttachment` to eliminate Chromium insecure-connection download blocks on LAN deployments.
-* **Full Development Loop Automation:** Established strict `.agents/workflows` for `start-task` and `finish-task` to enforce branch isolation, documentation hygiene (`docs-hygiene.md`), and three-layer verification checks on all future commits.
+* **Full Development Loop Automation:** Established strict `.agents/workflows` for `start-task`, `finish-task`, and `version-update` to enforce branch isolation, documentation hygiene (`docs-hygiene.md`), and three-layer verification checks on all future commits.
 
 ### 🛠️ 2. Bitwarden-Style Master-Detail Dashboard & Modern UI (v0.0.1)
 * **Responsive Master-Detail Split (`VaultShell`):** Transitioned away from tab-based views into a clean two-pane layout featuring `ItemListPane` (searchable/filterable stream) and `ItemDetailPane`.

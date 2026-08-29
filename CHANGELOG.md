@@ -1,6 +1,8 @@
 # Changelog — ShellGuard
 
 ## [Unreleased]
+n### Changed
+- **Iconography:** Updated Unraid template icon and Vite app favicon to use `docs/public/assets/shellguard-icon.svg`.
 
 ## [0.0.1.2] - 2026-08-29
 

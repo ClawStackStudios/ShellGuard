@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Lock, Eye, EyeOff, Globe, Sparkles, Paperclip, Upload, Plus, AlertTriangle, RefreshCw, Check, Zap } from 'lucide-react';
-import { VaultItem, VaultItemType } from '../../types.ts';
+import { VaultItem, VaultItemType, CustomField, CustomFieldType, CustomFieldLinkedProperty } from '../../types.ts';
 import { FolderInputGroup } from './FolderInputGroup.tsx';
 import { PendingAttachment, formatBytes, MAX_ATTACHMENT_BYTES } from '../../lib/attachmentUtils.ts';
 import { generateUUID } from '../../lib/crypto.ts';
@@ -29,6 +29,7 @@ interface ItemFormModalProps {
     notes?: string;
     totp_secret?: string;
     attachments?: string;
+    custom_fields?: string;
     newAttachments?: PendingAttachment[];
     removedAttachmentIds?: string[];
   }) => Promise<void>;
@@ -65,6 +66,14 @@ export function ItemFormModal({
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
+  // Custom Fields
+  const [customFieldsState, setCustomFieldsState] = useState<CustomField[]>([]);
+  const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldType, setNewFieldType] = useState<CustomFieldType>("text");
+  const [newFieldLinkedProperty, setNewFieldLinkedProperty] = useState<CustomFieldLinkedProperty>("username");
+  const [newFieldValue, setNewFieldValue] = useState("");
 
   // UI State
   const [showPassword, setShowPassword] = useState(false);
@@ -115,6 +124,16 @@ export function ItemFormModal({
           setLinkedAttachmentIds([]);
           setShowAttachmentField(false);
         }
+
+        // Parse custom fields from existing item
+        if (initialItem.custom_fields) {
+          try {
+            const parsed = JSON.parse(initialItem.custom_fields);
+            if (Array.isArray(parsed)) setCustomFieldsState(parsed);
+          } catch { setCustomFieldsState([]); }
+        } else {
+          setCustomFieldsState([]);
+        }
       } else {
         // Reset for Add
         setType(initialType);
@@ -129,6 +148,12 @@ export function ItemFormModal({
         setShowTotpField(false);
         setShowAttachmentField(false);
         setLinkedAttachmentIds([]);
+        setCustomFieldsState([]);
+        setIsAddFieldOpen(false);
+        setNewFieldName("");
+        setNewFieldValue("");
+        setNewFieldType("text");
+        setNewFieldLinkedProperty("username");
       }
       setPendingAttachments([]);
       setRemovedAttachmentIds([]);
@@ -155,6 +180,7 @@ export function ItemFormModal({
         notes: showNoteField ? notes : "",
         totp_secret: showTotpField ? totpSecret : "",
         attachments: JSON.stringify(linkedAttachmentIds),
+        custom_fields: customFieldsState.length > 0 ? JSON.stringify(customFieldsState) : "",
         newAttachments: pendingAttachments,
         removedAttachmentIds
       });
@@ -398,6 +424,89 @@ export function ItemFormModal({
                     )}
                   </div>
                 )}
+
+                {/* ── Custom Fields Section ── */}
+                <div className="col-span-1 md:col-span-2">
+                  {customFieldsState.length > 0 && (
+                    <div className="mb-3">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Custom Fields</label>
+                      <div className="space-y-2">
+                        {customFieldsState.map((cf) => (
+                          <div key={cf.id} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className="text-xs font-bold uppercase tracking-wider text-theme-muted shrink-0 w-16 truncate">{cf.type === "checkbox" ? "☑" : cf.type === "hidden" ? "🔒" : cf.type === "linked" ? "🔗" : "📝"}</span>
+                              <span className="text-sm font-semibold text-theme-main truncate">{cf.name}</span>
+                              {cf.type === "checkbox" && (
+                                <span className={`text-xs font-bold ${cf.value === "true" ? "text-green-600" : "text-slate-500"}`}>{cf.value === "true" ? "ON" : "OFF"}</span>
+                              )}
+                              {cf.type === "linked" && (
+                                <span className="text-xs text-claw-cyan italic">→ {cf.linkedProperty}</span>
+                              )}
+                              {(cf.type === "text" || cf.type === "hidden") && (
+                                <span className="text-xs text-theme-muted font-mono truncate max-w-[120px]">{cf.type === "hidden" ? "••••••••" : cf.value}</span>
+                              )}
+                            </div>
+                            <button type="button" onClick={() => setCustomFieldsState(prev => prev.filter(f => f.id !== cf.id))} className="text-slate-400 hover:text-red-500 shrink-0"><X size={14}/></button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add Custom Field Button */}
+                  {!isAddFieldOpen ? (
+                    <button type="button" onClick={() => { setIsAddFieldOpen(true); setNewFieldName(""); setNewFieldValue(""); setNewFieldType("text"); }} className="w-full border-2 border-dashed border-claw-cyan/50 rounded-xl py-2 text-claw-cyan font-bold hover:bg-claw-cyan/5 flex justify-center items-center gap-2 transition-colors cursor-pointer text-xs">
+                      <Plus size={14} /> Add Custom Field
+                    </button>
+                  ) : (
+                    <div className="border border-claw-cyan/40 rounded-xl p-3 bg-claw-cyan/5 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="text" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Field name" className="col-span-2 bg-theme-base border border-theme-subtle rounded-lg px-3 py-2 text-xs focus:border-claw-cyan outline-none text-theme-main" />
+                        <select value={newFieldType} onChange={(e) => setNewFieldType(e.target.value as CustomFieldType)} className="bg-theme-base border border-theme-subtle rounded-lg px-3 py-2 text-xs focus:border-claw-cyan outline-none text-theme-main">
+                          <option value="text">📝 Text</option>
+                          <option value="hidden">🔒 Hidden</option>
+                          <option value="checkbox">☑️ Checkbox</option>
+                          <option value="linked">🔗 Linked</option>
+                        </select>
+                        {newFieldType === "linked" ? (
+                          <select value={newFieldLinkedProperty} onChange={(e) => setNewFieldLinkedProperty(e.target.value as CustomFieldLinkedProperty)} className="bg-theme-base border border-theme-subtle rounded-lg px-3 py-2 text-xs focus:border-claw-cyan outline-none text-theme-main">
+                            <option value="username">Username</option>
+                            <option value="password">Password</option>
+                            <option value="url">URL</option>
+                            <option value="notes">Notes</option>
+                            <option value="totp">TOTP</option>
+                          </select>
+                        ) : newFieldType === "checkbox" ? (
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => setNewFieldValue(newFieldValue === "true" ? "false" : "true")} className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${newFieldValue === "true" ? "bg-green-500 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+                              {newFieldValue === "true" ? "ON" : "OFF"}
+                            </button>
+                          </div>
+                        ) : (
+                          <input type={newFieldType === "hidden" ? "password" : "text"} value={newFieldValue} onChange={(e) => setNewFieldValue(e.target.value)} placeholder="Field value" className="bg-theme-base border border-theme-subtle rounded-lg px-3 py-2 text-xs focus:border-claw-cyan outline-none text-theme-main" />
+                        )}
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button type="button" onClick={() => setIsAddFieldOpen(false)} className="px-3 py-1.5 text-xs text-theme-muted hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">Cancel</button>
+                        <button type="button" disabled={!newFieldName.trim()} onClick={() => {
+                          if (newFieldName.trim()) {
+                            setCustomFieldsState(prev => [...prev, {
+                              id: generateUUID(),
+                              name: newFieldName.trim(),
+                              type: newFieldType,
+                              value: newFieldType === "checkbox" ? (newFieldValue || "false") : newFieldValue,
+                              ...(newFieldType === "linked" ? { linkedProperty: newFieldLinkedProperty } : {})
+                            }]);
+                            setNewFieldName("");
+                            setNewFieldValue("");
+                            setNewFieldType("text");
+                            setIsAddFieldOpen(false);
+                          }
+                        }} className="px-3 py-1.5 text-xs font-bold bg-claw-cyan text-white rounded-lg hover:bg-cyan-600 transition-colors disabled:opacity-50 cursor-pointer">Add</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {(!showNoteField && type === 'password' || !showTotpField || !showAttachmentField) && (
                   <div className="col-span-1 md:col-span-2 relative">

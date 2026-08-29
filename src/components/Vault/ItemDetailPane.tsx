@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary } from 'lucide-react';
-import { VaultItem, VaultItemType } from '../../types.ts';
+import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
 import { getPodColor } from '../../lib/podUtils.ts';
@@ -27,11 +27,13 @@ export function ItemDetailPane({
 }: ItemDetailPaneProps) {
   const [revealed, setRevealed] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [revealedHiddenFields, setRevealedHiddenFields] = useState<Set<string>>(new Set());
 
   // Reset state when item changes
   useEffect(() => {
     setRevealed(false);
     setCopyFeedback(null);
+    setRevealedHiddenFields(new Set());
   }, [item?.id]);
 
   if (isLocked) {
@@ -222,6 +224,88 @@ export function ItemDetailPane({
                 </div>
               </div>
             )}
+
+            {/* Custom Fields */}
+            {item.custom_fields && (() => {
+              let customFields: CustomField[] = [];
+              try {
+                const parsed = JSON.parse(item.custom_fields);
+                if (Array.isArray(parsed)) customFields = parsed;
+              } catch {}
+              if (customFields.length === 0) return null;
+
+              const resolveLinkedValue = (cf: CustomField): string => {
+                switch (cf.linkedProperty) {
+                  case "password": return item.secret || "";
+                  case "username": return item.username || "";
+                  case "url": return item.url || "";
+                  case "notes": return item.notes || "";
+                  case "totp": return ""; // rendered with TotpDisplay
+                  default: return "";
+                }
+              };
+
+              return (
+                <div className="pt-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block ml-1">Custom Fields</span>
+                  <div className="flex flex-col gap-2">
+                    {customFields.map(cf => (
+                      <div key={cf.id} className="flex items-center justify-between p-3 rounded-xl border border-theme-subtle bg-theme-surface">
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="text-xs font-semibold text-theme-muted uppercase tracking-wider truncate">{cf.name}</span>
+                          {cf.type === "checkbox" ? (
+                            <span className={`text-sm font-bold mt-0.5 ${cf.value === "true" ? "text-green-600" : "text-slate-500"}`}>
+                              {cf.value === "true" ? "☑ Enabled" : "☐ Disabled"}
+                            </span>
+                          ) : cf.type === "linked" && cf.linkedProperty === "totp" ? (
+                            <div className="mt-1"><TotpDisplay secret={item.totp_secret || ""} /></div>
+                          ) : cf.type === "linked" ? (
+                            <span className="text-sm font-mono mt-0.5 text-theme-main truncate">{resolveLinkedValue(cf) || "—"}</span>
+                          ) : cf.type === "hidden" ? (
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-sm font-mono text-theme-main truncate">
+                                {revealedHiddenFields.has(cf.id) ? cf.value : "••••••••••••"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setRevealedHiddenFields(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(cf.id)) next.delete(cf.id); else next.add(cf.id);
+                                  return next;
+                                })}
+                                className="p-1 text-slate-400 hover:text-claw-cyan transition-colors cursor-pointer"
+                              >
+                                {revealedHiddenFields.has(cf.id) ? <EyeOff size={14} /> : <Eye size={14} />}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-sm font-mono mt-0.5 text-theme-main truncate">{cf.value || "—"}</span>
+                          )}
+                        </div>
+                        {(cf.type === "text" || cf.type === "hidden") && cf.value && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(cf.value, `custom_${cf.id}`)}
+                            className={`p-2 rounded-lg transition-colors flex-shrink-0 cursor-pointer ${copyFeedback === `custom_${cf.id}` ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10"}`}
+                          >
+                            {copyFeedback === `custom_${cf.id}` ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                        )}
+                        {cf.type === "linked" && cf.linkedProperty !== "totp" && resolveLinkedValue(cf) && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(resolveLinkedValue(cf), `custom_${cf.id}`)}
+                            className={`p-2 rounded-lg transition-colors flex-shrink-0 cursor-pointer ${copyFeedback === `custom_${cf.id}` ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10"}`}
+                          >
+                            {copyFeedback === `custom_${cf.id}` ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Attachments */}
             {item.attachments && (() => {

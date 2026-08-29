@@ -357,4 +357,35 @@ describe('Pearl → attachment cascade delete', () => {
     const remaining = await listRecords('/api/attachments');
     expect(remaining.some((r) => r.id === att.id)).toBe(true);
   });
+
+  it('custom_fields roundtrips byte-for-byte on vault pearls, secure notes, and ssh keys', async () => {
+    const customFieldsBlob = JSON.stringify([
+      { id: 'cf-1', name: 'PIN', type: 'hidden', value: '1234' },
+      { id: 'cf-2', name: 'Auto-renew', type: 'checkbox', value: 'true' }
+    ]);
+
+    // 1. Vault Pearl
+    const pearlPayload = makePearlPayload({ custom_fields: customFieldsBlob });
+    const pearlRes = await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(pearlPayload);
+    expect(pearlRes.status).toBe(201);
+    const pearls = await listRecords('/api/vault');
+    const storedPearl = findRecord(pearls, pearlPayload.id);
+    expect(storedPearl.custom_fields).toBe(customFieldsBlob);
+
+    // 2. Secure Note
+    const notePayload = makeNotePayload({ custom_fields: customFieldsBlob });
+    const noteRes = await request(srv.app).post('/api/notes').set('Authorization', `Bearer ${token}`).send(notePayload);
+    expect(noteRes.status).toBe(201);
+    const notes = await listRecords('/api/notes');
+    const storedNote = findRecord(notes, notePayload.id);
+    expect(storedNote.custom_fields).toBe(customFieldsBlob);
+
+    // 3. SSH Key
+    const keyPayload = makeSshKeyPayload({ custom_fields: customFieldsBlob });
+    const keyRes = await request(srv.app).post('/api/keys').set('Authorization', `Bearer ${token}`).send(keyPayload);
+    expect(keyRes.status).toBe(201);
+    const keys = await listRecords('/api/keys');
+    const storedKey = findRecord(keys, keyPayload.id);
+    expect(storedKey.custom_fields).toBe(customFieldsBlob);
+  });
 });

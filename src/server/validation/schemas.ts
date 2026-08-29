@@ -40,6 +40,7 @@ export const VaultSchemas = {
     notes: z.string().max(10000).optional(),
     totp_secret: z.string().max(5000).optional(), // opaque
     attachments: z.string().max(2000000).optional(), // opaque JSON string
+    custom_fields: z.string().max(500000).optional(), // opaque: ShellCrypted CustomField[] JSON
   }),
   update: z.object({
     title: itemTitle,
@@ -51,6 +52,7 @@ export const VaultSchemas = {
     notes: z.string().max(10000).optional(),
     totp_secret: z.string().max(5000).optional(), // opaque
     attachments: z.string().max(2000000).optional(), // opaque JSON string
+    custom_fields: z.string().max(500000).optional(), // opaque: ShellCrypted CustomField[] JSON
   }),
 };
 
@@ -60,11 +62,13 @@ export const NoteSchemas = {
     title: itemTitle,
     content: z.string().min(1).max(10000), // opaque
     category: itemCategory,
+    custom_fields: z.string().max(500000).optional(), // opaque
   }),
   update: z.object({
     title: itemTitle,
     content: z.string().min(1).max(10000), // opaque
     category: itemCategory,
+    custom_fields: z.string().max(500000).optional(), // opaque
   }),
 };
 
@@ -75,12 +79,14 @@ export const SshKeySchemas = {
     key_value: z.string().min(1).max(20000), // opaque
     username: z.string().max(255).optional(),
     category: itemCategory,
+    custom_fields: z.string().max(500000).optional(), // opaque
   }),
   update: z.object({
     title: itemTitle,
     key_value: z.string().min(1).max(20000), // opaque
     username: z.string().max(255).optional(),
     category: itemCategory,
+    custom_fields: z.string().max(500000).optional(), // opaque
   }),
 };
 

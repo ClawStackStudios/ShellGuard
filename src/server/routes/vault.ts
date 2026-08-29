@@ -32,7 +32,7 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
  * Payloads are stored byte-for-byte; only their length is validated.
  */
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, secret, username, url, type, category, notes, totp_secret, attachments } = req.body;
+  const { id, title, secret, username, url, type, category, notes, totp_secret, attachments, custom_fields } = req.body;
 
   try {
     const toStore = await prepareWrite('vault_pearls', {
@@ -44,8 +44,8 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, notes, totp_secret, attachments, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, notes, totp_secret, attachments, custom_fields, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       req.userUuid,
@@ -58,6 +58,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       toStore.notes,
       totp_secret || '',
       attachments || '[]',
+      custom_fields || '',
       new Date().toISOString()
     );
 
@@ -86,7 +87,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
  */
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, secret, username, url, type, category, notes, totp_secret, attachments } = req.body;
+  const { title, secret, username, url, type, category, notes, totp_secret, attachments, custom_fields } = req.body;
 
   try {
     // Ownership check first so foreign IDs yield 404, not a silent no-op write.
@@ -105,7 +106,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
 
     db.prepare(`
       UPDATE vault_pearls
-      SET title = ?, secret = ?, username = ?, url = ?, type = ?, category = ?, notes = ?, totp_secret = ?, attachments = ?
+      SET title = ?, secret = ?, username = ?, url = ?, type = ?, category = ?, notes = ?, totp_secret = ?, attachments = ?, custom_fields = ?
       WHERE id = ? AND owner_uuid = ?
     `).run(
       toStore.title,
@@ -117,6 +118,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       toStore.notes,
       totp_secret || '',
       attachments || '[]',
+      custom_fields || '',
       id,
       req.userUuid
     );

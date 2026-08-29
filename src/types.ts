@@ -1,5 +1,21 @@
 export type VaultItemType = "password" | "note" | "totp" | "key" | "attachment";
 
+export type CustomFieldType = "text" | "hidden" | "checkbox" | "linked";
+export type CustomFieldLinkedProperty = "username" | "password" | "url" | "notes" | "totp";
+
+export interface CustomField {
+  id: string;
+  name: string;
+  type: CustomFieldType;
+  /** 
+   * For text/hidden: the field value.
+   * For checkbox: "true" or "false".
+   * For linked: resolved at render time, stored as empty string or source property name.
+   */
+  value: string;
+  linkedProperty?: CustomFieldLinkedProperty;
+}
+
 export interface VaultItem {
   id: string;
   type: VaultItemType;
@@ -11,6 +27,7 @@ export interface VaultItem {
   notes?: string;
   totp_secret?: string; // encrypted
   attachments?: string; // JSON string of attachments
+  custom_fields?: string; // ShellCrypted CustomField[] JSON (server) / decrypted JSON string (client)
   // Present on attachment-type items (from vault_secure_attachments rows)
   file_name?: string;
   mime_type?: string;
@@ -22,6 +39,7 @@ export interface SecureNote {
   title: string;
   content: string; // encrypted
   category?: string;
+  custom_fields?: string; // ShellCrypted CustomField[] JSON (server) / decrypted JSON string (client)
   created_at: string;
 }
 
@@ -31,6 +49,7 @@ export interface SshKey {
   key_value: string; // encrypted
   username?: string;
   category?: string;
+  custom_fields?: string; // ShellCrypted CustomField[] JSON (server) / decrypted JSON string (client)
   created_at: string;
 }
 

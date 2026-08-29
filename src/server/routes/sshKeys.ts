@@ -24,7 +24,7 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
 });
 
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKeySchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, key_value, username, category } = req.body;
+  const { id, title, key_value, username, category, custom_fields } = req.body;
   try {
     const toStore = await prepareWrite('vault_ssh_keys', {
       title: title.trim(),
@@ -33,9 +33,9 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKey
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_ssh_keys (id, owner_uuid, title, key_value, username, category, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, req.userUuid, toStore.title, key_value, toStore.username, toStore.category, new Date().toISOString());
+      INSERT INTO vault_ssh_keys (id, owner_uuid, title, key_value, username, category, custom_fields, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, req.userUuid, toStore.title, key_value, toStore.username, toStore.category, custom_fields || '', new Date().toISOString());
 
     audit.log('SSH_KEY_CREATED', {
       action: 'ssh_key_created',
@@ -56,7 +56,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKey
 
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKeySchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, key_value, username, category } = req.body;
+  const { title, key_value, username, category, custom_fields } = req.body;
   try {
     const existing = db.prepare('SELECT id FROM vault_ssh_keys WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid);
     if (!existing) {
@@ -69,8 +69,8 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKe
       category: category || 'Personal',
     }, fieldCipher);
 
-    db.prepare('UPDATE vault_ssh_keys SET title = ?, key_value = ?, username = ?, category = ? WHERE id = ? AND owner_uuid = ?')
-      .run(toStore.title, key_value, toStore.username, toStore.category, id, req.userUuid);
+    db.prepare('UPDATE vault_ssh_keys SET title = ?, key_value = ?, username = ?, category = ?, custom_fields = ? WHERE id = ? AND owner_uuid = ?')
+      .run(toStore.title, key_value, toStore.username, toStore.category, custom_fields || '', id, req.userUuid);
 
     audit.log('SSH_KEY_UPDATED', {
       action: 'ssh_key_updated',

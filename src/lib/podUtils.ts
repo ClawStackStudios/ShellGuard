@@ -190,9 +190,14 @@ export function buildPodTree(
   items: VaultItem[],
   activeTabType?: VaultItemType
 ): { rootNodes: PodNode[]; totalAllCount: number } {
+  const primaryItems = items.filter(i => {
+    const t = i.type || "password";
+    return t === "password" || t === "note" || t === "key";
+  });
+
   const filteredItems = activeTabType 
-    ? items.filter(i => (i.type || "password") === activeTabType)
-    : items;
+    ? primaryItems.filter(i => (i.type || "password") === activeTabType)
+    : primaryItems;
 
   const totalAllCount = filteredItems.length;
 

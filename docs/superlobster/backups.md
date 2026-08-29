@@ -30,7 +30,7 @@ Every backup cycle updates `manifest.json` with cryptographic verification hashe
   "backups": [
     {
       "timestamp": "2026-08-28T20:00:00.000Z",
-      "version": "0.2.0",
+      "version": "0.0.1",
       "dbFile": "db-2026-08-28T20-00-00Z.sqlite",
       "dbSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "dbSizeBytes": 135168,

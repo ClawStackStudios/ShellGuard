@@ -5,9 +5,6 @@ Welcome to **ShellGuard**, the sovereign zero-knowledge secrets vault. This hand
 
 - **Zero-Knowledge Encryption** — Secrets are encrypted client-side with AES-GCM-256 (ShellCryption©™). Metadata is encrypted server-side with per-row AES-256-GCM. The database file itself can be encrypted with SQLCipher. Three independent layers.
 
-> [!WARNING]
-> **Fresh Start Release**: v0.2.0 scuttles all prior local data. There is no import path from older builds — export before upgrading.
-
 ---
 
 ## 🚀 Quick Launch

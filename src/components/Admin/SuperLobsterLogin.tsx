@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Shield, KeyRound, Loader2, ArrowLeft } from 'lucide-react';
 import { useSuperLobster } from './SuperLobsterContext.tsx';
+import { BouncyBrand } from '../ui/BouncyBrand.tsx';
 
 export function SuperLobsterLogin() {
   const { login, panelDisabled } = useSuperLobster();
@@ -46,30 +47,27 @@ export function SuperLobsterLogin() {
       >
         <a
           href="#/"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-theme-muted hover:text-theme-main transition-colors"
+          className="absolute -top-2 left-0 inline-flex items-center gap-1.5 text-sm text-theme-muted hover:text-theme-main transition-colors"
         >
           <ArrowLeft size={14} /> Back to the reef
         </a>
 
-        <div className="bg-theme-surface border border-theme-subtle rounded-2xl shadow-2xl p-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-[#e4048a]/10 border border-[#e4048a]/30 flex items-center justify-center">
-              <Shield size={24} className="text-[#e4048a]" />
+        <div className="bg-theme-surface border-t-2 border-[#e4048a] border-x border-b border-theme-subtle rounded-2xl shadow-2xl p-8">
+          {/* Centered brand header — CaraBase-style polish */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-[#e4048a]/10 rounded-2xl flex items-center justify-center shadow-lg shadow-[#e4048a]/20 border border-[#e4048a]/30">
+              <Shield size={32} className="text-[#e4048a]" />
             </div>
-            <div>
-              <h1 className="text-2xl font-black tracking-tight text-theme-main font-[Sora]">
-                SuperLobster
-              </h1>
-              <p className="text-xs text-theme-muted uppercase tracking-widest font-bold">
-                Instance Control Plane
-              </p>
+            <div className="flex justify-center mt-4">
+              <BouncyBrand variant="subtle" className="text-2xl justify-center tracking-tight" />
             </div>
+            <h1 className="text-xl font-bold text-theme-main mt-2 tracking-tight font-[Sora]">
+              SuperLobster Login
+            </h1>
+            <p className="text-sm text-[#e4048a]/80 mt-1">
+              The Reef is sealed. Sovereign access only.
+            </p>
           </div>
-
-          <p className="text-theme-muted text-sm mb-6 leading-relaxed">
-            Restricted shell. This panel manages lobsters, failsafe backups, and the audit reef.
-            It never decrypts vault data.
-          </p>
 
           {panelDisabled ? (
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-sm text-amber-500">
@@ -91,8 +89,8 @@ export function SuperLobsterLogin() {
                     autoFocus
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
-                    placeholder="The instance operator token"
-                    className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-10 pr-4 py-3 text-sm focus:border-claw-cyan focus:ring-1 focus:ring-claw-cyan outline-none transition-all text-theme-main placeholder:text-slate-400 font-mono"
+                    placeholder="Enter Admin Token…"
+                    className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-10 pr-4 py-3 text-sm focus:border-claw-cyan focus:ring-2 focus:ring-[#06b6d4]/40 outline-none transition-all text-theme-main placeholder:text-slate-400 font-mono"
                   />
                 </div>
               </div>
@@ -106,12 +104,12 @@ export function SuperLobsterLogin() {
               <button
                 type="submit"
                 disabled={!token || isSubmitting}
-                className="w-full py-3 bg-gradient-to-r from-[#e4048a] to-[#b7006e] hover:from-[#f01a97] hover:to-[#c90077] text-white font-bold rounded-xl shadow-lg shadow-[#e4048a]/20 disabled:opacity-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-gradient-to-r from-[#e4048a] to-[#b7006e] hover:from-[#f01a97] hover:to-[#c90077] text-white font-bold rounded-xl shadow-lg shadow-[#e4048a]/20 hover:shadow-[#e4048a]/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <><Loader2 size={16} className="animate-spin" /> Unlocking the shell…</>
                 ) : (
-                  'Enter the Shell'
+                  <><KeyRound size={16} /> Login With Admin Token</>
                 )}
               </button>
             </form>
@@ -119,7 +117,7 @@ export function SuperLobsterLogin() {
         </div>
 
         <p className="mt-4 text-center text-[11px] text-theme-muted/60 font-mono">
-          Sessions are volatile · 20-minute sliding expiry · every action is audited
+          Sovereign Data Policy Enforced · Sessions are volatile · 20-minute sliding expiry
         </p>
       </motion.div>
     </div>

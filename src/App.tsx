@@ -125,12 +125,15 @@ export default function App() {
   };
 
   // ── SuperLobster Panel (admin plane) ─────────────────────────────────────────
-  const [isSuperLobster, setIsSuperLobster] = useState(
-    typeof window !== 'undefined' && window.location.hash === '#/super-lobster'
-  );
+  // Two entry hashes: #/super-lobster (canonical) and #/admin-login (alias).
+  const isAdminHash = () =>
+    typeof window !== 'undefined' &&
+    (window.location.hash === '#/super-lobster' || window.location.hash === '#/admin-login');
+
+  const [isSuperLobster, setIsSuperLobster] = useState(isAdminHash);
 
   useEffect(() => {
-    const onHashChange = () => setIsSuperLobster(window.location.hash === '#/super-lobster');
+    const onHashChange = () => setIsSuperLobster(isAdminHash());
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
@@ -596,7 +599,7 @@ export default function App() {
   if (isSuperLobster) {
     return (
       <SuperLobsterProvider>
-        <SuperLobsterPanel />
+        <SuperLobsterGate />
       </SuperLobsterProvider>
     );
   }

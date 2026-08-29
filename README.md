@@ -19,7 +19,7 @@
 ---
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/Version-v0.0.1.2-blue?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.0.1.3-blue?style=for-the-badge)](CHANGELOG.md)
 [![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)

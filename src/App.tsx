@@ -186,6 +186,19 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Prevent browser from navigating when files are dropped outside dropzones
+  useEffect(() => {
+    const preventDrag = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", preventDrag);
+    window.addEventListener("drop", preventDrag);
+    return () => {
+      window.removeEventListener("dragover", preventDrag);
+      window.removeEventListener("drop", preventDrag);
+    };
+  }, []);
+
   // Click outside to dismiss search results dropdown and header add menu
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

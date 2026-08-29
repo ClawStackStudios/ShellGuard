@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import * as OTPAuth from 'otpauth';
+import { downloadAttachment } from '../../lib/attachmentUtils.ts';
 import { GeneratorOptions } from './GeneratorOptions.tsx';
 import { FlickerRevealText } from './FlickerRevealText.tsx';
 import { 
@@ -675,14 +676,14 @@ export function GeneratorToolView({ currentUser, onSaveToVault }: GeneratorToolV
                       </button>
                     )}
                     
-                    <a
-                      href={qrCodeDataUrl}
-                      download={`shellguard-totp-qr-${Date.now()}.png`}
-                      className="px-3 py-1.5 text-xs font-bold rounded-lg border bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 transition-all flex items-center gap-1.5"
+                    <button
+                      type="button"
+                      onClick={() => downloadAttachment(qrCodeDataUrl, `shellguard-totp-qr-${Date.now()}.png`)}
+                      className="px-3 py-1.5 text-xs font-bold rounded-lg border bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <Download size={13} />
                       <span>Download QR</span>
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>

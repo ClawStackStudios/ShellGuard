@@ -4,7 +4,10 @@ import {
   Search, 
   Pencil, 
   X, 
-  Layers
+  Layers,
+  Key,
+  FileText,
+  Binary
 } from "lucide-react";
 import { 
   PodNode, 
@@ -15,13 +18,15 @@ import {
   setPodColor, 
   deletePodColor
 } from "../../lib/podUtils.ts";
-import { VaultItem } from "../../types.ts";
+import { VaultItem, VaultItemType } from "../../types.ts";
 import { PodModal } from "./PodModal.tsx";
 
 interface SidebarFolderTreeProps {
   items: VaultItem[];
   selectedFolder: string;
   onSelectFolder: (podPath: string) => void;
+  activeTypeFilter?: VaultItemType | "all";
+  onActiveTypeFilterChange?: (type: VaultItemType | "all") => void;
   onAddNewFolder?: (podPath: string) => void;
   onRenameFolder?: (oldPath: string, newPath: string) => Promise<void> | void;
   onDeleteFolder?: (podPath: string) => Promise<void> | void;
@@ -36,6 +41,8 @@ export function SidebarFolderTree({
   onAddNewFolder,
   onRenameFolder,
   onDeleteFolder,
+  activeTypeFilter = "all",
+  onActiveTypeFilterChange,
   isCollapsed = false,
   isLocked = false
 }: SidebarFolderTreeProps) {
@@ -56,6 +63,11 @@ export function SidebarFolderTree({
     const q = podSearch.toLowerCase().trim();
     return rootNodes.filter(node => node.name.toLowerCase().includes(q) || node.path.toLowerCase().includes(q));
   }, [rootNodes, podSearch]);
+
+  const passwordsCount = useMemo(() => items.filter(i => (i.type || "password") === "password").length, [items]);
+  const notesCount = useMemo(() => items.filter(i => i.type === "note").length, [items]);
+  const keysCount = useMemo(() => items.filter(i => i.type === "key").length, [items]);
+  const totalPrimaryCount = passwordsCount + notesCount + keysCount;
 
   const handleOpenCreateModal = () => {
     if (isLocked) return;
@@ -143,6 +155,95 @@ export function SidebarFolderTree({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-2 pt-2">
+      {/* ── TYPE FILTERS ── */}
+      <div className="flex flex-col px-1 mb-2 space-y-0.5">
+        <div
+          onClick={() => onActiveTypeFilterChange?.("all")}
+          className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+            activeTypeFilter === "all"
+              ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-sm border border-claw-cyan/20"
+              : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Layers size={14} className={activeTypeFilter === "all" ? "text-claw-cyan" : "text-slate-400"} />
+            <span className="truncate">All Items</span>
+          </div>
+          <span className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded-full ${
+            activeTypeFilter === "all"
+              ? "bg-slate-700/80 text-white"
+              : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+          }`}>
+            {totalPrimaryCount}
+          </span>
+        </div>
+
+        <div
+          onClick={() => onActiveTypeFilterChange?.("password")}
+          className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+            activeTypeFilter === "password"
+              ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-sm border border-claw-cyan/20"
+              : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Key size={14} className={activeTypeFilter === "password" ? "text-claw-cyan" : "text-slate-400"} />
+            <span className="truncate">Logins</span>
+          </div>
+          <span className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded-full ${
+            activeTypeFilter === "password"
+              ? "bg-slate-700/80 text-white"
+              : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+          }`}>
+            {passwordsCount}
+          </span>
+        </div>
+
+        <div
+          onClick={() => onActiveTypeFilterChange?.("note")}
+          className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+            activeTypeFilter === "note"
+              ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-sm border border-claw-cyan/20"
+              : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <FileText size={14} className={activeTypeFilter === "note" ? "text-claw-cyan" : "text-slate-400"} />
+            <span className="truncate">Secure Notes</span>
+          </div>
+          <span className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded-full ${
+            activeTypeFilter === "note"
+              ? "bg-slate-700/80 text-white"
+              : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+          }`}>
+            {notesCount}
+          </span>
+        </div>
+
+        <div
+          onClick={() => onActiveTypeFilterChange?.("key")}
+          className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+            activeTypeFilter === "key"
+              ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-sm border border-claw-cyan/20"
+              : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Binary size={14} className={activeTypeFilter === "key" ? "text-claw-cyan" : "text-slate-400"} />
+            <span className="truncate">SSH Keys</span>
+          </div>
+          <span className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded-full ${
+            activeTypeFilter === "key"
+              ? "bg-slate-700/80 text-white"
+              : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+          }`}>
+            {keysCount}
+          </span>
+        </div>
+      </div>
+
+      <div className="h-px w-full bg-theme-subtle my-1"></div>
+
       {/* ── PODS Header (ClawChives Style: uppercase tracked + Plus action) ── */}
       <div className="flex items-center justify-between px-3 pt-1">
         <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400">

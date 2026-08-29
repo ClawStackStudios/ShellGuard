@@ -47,7 +47,8 @@ import { SetupView } from "./components/SetupView.tsx";
 import { Sidebar } from "./components/Layout/Sidebar.tsx";
 import { Header } from "./components/Layout/Header.tsx";
 import { QuickLoginModal, AuthModalConfig } from "./components/QuickLoginModal.tsx";
-import { PasswordVaultView } from "./components/Vault/PasswordVaultView.tsx";
+import { VaultShell } from "./components/Vault/VaultShell.tsx";
+import { ItemFormModal } from "./components/Vault/ItemFormModal.tsx";
 import { SuperLobsterProvider, useSuperLobster } from "./components/Admin/SuperLobsterContext.tsx";
 import { SuperLobsterLogin } from "./components/Admin/SuperLobsterLogin.tsx";
 import { SuperLobsterPanel } from "./components/Admin/SuperLobsterPanel.tsx";
@@ -116,15 +117,16 @@ export default function App() {
   // Global Header Search & Vault Tab sync
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [activeVaultTab, setActiveVaultTab] = useState<VaultItemType>("password");
+  const [activeTypeFilter, setActiveTypeFilter] = useState<VaultItemType | "all">("all");
   const [isAddingVaultItem, setIsAddingVaultItem] = useState(false);
+  const [editingVaultItem, setEditingVaultItem] = useState<VaultItem | null>(null);
   const [isHeaderAddMenuOpen, setIsHeaderAddMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const headerAddMenuRef = useRef<HTMLDivElement>(null);
 
   const handleOpenAdd = (type: VaultItemType) => {
-    setActiveVaultTab(type);
+    setActiveTypeFilter(type);
     setView("vault");
     setIsAddingVaultItem(true);
     setIsHeaderAddMenuOpen(false);
@@ -224,7 +226,7 @@ export default function App() {
 
   const handleSelectSearchResult = (item: VaultItem) => {
     const itemType = (item.type as VaultItemType) || "password";
-    setActiveVaultTab(itemType);
+    setActiveTypeFilter(itemType);
     setHeaderSearchQuery(item.title);
     setView("vault");
     setIsSearchFocused(false);
@@ -307,6 +309,18 @@ export default function App() {
       setError(err.message);
     }
   }, []);
+
+  // 🐚 Reactive Vault & Agent loader: automatically loads and decrypts items
+  // whenever shellKey is established, and purges in-memory plaintext when locked/null.
+  useEffect(() => {
+    if (shellKey) {
+      scuttleVault(shellKey);
+      scuttleAgents();
+    } else {
+      setVaultItems([]);
+      setAgents([]);
+    }
+  }, [shellKey, scuttleVault, scuttleAgents]);
 
   const handleLogout = useCallback(() => {
     if (activeLobsterId) {
@@ -852,6 +866,8 @@ export default function App() {
           handleDeletePod={handleDeletePod}
           scuttleVault={() => shellKey && scuttleVault(shellKey)}
           scuttleAgents={scuttleAgents}
+          activeTypeFilter={activeTypeFilter}
+          setActiveTypeFilter={setActiveTypeFilter}
         />
       </aside>
 
@@ -911,36 +927,37 @@ export default function App() {
               )}
 
               {view === "vault" && (
-                <motion.div key="vault" className="w-full">
-                  <PasswordVaultView 
-                    items={vaultItems} 
-                    isLocked={isLocked}
-                    onUnlock={() => setAuthModalConfig({ mode: "unlock", target: lobster })}
-                    onAdd={lockTheClaw} 
-                    onUpdate={updateTheClaw}
+                <motion.div key="vault" className="w-full h-[calc(100vh-140px)]">
+                  <VaultShell
+                    items={vaultItems}
                     selectedFolder={selectedFolder}
-                    onSelectFolder={setSelectedFolder}
-                    searchQuery={headerSearchQuery}
-                    onSearchQueryChange={setHeaderSearchQuery}
-                    activeTypeTab={activeVaultTab}
-                    onActiveTypeTabChange={setActiveVaultTab}
-                    isAdding={isAddingVaultItem}
-                    onToggleIsAdding={setIsAddingVaultItem}
-                    onDelete={async (id, type) => { 
+                    activeTypeFilter={activeTypeFilter}
+                    isLocked={isLocked}
+                    onAdd={handleOpenAdd}
+                    onEdit={(item) => setEditingVaultItem(item)}
+                    onDelete={async (item) => {
                       if (!shellKey || isLocked) return;
-                      const endpoint = type === 'password' ? '/api/vault' : 
-                                       type === 'note' ? '/api/notes' : 
-                                       type === 'key' ? '/api/keys' : '/api/attachments';
-                      await restAdapter.DELETE(`${endpoint}/${id}`); 
-                      if(shellKey) scuttleVault(shellKey); 
-                    }} 
-                    onDeleteMultiple={async (selectedList) => {
-                      if (!shellKey || isLocked) return;
-                      for (const item of selectedList) {
-                        const endpoint = item.type === 'password' ? '/api/vault' : 
-                                         item.type === 'note' ? '/api/notes' : 
-                                         item.type === 'key' ? '/api/keys' : '/api/attachments';
-                        await restAdapter.DELETE(`${endpoint}/${item.id}`);
+                      const endpoint = item.type === 'password' ? '/api/vault' : 
+                                       item.type === 'note' ? '/api/notes' : 
+                                       item.type === 'key' ? '/api/keys' : '/api/attachments';
+                      await restAdapter.DELETE(`${endpoint}/${item.id}`); 
+                      if (shellKey) scuttleVault(shellKey);
+                    }}
+                  />
+                  <ItemFormModal
+                    isOpen={isAddingVaultItem || !!editingVaultItem}
+                    onClose={() => {
+                      setIsAddingVaultItem(false);
+                      setEditingVaultItem(null);
+                    }}
+                    items={vaultItems}
+                    initialItem={editingVaultItem}
+                    initialType={activeTypeFilter === "all" ? "password" : activeTypeFilter as VaultItemType}
+                    onSave={async (data) => {
+                      if (editingVaultItem) {
+                        await updateTheClaw(editingVaultItem.id, data);
+                      } else {
+                        await lockTheClaw(data);
                       }
                       if (shellKey) scuttleVault(shellKey);
                     }}

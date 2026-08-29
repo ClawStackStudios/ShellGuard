@@ -37,6 +37,8 @@ interface SidebarProps {
   handleDeletePod: (podToDelete: string) => void;
   scuttleVault: () => void;
   scuttleAgents: () => void;
+  activeTypeFilter: VaultItemType | "all";
+  setActiveTypeFilter: (type: VaultItemType | "all") => void;
 }
 
 export function Sidebar({
@@ -54,7 +56,9 @@ export function Sidebar({
   handleRenamePod,
   handleDeletePod,
   scuttleVault,
-  scuttleAgents
+  scuttleAgents,
+  activeTypeFilter,
+  setActiveTypeFilter
 }: SidebarProps) {
   
   // Search State
@@ -359,6 +363,12 @@ export function Sidebar({
                   setSelectedFolder(folder);
                   setView('vault');
                   scuttleVault();
+                  if (window.innerWidth < 1024) onClose();
+                }}
+                activeTypeFilter={activeTypeFilter}
+                onActiveTypeFilterChange={(type) => {
+                  setActiveTypeFilter(type);
+                  setView('vault');
                   if (window.innerWidth < 1024) onClose();
                 }}
                 onRenameFolder={handleRenamePod}

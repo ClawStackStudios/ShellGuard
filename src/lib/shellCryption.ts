@@ -1,25 +1,58 @@
+import { hkdfSha256, aesGcmEncrypt, aesGcmDecrypt } from './webCryptoFallback.ts';
+
+export interface ShellKeyFallback {
+  _rawKey: Uint8Array;
+  type: 'secret';
+  extractable: boolean;
+  algorithm: { name: 'AES-GCM'; length: 256 };
+  usages: KeyUsage[];
+}
+
+export type ShellKey = CryptoKey | ShellKeyFallback;
+
 export async function deriveShellKey(huKey: string, userUuid: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(huKey),
-    { name: "HKDF" },
-    false,
-    ["deriveKey"]
-  );
+  const ikm = encoder.encode(huKey);
+  const salt = encoder.encode(userUuid);
+  const info = encoder.encode("clawchives-shellcryption-v1");
 
-  return crypto.subtle.deriveKey(
-    {
-      name: "HKDF",
-      hash: "SHA-256",
-      salt: encoder.encode(userUuid),
-      info: encoder.encode("clawchives-shellcryption-v1")
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
+  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.importKey === 'function') {
+    try {
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        ikm,
+        { name: "HKDF" },
+        false,
+        ["deriveKey"]
+      );
+
+      return await crypto.subtle.deriveKey(
+        {
+          name: "HKDF",
+          hash: "SHA-256",
+          salt,
+          info
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    } catch {
+      // Fall through to fallback
+    }
+  }
+
+  // Pure TypeScript fallback engine for non-secure HTTP contexts (Unraid LAN)
+  const rawKey = hkdfSha256(ikm, salt, info, 32);
+  const keyObj: ShellKeyFallback = {
+    _rawKey: rawKey,
+    type: 'secret',
+    extractable: false,
+    algorithm: { name: 'AES-GCM', length: 256 },
+    usages: ['encrypt', 'decrypt']
+  };
+  return keyObj as unknown as CryptoKey;
 }
 
 export interface EncryptedField {
@@ -55,24 +88,37 @@ export async function encryptField(plaintext: string, shellKey: CryptoKey, table
   }
 
   const encoder = new TextEncoder();
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const iv = (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function')
+    ? crypto.getRandomValues(new Uint8Array(12))
+    : new Uint8Array(12).map(() => (Math.random() * 256) | 0);
   const aadString = `${table}:${recordId}`;
   const aad = encoder.encode(aadString);
 
-  const ciphertextBuffer = await crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv: iv,
-      additionalData: aad
-    },
-    shellKey,
-    encoder.encode(plaintext)
-  );
+  let ciphertextBuffer: ArrayBuffer;
+
+  if ((shellKey as any)?._rawKey) {
+    const rawKey = (shellKey as any)._rawKey as Uint8Array;
+    const ctAndTag = aesGcmEncrypt(rawKey, iv, encoder.encode(plaintext), aad);
+    ciphertextBuffer = ctAndTag.buffer.slice(ctAndTag.byteOffset, ctAndTag.byteOffset + ctAndTag.byteLength);
+  } else if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.encrypt === 'function') {
+    ciphertextBuffer = await crypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv: iv,
+        additionalData: aad
+      },
+      shellKey,
+      encoder.encode(plaintext)
+    );
+  } else {
+    // If shellKey is a CryptoKey but subtle is gone, fallback by deriving key again
+    throw new Error("No cryptographic engine available for AES-GCM encryption");
+  }
 
   const encryptedField: EncryptedField = {
     v: 1,
     alg: "AES-GCM-256",
-    iv: arrayBufferToBase64(iv),
+    iv: arrayBufferToBase64(iv.buffer),
     ct: arrayBufferToBase64(ciphertextBuffer),
     aad: aadString
   };
@@ -98,15 +144,30 @@ export async function decryptField(encryptedJson: string, shellKey: CryptoKey, t
       throw new Error("AAD mismatch");
     }
 
-    const decryptedBuffer = await crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: new Uint8Array(iv),
-        additionalData: encoder.encode(expectedAad)
-      },
-      shellKey,
-      ciphertext
-    );
+    let decryptedBuffer: ArrayBuffer;
+
+    if ((shellKey as any)?._rawKey) {
+      const rawKey = (shellKey as any)._rawKey as Uint8Array;
+      const pt = aesGcmDecrypt(
+        rawKey, 
+        new Uint8Array(iv), 
+        new Uint8Array(ciphertext), 
+        encoder.encode(expectedAad)
+      );
+      decryptedBuffer = pt.buffer.slice(pt.byteOffset, pt.byteOffset + pt.byteLength);
+    } else if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.decrypt === 'function') {
+      decryptedBuffer = await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: new Uint8Array(iv),
+          additionalData: encoder.encode(expectedAad)
+        },
+        shellKey,
+        ciphertext
+      );
+    } else {
+      throw new Error("No cryptographic engine available for AES-GCM decryption");
+    }
 
     const decoder = new TextDecoder();
     return decoder.decode(decryptedBuffer);

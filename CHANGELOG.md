@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.0.1.4] - 2026-08-29
+
+### Fixed
+- **Pure TypeScript WebCrypto Fallback Engine:** Built zero-dependency implementations of SHA-256, HMAC-SHA256, HKDF, and AES-GCM-256 in `src/lib/webCryptoFallback.ts`, transparently polyfilling `crypto.subtle` when accessing ShellGuard over plain HTTP LAN origins (e.g. Unraid LAN IPs) where `window.crypto.subtle` is undefined.
+- **Global Drag-and-Drop Shield:** Attached global `window` `dragover` and `drop` `e.preventDefault()` handlers to prevent browsers from accidentally navigating away when files are dropped outside active dropzones.
+- **TOTP QR Code Blob Downloads:** Swapped raw `data:` URI link downloads with in-memory Blob streams in `GeneratorToolView.tsx`.
+
 ## [0.0.1.3] - 2026-08-29
 
 ### Changed

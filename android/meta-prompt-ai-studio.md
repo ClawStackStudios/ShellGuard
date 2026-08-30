@@ -11,16 +11,22 @@ To ensure optimal token economy and avoid context degradation in **Google AI Stu
 
 ```mermaid
 flowchart TD
-    Step0["🚀 Stage 0: Initial 'First Build' Prompt<br/>(Scaffold Structure & Security Foundation — No UI)"]
-    UploadContext["📂 Upload Full /android Context Files into AI Studio Project"]
-    Phase1["⚡ Phase 1 Prompt: Cryptographic Engine & Live Display<br/>(Task 01: Core Crypto & TOTP · Task 02: Countdown UI)"]
-    Phase2["🗄️ Phase 2 Prompt: Local Persistence & Offline Screen<br/>(Task 03: SQLCipher Room · Task 04: List Screen & Search)"]
-    Phase3["🌐 Phase 3 Prompt: Network Sync & Hardware Scanner<br/>(Task 05: Ktor Client & Delta Sync · Task 06: CameraX QR & Biometrics)"]
+    Step0["🚀 Stage 0: Initial 'First Build' Prompt<br/>(Scaffold Structure, Gradle & Security Foundation)"]
+    UploadContext["📂 Stage 1: Upload Full /android Context Files into AI Studio Project"]
+    Phase1["⚡ Stage 2: Phase 1 — Cryptographic Engine & Live Display<br/>(Task 01: Core Crypto & TOTP · Task 02: Dynamic Theme & Countdown UI)"]
+    Phase2["🗄️ Stage 3: Phase 2 — Local Persistence & Authenticator Screen<br/>(Task 03: SQLCipher Room · Task 04: List Screen, Gestures & Empty State)"]
+    Phase3["🔐 Stage 4: Phase 3 — Vault Onboarding & Biometric Security<br/>(Task 05: KeyStore Biometrics & Auto-Lock · Task 06: Hatch Vault Wizard & LockScreen)"]
+    Phase4["📷 Stage 5: Phase 4 — CameraX QR Scanner & Backup Engine<br/>(Task 07: UriParser & BackupManager · Task 08: Live Scanner & Manual Add)"]
+    Phase5["🌐 Stage 6: Phase 5 — Self-Hosted Server Gateway & Bidirectional Sync<br/>(Task 09: Two-Way Delta Sync & WorkManager · Task 10: Spotlight Tour, Settings & Theme Picker)"]
+    Phase6["🎨 Stage 7: Phase 6 — Adaptive Launcher Icon & Release Hardening<br/>(Task 11: ProGuard/R8 & Backup Rules · Task 12: Adaptive Icon, Splash & System Polish)"]
 
     Step0 --> UploadContext
     UploadContext --> Phase1
     Phase1 --> Phase2
     Phase2 --> Phase3
+    Phase3 --> Phase4
+    Phase4 --> Phase5
+    Phase5 --> Phase6
 ```
 
 ---
@@ -138,10 +144,14 @@ Execute Phase 1 adhering to the Functionality + UI Component pairing:
   - Add `TotpEngineTest.kt` in `test/` verifying RFC 6238 reference vectors (secret `"12345678901234567890"`, time `59s` -> `"287082"`, time `1111111109s` -> `"081804"`, time `1111111111s` -> `"140504"`, time `1234567890s` -> `"890059"`, time `2000000000s` -> `"692790"` across 6 and 8 digits).
   - Add `ShellCryptionEngineTest.kt` in `test/` verifying deterministic HKDF-SHA256 derivation per user, AES-GCM-256 roundtrip encryption/decryption, and AAD tamper detection (tampered `table` or `recordId` throwing authentication tag verification failure).
 
-### Task 02: [UI Component] Live TOTP Countdown Display & Progress Ring
-- Implement `ui/theme/Color.kt`, `Theme.kt`, and `Type.kt` matching the **Reef Modernist** palette in `DESIGN.md` (`AbyssalDeep` `#030712`, `ShellSurface` `#0F172A`, `ClawCyan` `#06B6D4`, `LobsterRed` `#EF4444`, `TextPearl` `#F8FAFC`).
+### Task 02: [UI Component] Dynamic Theme Engine, Live TOTP Countdown Display & Progress Ring
+- Implement `ui/theme/Color.kt`, `Theme.kt`, and `Type.kt` matching the **Reef Modernist** design system in `DESIGN.md`:
+  - Dual-mode base tokens: Dark base `#0F1419`, Dark surface `#171C21`, Dark elevated `#1E252C`, Text main `#DEE3EA`, Border `#3D484E`.
+  - Brand accents: Lobster Red `#E4048A`, Claw Cyan `#06B6D4`, Deep Purple `#3B0764`, Coral Orange `#F97316`, Emerald `#10B981`.
+  - Implement `ThemeAccent` enum with 6 curated palettes (`REEF_DEFAULT`, `CYAN_VENT`, `PURPLE_SHELL`, `EMERALD_TRENCH`, `AMBER_FLARE`, `MONOCHROME`).
+  - Implement `LocalShellGuardColors` `staticCompositionLocalOf` for dynamic Compose color inheritance across dark/light and custom accents.
 - Implement `engine/TotpTicker.kt` (reactive Flow emitting 1s ticks synchronized with Kotlin Time).
-- Implement `ui/components/TotpCountdownRing.kt` (Canvas arc depleting counter-clockwise, smooth animated transition from `ClawCyan` -> `CoralOrange` -> `LobsterRed` as expiration nears).
+- Implement `ui/components/TotpCountdownRing.kt` (Canvas arc depleting counter-clockwise, smooth animated transition from secondary accent -> `BrandCoralOrange` -> `BrandLobsterRed` as expiration nears).
 - Implement `ui/components/TotpCard.kt` displaying large monospace split codes (`123 456`), spring touch bounce scale (`0.97f`), haptic feedback, and the countdown ring.
 
 Verify all unit tests pass and the countdown ring renders smoothly at 60fps.
@@ -344,6 +354,9 @@ Execute Phase 5 adhering to the Functionality + UI Component pairing:
 - Implement `ui/screens/GatewayScreen.kt` & `GatewayViewModel.kt`:
   - Faithful 1:1 port of ClawStack Gateway: protocol/host/port segment bar, animated port width, key file dropzone + paste ShellKey view, and warning card.
 - Implement `ui/screens/SettingsScreen.kt`:
+  - **Appearance & Theme Accents Card**:
+    - Mode toggle selector: `[ System | Dark | Light ]`.
+    - Horizontal gradient swatch picker for the 6 curated ShellGuard accent palettes (`REEF_DEFAULT`, `CYAN_VENT`, `PURPLE_SHELL`, `EMERALD_TRENCH`, `AMBER_FLARE`, `MONOCHROME`) with active selection checkmark and instant Compose preview.
   - **Server Synchronization Card**:
     - Disconnected mode: Shows "Standalone Offline Vault" with a prominent "[ Connect to Server ]" button that navigates to Gateway.
     - Connected mode: Displays `Server: [IP]`, `User: [Name]`, `Last Synced`, "[ Sync Now ]", and "[ Disconnect ]".
@@ -353,7 +366,7 @@ Execute Phase 5 adhering to the Functionality + UI Component pairing:
   - **Encrypted Backup & Restore**: "Export JSON" and "Import JSON" file pickers.
   - **Biometric Unlock Switch**: Toggle cold-start hardware biometric prompt (optional).
 
-Verify that local 2FA tokens push to the server and appear in the Web UI under Passwords, remote tokens sync down, and the Spotlight Tour navigates seamlessly.
+Verify that local 2FA tokens push to the server and appear in the Web UI under Passwords, remote tokens sync down, the theme accent picker dynamically changes app colors, and the Spotlight Tour navigates seamlessly.
 ```
 
 ---

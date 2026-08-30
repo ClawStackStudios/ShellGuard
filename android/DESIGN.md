@@ -1,93 +1,235 @@
 # 🎨 ShellGuard-TOTP — Android Design System: Reef Modernist Mobile
 
 > **Material Design 3 Adaptation of the Reef Modernist ("Bioluminescent Defense") Design Language**  
-> *Engineered for Native Android Jetpack Compose with Flat Material Cards, Dynamic Motion & Tactile Feedback.*
+> *Engineered for Native Android Jetpack Compose with Flat Material Cards, Dynamic Theme Accents, Smooth Motion & Tactile Feedback.*
 
 ---
 
-## 💎 Design Philosophy & Mobile Translation
+## 💎 Brand & Visual Identity
 
-The **Reef Modernist Mobile** design system translates ShellGuard’s desktop vault aesthetic into high-performance, touch-first Android UI paradigms:
+**Reef Modernist Mobile** translates ShellGuard’s desktop vault design language into a high-performance, touch-first Android experience. It embodies **Bioluminescent Defense**—organic marine resilience fused with sharp, mathematical cryptographic precision.
 
-- **Exoskeletal Shells (Flat Material 3 Cards)**: Containers use clean geometric contours (`12dp`–`16dp` rounded corners), crisp 1dp structural borders (`#334155`), and subtle tonal surface elevations rather than muddy drop shadows.
-- **Bioluminescent Signaling**: Active 2FA codes, countdown progress arcs, and copy feedback glow with electric `ClawCyan` (`#06B6D4`), shifting to `CoralOrange` (`#F97316`) and `LobsterRed` (`#EF4444`) as expiration nears.
-- **Fluid Android Motion**: All touch targets respond with natural spring physics (`spring(dampingRatio = 0.75f, stiffness = 400f)`), smooth animated visibility expansions, and native ripple feedback.
-- **Glanceable Cryptographic Precision**: Large 3x3 grouped monospace digits (`123 456`) designed for immediate legibility in high-pressure authentication flows.
+The mobile interface treats authentication and data protection as an active, luminous carapace:
+- **Exoskeletal Shells (Flat Material 3 Cards)**: Containers use clean geometric contours (`12dp`–`16dp` rounded corners), crisp 1dp structural borders (`#3D484E`), and subtle tonal surface elevations rather than heavy drop shadows.
+- **Bioluminescent Glow**: Active 2FA codes, countdown progress arcs, and copy feedback glow with electric **Claw Cyan** (`#06B6D4`) and signature **Lobster Red** (`#E4048A`), shifting dynamically as token expiration nears.
+- **Dual-Mode Fluidity**: Full native support for **Abyssal Dark** (Default Vault Mode) and **Ocean Mist** (Crisp Light Mode), with seamless transition support.
+- **Dynamic Accent Customization**: Users can personalize their vault accent directly from Settings, choosing between iconic ShellGuard palettes (*Reef Bioluminescent, Electric Cyan, Imperial Shell, Emerald Bio-Flora, Solar Vent, Minimalist Pearl*) with dynamic Compose inheritance.
+- **Glanceable Cryptographic Precision**: Large 3x3 grouped monospace digits (`123 456`) formatted for instant legibility in high-pressure authentication flows.
 
 ```mermaid
 flowchart LR
     subgraph ColorHierarchy ["Color & Elevation Hierarchy"]
-        Floor["Level 0: AbyssalDeep (#030712)<br/>(Canvas / Window Floor)"]
-        Surface["Level 1: ShellSurface (#0F172A)<br/>(Material Flat Cards & Search)"]
-        Elevated["Level 2: ShellElevated (#1E293B)<br/>(Modal Bottom Sheets & Dialogs)"]
-        Glow["Accent: ClawCyan Glow (#3306B6D4)<br/>(Focus & Active Rings)"]
+        Floor["Level 0: Abyssal Base (#0F1419)<br/>(Canvas / Viewport Floor)"]
+        Surface["Level 1: Deep Surface (#171C21)<br/>(Flat Material Cards & List Items)"]
+        Elevated["Level 2: Elevated Surface (#1E252C)<br/>(Modals, Sheets & Dropups)"]
+        Glow["Bioluminescent Glow (#E4048A / #06B6D4)<br/>(Active Rings, Focus & Badges)"]
 
         Floor --> Surface --> Elevated --> Glow
     end
 
-    subgraph MotionInteraction ["Motion & Micro-Interactions"]
-        Spring["Spring Touch Scale (0.97f)"]
-        Ring["60fps Canvas Arc Countdown"]
-        Haptics["HapticFeedback (LongPress)"]
-        Toast["Auto-Clearing Clipboard Pill"]
+    subgraph ThemeCustomization ["Dynamic Theme Engine"]
+        Selector["Settings Accent Selector"]
+        CompLocal["LocalShellGuardColors"]
+        Cards["TotpCard / CountdownRing / Badges"]
 
-        Spring --> Ring --> Haptics --> Toast
+        Selector --> CompLocal --> Cards
     end
 ```
 
 ---
 
-## 🎨 Palette & Material 3 ColorScheme
+## 🎨 Palette & Dynamic Theme Tokens
+
+Aligned 1:1 with ShellGuard's web design tokens (`DESIGN.md`), calibrated for Jetpack Compose:
+
+### 🌑 Dark Mode (Abyssal Dark — Default)
+- **Base Canvas (`--bg-base`)**: `Color(0xFF0F1419)` (`rgb(15, 20, 25)`)
+- **Surface Card (`--bg-surface`)**: `Color(0xFF171C21)` (`rgb(23, 28, 33)`)
+- **Elevated Surface**: `Color(0xFF1E252C)` (`rgb(30, 37, 44)`)
+- **Text Main (`--text-main`)**: `Color(0xFFDEE3EA)` (`rgb(222, 227, 234)`)
+- **Text Muted (`--text-muted`)**: `Color(0xFF879298)` (`rgb(135, 146, 152)`)
+- **Border Subtle (`--border-subtle`)**: `Color(0xFF3D484E)` (`rgb(61, 72, 78)`)
+- **Header Accent Border**: `Color(0xFFE4048A)` (Lobster Red)
+
+### ☀️ Light Mode (Ocean Mist)
+- **Base Canvas (`--bg-base`)**: `Color(0xFFF1F5F9)` (`rgb(241, 245, 249)`)
+- **Surface Card (`--bg-surface`)**: `Color(0xFFFFFFFF)` (`rgb(255, 255, 255)`)
+- **Elevated Surface**: `Color(0xFFF8FAFC)` (`rgb(248, 250, 252)`)
+- **Text Main (`--text-main`)**: `Color(0xFF0F172A)` (`rgb(15, 23, 42)`)
+- **Text Muted (`--text-muted`)**: `Color(0xFF64748B)` (`rgb(100, 116, 139)`)
+- **Border Subtle (`--border-subtle`)**: `Color(0xFFCBD5E1)` (`rgb(203, 213, 225)`)
+- **Header Accent Border**: `Color(0xFF3B0764)` (ShellGuard Purple)
+
+---
+
+## 🌈 Dynamic Theme Accent Customization System
+
+To allow users to personalize their vault while preserving the signature ShellGuard aesthetic, the Android client provides **6 Curated Accent Palettes**:
+
+| Accent Enum | Name | Primary Accent | Secondary / Glow | Character & Vibe |
+|:---|:---|:---|:---|:---|
+| `REEF_DEFAULT` | **Reef Bioluminescent** | `#E4048A` (Lobster Red) | `#06B6D4` (Claw Cyan) | Canonical ShellGuard dual-tone signature |
+| `CYAN_VENT` | **Electric Cyan** | `#06B6D4` (Claw Cyan) | `#E4048A` (Lobster Red) | Crisp hydro-thermal neon focus |
+| `PURPLE_SHELL`| **Imperial Shell** | `#A855F7` (Deep Purple) | `#06B6D4` (Claw Cyan) | Regal executive vault carapace |
+| `EMERALD_TRENCH`| **Emerald Bio-Flora** | `#10B981` (Emerald) | `#06B6D4` (Claw Cyan) | Subaquatic luminescence & vitality |
+| `AMBER_FLARE` | **Solar Vent** | `#F59E0B` (Amber Gold) | `#E4048A` (Lobster Red) | Warm high-visibility solar beacon |
+| `MONOCHROME` | **Minimalist Pearl** | `#F8FAFC` (Pure Pearl) | `#879298` (Muted Steel) | Stealth, zero-distraction monochrome |
+
+---
+
+### Kotlin Theme Engine (`Theme.kt` & `Color.kt`)
 
 ```kotlin
 package com.clawstack.shellguard.totp.ui.theme
 
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 
-// ── Core Reef Modernist Palette ─────────────────────────────────
-val AbyssalDeep = Color(0xFF030712)          // Canvas / Window Floor (Trench Noir)
-val ShellSurface = Color(0xFF0F172A)         // Primary Flat Card Container
-val ShellSurfaceElevated = Color(0xFF1E293B) // Elevated Sheets & Modals
-val ShellBorder = Color(0xFF334155)          // 1dp Structural Card Borders
-val ShellBorderActive = Color(0xFF06B6D4)    // Focused / Active Border
+// ── Canonical ShellGuard Brand Colors ───────────────────────────
+val BrandLobsterRed = Color(0xFFE4048A)      // Primary Action / Brand Gradient
+val BrandClawCyan = Color(0xFF06B6D4)        // Secondary Action / Active Vents
+val BrandPurple = Color(0xFF3B0764)          // ShellGuard Dark Purple
+val BrandCoralOrange = Color(0xFFF97316)      // Countdown Warning (< 10s)
+val BrandEmerald = Color(0xFF10B981)          // Success / Validated State
 
-// ── Brand Accents (Bioluminescent Defense) ───────────────────────
-val ClawCyan = Color(0xFF06B6D4)             // Primary Action / Electric Pulse
-val ClawCyanGlow = Color(0x3306B6D4)         // Glow / Selection Background
-val LobsterRed = Color(0xFFEF4444)           // Critical Countdown (< 5s) / Danger Actions
-val CoralOrange = Color(0xFFF97316)          // Warning Countdown (< 10s)
-val TextPearl = Color(0xFFF8FAFC)            // Crisp Headlines & Monospace Digits
-val TextMuted = Color(0xFF94A3B8)            // Secondary Metadata & Subtitles
+// ── Dark Mode Tokens (Abyssal Dark) ─────────────────────────────
+val DarkBgBase = Color(0xFF0F1419)           // Canvas Viewport Floor
+val DarkBgSurface = Color(0xFF171C21)        // Card / Container Surface
+val DarkBgElevated = Color(0xFF1E252C)       // Sheets / Modals / Toolbars
+val DarkTextMain = Color(0xFFDEE3EA)         // Luminous Shell Headlines & Codes
+val DarkTextMuted = Color(0xFF879298)        // Secondary Subtitles & Timestamps
+val DarkBorderSubtle = Color(0xFF3D484E)     // Carapace Ridge 1dp Outlines
 
-// ── Warning & Notice Badges ─────────────────────────────────────
-val WarningBoxBg = Color(0x26F97316)         // Amber Warning Container (15% Alpha)
-val WarningText = Color(0xFFFDBA74)          // Amber Warning Text
+// ── Light Mode Tokens (Ocean Mist) ──────────────────────────────
+val LightBgBase = Color(0xFFF1F5F9)          // Ocean Mist Canvas
+val LightBgSurface = Color(0xFFFFFFFF)       // Crisp White Card Surface
+val LightBgElevated = Color(0xFFF8FAFC)      // Elevated Surfaces
+val LightTextMain = Color(0xFF0F172A)        // Slate 900 Typography
+val LightTextMuted = Color(0xFF64748B)       // Slate 500 Subtitles
+val LightBorderSubtle = Color(0xFFCBD5E1)    // Slate 300 Outlines
 
-val ShellGuardTotpColorScheme = darkColorScheme(
-    primary = ClawCyan,
-    onPrimary = AbyssalDeep,
-    primaryContainer = ClawCyanGlow,
-    onPrimaryContainer = ClawCyan,
-    secondary = LobsterRed,
-    onSecondary = TextPearl,
-    tertiary = CoralOrange,
-    background = AbyssalDeep,
-    onBackground = TextPearl,
-    surface = ShellSurface,
-    onSurface = TextPearl,
-    surfaceVariant = ShellSurfaceElevated,
-    onSurfaceVariant = TextMuted,
-    outline = ShellBorder,
-    outlineVariant = ShellBorderActive,
-    error = LobsterRed,
-    onError = TextPearl
+// ── Theme Accents Enum ──────────────────────────────────────────
+enum class ThemeAccent(
+    val displayName: String,
+    val primaryColor: Color,
+    val secondaryColor: Color
+) {
+    REEF_DEFAULT("Reef Bioluminescent", BrandLobsterRed, BrandClawCyan),
+    CYAN_VENT("Electric Cyan", BrandClawCyan, BrandLobsterRed),
+    PURPLE_SHELL("Imperial Shell", Color(0xFFA855F7), BrandClawCyan),
+    EMERALD_TRENCH("Emerald Bio-Flora", BrandEmerald, BrandClawCyan),
+    AMBER_FLARE("Solar Vent", Color(0xFFF59E0B), BrandLobsterRed),
+    MONOCHROME("Minimalist Pearl", Color(0xFFF8FAFC), Color(0xFF879298))
+}
+
+enum class ThemeMode {
+    SYSTEM, DARK, LIGHT
+}
+
+// ── Dynamic Color Scheme Carrier ─────────────────────────────────
+data class ShellGuardCustomColors(
+    val bgBase: Color,
+    val bgSurface: Color,
+    val bgElevated: Color,
+    val textMain: Color,
+    val textMuted: Color,
+    val borderSubtle: Color,
+    val primaryAccent: Color,
+    val secondaryAccent: Color,
+    val warning: Color = BrandCoralOrange,
+    val danger: Color = BrandLobsterRed
 )
+
+val LocalShellGuardColors = staticCompositionLocalOf<ShellGuardCustomColors> {
+    error("No ShellGuardColors provided")
+}
+
+@Composable
+fun ShellGuardTheme(
+    themeMode: ThemeMode = ThemeMode.DARK,
+    accent: ThemeAccent = ThemeAccent.REEF_DEFAULT,
+    content: @Composable () -> Unit
+) {
+    val isDark = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+    }
+
+    val customColors = if (isDark) {
+        ShellGuardCustomColors(
+            bgBase = DarkBgBase,
+            bgSurface = DarkBgSurface,
+            bgElevated = DarkBgElevated,
+            textMain = DarkTextMain,
+            textMuted = DarkTextMuted,
+            borderSubtle = DarkBorderSubtle,
+            primaryAccent = accent.primaryColor,
+            secondaryAccent = accent.secondaryColor
+        )
+    } else {
+        ShellGuardCustomColors(
+            bgBase = LightBgBase,
+            bgSurface = LightBgSurface,
+            bgElevated = LightBgElevated,
+            textMain = LightTextMain,
+            textMuted = LightTextMuted,
+            borderSubtle = LightBorderSubtle,
+            primaryAccent = accent.primaryColor,
+            secondaryAccent = accent.secondaryColor
+        )
+    }
+
+    val materialColors = if (isDark) {
+        darkColorScheme(
+            primary = accent.primaryColor,
+            onPrimary = if (accent == ThemeAccent.MONOCHROME) DarkBgBase else Color.White,
+            secondary = accent.secondaryColor,
+            background = DarkBgBase,
+            onBackground = DarkTextMain,
+            surface = DarkBgSurface,
+            onSurface = DarkTextMain,
+            surfaceVariant = DarkBgElevated,
+            onSurfaceVariant = DarkTextMuted,
+            outline = DarkBorderSubtle,
+            error = BrandLobsterRed
+        )
+    } else {
+        lightColorScheme(
+            primary = accent.primaryColor,
+            onPrimary = Color.White,
+            secondary = accent.secondaryColor,
+            background = LightBgBase,
+            onBackground = LightTextMain,
+            surface = LightBgSurface,
+            onSurface = LightTextMain,
+            surfaceVariant = LightBgElevated,
+            onSurfaceVariant = LightTextMuted,
+            outline = LightBorderSubtle,
+            error = BrandLobsterRed
+        )
+    }
+
+    CompositionLocalProvider(LocalShellGuardColors provides customColors) {
+        MaterialTheme(
+            colorScheme = materialColors,
+            typography = ShellGuardTypography,
+            content = content
+        )
+    }
+}
 ```
 
 ---
 
-## 🔤 Typography & Monospace Code Hierarchy
+## 🔤 Typography & Monospace Hierarchy
+
+Matches ShellGuard desktop typography rules:
+- **Headlines:** `Outfit` (Bold / SemiBold) with tight tracking (`-0.02em`)
+- **Body:** `Inter` (Regular / Medium) for interface legibility
+- **Monospace:** `JetBrains Mono` for 2FA verification codes, secret seeds, and hash fingerprints
 
 ```kotlin
 package com.clawstack.shellguard.totp.ui.theme
@@ -99,63 +241,51 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 val ShellGuardTypography = Typography(
-    // ── Headlines (Bold & Punchy) ────────────────────────────────
     headlineLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = FontFamily.SansSerif, // Configured with Outfit font in res/font
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
         lineHeight = 34.sp,
-        letterSpacing = (-0.5).sp,
-        color = TextPearl
+        letterSpacing = (-0.5).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
-        lineHeight = 28.sp,
-        color = TextPearl
+        lineHeight = 28.sp
     ),
-
-    // ── Body (High Scannability) ─────────────────────────────────
     bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = FontFamily.SansSerif, // Configured with Inter font
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 22.sp,
-        color = TextPearl
+        fontSize = 15.sp,
+        lineHeight = 22.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        color = TextMuted
+        fontSize = 13.sp,
+        lineHeight = 18.sp
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.SemiBold,
         fontSize = 11.sp,
         lineHeight = 14.sp,
-        letterSpacing = 0.5.sp,
-        color = TextMuted
+        letterSpacing = 0.5.sp
     ),
-
-    // ── Monospace (2FA Codes & Cryptographic Keys) ───────────────
     displayLarge = TextStyle(
-        fontFamily = FontFamily.Monospace,
+        fontFamily = FontFamily.Monospace, // JetBrains Mono
         fontWeight = FontWeight.Bold,
         fontSize = 32.sp,
         lineHeight = 36.sp,
-        letterSpacing = 3.sp,
-        color = ClawCyan
+        letterSpacing = 3.sp
     ),
     displayMedium = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 2.sp,
-        color = ClawCyan
+        fontSize = 22.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 2.sp
     )
 )
 ```
@@ -173,38 +303,31 @@ package com.clawstack.shellguard.totp.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PhoneAndroid
-import com.clawstack.shellguard.totp.ui.theme.*
+import com.clawstack.shellguard.totp.ui.theme.LocalShellGuardColors
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwipeableTotpCard(
     title: String,
@@ -219,6 +342,7 @@ fun SwipeableTotpCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -233,19 +357,18 @@ fun SwipeableTotpCard(
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = true,
         backgroundContent = {
-            val color = LobsterRed
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(color)
+                    .background(colors.danger)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete 2FA Code",
-                    tint = TextPearl
+                    tint = colors.textMain
                 )
             }
         },
@@ -279,6 +402,7 @@ fun TotpCard(
     onEdit: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
     val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -310,9 +434,9 @@ fun TotpCard(
                 }
             ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = ShellSurface),
-        border = BorderStroke(1.dp, ShellBorder),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Flat Material Aesthetic
+        colors = CardDefaults.cardColors(containerColor = colors.bgSurface),
+        border = BorderStroke(1.dp, colors.borderSubtle),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -331,13 +455,13 @@ fun TotpCard(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(ShellSurfaceElevated)
-                        .border(1.dp, ShellBorder, CircleShape),
+                        .background(colors.bgElevated)
+                        .border(1.dp, colors.borderSubtle, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = title.firstOrNull()?.uppercase() ?: "🐚",
-                        color = ClawCyan,
+                        color = colors.primaryAccent,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -349,8 +473,8 @@ fun TotpCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = title,
-                            color = TextPearl,
-                            fontSize = 16.sp,
+                            color = colors.textMain,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1
                         )
@@ -359,14 +483,14 @@ fun TotpCard(
                         Icon(
                             imageVector = if (isLocalOnly) Icons.Default.PhoneAndroid else Icons.Default.CloudDone,
                             contentDescription = if (isLocalOnly) "Local Only" else "Synced with Vault",
-                            tint = if (isLocalOnly) TextMuted else ClawCyan,
+                            tint = if (isLocalOnly) colors.textMuted else colors.secondaryAccent,
                             modifier = Modifier.size(13.dp)
                         )
                     }
                     if (!username.isNullOrBlank()) {
                         Text(
                             text = username,
-                            color = TextMuted,
+                            color = colors.textMuted,
                             fontSize = 13.sp,
                             maxLines = 1
                         )
@@ -376,12 +500,12 @@ fun TotpCard(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(ShellSurfaceElevated)
+                                .background(colors.bgElevated)
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = category,
-                                color = ClawCyan,
+                                color = colors.primaryAccent,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -400,11 +524,11 @@ fun TotpCard(
                 Text(
                     text = formattedCode,
                     color = when {
-                        remainingSeconds <= 5 -> LobsterRed
-                        remainingSeconds <= 10 -> CoralOrange
-                        else -> ClawCyan
+                        remainingSeconds <= 5 -> colors.danger
+                        remainingSeconds <= 10 -> colors.warning
+                        else -> colors.primaryAccent
                     },
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
                     letterSpacing = 1.5.sp
@@ -447,7 +571,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.clawstack.shellguard.totp.ui.theme.*
+import com.clawstack.shellguard.totp.ui.theme.LocalShellGuardColors
 
 @Composable
 fun TotpCountdownRing(
@@ -455,11 +579,13 @@ fun TotpCountdownRing(
     progress: Float,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
+
     val ringColor by animateColorAsState(
         targetValue = when {
-            remainingSeconds <= 5 -> LobsterRed
-            remainingSeconds <= 10 -> CoralOrange
-            else -> ClawCyan
+            remainingSeconds <= 5 -> colors.danger
+            remainingSeconds <= 10 -> colors.warning
+            else -> colors.secondaryAccent
         },
         animationSpec = tween(400),
         label = "RingColorInterpolation"
@@ -472,7 +598,7 @@ fun TotpCountdownRing(
         Canvas(modifier = Modifier.size(34.dp)) {
             // Track
             drawCircle(
-                color = ShellBorder,
+                color = colors.borderSubtle,
                 style = Stroke(width = 3.dp.toPx())
             )
             // Progress Arc
@@ -513,11 +639,10 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.clawstack.shellguard.totp.ui.theme.*
+import com.clawstack.shellguard.totp.ui.theme.LocalShellGuardColors
 
 // ── Pod / Category Filter Chips ──────────────────────────────────
 @Composable
@@ -527,6 +652,8 @@ fun PodFilterChips(
     onCategorySelected: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
+
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -538,16 +665,16 @@ fun PodFilterChips(
                 onClick = { onCategorySelected(null) },
                 label = { Text("All Accounts", fontSize = 13.sp) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = ClawCyan,
-                    selectedLabelColor = AbyssalDeep,
-                    containerColor = ShellSurface,
-                    labelColor = TextMuted
+                    selectedContainerColor = colors.primaryAccent,
+                    selectedLabelColor = colors.bgBase,
+                    containerColor = colors.bgSurface,
+                    labelColor = colors.textMuted
                 ),
                 border = FilterChipDefaults.filterChipBorder(
                     enabled = true,
                     selected = selectedCategory == null,
-                    borderColor = ShellBorder,
-                    selectedBorderColor = ClawCyan
+                    borderColor = colors.borderSubtle,
+                    selectedBorderColor = colors.primaryAccent
                 ),
                 shape = RoundedCornerShape(20.dp)
             )
@@ -558,16 +685,16 @@ fun PodFilterChips(
                 onClick = { onCategorySelected(cat) },
                 label = { Text(cat, fontSize = 13.sp) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = ClawCyan,
-                    selectedLabelColor = AbyssalDeep,
-                    containerColor = ShellSurface,
-                    labelColor = TextMuted
+                    selectedContainerColor = colors.primaryAccent,
+                    selectedLabelColor = colors.bgBase,
+                    containerColor = colors.bgSurface,
+                    labelColor = colors.textMuted
                 ),
                 border = FilterChipDefaults.filterChipBorder(
                     enabled = true,
                     selected = selectedCategory == cat,
-                    borderColor = ShellBorder,
-                    selectedBorderColor = ClawCyan
+                    borderColor = colors.borderSubtle,
+                    selectedBorderColor = colors.primaryAccent
                 ),
                 shape = RoundedCornerShape(20.dp)
             )
@@ -581,10 +708,12 @@ fun ScannerFab(
     onScanQrClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
+
     ExtendedFloatingActionButton(
         onClick = onScanQrClick,
-        containerColor = ClawCyan,
-        contentColor = AbyssalDeep,
+        containerColor = colors.primaryAccent,
+        contentColor = colors.bgBase,
         shape = RoundedCornerShape(16.dp),
         elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
         icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan 2FA QR") },
@@ -619,7 +748,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.clawstack.shellguard.totp.ui.theme.*
+import com.clawstack.shellguard.totp.ui.theme.LocalShellGuardColors
 
 @Composable
 fun ClipboardToastPill(
@@ -627,6 +756,8 @@ fun ClipboardToastPill(
     message: String,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
+
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -639,8 +770,8 @@ fun ClipboardToastPill(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(ShellSurfaceElevated)
-                .border(1.dp, ClawCyan.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                .background(colors.bgElevated)
+                .border(1.dp, colors.primaryAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -648,13 +779,13 @@ fun ClipboardToastPill(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "Copied",
-                    tint = ClawCyan,
+                    tint = colors.primaryAccent,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = message,
-                    color = TextPearl,
+                    color = colors.textMain,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -662,6 +793,7 @@ fun ClipboardToastPill(
         }
     }
 }
+```
 
 ---
 
@@ -687,12 +819,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.clawstack.shellguard.totp.ui.theme.*
+import com.clawstack.shellguard.totp.ui.theme.LocalShellGuardColors
 
 @Composable
 fun TotpEmptyState(
@@ -700,6 +831,8 @@ fun TotpEmptyState(
     onManualAddClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -712,15 +845,14 @@ fun TotpEmptyState(
             modifier = Modifier
                 .size(120.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(ShellSurfaceElevated)
-                .border(1.5.dp, ClawCyan.copy(alpha = 0.5f), RoundedCornerShape(24.dp)),
+                .background(colors.bgElevated)
+                .border(1.5.dp, colors.primaryAccent.copy(alpha = 0.5f), RoundedCornerShape(24.dp)),
             contentAlignment = Alignment.Center
         ) {
-            // Note: In production, load R.drawable.ic_locked_shell using androidx.compose.foundation.Image
             Icon(
                 imageVector = Icons.Default.Shield,
                 contentDescription = "3D Locked Shell",
-                tint = ClawCyan,
+                tint = colors.primaryAccent,
                 modifier = Modifier.size(56.dp)
             )
         }
@@ -730,7 +862,7 @@ fun TotpEmptyState(
         // ── Headline & Instructions ──────────────────────────────
         Text(
             text = "No 2FA Codes Yet",
-            color = TextPearl,
+            color = colors.textMain,
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
             textAlign = TextAlign.Center
@@ -740,7 +872,7 @@ fun TotpEmptyState(
 
         Text(
             text = "Scan a QR code from any service or sync your self-hosted ShellGuard vault to generate time-based verification codes.",
-            color = TextMuted,
+            color = colors.textMuted,
             fontSize = 14.sp,
             lineHeight = 20.sp,
             textAlign = TextAlign.Center,
@@ -756,18 +888,18 @@ fun TotpEmptyState(
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = ClawCyan)
+            colors = ButtonDefaults.buttonColors(containerColor = colors.primaryAccent)
         ) {
             Icon(
                 imageVector = Icons.Default.QrCodeScanner,
                 contentDescription = null,
-                tint = AbyssalDeep,
+                tint = colors.bgBase,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Scan 2FA QR Code",
-                color = AbyssalDeep,
+                color = colors.bgBase,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp
             )
@@ -782,19 +914,19 @@ fun TotpEmptyState(
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            border = BorderStroke(1.dp, ShellBorder),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPearl)
+            border = BorderStroke(1.dp, colors.borderSubtle),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textMain)
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = null,
-                tint = ClawCyan,
+                tint = colors.primaryAccent,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Enter Key Manually",
-                color = TextPearl,
+                color = colors.textMain,
                 fontWeight = FontWeight.Medium,
                 fontSize = 15.sp
             )
@@ -806,15 +938,15 @@ fun TotpEmptyState(
 
 ## ⚙️ Secure Settings & Encrypted Backup Screen (`SettingsScreen.kt`)
 
-Provides vault synchronization status, hardware biometric toggles, and secure encrypted JSON export/import verified via `ShellCryptionEngine`:
+Provides vault synchronization status, hardware biometric toggles, secure encrypted JSON export/import, and **dynamic theme appearance & accent color selection**:
 
 ```kotlin
 package com.clawstack.shellguard.totp.ui.screens
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -824,6 +956,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -838,6 +971,10 @@ fun SettingsScreen(
     lastSyncTime: String?,
     offlineCodesCount: Int,
     isBiometricEnabled: Boolean,
+    currentThemeMode: ThemeMode,
+    currentAccent: ThemeAccent,
+    onSelectThemeMode: (ThemeMode) -> Unit,
+    onSelectAccent: (ThemeAccent) -> Unit,
     onConnectServerClick: () -> Unit,
     onDisconnectServerClick: () -> Unit,
     onManualSyncClick: () -> Unit,
@@ -848,19 +985,21 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalShellGuardColors.current
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings & Vault Security", color = TextPearl, fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text("Settings & Vault Security", color = colors.textMain, fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextPearl)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = colors.textMain)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AbyssalDeep)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.bgBase)
             )
         },
-        containerColor = AbyssalDeep
+        containerColor = colors.bgBase
     ) { padding ->
         Column(
             modifier = modifier
@@ -871,23 +1010,119 @@ fun SettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Section 1: Server Connection (Standalone vs Connected) ─
-            Text("SERVER SYNCHRONIZATION", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            // ── Section 1: Appearance & Theme Accent Selection ──────
+            Text("APPEARANCE & THEME ACCENTS", color = colors.textMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = ShellSurface),
-                border = BorderStroke(1.dp, if (serverUrl != null) ClawCyan.copy(alpha = 0.5f) else ShellBorder)
+                colors = CardDefaults.cardColors(containerColor = colors.bgSurface),
+                border = BorderStroke(1.dp, colors.borderSubtle)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Bioluminescent Accent Palette", color = colors.textMain, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                    Text("Select your preferred ShellGuard glow aesthetic", color = colors.textMuted, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Mode Toggle (System / Dark / Light)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ThemeMode.values().forEach { mode ->
+                            val isSelected = currentThemeMode == mode
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { onSelectThemeMode(mode) },
+                                label = { Text(mode.name.lowercase().replaceFirstChar { it.uppercase() }, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = colors.primaryAccent,
+                                    selectedLabelColor = colors.bgBase,
+                                    containerColor = colors.bgElevated,
+                                    labelColor = colors.textMuted
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = isSelected,
+                                    borderColor = colors.borderSubtle,
+                                    selectedBorderColor = colors.primaryAccent
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = colors.borderSubtle.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Accent Palette Swatches
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        ThemeAccent.values().forEach { accent ->
+                            val isSelected = currentAccent == accent
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.clickable { onSelectAccent(accent) }
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(accent.primaryColor, accent.secondaryColor)
+                                            )
+                                        )
+                                        .border(
+                                            width = if (isSelected) 3.dp else 1.dp,
+                                            color = if (isSelected) colors.textMain else colors.borderSubtle,
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isSelected) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = if (accent == ThemeAccent.MONOCHROME) Color.Black else Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = accent.displayName.split(" ").first(),
+                                    color = if (isSelected) colors.textMain else colors.textMuted,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Section 2: Server Connection (Standalone vs Connected) ─
+            Text("SERVER SYNCHRONIZATION", color = colors.textMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.bgSurface),
+                border = BorderStroke(1.dp, if (serverUrl != null) colors.primaryAccent.copy(alpha = 0.5f) else colors.borderSubtle)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (serverUrl == null) {
                         // ── Disconnected / Standalone Mode ──
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CloudOff, contentDescription = null, tint = TextMuted)
+                            Icon(Icons.Default.CloudOff, contentDescription = null, tint = colors.textMuted)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("Standalone Offline Vault", color = TextPearl, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                                Text("Not connected to a ShellGuard server", color = TextMuted, fontSize = 13.sp)
+                                Text("Standalone Offline Vault", color = colors.textMain, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                                Text("Not connected to a ShellGuard server", color = colors.textMuted, fontSize = 13.sp)
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
@@ -895,21 +1130,21 @@ fun SettingsScreen(
                             onClick = onConnectServerClick,
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = ClawCyan)
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.primaryAccent)
                         ) {
-                            Icon(Icons.Default.CloudSync, contentDescription = null, tint = AbyssalDeep, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.CloudSync, contentDescription = null, tint = colors.bgBase, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Connect to Server", color = AbyssalDeep, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("Connect to Server", color = colors.bgBase, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     } else {
                         // ── Connected Mode ──
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CloudDone, contentDescription = null, tint = ClawCyan)
+                            Icon(Icons.Default.CloudDone, contentDescription = null, tint = colors.primaryAccent)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(serverUrl, color = TextPearl, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                                Text("User: ${userName ?: "Authenticated Vault"}", color = TextMuted, fontSize = 13.sp)
-                                Text("Last Synced: ${lastSyncTime ?: "Just now"}", color = TextMuted, fontSize = 12.sp)
+                                Text(serverUrl, color = colors.textMain, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                                Text("User: ${userName ?: "Authenticated Vault"}", color = colors.textMuted, fontSize = 13.sp)
+                                Text("Last Synced: ${lastSyncTime ?: "Just now"}", color = colors.textMuted, fontSize = 12.sp)
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
@@ -918,20 +1153,20 @@ fun SettingsScreen(
                                 onClick = onManualSyncClick,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = ShellSurfaceElevated)
+                                colors = ButtonDefaults.buttonColors(containerColor = colors.bgElevated)
                             ) {
-                                Icon(Icons.Default.Sync, contentDescription = null, tint = ClawCyan, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Sync, contentDescription = null, tint = colors.primaryAccent, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Sync Now", color = TextPearl, fontSize = 13.sp)
+                                Text("Sync Now", color = colors.textMain, fontSize = 13.sp)
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             OutlinedButton(
                                 onClick = onDisconnectServerClick,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, LobsterRed.copy(alpha = 0.6f))
+                                border = BorderStroke(1.dp, colors.danger.copy(alpha = 0.6f))
                             ) {
-                                Text("Disconnect", color = LobsterRed, fontSize = 13.sp)
+                                Text("Disconnect", color = colors.danger, fontSize = 13.sp)
                             }
                         }
                     }
@@ -940,21 +1175,21 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Section 2: Local Storage & Offline Codes ─────────────
-            Text("LOCAL STORAGE & OFFLINE CODES", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            // ── Section 3: Local Storage & Offline Codes ─────────────
+            Text("LOCAL STORAGE & OFFLINE CODES", color = colors.textMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = ShellSurface),
-                border = BorderStroke(1.dp, ShellBorder)
+                colors = CardDefaults.cardColors(containerColor = colors.bgSurface),
+                border = BorderStroke(1.dp, colors.borderSubtle)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = ClawCyan)
+                        Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = colors.primaryAccent)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Offline Codes: $offlineCodesCount", color = TextPearl, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                            Text("Stored securely in local SQLCipher database", color = TextMuted, fontSize = 13.sp)
+                            Text("Offline Codes: $offlineCodesCount", color = colors.textMain, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                            Text("Stored securely in local SQLCipher database", color = colors.textMuted, fontSize = 13.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -962,29 +1197,29 @@ fun SettingsScreen(
                         onClick = onDisplayOfflineCodesClick,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, ClawCyan)
+                        border = BorderStroke(1.dp, colors.primaryAccent)
                     ) {
-                        Icon(Icons.Default.FilterList, contentDescription = null, tint = ClawCyan, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.FilterList, contentDescription = null, tint = colors.primaryAccent, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Display Offline Codes on Dashboard", color = ClawCyan, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Display Offline Codes on Dashboard", color = colors.primaryAccent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Section 3: Encrypted Backup & Restore ───────────────
-            Text("ENCRYPTED BACKUP & RESTORE", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            // ── Section 4: Encrypted Backup & Restore ───────────────
+            Text("ENCRYPTED BACKUP & RESTORE", color = colors.textMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = ShellSurface),
-                border = BorderStroke(1.dp, ShellBorder)
+                colors = CardDefaults.cardColors(containerColor = colors.bgSurface),
+                border = BorderStroke(1.dp, colors.borderSubtle)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         "Export or restore your 2FA seeds in a ShellCrypted AES-256 JSON envelope. The backup is cryptographically bound to your human key with SHA-256 integrity verification.",
-                        color = TextMuted,
+                        color = colors.textMuted,
                         fontSize = 13.sp,
                         lineHeight = 18.sp
                     )
@@ -994,22 +1229,22 @@ fun SettingsScreen(
                             onClick = onExportBackupClick,
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, ClawCyan)
+                            border = BorderStroke(1.dp, colors.primaryAccent)
                         ) {
-                            Icon(Icons.Default.Upload, contentDescription = null, tint = ClawCyan, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Upload, contentDescription = null, tint = colors.primaryAccent, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Export JSON", color = ClawCyan, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Export JSON", color = colors.primaryAccent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         OutlinedButton(
                             onClick = onImportBackupClick,
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, ShellBorder)
+                            border = BorderStroke(1.dp, colors.borderSubtle)
                         ) {
-                            Icon(Icons.Default.Download, contentDescription = null, tint = TextPearl, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Download, contentDescription = null, tint = colors.textMain, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Import JSON", color = TextPearl, fontSize = 13.sp)
+                            Text("Import JSON", color = colors.textMain, fontSize = 13.sp)
                         }
                     }
                 }
@@ -1017,13 +1252,13 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Section 4: Hardware Biometric Security ──────────────
-            Text("DEVICE SECURITY", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            // ── Section 5: Hardware Biometric Security ──────────────
+            Text("DEVICE SECURITY", color = colors.textMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = ShellSurface),
-                border = BorderStroke(1.dp, ShellBorder)
+                colors = CardDefaults.cardColors(containerColor = colors.bgSurface),
+                border = BorderStroke(1.dp, colors.borderSubtle)
             ) {
                 Row(
                     modifier = Modifier
@@ -1033,17 +1268,20 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Fingerprint, contentDescription = null, tint = ClawCyan)
+                        Icon(Icons.Default.Fingerprint, contentDescription = null, tint = colors.primaryAccent)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Require Biometric Unlock", color = TextPearl, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                            Text("Prompt fingerprint/face on cold start", color = TextMuted, fontSize = 13.sp)
+                            Text("Require Biometric Unlock", color = colors.textMain, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                            Text("Prompt fingerprint/face on cold start", color = colors.textMuted, fontSize = 13.sp)
                         }
                     }
                     Switch(
                         checked = isBiometricEnabled,
                         onCheckedChange = onToggleBiometric,
-                        colors = SwitchDefaults.colors(checkedThumbColor = ClawCyan, checkedTrackColor = ClawCyanGlow)
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = colors.primaryAccent,
+                            checkedTrackColor = colors.primaryAccent.copy(alpha = 0.3f)
+                        )
                     )
                 }
             }

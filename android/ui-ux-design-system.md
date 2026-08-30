@@ -13,45 +13,149 @@ The UI architecture follows a deliberate dual strategy:
 
 ---
 
-## 2. Reef Modernist Theme Tokens (`Color.kt` & `Theme.kt`)
+## 2. Reef Modernist Theme Tokens & Dynamic Theme Engine (`Color.kt` & `Theme.kt`)
 
 ```kotlin
 package com.clawstack.shellguard.totp.ui.theme
 
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 
-// Reef Modernist Brand Tokens
-val AbyssalDeep = Color(0xFF030712)          // Deep Trench Canvas Background
-val ShellSurface = Color(0xFF0F172A)         // Container & Card Surface
-val ShellSurfaceElevated = Color(0xFF1E293B)    // Active / Elevated Surface
-val ShellBorder = Color(0xFF334155)          // Structural Border
-val ClawCyan = Color(0xFF06B6D4)             // Primary Bioluminescent Electric Accent
-val ClawCyanGlow = Color(0x3306B6D4)         // Glow / Selection Background
-val LobsterRed = Color(0xFFEF4444)           // Danger / Critical (< 5s) / Shell Brand Color
-val CoralOrange = Color(0xFFF97316)          // Warning / Expiring (< 10s)
-val TextPearl = Color(0xFFF8FAFC)            // Crisp Foreground Headlines
-val TextMuted = Color(0xFF94A3B8)            // Secondary Metadata Text
-val WarningBoxBg = Color(0x26F97316)         // Amber Warning Container (15% Alpha)
-val WarningText = Color(0xFFFDBA74)          // Amber Warning Foreground
+// ── Canonical ShellGuard Brand Colors ───────────────────────────
+val BrandLobsterRed = Color(0xFFE4048A)      // Primary Action / Brand Gradient
+val BrandClawCyan = Color(0xFF06B6D4)        // Secondary Action / Active Vents
+val BrandPurple = Color(0xFF3B0764)          // ShellGuard Dark Purple
+val BrandCoralOrange = Color(0xFFF97316)      // Countdown Warning (< 10s)
+val BrandEmerald = Color(0xFF10B981)          // Success / Validated State
 
-val ShellGuardTotpColorScheme = darkColorScheme(
-    primary = ClawCyan,
-    onPrimary = AbyssalDeep,
-    primaryContainer = ClawCyanGlow,
-    onPrimaryContainer = ClawCyan,
-    secondary = CoralOrange,
-    onSecondary = TextPearl,
-    error = LobsterRed,
-    onError = TextPearl,
-    background = AbyssalDeep,
-    onBackground = TextPearl,
-    surface = ShellSurface,
-    onSurface = TextPearl,
-    surfaceVariant = ShellSurfaceElevated,
-    onSurfaceVariant = TextMuted,
-    outline = ShellBorder
+// ── Dark Mode Tokens (Abyssal Dark) ─────────────────────────────
+val DarkBgBase = Color(0xFF0F1419)           // Canvas Viewport Floor
+val DarkBgSurface = Color(0xFF171C21)        // Card / Container Surface
+val DarkBgElevated = Color(0xFF1E252C)       // Sheets / Modals / Toolbars
+val DarkTextMain = Color(0xFFDEE3EA)         // Luminous Shell Headlines & Codes
+val DarkTextMuted = Color(0xFF879298)        // Secondary Subtitles & Timestamps
+val DarkBorderSubtle = Color(0xFF3D484E)     // Carapace Ridge 1dp Outlines
+
+// ── Light Mode Tokens (Ocean Mist) ──────────────────────────────
+val LightBgBase = Color(0xFFF1F5F9)          // Ocean Mist Canvas
+val LightBgSurface = Color(0xFFFFFFFF)       // Crisp White Card Surface
+val LightBgElevated = Color(0xFFF8FAFC)      // Elevated Surfaces
+val LightTextMain = Color(0xFF0F172A)        // Slate 900 Typography
+val LightTextMuted = Color(0xFF64748B)       // Slate 500 Subtitles
+val LightBorderSubtle = Color(0xFFCBD5E1)    // Slate 300 Outlines
+
+// ── Theme Accents Enum ──────────────────────────────────────────
+enum class ThemeAccent(
+    val displayName: String,
+    val primaryColor: Color,
+    val secondaryColor: Color
+) {
+    REEF_DEFAULT("Reef Bioluminescent", BrandLobsterRed, BrandClawCyan),
+    CYAN_VENT("Electric Cyan", BrandClawCyan, BrandLobsterRed),
+    PURPLE_SHELL("Imperial Shell", Color(0xFFA855F7), BrandClawCyan),
+    EMERALD_TRENCH("Emerald Bio-Flora", BrandEmerald, BrandClawCyan),
+    AMBER_FLARE("Solar Vent", Color(0xFFF59E0B), BrandLobsterRed),
+    MONOCHROME("Minimalist Pearl", Color(0xFFF8FAFC), Color(0xFF879298))
+}
+
+enum class ThemeMode {
+    SYSTEM, DARK, LIGHT
+}
+
+// ── Dynamic Color Scheme Carrier ─────────────────────────────────
+data class ShellGuardCustomColors(
+    val bgBase: Color,
+    val bgSurface: Color,
+    val bgElevated: Color,
+    val textMain: Color,
+    val textMuted: Color,
+    val borderSubtle: Color,
+    val primaryAccent: Color,
+    val secondaryAccent: Color,
+    val warning: Color = BrandCoralOrange,
+    val danger: Color = BrandLobsterRed
 )
+
+val LocalShellGuardColors = staticCompositionLocalOf<ShellGuardCustomColors> {
+    error("No ShellGuardColors provided")
+}
+
+@Composable
+fun ShellGuardTheme(
+    themeMode: ThemeMode = ThemeMode.DARK,
+    accent: ThemeAccent = ThemeAccent.REEF_DEFAULT,
+    content: @Composable () -> Unit
+) {
+    val isDark = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+    }
+
+    val customColors = if (isDark) {
+        ShellGuardCustomColors(
+            bgBase = DarkBgBase,
+            bgSurface = DarkBgSurface,
+            bgElevated = DarkBgElevated,
+            textMain = DarkTextMain,
+            textMuted = DarkTextMuted,
+            borderSubtle = DarkBorderSubtle,
+            primaryAccent = accent.primaryColor,
+            secondaryAccent = accent.secondaryColor
+        )
+    } else {
+        ShellGuardCustomColors(
+            bgBase = LightBgBase,
+            bgSurface = LightBgSurface,
+            bgElevated = LightBgElevated,
+            textMain = LightTextMain,
+            textMuted = LightTextMuted,
+            borderSubtle = LightBorderSubtle,
+            primaryAccent = accent.primaryColor,
+            secondaryAccent = accent.secondaryColor
+        )
+    }
+
+    val materialColors = if (isDark) {
+        darkColorScheme(
+            primary = accent.primaryColor,
+            onPrimary = if (accent == ThemeAccent.MONOCHROME) DarkBgBase else Color.White,
+            secondary = accent.secondaryColor,
+            background = DarkBgBase,
+            onBackground = DarkTextMain,
+            surface = DarkBgSurface,
+            onSurface = DarkTextMain,
+            surfaceVariant = DarkBgElevated,
+            onSurfaceVariant = DarkTextMuted,
+            outline = DarkBorderSubtle,
+            error = BrandLobsterRed
+        )
+    } else {
+        lightColorScheme(
+            primary = accent.primaryColor,
+            onPrimary = Color.White,
+            secondary = accent.secondaryColor,
+            background = LightBgBase,
+            onBackground = LightTextMain,
+            surface = LightBgSurface,
+            onSurface = LightTextMain,
+            surfaceVariant = LightBgElevated,
+            onSurfaceVariant = LightTextMuted,
+            outline = LightBorderSubtle,
+            error = BrandLobsterRed
+        )
+    }
+
+    CompositionLocalProvider(LocalShellGuardColors provides customColors) {
+        MaterialTheme(
+            colorScheme = materialColors,
+            typography = ShellGuardTypography,
+            content = content
+        )
+    }
+}
 ```
 
 ---

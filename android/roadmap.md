@@ -25,11 +25,11 @@ Description: Create the core TOTP generation logic in `com.clawstack.shellguard.
 
 > Success Criteria: Unit tests prove 100% cryptographic compatibility with web client envelopes. `TotpEngine` passes all RFC 6238 reference test vectors across SHA-1, SHA-256, and SHA-512 with thread safety.
 
-- [ ]  Task 02: [UI Component] Reef Modernist Palette, Reactive Ticker & Animated Progress Ring
+- [ ]  Task 02: [UI Component] Dynamic Reef Modernist Theme Engine, Reactive Ticker & Animated Progress Ring
 
-Description: Implement `ui/theme/Color.kt`, `Theme.kt`, and `Type.kt` matching the Reef Modernist dark palette (`AbyssalDeep` `#030712`, `ShellSurface` `#0F172A`, `ClawCyan` `#06B6D4`, `LobsterRed` `#EF4444`, `TextPearl` `#F8FAFC`). Build `TotpTicker` reactive Flow (emitting 1-second ticks synchronized with Kotlin Time) and construct the `TotpCountdownRing` Canvas component. The ring visually depletes counter-clockwise over the 30s period, smoothly animating colors from `ClawCyan` (30s–11s) → `CoralOrange` (10s–6s) → `LobsterRed` (5s–0s). Build the basic `TotpCard` composable displaying formatted split digits (`123 456`) with spring bounce interactions.
+Description: Implement `ui/theme/Color.kt`, `Theme.kt`, and `Type.kt` matching the Reef Modernist design system (`DarkBgBase` `#0F1419`, `DarkBgSurface` `#171C21`, `DarkTextMain` `#DEE3EA`, `DarkBorderSubtle` `#3D484E`). Implement `ThemeAccent` enum with 6 curated palettes (`REEF_DEFAULT`, `CYAN_VENT`, `PURPLE_SHELL`, `EMERALD_TRENCH`, `AMBER_FLARE`, `MONOCHROME`) and `LocalShellGuardColors` `staticCompositionLocalOf` for dynamic Compose color inheritance. Build `TotpTicker` reactive Flow (emitting 1-second ticks synchronized with Kotlin Time) and construct the `TotpCountdownRing` Canvas component. The ring visually depletes counter-clockwise over the 30s period, smoothly animating colors from secondary accent (30s–11s) → `CoralOrange` (10s–6s) → `LobsterRed` (5s–0s). Build the `TotpCard` composable displaying formatted split digits (`123 456`) with spring bounce interactions.
 
-> Success Criteria: Composable renders a smooth 60fps countdown ring with animated color transitions. Numbers and rings update synchronously on 30s interval boundaries without frame drops or memory allocations.
+> Success Criteria: Composable renders a smooth 60fps countdown ring with animated color transitions. Numbers and rings update synchronously on 30s interval boundaries without frame drops or memory allocations. Theme supports dynamic Compose inheritance across dark/light and custom accents.
 
 ---
 
@@ -101,11 +101,11 @@ Description: Configure Android Cleartext & VPN Network Security (`network_securi
 
 > Success Criteria: App connects over HTTP, HTTPS, LAN, and Tailscale VPN without cleartext errors. Local 2FA codes push to the server and appear in the ShellGuard Web UI with live countdown rings. Remote vault items sync down to Android. WorkManager executes background sync cleanly.
 
-- [ ]  Task 10: [UI Component] Interactive Spotlight Guided Tour, Server Gateway & Settings
+- [ ]  Task 10: [UI Component] Interactive Spotlight Guided Tour, Server Gateway & Settings with Theme Picker
 
-Description: Implement `SpotlightOverlay.kt` (**Interactive Spotlight Guided Tour**): dims and blurs background, punches circular cutout over topbar Settings icon with tooltip pill and centered `[ Skip Tutorial ]` button, transitioning to spotlight the "Connect to Server" button inside Settings. Implement `GatewayScreen.kt` & `GatewayViewModel.kt` (faithful 1:1 port of ClawStack Gateway: protocol/host/port segment bar, animated port width, key file dropzone + paste ShellKey view, and warning card). Implement `SettingsScreen.kt` (server sync status card, "Sync Now", "Disconnect", offline codes count & filter, encrypted backup pickers, and biometric toggle).
+Description: Implement `SpotlightOverlay.kt` (**Interactive Spotlight Guided Tour**): dims and blurs background, punches circular cutout over topbar Settings icon with tooltip pill and centered `[ Skip Tutorial ]` button, transitioning to spotlight the "Connect to Server" button inside Settings. Implement `GatewayScreen.kt` & `GatewayViewModel.kt` (faithful 1:1 port of ClawStack Gateway: protocol/host/port segment bar, animated port width, key file dropzone + paste ShellKey view, and warning card). Implement `SettingsScreen.kt` (Appearance & Theme Accents Card with 6 curated palette swatches + mode toggles, server sync status card, "Sync Now", "Disconnect", offline codes count & filter, encrypted backup pickers, and biometric toggle).
 
-> Success Criteria: First launch after Hatch Vault presents the Spotlight overlay guiding the user to Settings. Gateway connects and authenticates with the server. Settings screen allows manual sync, disconnecting, and toggling biometrics.
+> Success Criteria: First launch after Hatch Vault presents the Spotlight overlay guiding the user to Settings. Gateway connects and authenticates with the server. Settings screen allows selecting theme accent palettes with live preview, manual sync, disconnecting, and toggling biometrics.
 
 ---
 

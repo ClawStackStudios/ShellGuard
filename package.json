@@ -2,7 +2,7 @@
   "name": "shellguard",
   "private": true,
   "license": "AGPL-3.0-only",
-  "version": "0.0.1.5",
+  "version": "0.0.1.6",
   "type": "module",
   "scripts": {
     "scuttle": "npm run scuttle:dev-start",

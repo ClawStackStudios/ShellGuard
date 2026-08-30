@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- **Native LAN TLS (self-signed):** `TLS_ENABLED=true` generates a persistent 10-year EC P-256 certificate on first boot (`DATA_DIR/certs/`, `0o600`) with SANs covering localhost + every detected LAN interface — one browser warning, accepted once, valid across restarts. Bring-your-own PEM pair via `TLS_CERT_PATH`/`TLS_KEY_PATH`. HTTPS-only listener (plain HTTP refused when enabled), HSTS activated, Docker healthcheck TLS-aware, graceful fallback to HTTP with a warning if TLS materials fail. New dependency: `selfsigned` (pure JS). Documented in SECURITY.md § Transport Security and QUICKSTART § LAN HTTPS.
+
 ## [0.0.1.5] - 2026-08-29
 
 ### Added

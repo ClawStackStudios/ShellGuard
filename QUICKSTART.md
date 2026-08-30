@@ -128,6 +128,26 @@ npm run scuttle:reset       # DANGER: wipes production data/
 
 ---
 
+## 🔒 LAN HTTPS Without a Proxy (Optional)
+
+By default, LAN deployments serve plain HTTP. That is acceptable inside a trusted LAN or VPN (Tailscale/WireGuard already encrypt the tunnel), but if you want native TLS **without** standing up a reverse proxy, ShellGuard can generate its own certificate:
+
+```bash
+# .env
+TLS_ENABLED=true
+```
+
+1. **Start the server.** On first boot a 10-year self-signed certificate is generated to `data/certs/` and reused on every restart.
+2. **Visit the UI.** The browser shows a security warning — this is *expected* for self-signed certs. Accept it once.
+3. **Done.** The certificate's SANs cover `localhost` plus every detected LAN IP, so any device on your network reaches `https://<lan-ip>:6464` under the same exception.
+
+Prefer your own certificate (mkcert, internal CA, proxy-issued)? Point `TLS_CERT_PATH` / `TLS_KEY_PATH` at a PEM pair instead — both must be set together. See [.env.example](./.env.example) for the full reference and [SECURITY.md](./SECURITY.md) for the transport threat model.
+
+> [!NOTE]
+> Public deployments should still terminate TLS at a reverse proxy (Caddy/Traefik/nginx/Cloudflare Tunnel). Native TLS is a LAN convenience, not a public-exposure strategy.
+
+---
+
 ## 💾 Database Backups & Restoration
 
 ShellGuard maintains a two-tiered backup strategy designed around zero-knowledge principles and a strict secrets-aware threat model.
@@ -204,7 +224,7 @@ Your `hu-` key is the root of trust for Layer 1. `DB_ENCRYPTION_KEY` governs Lay
 - [ ] **Back up your `hu-` identity key** to at least 2 secure, offline locations — losing it means permanent data loss
 - [ ] **Verify per-row encryption** is active: check startup logs for `[FieldEncryption] AES-256-GCM metadata encryption active`
 - [ ] Set a strong `DB_ENCRYPTION_KEY` (`openssl rand -base64 32`) and store it separately from your data directory
-- [ ] Run behind a reverse proxy with TLS termination (nginx, Caddy, Traefik)
+- [ ] Run behind a reverse proxy with TLS termination (nginx, Caddy, Traefik) — or set `TLS_ENABLED=true` for native self-signed HTTPS on LAN
 - [ ] Restrict container network exposure — bind to `127.0.0.1` unless LAN access is required
 - [ ] Enable the inactivity retractor (`security/retractMinutes`) to auto-lock idle sessions
 - [ ] Review audit logs regularly (`audit.sqlite`) for unexpected mutations

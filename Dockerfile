@@ -54,9 +54,11 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Expose the API/UI port
 EXPOSE 6464
 
-# Health check (run as the node user inside the container)
+# Health check (run as the node user inside the container).
+# TLS-aware: when TLS_ENABLED=true the server speaks HTTPS with a self-signed
+# cert, so the probe must skip verification (busybox wget --no-check-certificate).
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=5 \
-  CMD wget -qO- http://localhost:6464/api/health || exit 1
+  CMD sh -c 'if [ "$TLS_ENABLED" = "true" ]; then wget -qO- --no-check-certificate https://localhost:6464/api/health || exit 1; else wget -qO- http://localhost:6464/api/health || exit 1; fi'
 
 ENV NODE_ENV=production
 ENV PORT=6464

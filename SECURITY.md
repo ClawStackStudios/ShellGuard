@@ -18,6 +18,7 @@
 - [Encryption Keys & Database Encryption](#-encryption-keys--database-encryption)
 - [OWASP Coverage Checklist](#-owasp-coverage-checklist)
 - [Attack Scenarios & Mitigations](#-attack-scenarios--mitigations)
+- [Transport Security & the Plain-HTTP Tradeoff](#-transport-security--the-plain-http-tradeoff)
 - [Reporting a Vulnerability](#-reporting-a-vulnerability)
 - [Self-Hosted Hardening Checklist](#️-self-hosted-hardening-checklist)
 
@@ -343,7 +344,7 @@ Instead, report privately:
 Before exposing ShellGuard to anything beyond localhost:
 
 - [ ] Set **`DB_ENCRYPTION_KEY`** (`openssl rand -base64 32`) — activates both SQLCipher and per-row metadata encryption
-- [ ] Place the app behind **Nginx/Caddy with TLS**, or set `ENFORCE_HTTPS=true` if terminating in-process
+- [ ] Place the app behind **Nginx/Caddy with TLS**, set `TLS_ENABLED=true` for native self-signed LAN HTTPS, or set `ENFORCE_HTTPS=true` if terminating in-process
 - [ ] Set **`TRUST_PROXY=true`** only behind your reverse proxy (correct IPs for rate limiting)
 - [ ] Set **`CORS_ORIGIN`** to your specific origin — not wildcard
 - [ ] Restrict port `6464` to localhost/LAN and proxy publicly via TLS
@@ -355,6 +356,46 @@ Before exposing ShellGuard to anything beyond localhost:
 - [ ] Store your `hu-` identity key offline in a secure vault
 - [ ] **Back up your `hu-` identity key to at least 2 secure locations** — losing it means permanent data loss
 - [ ] **Verify per-row encryption is active** by checking startup logs for `[FieldEncryption] AES-256-GCM metadata encryption active`
+
+---
+
+## 🌐 Transport Security & the Plain-HTTP Tradeoff
+
+ShellGuard's cryptographic model is independent of transport: secrets are encrypted **in the browser** before any byte hits the network. But the *transport* still matters, and ShellGuard — unlike Bitwarden/AliasVault — deliberately supports plain HTTP on LAN. Here is the honest threat picture.
+
+### Why we don't hard-require HTTPS
+
+Browsers expose the Web Crypto API (`crypto.subtle`) only in **secure contexts** (HTTPS or `localhost`). Bitwarden and AliasVault refuse HTTP largely because their client crypto *cannot run* without it. ShellGuard ships a pure-TypeScript fallback engine (`webCryptoFallback.ts`, v0.0.1.4) providing byte-equivalent SHA-256/HMAC/HKDF/AES-GCM-256, so the vault remains fully functional on bare LAN IPs (e.g. Unraid) where installing certs is awkward.
+
+The ciphers are equally strong either way. What differs is the transport guarantee:
+
+| Transport | Passive sniffing (keyHash / token theft) | Active MITM (code injection) |
+|:----------|:-----------------------------------------|:------------------------------|
+| Plain HTTP (trusted LAN/VPN) | ⚠️ Possible — a sniffed `SHA-256(hu-)` is replayable to mint sessions | ⚠️ Possible — served JS can be swapped to steal the `hu-` key at login |
+| Native TLS (`TLS_ENABLED=true`) | ✅ Defeated | ✅ Defeated* |
+| Reverse proxy (Caddy/Traefik/nginx/Tailscale/CF Tunnel) | ✅ Defeated | ✅ Defeated |
+
+\* *Caveat:* a self-signed cert stops passive attackers outright. A **dedicated** LAN attacker who presents their *own* self-signed cert can still MITM a user who blindly accepts any warning. Verify the fingerprint shown at server startup once, or install the cert into your trust store, if your LAN is hostile.
+
+### Recommended postures
+
+- **VPN access is LAN access.** Tailscale/WireGuard already encrypt the tunnel — plain HTTP over a VPN is not plaintext on any wire you don't own.
+- **Public exposure always terminates TLS at a proxy.** ShellGuard behind Caddy/Cloudflare never needs its own cert.
+- **Bare-LAN HTTP** is acceptable for trusted home networks — the vault ciphertext remains unreadable even if sniffed; the exposure is session hijack + metadata.
+- **Native TLS for the middle ground**: set `TLS_ENABLED=true` and ShellGuard generates a persistent 10-year self-signed cert (SANs: localhost + all LAN IPs) to `DATA_DIR/certs/`. Accept the browser warning once; the fingerprint stays stable across restarts. Bring your own PEM pair via `TLS_CERT_PATH`/`TLS_KEY_PATH` if preferred.
+
+### What plain HTTP never exposes (even if sniffed)
+
+- ❌ Vault secrets — ShellCryption AES-256-GCM ciphertext is opaque on the wire
+- ❌ The `hu-` key itself (login sends only `SHA-256(hu-)`)
+- ❌ Custom fields, TOTP seeds, SSH keys, attachment contents
+
+### What plain HTTP *can* expose
+
+- ⚠️ The `SHA-256(hu-)` login hash — replayable by an on-path attacker to obtain a session token (agent-equivalent access: organize items, read ciphertext, no decryption)
+- ⚠️ `api-` bearer tokens on subsequent requests
+- ⚠️ Item metadata (titles, categories) when `DB_ENCRYPTION_KEY` is unset
+- ⚠️ The application JavaScript itself — tampering here is the catastrophic path (see MITM row above)
 
 ---
 

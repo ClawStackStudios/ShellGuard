@@ -2,7 +2,14 @@
 
 ## [Unreleased]
 
-## [0.0.1.4] - 2026-08-29
+### Added
+- **Bitwarden-Style Custom Fields:** Implemented client-side ShellCrypted custom fields supporting all 4 standard field types (`Text`, `Hidden`, `Checkbox`, and dynamic `Linked` properties to username/password/url/notes/totp).
+- **Custom Field AES-GCM Zero-Knowledge Namespaces:** Custom fields are encrypted in-memory with separate AAD namespaces (`vault_pearls_custom:{id}`, `vault_secure_notes_custom:{id}`, `vault_ssh_keys_custom:{id}`). Server DB migration `0003_custom_fields.up.sql` stores opaque ciphertext across vault pearls, secure notes, and SSH keys.
+
+### Changed
+- **Unified "Add Extra Field" Dropup:** Consolidated the separate custom field action button into the primary "+ Add Extra Field" selection menu with an animated upward dropup menu and click-outside dismissal.
+- **Master-Detail ItemFormModal Layout Polish:** Enhanced item create/edit modal with pinned header, pinned action footer, fixed `max-w-3xl` spacious width, and sleek internal element scrolling.
+
 
 ### Fixed
 - **Pure TypeScript WebCrypto Fallback Engine:** Built zero-dependency implementations of SHA-256, HMAC-SHA256, HKDF, and AES-GCM-256 in `src/lib/webCryptoFallback.ts`, transparently polyfilling `crypto.subtle` when accessing ShellGuard over plain HTTP LAN origins (e.g. Unraid LAN IPs) where `window.crypto.subtle` is undefined.

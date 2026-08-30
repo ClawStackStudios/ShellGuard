@@ -281,6 +281,17 @@ export default function App() {
         }
       }));
 
+      // Decrypt custom_fields for each item type
+      const decryptedLoginsWithCustom = await Promise.all(decryptedLogins.map(async (p: any) => {
+        if (p.custom_fields) {
+          try {
+            const decrypted = await decryptField(p.custom_fields, key, "vault_pearls_custom", p.id);
+            return { ...p, custom_fields: decrypted };
+          } catch { return { ...p, custom_fields: "" }; }
+        }
+        return p;
+      }));
+
       const decryptedNotes = await Promise.all(reefNotes.map(async (p: any) => {
         try {
           const content = await decryptField(p.content, key, "vault_secure_notes", p.id);
@@ -288,6 +299,16 @@ export default function App() {
         } catch (e) {
           return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "" };
         }
+      }));
+
+      const decryptedNotesWithCustom = await Promise.all(decryptedNotes.map(async (p: any) => {
+        if (p.custom_fields) {
+          try {
+            const decrypted = await decryptField(p.custom_fields, key, "vault_secure_notes_custom", p.id);
+            return { ...p, custom_fields: decrypted };
+          } catch { return { ...p, custom_fields: "" }; }
+        }
+        return p;
       }));
 
       const decryptedKeys = await Promise.all(reefKeys.map(async (p: any) => {
@@ -299,6 +320,16 @@ export default function App() {
         }
       }));
 
+      const decryptedKeysWithCustom = await Promise.all(decryptedKeys.map(async (p: any) => {
+        if (p.custom_fields) {
+          try {
+            const decrypted = await decryptField(p.custom_fields, key, "vault_ssh_keys_custom", p.id);
+            return { ...p, custom_fields: decrypted };
+          } catch { return { ...p, custom_fields: "" }; }
+        }
+        return p;
+      }));
+
       const decryptedAttachments = await Promise.all(reefAttachments.map(async (p: any) => {
         try {
           const fd = await decryptField(p.file_data, key, "vault_secure_attachments", p.id);
@@ -308,7 +339,7 @@ export default function App() {
         }
       }));
 
-      setVaultItems([...decryptedLogins, ...decryptedNotes, ...decryptedKeys, ...decryptedAttachments]);
+      setVaultItems([...decryptedLoginsWithCustom, ...decryptedNotesWithCustom, ...decryptedKeysWithCustom, ...decryptedAttachments]);
     } catch (err: any) {
       setError(err.message);
     }
@@ -502,6 +533,7 @@ export default function App() {
     notes?: string;
     totp_secret?: string;
     attachments?: string;
+    custom_fields?: string;
     newAttachments?: PendingAttachment[];
   }) => {
     if (!shellKey || isLocked) return;
@@ -510,10 +542,12 @@ export default function App() {
       
       if (item.type === 'note') {
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
-        await restAdapter.POST("/api/notes", { id, title: item.title, content: encryptedContent, category: item.category });
+        const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
+        await restAdapter.POST("/api/notes", { id, title: item.title, content: encryptedContent, category: item.category, custom_fields: encryptedCustomFields });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
-        await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category });
+        const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
+        await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
         const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
         await restAdapter.POST("/api/attachments", { id, title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
@@ -531,6 +565,7 @@ export default function App() {
         if (item.totp_secret) {
           encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
         }
+        const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
         await restAdapter.POST("/api/vault", {
           id,
           title: item.title,
@@ -541,7 +576,8 @@ export default function App() {
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
-          attachments: attachmentIdsJson
+          attachments: attachmentIdsJson,
+          custom_fields: encryptedCustomFields
         });
       }
       scuttleVault(shellKey);
@@ -562,6 +598,7 @@ export default function App() {
       notes?: string;
       totp_secret?: string;
       attachments?: string;
+      custom_fields?: string;
       newAttachments?: PendingAttachment[];
       removedAttachmentIds?: string[];
     },
@@ -571,10 +608,12 @@ export default function App() {
     try {
       if (item.type === 'note') {
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
-        await restAdapter.PUT(`/api/notes/${id}`, { title: item.title, content: encryptedContent, category: item.category });
+        const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
+        await restAdapter.PUT(`/api/notes/${id}`, { title: item.title, content: encryptedContent, category: item.category, custom_fields: encryptedCustomFields });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
-        await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category });
+        const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
+        await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
         const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
         await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
@@ -594,6 +633,7 @@ export default function App() {
         if (item.totp_secret) {
           encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
         }
+        const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
         await restAdapter.PUT(`/api/vault/${id}`, {
           title: item.title,
           secret: encryptedSecret,
@@ -603,7 +643,8 @@ export default function App() {
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
-          attachments: item.attachments || "[]"
+          attachments: item.attachments || "[]",
+          custom_fields: encryptedCustomFields
         });
       }
       if (!skipScuttle) {
@@ -657,7 +698,8 @@ export default function App() {
           type: item.type,
           notes: item.notes,
           totp_secret: item.totp_secret,
-          attachments: item.attachments
+          attachments: item.attachments,
+          custom_fields: item.custom_fields
         },
         true
       );
@@ -703,7 +745,8 @@ export default function App() {
           type: item.type,
           notes: item.notes,
           totp_secret: item.totp_secret,
-          attachments: item.attachments
+          attachments: item.attachments,
+          custom_fields: item.custom_fields
         },
         true
       );
@@ -1020,7 +1063,8 @@ export default function App() {
                           type: (item.type as VaultItemType) || "password",
                           notes: item.notes || "",
                           totp_secret: item.totp_secret || "",
-                          attachments: item.attachments || "[]"
+                          attachments: item.attachments || "[]",
+                          custom_fields: item.custom_fields || ""
                         });
                       }
                       if (shellKey) await scuttleVault(shellKey);

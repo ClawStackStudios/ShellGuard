@@ -90,15 +90,20 @@ describe('WebCrypto Fallback Engine for Non-Secure LAN HTTP', () => {
     const uuid = "1c8705b8-c31c-4b12-aa71-6da046a357ba";
 
     // Simulate non-secure context where crypto.subtle is undefined
-    const originalSubtle = (globalThis.crypto as any)?.subtle;
+    const cryptoProto = Object.getPrototypeOf(globalThis.crypto);
+    const originalDescriptor = Object.getOwnPropertyDescriptor(cryptoProto, 'subtle');
     try {
-      delete (globalThis.crypto as any).subtle;
+      Object.defineProperty(cryptoProto, 'subtle', {
+        get: () => undefined,
+        configurable: true,
+      });
       
       const hash = await hashToken(huKey);
       expect(hash).toHaveLength(64);
 
       const shellKey = await deriveShellKey(huKey, uuid);
       expect(shellKey).toBeDefined();
+      expect((shellKey as any)._rawKey).toBeDefined();
 
       const encrypted = await encryptField("MySecretPassphrase42!", shellKey, "vault_items", "item-123");
       expect(encrypted).toContain('"alg":"AES-GCM-256"');
@@ -106,8 +111,8 @@ describe('WebCrypto Fallback Engine for Non-Secure LAN HTTP', () => {
       const decrypted = await decryptField(encrypted, shellKey, "vault_items", "item-123");
       expect(decrypted).toBe("MySecretPassphrase42!");
     } finally {
-      if (originalSubtle) {
-        (globalThis.crypto as any).subtle = originalSubtle;
+      if (originalDescriptor) {
+        Object.defineProperty(cryptoProto, 'subtle', originalDescriptor);
       }
     }
   });

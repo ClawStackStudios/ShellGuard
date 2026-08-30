@@ -24,7 +24,7 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
 });
 
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, content, category } = req.body;
+  const { id, title, content, category, custom_fields } = req.body;
   try {
     const toStore = await prepareWrite('vault_secure_notes', {
       title: title.trim(),
@@ -32,9 +32,9 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, req.userUuid, toStore.title, content, toStore.category, new Date().toISOString());
+      INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, custom_fields, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, req.userUuid, toStore.title, content, toStore.category, custom_fields || '', new Date().toISOString());
 
     audit.log('NOTE_CREATED', {
       action: 'note_created',
@@ -55,7 +55,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
 
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, content, category } = req.body;
+  const { title, content, category, custom_fields } = req.body;
   try {
     const existing = db.prepare('SELECT id FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid);
     if (!existing) {
@@ -67,8 +67,8 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
       category: category || 'Personal',
     }, fieldCipher);
 
-    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ? WHERE id = ? AND owner_uuid = ?')
-      .run(toStore.title, content, toStore.category, id, req.userUuid);
+    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, custom_fields = ? WHERE id = ? AND owner_uuid = ?')
+      .run(toStore.title, content, toStore.category, custom_fields || '', id, req.userUuid);
 
     audit.log('NOTE_UPDATED', {
       action: 'note_updated',

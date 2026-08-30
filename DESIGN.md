@@ -1,184 +1,207 @@
 ---
-name: Reef Modernist
+name: Reef Modernist (Dual-Mode Design System)
 colors:
-  surface: '#1e0f15'
-  surface-dim: '#1e0f15'
-  surface-bright: '#47343a'
-  surface-container-lowest: '#180a0f'
-  surface-container-low: '#27171d'
-  surface-container: '#2b1b21'
-  surface-container-high: '#36252b'
-  surface-container-highest: '#423036'
-  on-surface: '#f8dbe3'
-  on-surface-variant: '#e1bdc8'
-  inverse-surface: '#f8dbe3'
-  inverse-on-surface: '#3d2b32'
-  outline: '#a98893'
-  outline-variant: '#5a3f49'
-  surface-tint: '#ffb0cd'
-  primary: '#ffb0cd'
-  on-primary: '#640039'
-  primary-container: '#e4048a'
-  on-primary-container: '#130007'
-  inverse-primary: '#b7006e'
-  secondary: '#4cd7f6'
-  on-secondary: '#003640'
-  secondary-container: '#03b5d3'
-  on-secondary-container: '#00424e'
-  tertiary: '#ffb3ad'
-  on-tertiary: '#68000a'
-  tertiary-container: '#dd3739'
-  on-tertiary-container: '#150001'
-  error: '#ffb4ab'
-  on-error: '#690005'
-  error-container: '#93000a'
-  on-error-container: '#ffdad6'
-  primary-fixed: '#ffd9e4'
-  primary-fixed-dim: '#ffb0cd'
-  on-primary-fixed: '#3e0021'
-  on-primary-fixed-variant: '#8c0053'
-  secondary-fixed: '#acedff'
-  secondary-fixed-dim: '#4cd7f6'
-  on-secondary-fixed: '#001f26'
-  on-secondary-fixed-variant: '#004e5c'
-  tertiary-fixed: '#ffdad7'
-  tertiary-fixed-dim: '#ffb3ad'
-  on-tertiary-fixed: '#410004'
-  on-tertiary-fixed-variant: '#930013'
-  background: '#1e0f15'
-  on-background: '#f8dbe3'
-  surface-variant: '#423036'
+  light:
+    bg-base: '241 245 249'          # Ocean Mist / slate-100
+    bg-surface: '255 255 255'       # Crisp White
+    text-main: '15 23 42'           # slate-900
+    text-muted: '100 116 139'       # slate-500
+    border-subtle: '203 213 225'    # slate-300
+    header-border: '#3b0764'        # ShellGuard Dark Purple
+    glass-bg: 'rgba(255, 255, 255, 0.85)'
+  dark:
+    bg-base: '15 20 25'             # Abyssal Dark
+    bg-surface: '23 28 33'          # Deep Subsurface
+    text-main: '222 227 234'        # Luminous Shell
+    text-muted: '135 146 152'       # Abyssal Muted
+    border-subtle: '61 72 78'       # Carapace Ridge
+    header-border: '#e4048a'        # Lobster Red
+    glass-bg: 'rgba(23, 28, 33, 0.85)'
+  brand:
+    lobster-red: '#e4048a'
+    claw-cyan: '#06b6d4'
+    shellguard-purple: '#3b0764'
+    ocean: '#1e0f15'
+    deep-teal: '#47343a'
+    shell-white: '#f8dbe3'
 typography:
-  headline-xl:
-    fontFamily: Sora
-    fontSize: 48px
-    fontWeight: '800'
-    lineHeight: 56px
+  headline:
+    fontFamily: Outfit, sans-serif
+    weights: ['700', '800']
     letterSpacing: -0.02em
-  headline-lg:
-    fontFamily: Sora
-    fontSize: 32px
-    fontWeight: '700'
-    lineHeight: 40px
+  body:
+    fontFamily: Inter, system-ui, sans-serif
+    weights: ['400', '500', '600']
     letterSpacing: -0.01em
-  headline-lg-mobile:
-    fontFamily: Sora
-    fontSize: 24px
-    fontWeight: '700'
-    lineHeight: 32px
-  body-md:
-    fontFamily: Geist
-    fontSize: 16px
-    fontWeight: '400'
-    lineHeight: 24px
-  body-sm:
-    fontFamily: Geist
-    fontSize: 14px
-    fontWeight: '400'
-    lineHeight: 20px
-  code-sm:
-    fontFamily: JetBrains Mono
-    fontSize: 14px
-    fontWeight: '500'
-    lineHeight: 20px
-  label-caps:
-    fontFamily: Sora
-    fontSize: 12px
-    fontWeight: '700'
-    lineHeight: 16px
-    letterSpacing: 0.05em
+  mono:
+    fontFamily: JetBrains Mono, monospace
+    weights: ['400', '500', '700']
 rounded:
-  sm: 0.25rem
+  sm: 0.375rem
   DEFAULT: 0.5rem
   md: 0.75rem
   lg: 1rem
   xl: 1.5rem
+  2xl: 1.75rem
   full: 9999px
 spacing:
   unit: 8px
   gutter: 24px
   margin-mobile: 16px
-  margin-desktop: 48px
-  stack-sm: 8px
-  stack-md: 16px
-  stack-lg: 32px
+  margin-desktop: 32px
 ---
 
-## Brand & Style
+# 🦞 ShellGuard Design System — Reef Modernist
 
-This design system establishes a high-security, high-energy environment for digital asset protection. The brand personality is "Bioluminescent Defense"—it is vibrant, watchful, and impenetrable. It combines the organic resilience of marine life with the sharp, technical precision of modern cybersecurity.
+## 💎 Brand & Visual Identity
 
-The visual style is a hybrid of **Glassmorphism** and **High-Contrast Neon**. It utilizes deep "oceanic" voids as a canvas for glowing, translucent layers. The emotional response should be one of "Vibrant Security"—where the user feels protected within a sophisticated, bioluminescent armor.
+**Reef Modernist** is a dual-mode, high-security design language created for the **ShellGuard** exoskeletal vault ecosystem. It embodies **Bioluminescent Defense**—organic marine resilience fused with sharp, mathematical cryptographic precision.
 
-**Key Stylistic Pillars:**
-- **Submerged Depth:** Use of transparency and background blurs to create a sense of looking through water.
-- **Crustacean Resilience:** UI elements should feel like "shells"—protective containers with soft-curved exteriors but rigid, high-contrast interiors.
-- **Electric Accents:** Neon-inspired primary and secondary colors against near-black backgrounds to draw immediate attention to critical security actions.
+The interface treats data protection not as an opaque monolith, but as an active, luminous carapace. Translucent glass surfaces, neon energy conduits (Lobster Red & Claw Cyan), and clean typographic hierarchy instill immediate confidence and effortless control.
 
-## Colors
+### 🌟 Core Design Pillars
+1. **Exoskeletal Resilience:** Containers ("Shells") feature soft, rounded perimeters (`rounded-2xl` / `rounded-3xl`) with high-contrast, structured interior grids.
+2. **Bioluminescent Glow:** Subdued atmospheric lighting and directional glows highlight active items, clipboard copies, and TOTP countdown pulses.
+3. **Dual-Mode Fluidity:** Seamless transitions between **Ocean Mist** (Light Mode) and **Abyssal Dark** (Dark Mode) using the browser View Transitions API circular reveal.
+4. **Master-Detail Ergonomics:** Responsive three-pane navigation that eliminates jarring page transitions, keeping the user grounded in their vault context.
 
-The palette is rooted in the "Abyssal Zone," utilizing high-saturation accents to slice through a dark, high-density background.
+---
 
-- **Primary (Deep Pink):** Used for "Claw" actions (primary buttons), active states, and critical brand moments. It represents the strength of the ecosystem.
-- **Secondary (Cyan):** Used for informational elements, progress indicators, and "Navigation Vents." It provides a high-tech, bioluminescent contrast.
-- **Tertiary (Red):** Reserved strictly for "Breach" warnings, destructive actions, and critical security alerts.
-- **Neutral/Ocean:** The background and surface colors create the "Tidepool" hierarchy. The primary background is the deep ocean, while surfaces are slightly lighter, mimicking shallower waters for active content.
+## 🎨 Theme System & Color Tokens
 
-## Typography
+ShellGuard uses CSS Custom Properties bound to Tailwind utility classes (`bg-theme-base`, `bg-theme-surface`, `text-theme-main`, `text-theme-muted`, `border-theme-subtle`), ensuring flawless theme switching and custom opacity support.
 
-The typography system is engineered for maximum legibility and a "technical-editorial" feel.
+| Token | Light Mode (Ocean Mist) | Dark Mode (Abyssal Dark) | Usage |
+|:---|:---|:---|:---|
+| `--bg-base` | `rgb(241, 245, 249)` | `rgb(15, 20, 25)` | Primary canvas and viewport floor |
+| `--bg-surface` | `rgb(255, 255, 255)` | `rgb(23, 28, 33)` | Cards, inspection panes, and modal backgrounds |
+| `--text-main` | `rgb(15, 23, 42)` | `rgb(222, 227, 234)` | Primary titles, secret values, and form labels |
+| `--text-muted` | `rgb(100, 116, 139)` | `rgb(135, 146, 152)` | Secondary metadata, dates, and placeholder text |
+| `--border-subtle` | `rgb(203, 213, 225)` | `rgb(61, 72, 78)` | Card borders, table dividers, and input outlines |
+| `--header-border` | `#3b0764` (Purple) | `#e4048a` (Lobster Red) | Brand boundary accent line under header |
 
-- **Headline (Sora):** A geometric, futuristic sans-serif used for major page titles and headers. Bold and Extra Bold weights are preferred to emphasize the "strong" nature of the security platform.
-- **Body (Geist):** A clean, developer-friendly typeface used for all standard interface text. Its precise kerning and clear letterforms ensure security details are easily parsed.
-- **Labels & Mono (JetBrains Mono):** Used for secrets, passwords, keys, and technical metadata. This font ensures zero ambiguity between similar characters (e.g., 'O' vs '0').
+### 🦞 Brand Accent Palette
+- **Lobster Red (`#e4048a`):** Primary action buttons ("Claw"), active status indicators, destructive confirmations, and brand gradients.
+- **Claw Cyan (`#06b6d4`):** Secondary buttons ("Vents"), focus rings, TOTP progress bars, link hovers, and custom field badges.
+- **ShellGuard Purple (`#3b0764`):** Executive light-mode brand accents and cryptographic badge outlines.
+- **Deep Teal (`#47343a`):** Subdued surface container contrast and card hover fills.
 
-## Layout & Spacing
+---
 
-This design system uses a **Fluid Grid** approach within a "Tidepool" layout model. Elements flow naturally within their containers, but the containers themselves follow a strict 8px-based spacing rhythm.
+## 🔤 Typography
 
-- **Desktop Layout:** A 12-column grid with wide 48px margins to create a "sanctuary" feel for sensitive data.
-- **Mobile Layout:** A 4-column grid with 16px margins, prioritizing vertical stackability.
-- **Spacing Philosophy:** Use larger gaps (`stack-lg`) between different "Shells" (cards) and tighter gaps (`stack-sm`) for related internal components like input labels and fields.
+Typography is calibrated for instant readability and developer-grade precision:
 
-## Elevation & Depth
+```
+Headlines:   Outfit (Bold 700 / ExtraBold 800)
+Body Text:   Inter (Regular 400 / Medium 500 / SemiBold 600)
+Monospace:   JetBrains Mono (Regular 400 / Bold 700)
+```
 
-Elevation in this design system is conveyed through **Submergence Levels** rather than traditional shadows.
+- **Headlines (`font-headline` / `Outfit`):** Geometric, modern letterforms with negative tracking (`tracking-tight`) for strong brand presence and section titles.
+- **Body (`font-sans` / `Inter`):** Neutral, highly legible interface typography engineered for rapid scanning across complex lists and forms.
+- **Monospace (`font-mono` / `JetBrains Mono`):** Standard across all passwords, human keys (`hu-`), agent keys (`lb-`), SSH private keys, and custom field values. Guarantees zero glyph ambiguity (`0` vs `O`, `1` vs `l`).
 
-1.  **Level 0 (Floor):** The "Ocean" background (#0f1419).
-2.  **Level 1 (Submerged):** Surface Light (#161e27) with no blur. Used for persistent sidebar or footer areas.
-3.  **Level 2 (Shell):** Surface Light with a 1px solid border (White at 10% opacity) and a subtle 4px backdrop blur. This is the standard state for cards and list items.
-4.  **Level 3 (Floating):** Surface Light with a 20px backdrop blur and a vibrant inner-glow (Cyan or Magenta at 15% opacity). Reserved for modals, popovers, and active "Secret" reveals.
+---
 
-Avoid heavy black shadows. Instead, use a subtle "Bioluminescent Glow"—a drop shadow with 0px spread, 12px blur, using the primary or secondary color at a very low (8-12%) opacity.
+## 🏛️ Master-Detail Layout Architecture
 
-## Shapes
+The ShellGuard vault uses a Bitwarden-style **Master-Detail Three-Pane Architecture**:
 
-The shape language reflects the "Shell" metaphor. 
+```
+┌─────────────────┬─────────────────────────┬──────────────────────────────┐
+│  Sidebar Tree   │     Item List Pane      │      Item Detail Pane        │
+│  (Folder Pods)  │  (Search & Type Filter) │ (Secrets, Custom Fields, CF) │
+│                 │                         │                              │
+│ 📁 All Vaults   │ 🔍 Search secrets...    │ 🔑 GitHub Corporate         │
+│ 📁 Personal     │                         │ 👤 octocat@github.com        │
+│ 📁 Work/Finance │ 📝 AWS Root Key         │ •••••••••••••••• 👁️ 📋     │
+│ 📁 Infrastructure│ 🔑 GitHub Corporate    │ ⏱️ 842 190 (24s)           │
+│                 │ 🔒 Server SSH           │ 📝 Custom Fields (4)         │
+│                 │                         │ 📎 Attachments (2)           │
+└─────────────────┴─────────────────────────┴──────────────────────────────┘
+```
 
-- **Outer Shells:** Main containers and cards use `rounded-lg` (1rem) or `rounded-xl` (1.5rem) to mimic the smooth, protective exterior of a crustacean.
-- **Inner Components:** Buttons, inputs, and chips use standard `roundedness: 2` (0.5rem) to provide a structural, modern feel.
-- **Interactive Elements:** Small interactive icons or "pills" may use a fully rounded (pill-shaped) style to distinguish them from data-bearing containers.
+1. **Left Sidebar (`SidebarFolderTree`):**
+   - Collapsible desktop toggle (`PanelLeftClose` / `PanelLeftOpen`).
+   - Hierarchical user-created Pods with customizable color badges.
+   - Zero hardcoded defaults—all pods are user-governed.
+2. **Middle List Pane (`ItemListPane`):**
+   - Sticky top bar with real-time search, item count, and type filter tabs.
+   - Item rows with Favicon integration, username preview, category chip, and favorite toggle.
+3. **Right Detail Pane (`ItemDetailPane`):**
+   - High-density inspection card with masked secrets and one-click copy feedback.
+   - Live SVG TOTP countdown ring with animated remaining-seconds display.
+   - Expandable Custom Fields and Drag-and-Drop Attachment trays.
 
-## Components
+---
 
-### The "Claw" (Buttons)
-Primary buttons use the Brand Primary (#e4048a) background with White text. They feature a slight horizontal gradient toward a lighter pink on the right edge. Secondary buttons ("Vents") use an outline style with the Secondary Cyan (#06b6d4) and a 12px backdrop blur.
+## 📝 Modal Form Architecture & Ergonomics
 
-### "Shell" Cards
-Cards are the primary data container. They must use the Level 2 Elevation (Submerged) with a 1px border. When a card is hovered, the border color should transition to the Primary Magenta or Secondary Cyan.
+For creating and editing vault items, ShellGuard uses the **Ergonomic Modal Architecture**:
 
-### "Vents" (Input Fields)
-Inputs should have a dark, recessed appearance—background: #0f1419 with a 1px border. On focus, the border glows with the Secondary Cyan and applies a subtle outer glow (4px blur).
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [Favicon] Edit Login Item (Pinned Header)              [X] │
+├─────────────────────────────────────────────────────────────┤
+│  ▲ SCROLLABLE FORM BODY (flex-1 overflow-y-auto)            │
+│                                                             │
+│  Title * [ GitHub Corporate        ]  Pod [ Work/Dev      ] │
+│  Username [ octocat                ]  URL [ github.com    ] │
+│  Password [ •••••••••••••••••••••• ] [ 🎲 Generator ]       │
+│                                                             │
+│  ── Custom Fields ────────────────────────────────────────  │
+│  📝 Employee ID: ENG-8492                              [X]  │
+│  🔒 Recovery PIN: •••••••• (Hidden) 👁️                 [X]  │
+│  ☑️ MFA Enforced: ON                                    [X]  │
+│  🔗 Backup Auth: → username                             [X]  │
+│                                                             │
+│  ┌─────────────────────────────────┐                       │
+│  │ ⏱️ TOTP Secret                   │                       │
+│  │ 📎 Attachment                   │                       │
+│  │ ✨ Custom Field                  │  (Dropup Menu ▲)      │
+│  └─────────────────────────────────┘                       │
+│  [+ Add Extra Field               ]                         │
+│  ▼                                                          │
+├─────────────────────────────────────────────────────────────┤
+│  (Pinned Footer)                     [ Cancel ] [ Save Item ]│
+└─────────────────────────────────────────────────────────────┘
+```
 
-### "Barnacles" (Chips/Tags)
-Used for categorizing secrets (e.g., "Work", "Personal"). These are small, semi-transparent pills with a low-opacity background of the color they represent (Cyan for tech, Magenta for finance).
+- **Internal Element Scrolling:** Pinned header (`shrink-0 border-b`) and pinned footer (`shrink-0 border-t`) remain permanently visible. Only the form body scrolls (`flex-1 overflow-y-auto custom-scrollbar`).
+- **Fixed Viewport Ratio:** Card is locked to `h-[90vh] md:h-[85vh]` with a spacious `max-w-3xl` (768px) width.
+- **Upward-Expanding Dropup:** Secondary action menus expand upward (`bottom-full mb-2`) rather than downward, backed by an invisible backdrop (`fixed inset-0 z-10`) for click-outside dismissal.
+- **Sleek Custom Scrollbars:** Slim 6px translucent scrollbars with smooth cyan hover states.
 
-### "The Reef" (Lists)
-Lists of secrets should be separated by subtle dividers (White at 5% opacity). Each list item should have a hover state that slightly increases its backdrop blur, making it "float" toward the user.
+---
 
-### Terminology for UI
-- **Vault:** "The Grotto"
-- **Master Password:** "The Keel"
-- **Auto-lock:** "Retract"
-- **Categories:** "Tidepools"
-- **Security Audit:** "Sonar Scan"
+## ✨ Bitwarden-Style Custom Fields
+
+Custom fields are first-class citizens in the Reef Modernist design system:
+
+| Type | Icon | Visual Presentation | Interaction |
+|:---|:---|:---|:---|
+| **Text** | 📝 | Monospace/sans label + plaintext value | One-click clipboard copy with green checkmark animation |
+| **Hidden** | 🔒 | Masked bullets (`••••••••••••`) | Show/hide eye toggle (`Eye` / `EyeOff`) + copy button |
+| **Checkbox** | ☑️ | Visual pill badge (`☑ Enabled` / `☐ Disabled`) | Color-coded status chip (Green for ON, Slate for OFF) |
+| **Linked** | 🔗 | Cyan arrow chip (`→ Property Name`) + live resolved value | Dynamically resolves from decrypted item properties + live TOTP timer |
+
+---
+
+## 🔒 Locked Dashboard & Security States
+
+1. **The Locked Dashboard:** When session timers expire or the user locks their vault, the master-detail layout remains visible in a frosted, secured state with a centralized `QuickLoginModal` overlay.
+2. **Quick Account Switcher:** Users can switch between multiple known accounts directly from the lock overlay without reloading or losing state.
+3. **Reactive Memory Purging:** Locking the vault immediately zeroes all decrypted plaintext secrets and crypto keys from React state.
+
+---
+
+## 📐 Elevation & Depth Hierarchy
+
+| Level | Name | Visual Treatment | Used For |
+|:---|:---|:---|:---|
+| **0** | **Floor** | Theme background (`--bg-base`) | Global viewport background |
+| **1** | **Submerged** | `bg-theme-surface/50` + border | Left sidebar and secondary panels |
+| **2** | **Shell** | `bg-theme-surface` + `border-theme-subtle` | Data cards, list items, and detail panes |
+| **3** | **Floating** | `bg-theme-surface` + 20px blur + `shadow-2xl` | Modals, dropups, and floating toolbars |
+| **Glow** | **Bioluminescent** | `0 0 24px rgba(6, 182, 212, 0.2)` | Focus rings, active copy confirmations, and security alerts |

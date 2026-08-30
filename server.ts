@@ -4,6 +4,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
 import fs, { existsSync } from 'fs';
+import http from 'http';
+import https from 'https';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
@@ -27,6 +29,7 @@ import agentKeyRoutes    from './src/server/routes/agentKeys.js';
 import settingsRoutes    from './src/server/routes/settings.js';
 import adminRoutes       from './src/server/routes/admin.js';
 import { performBackup } from './src/server/utils/backupManager.js';
+import { ensureTlsMaterials } from './src/server/utils/tlsManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -118,8 +121,12 @@ if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
 app.use(httpsRedirect);
 
 // Delta #3: ShellGuard has no reader-mode feature — no jina/microlink connect-src
+// HSTS activates when TLS termination happens here (native TLS or ENFORCE_HTTPS
+// behind a proxy). Browsers ignore the header over plain HTTP, so it is inert
+// in LAN-HTTP mode.
+const hstsEnabled = process.env.ENFORCE_HTTPS === 'true' || process.env.TLS_ENABLED === 'true';
 app.use(helmet({
-  strictTransportSecurity: process.env.ENFORCE_HTTPS === 'true' ? undefined : false,
+  strictTransportSecurity: hstsEnabled ? undefined : false,
   contentSecurityPolicy: {
     directives: {
       defaultSrc:    ["'self'"],
@@ -235,12 +242,35 @@ app.use(errorHandler);
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 const HOST = process.env.HOST ?? (isProduction ? '0.0.0.0' : '127.0.0.1');
+const tlsEnabled = process.env.TLS_ENABLED === 'true';
 
-const server = app.listen(PORT, HOST, () => {
-  audit.log('SYSTEM_START', { action: 'system_start', outcome: 'success', details: { session_id: SESSION_ID } });
-  console.log(`\n🐚 ShellGuard©™ API scuttling on port ${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health\n`);
-});
+function onListening(protocol: 'http' | 'https', tls?: { generated: boolean; fingerprint: string; certPath: string }) {
+  audit.log('SYSTEM_START', { action: 'system_start', outcome: 'success', details: { session_id: SESSION_ID, protocol } });
+  console.log(`\n🐚 ShellGuard©™ API scuttling on port ${PORT}${protocol === 'https' ? ' (TLS)' : ''}`);
+  if (tls) {
+    console.log(`   Certificate: ${tls.generated ? 'generated' : 'loaded'} — ${tls.certPath}`);
+    console.log(`   Fingerprint: ${tls.fingerprint}`);
+    console.log(`   First visit: accept the self-signed certificate warning once — the cert persists across restarts.`);
+  }
+  console.log(`   Health: ${protocol}://localhost:${PORT}/api/health\n`);
+}
+
+let server: http.Server | https.Server;
+
+if (tlsEnabled) {
+  try {
+    const tls = await ensureTlsMaterials();
+    server = https.createServer({ key: tls.key, cert: tls.cert }, app).listen(PORT, HOST, () =>
+      onListening('https', { generated: tls.generated, fingerprint: tls.fingerprint, certPath: tls.certPath }),
+    );
+  } catch (err: any) {
+    console.error(`[TLS] ⚠️ Failed to start with TLS: ${err.message}`);
+    console.error('[TLS]    Falling back to plain HTTP. Fix TLS_CERT_PATH/TLS_KEY_PATH or unset TLS_ENABLED.');
+    server = app.listen(PORT, HOST, () => onListening('http'));
+  }
+} else {
+  server = app.listen(PORT, HOST, () => onListening('http'));
+}
 
 // ─── Graceful Shutdown ───────────────────────────────────────────────────────
 function handleShutdown(signal: string) {

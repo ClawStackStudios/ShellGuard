@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.0.1.7] - 2026-09-03
+
+### Added
+- **`sgtotp.bak` Import Compatibility Layer:** Built `src/lib/sgtotpBackup.ts` supporting full client-side parsing and decryption of ShellGuard-TOTP Android backups. Handles encrypted `shellguard-totp-backup-v1` envelopes (HKDF-SHA256, AES-GCM-256 with AAD `totp_backup:{ownerUuid}` verification and enforced byte-exact SHA-256 integrity checksums), `shellguard-totp-plain-export-v1` plaintext files, and bare JSON arrays.
+- **Client-Side Export Key Decryption Modal:** Extended `ImportExportView.tsx` with dynamic format sniffing and an interactive prompt modal for decrypting encrypted `.bak` files without transmitting plaintext keys or seeds to the server.
+- **Base32 Normalization & Pod Mapping:** Automatically sanitizes Base32 secret seeds (stripping spaces/hyphens and uppercasing), assigns fresh web UUIDs, and normalizes category pods using `normalizePod()`.
+- **Cross-Ecosystem Topology & Links:** Documented the One-Way Mirror Sync architecture in `ARCHITECTURE.md` and `compatibility_layer.md`, and linked directly to [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases) in `README.md`.
+- **Identity & Architectural Constraints:** Integrated `AGENTS.md` defining Antigravity/Gemini operational posture, memory bank invariants, and verification loop rules.
+- **22 Dedicated Vitest Tests:** Implemented comprehensive unit test suite in `tests/unit/sgtotpBackup.test.ts` verifying cryptographic roundtrips, wrong-key rejection, checksum verification, AAD defense, and parser edge cases.
+
+### Fixed
+- **TypeScript Type Invariants:** Resolved compiler errors in `src/lib/sgtotpBackup.ts` and `src/components/Settings/ImportExportView.tsx` by adding `ParsedSgTotpBackup` and propagating `created_at` timestamps on candidate imports.
+
 ## [0.0.1.6] - 2026-08-30
 
 ### Added

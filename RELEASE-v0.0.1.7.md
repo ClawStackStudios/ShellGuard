@@ -1,6 +1,6 @@
-# 🦞 ShellGuard — Release v0.0.1.6
+# 🦞 ShellGuard — Release v0.0.1.7
 
-## *Frictionless Sovereign TLS — Encrypted LAN, Zero Ceremony*
+## *Cross-Ecosystem Sovereign 2FA — Web Vault & Android Companion In Lockstep*
 
 ```text
 ███████╗██╗   ██╗███████╗██╗     ██╗              ██████╗   ██╗   ██╗   █████╗    ██████╗     ██████╗ 
@@ -8,7 +8,7 @@
 ███████╗███████║█████╗   ██║     ██║              ██║ ███╗  ██║   ██║  ███████║  ██████╔╝    ██║   ██║
 ╚════██║██╔══██║██╔══╝   ██║     ██║              ██║   ██║  ██║   ██║  ██╔══██║  ██╔══██╗    ██║   ██║
 ███████║██║   ██║███████╗███████╗███████╗  ╚██████╔╝╚██████╝  ██║   ██║  ██║   ██║   ██████╔╝
-╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝    ╚═════╝   ╚═════╝   ╚═╝  ╚═╝  ╚═╝   ╚═════╝
+╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝    ╚═════╝   ╚═════╝   ╚═╝  ╚═╝  ╚═╝   ╚═╝   ╚═════╝
                                                   ~ **ClawStack Mobile Studios©™** ~
 ```
 
@@ -16,80 +16,109 @@
 
 ## 🚀 The Core Summary
 
-Welcome to **v0.0.1.6** of **ShellGuard**! This release closes the last plaintext transport gap for LAN deployments with **Native TLS**: set `TLS_ENABLED=true` and the server generates a persistent 10-year self-signed certificate on first boot — one browser warning, accepted once, stable across every restart. No reverse proxy required, no ceremony, no expired-cert surprises. For operators who prefer their own certificates, `TLS_CERT_PATH` / `TLS_KEY_PATH` accept any PEM pair. The release also lands a fully documented **Transport Security threat model** in SECURITY.md, ships the Android reference documentation corpus into the repository, and adds CI support for `--release` commit-message flags.
+Welcome to **v0.0.1.7** of **ShellGuard**! This release cements full cross-ecosystem interoperability between the self-hosted ShellGuard web vault and our standalone companion application, [**ShellGuard-TOTP (Android)**](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases). 
+
+With the new `sgtotp.bak` client-side import engine, users can directly import mobile 2FA backups into the web vault. The system effortlessly parses encrypted `shellguard-totp-backup-v1` envelopes (via HKDF-SHA256 and AES-GCM-256 with AAD verification and SHA-256 integrity checksum enforcement), unencrypted `shellguard-totp-plain-export-v1` files, and bare JSON arrays. Imported seeds are sanitized, assigned fresh UUIDs, mapped into normalized user pods, and encrypted into standard vault pearls. Under our **One-Way Mirror Sync** architecture, these newly imported secrets seamlessly mirror back down to the Android app during subsequent sync cycles. 
+
+This release also resolves strict TypeScript type invariants, formalizes cross-ecosystem documentation in `ARCHITECTURE.md` and `compatibility_layer.md`, embeds Gemini identity and architectural constraints in `AGENTS.md`, and verifies a 100% green test oracle across all 13 test suites.
 
 ---
 
 ## 💎 Key Themes & Highlights
 
-### 🔐 1. Native LAN TLS & Self-Signed Certificate Lifecycle
+### 📱 1. `sgtotp.bak` Import Compatibility Layer & Client-Side Decryption
 
-* **Frictionless Generation:** With `TLS_ENABLED=true`, a 10-year EC P-256 certificate is generated on first boot via the new `src/server/utils/tlsManager.ts` — pure-JS `selfsigned` engine, no native build step, fast enough for boot-time.
-* **Persistent & Stable:** The certificate is written to `DATA_DIR/certs/{cert,key}.pem` with owner-only `0o600` permissions and **reused on every subsequent boot** — the browser exception you grant once remains valid indefinitely (verified live: second boot logs `Certificate: loaded` with an identical fingerprint).
-* **Complete SAN Coverage:** Subject Alternative Names are auto-collected from `localhost`, loopback (`127.0.0.1`, `::1`), and **every non-internal network interface** — one warning covers `https://<lan-ip>:6464` from any device on the reef.
-* **Bring Your Own:** Operators with an internal CA, mkcert, or proxy-issued pair can set `TLS_CERT_PATH` / `TLS_KEY_PATH` directly — both validated as a set, taking precedence over the generated pair.
+* **Universal Format Sniffing:** `src/lib/sgtotpBackup.ts` auto-sniffs uploaded backup files to detect encrypted envelopes (`shellguard-totp-backup-v1`), structured plaintext exports (`shellguard-totp-plain-export-v1`), or bare JSON item arrays without leaking plaintext.
+* **Pure Client-Side Zero-Knowledge Decryption:** Encrypted envelopes are decrypted strictly in the browser using pure TypeScript WebCrypto fallback primitives (`hkdfSha256` and `aesGcmDecrypt`). The user's export PIN or passphrase and unencrypted seeds never cross the network to the server.
+* **Enforced AAD & Checksum Integrity:** Key derivation uses HKDF-SHA256 (`ikm = exportKey`, `salt = ownerUuid`, `info = "clawchives-shellcryption-v1"`). Decryption verifies AAD `totp_backup:{ownerUuid}` to eliminate substitution attacks, and strictly checks the SHA-256 hash of the decrypted payload against the envelope checksum.
+* **Sanitization & Pod Normalization:** Base32 secrets are validated and stripped of whitespace and hyphens. Fresh web UUIDs are assigned to prevent ID collision, and category strings are passed through `normalizePod()` to ensure seamless integration into the user's existing pod hierarchy.
+* **Interactive Export-Key Modal:** `ImportExportView.tsx` automatically detects encrypted `.bak` uploads and displays an interactive modal prompting for the export key before completing the client-side import.
 
-### 🛡️ 2. Honest Transport Security Posture
+### ☁️ 2. One-Way Mirror Sync Architecture
 
-* **HTTPS-Only Listener:** When TLS is enabled, the plain HTTP listener is **gone** — requests to `http://` are refused outright, not redirected.
-* **HSTS Activated:** Helmet's Strict-Transport-Security engages whenever TLS terminates in-process (native TLS or `ENFORCE_HTTPS=true` behind a proxy), and stays inert in LAN-HTTP mode.
-* **Graceful Fallback:** If TLS materials fail to load, the server falls back to HTTP with a loud warning rather than refusing to start — matching the codebase's warns-not-blocks philosophy.
-* **Documented Threat Model:** SECURITY.md gains a full **"Transport Security & the Plain-HTTP Tradeoff"** section: what plain HTTP exposes (keyHash replay, token theft, code injection), what it never exposes (all ShellCryption ciphertext), and recommended postures for LAN, VPN, and public exposure.
+* **Isolated Local Codes:** Codes created directly on the Android device remain local (`isLocalOnly = true`), keeping mobile additions completely autonomous and isolated from upstream synchronization conflicts.
+* **Downstream Mirroring:** The Android companion pulls remote `vault_pearls` via `GET /api/vault` as a read-only mirror, organizing them into a distinct `"☁️ Synced from ShellGuard"` dashboard group.
+* **Ecosystem Bridge:** The mobile app exports *only* local codes into `sgtotp.bak`. Importing this file into the web vault elevates local mobile codes to sovereign vault pearls, which then mirror back down to all connected mobile clients.
+* **Official Companion Release Links:** Integrated direct pointers to [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases) in `README.md`, `ARCHITECTURE.md`, and release documentation.
 
-### 🐳 3. Operational Integration
+### 🛡️ 3. Repository Hygiene & Identity Governance
 
-* **TLS-Aware Docker Healthcheck:** The container `HEALTHCHECK` now probes `https://localhost:6464/api/health` with `--no-check-certificate` when `TLS_ENABLED=true`, and plain HTTP otherwise — no false-unhealthy containers.
-* **Environment Reference:** `.env.example` documents both TLS modes end-to-end, including the browser-warning expectation for self-signed deployments.
-* **Quickstart Recipe:** QUICKSTART.md gains a "LAN HTTPS Without a Proxy" walkthrough — three steps from env var to encrypted vault.
+* **Identity Configuration (`AGENTS.md`):** Added explicit instructions and negative invariants governing Gemini/Antigravity behavior, memory-bank verification, and multi-agent orchestration limits.
+* **Architecture Alignment:** Formalized the cross-ecosystem boundary in `ARCHITECTURE.md` and added `compatibility_layer.md` as the authoritative wire-format specification.
+* **Clean Build Gates:** Cleaned up temporary Android spec files in the root repository to maintain clean separation between the web vault codebase and the native Android repository.
 
-### 📚 4. Documentation & Repository Hygiene
+### 🧪 4. Complete Verification & Type Safety
 
-* **Android Reference Corpus:** Initialized comprehensive Android project documentation, architecture specifications, and engineering guidelines (`9aba894`).
-* **CI Release Flags:** The release workflow now supports `--release vX.Y.Z` commit-message flags for automated release publication (`fa72f67`).
-* **Repository Hygiene:** Untracked the `.agents` directory from the git index per `.gitignore` (`d982474`), synchronized `DESIGN.md` with the master-detail and custom-fields patterns (`2c13b39`), and removed the superseded v0.0.1.4 release notes (`e8497bd`).
+* **22 Dedicated Unit Tests:** `tests/unit/sgtotpBackup.test.ts` validates format detection, encrypted round-trip decryption, wrong-key rejection, tampered checksum detection, AAD substitution prevention, Base32 normalization, and pod mapping.
+* **100% Passing Test Oracle:** **202 tests passing across all 13 test suites** (0 failures).
+* **Strict Type Safety:** Zero TypeScript compiler errors (`tsc --noEmit`) and a clean production Vite bundle.
 
-### 🧪 5. Complete Verification Matrix
-
-* **8 Dedicated TLS Tests:** `tests/tls.test.ts` covers generation, `0o600` file permissions, SAN embedding, ~10-year validity, **stable-fingerprint reuse**, BYO path handling, half-configured rejection, and a **live HTTPS handshake over a real socket** with the generated materials.
-* **Full Oracle:** **180 tests passing across all 12 suites** (0 failures), `tsc --noEmit` clean, production Vite bundle built.
-* **Live Two-Boot Smoke:** First boot generated the cert and served `/api/health` over TLS; second boot loaded the persisted cert with an identical fingerprint while plain HTTP refused connection.
 ---
 
 ## 🏗️ Architectural Topology Map
 
 ```text
-┌──────────────────────────────────────────────────┐
-│              🌐 Browser / Agent Client           │
-│   https://<lan-ip>:6464  (accept cert once)      │
-└───────────────────────┬──────────────────────────┘
-                        │  TLS 1.3 (EC P-256, self-signed)
-                        ▼
-┌──────────────────────────────────────────────────┐
-│      🔌 Express 5 — Carapace Gateway (:6464)     │
-│  https.createServer({ cert, key }) ← tlsManager  │
-│  helmet HSTS · cors · rate limits · zod          │
-└───────────────────────┬──────────────────────────┘
-                        │
-                        ▼
-┌──────────────────────────────────────────────────┐
-│     🖥️ SQLite Bedrock + Audit Reef (DATA_DIR)    │
-│  db.sqlite · audit.sqlite · certs/ (0o600)       │
-└──────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                 ShellGuard Web Vault (:6464)                │
+│       • Sovereign single-source-of-truth for vault pearls   │
+│       • Master ShellCryption key (hu-) in browser memory     │
+│       • Full CRUD on logins, notes, SSH keys, attachments   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+            ☁️ Read-Only Mirror│ (GET /api/vault)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│              📱 ShellGuard-TOTP (Android Client)            │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ "☁️ Synced from ShellGuard" (Read-Only Mirror Group)   │  │
+│  │   • Downstream mirror of web vault TOTP records       │  │
+│  │   • Offline cache in SQLCipher Room DB               │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ "📱 Local Vault" (On-Device Codes, isLocalOnly = true) │  │
+│  │   • Scanned QR codes & manual additions on device     │  │
+│  │   • Hardware-backed Android KeyStore protection       │  │
+│  │   • NEVER pushed upstream directly                    │  │
+│  └───────────────────────────────────────────────────────┘  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+              📦 sgtotp.bak    │ (Export Local Codes Only)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│             Web Vault Import Compatibility Layer            │
+│       • Format sniffing: encrypted / plain / bare array     │
+│       • Client-side HKDF + AES-GCM-256 decryption           │
+│       • Enforced SHA-256 payload checksum verification      │
+│       • Base32 sanitization, fresh UUIDs, pod normalization │
+│       • Encrypted into vault_pearls (mirrors downstream)    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📋 Commit Ledger (Since `v0.0.1.5`)
+## 📦 Changes by Layer
 
-* `f3448c9` — **chore:** bump version to 0.0.1.6 for native LAN TLS release
-* `02ed28e` — **merge:** native LAN TLS with self-signed certificate generation
-* `f35ba4a` — **docs:** add native LAN TLS to unreleased changelog
-* `33157ff` — **feat:** native LAN TLS with self-signed certificate generation
-* `9aba894` — **docs:** initialize Android project documentation, architecture specifications, and engineering guidelines
-* `e8497bd` — **chore:** remove previous release notes RELEASE-v0.0.1.4.md in favor of v0.0.1.5
-* `d982474` — **chore:** untrack .agents directory from git index per .gitignore
-* `2c13b39` — **docs(design):** synchronize DESIGN.md with modern master-detail and custom fields patterns
-* `fa72f67` — **ci:** support `--release` flag in commit messages for automated release publication
+| Component | Files | Description |
+|:---|:---|:---|
+| **Client Utilities** | `src/lib/sgtotpBackup.ts` | `sgtotp.bak` format sniffer, HKDF/AES-GCM client decryptor, AAD + checksum verification, and `mapSgTotpItemsToVaultItems` |
+| **Settings UI** | `src/components/Settings/ImportExportView.tsx` | Export-key modal for encrypted `.bak` imports, file upload handler, and notification feedback |
+| **Specifications** | `compatibility_layer.md` | Formal 2-way data interoperability specification and schema definitions |
+| **Documentation** | `README.md`, `ARCHITECTURE.md` | Added ShellGuard-TOTP Android companion links, One-Way Mirror Sync topology, and updated version badges |
+| **Tests** | `tests/unit/sgtotpBackup.test.ts` | 22 comprehensive unit tests covering cryptographic round-trips, tampered checksums, and parser edge cases |
+| **Identity & CI** | `AGENTS.md`, `.github/workflows/release.yml` | Gemini identity rules and release document mirroring configuration |
+
+---
+
+## 📋 Commit Ledger (Since `v0.0.1.6`)
+
+* `[pending]` — **chore:** prepare release v0.0.1.7 with ShellGuard-TOTP companion sync
+* `09f4c57` — **feat:** sgtotp.bak import compatibility layer with ShellGuard-TOTP
+* `68da985` — **feat:** add AGENTS.md configuration for Gemini identity and architectural constraints
+* `7b7a90c` — **feat:** implement dynamic theme engine with adaptive light/dark mode and multi-accent support
+* `074eab0` — **merge:** strict RELEASE-doc mirror in release pipeline
+* `7054595` — **ci:** strict RELEASE-doc mirror in release pipeline
+* `b0fcc47` — **chore:** remove outdated release notes for v0.0.1.5
+* `138952b` — **docs:** add themed release notes for v0.0.1.6
 
 ---
 
@@ -98,29 +127,24 @@ Welcome to **v0.0.1.6** of **ShellGuard**! This release closes the last plaintex
 ### Using Containerized Environments (Self-Hosted / Production)
 
 ```bash
-docker pull ghcr.io/clawstackstudios/shellguard:v0.0.1.6
+docker pull ghcr.io/clawstackstudios/shellguard:v0.0.1.7
 docker restart shellguard
-```
-
-### Optional: Enable Native LAN TLS
-
-```bash
-# In your .env / compose environment:
-TLS_ENABLED=true
-# Restart — the cert generates on first boot, reuse forever after.
 ```
 
 ### Upgrading from Source
 
 ```bash
 git fetch --tags
-git checkout v0.0.1.6
+git checkout v0.0.1.7
 npm install
 npm run build
 npm run scuttle:prod
 ```
 
-> **Note:** Public deployments should still terminate TLS at a reverse proxy (Caddy, Traefik, nginx, Cloudflare Tunnel). Native TLS is a LAN convenience, not a public-exposure strategy — VPN access (Tailscale/WireGuard) is already encrypted transport.
+### Companion Android Client
+
+Download the latest APK or release bundle for the standalone Android Authenticator from:
+👉 **[ShellGuard-TOTP GitHub Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases)**
 
 ---
 

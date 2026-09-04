@@ -118,7 +118,7 @@ ShellGuard/
     ├── components/                    # ◀ Reef Modernist UI
     │   ├── Vault/                     #   PasswordVaultView, VaultTabView, PodModal, folder tree
     │   ├── Generator/                 #   GeneratorToolView, GeneratorOptions
-    │   ├── Settings/                  #   ImportExportView (CSV metadata / JSON re-auth export)
+    │   ├── Settings/                  #   ImportExportView (CSV metadata / JSON re-auth / sgtotp.bak import)
     │   ├── Layout/                    #   Header, Sidebar
     │   ├── Theme/                     #   ThemeToggle
     │   ├── Branding/                  #   InteractiveBrand

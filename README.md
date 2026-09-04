@@ -19,7 +19,7 @@
 ---
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/Version-v0.0.1.6-blue?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.0.1.7-blue?style=for-the-badge)](CHANGELOG.md)
 [![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -70,7 +70,8 @@
 - 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 10 MB per file), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
 - 💾 **Data Survival & Resilient Backups** — Born from real-world disaster recovery: painless dual-layer backups (live-consistent Online Backup API SQLite snapshots + comprehensive client-side encrypted vault exports with attachments and keys) designed to ensure you never face a catastrophic lock-out.
-- 📤 **Sovereign Exports** — Metadata CSV export and re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments.
+- 📤 **Sovereign Exports & Imports** — Metadata CSV export, re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments, plus native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
+- 📱 **ShellGuard-TOTP Android Companion** — Dedicated native Android 2FA authenticator with biometrics, hardware-backed KeyStore isolation, camera & gallery QR scanning, and 1-way mirror sync with the ShellGuard web vault. Releases: [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases).
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically without flushing offline recovery buffers.
 - 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
 - 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
@@ -484,6 +485,7 @@ ShellGuard/
 | [**ROADMAP.md**](./ROADMAP.md) | Changelog and future molts |
 | [**CRUSTAGENT.md**](./CRUSTAGENT.md) | Agent intelligence handshake and stability locks |
 | [**DESIGN.md**](./DESIGN.md) | Reef Modernist design tokens and component language |
+| [**compatibility_layer.md**](./compatibility_layer.md) | ShellGuard-TOTP Android `sgtotp.bak` backup format & 1-way sync bridge specification |
 
 ---
 

@@ -16,6 +16,7 @@
 - [📂 Complete Directory Structure](#-complete-directory-structure)
 - [📊 Data Flow & Architecture](#-data-flow--architecture)
 - [🏗️ Architectural Tenets](#️-architectural-tenets)
+- [📱 Cross-Ecosystem Topology: ShellGuard-TOTP Companion](#-cross-ecosystem-topology-shellguard-totp-companion)
 - [🔑 Key System Architecture](#-key-system-architecture)
 - [🔐 Hard Constraints & Stability Locks](#-hard-constraints--stability-locks)
 - [🔌 API Routes & Endpoints](#-api-routes--endpoints)
@@ -37,6 +38,7 @@ ShellGuard/
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
+├── 📄 compatibility_layer.md          # ShellGuard-TOTP Android sgtotp.bak format & 1-way sync bridge spec
 │
 ├── 🐳 Dockerfile                      # Multi-stage node:20-alpine single image (UI + API)
 ├── 🐳 docker-compose.yml              # Production reef (build locally, ./data bind mount)
@@ -113,12 +115,14 @@ ShellGuard/
     │   ├── crypto.ts                  #   hashToken (SHA-256), rejection-sampling key generation
     │   ├── generator.ts               #   Password generator, complexity scoring, TOTP helpers
     │   ├── podUtils.ts                #   Nested pod (folder) tree, colors, counts
-    │   └── clipboardManager.ts        #   Clipboard hygiene for copied secrets
+    │   ├── clipboardManager.ts        #   Clipboard hygiene for copied secrets
+    │   ├── sgtotpBackup.ts            #   ShellGuard-TOTP sgtotp.bak parser, decryptor & mapper
+    │   └── webCryptoFallback.ts       #   Pure TS WebCrypto primitives for plain-HTTP LAN origins
     │
     ├── components/                    # ◀ Reef Modernist UI
     │   ├── Vault/                     #   PasswordVaultView, VaultTabView, PodModal, folder tree
     │   ├── Generator/                 #   GeneratorToolView, GeneratorOptions
-    │   ├── Settings/                  #   ImportExportView (CSV metadata / JSON re-auth export)
+    │   ├── Settings/                  #   ImportExportView (CSV metadata / JSON re-auth / sgtotp.bak import)
     │   ├── Layout/                    #   Header, Sidebar
     │   ├── Theme/                     #   ThemeToggle
     │   ├── Branding/                  #   InteractiveBrand
@@ -238,6 +242,67 @@ The raw `hu-` key never crosses the network — only its SHA-256 hash is transmi
 10. **Mechanical Client Edits** — Client refactors during parity work touch wiring, not structure. Decomposition is a separate roadmap effort.
 
 </details>
+
+---
+
+## 📱 Cross-Ecosystem Topology: ShellGuard-TOTP Companion
+
+ShellGuard maintains an intentional cross-ecosystem boundary with the standalone native Android companion application, [**ShellGuard-TOTP**](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases).
+
+### One-Way Mirror Sync Architecture
+
+To balance zero-knowledge security with operational simplicity and prevent write-lockouts or merge race conditions, ShellGuard and ShellGuard-TOTP operate on a strict **One-Way Mirror Sync** architecture:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                 ShellGuard Web Vault (:6464)                │
+│       • Sovereign single-source-of-truth for vault pearls   │
+│       • Master ShellCryption key (hu-) in browser memory     │
+│       • Full CRUD on logins, notes, SSH keys, attachments   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+            ☁️ Read-Only Mirror│ (GET /api/vault)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│              📱 ShellGuard-TOTP (Android Client)            │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ "☁️ Synced from ShellGuard" (Read-Only Mirror Group)   │  │
+│  │   • Downstream mirror of web vault TOTP records       │  │
+│  │   • Offline cache in SQLCipher Room DB               │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ "📱 Local Vault" (On-Device Codes, isLocalOnly = true) │  │
+│  │   • Scanned QR codes & manual additions on device     │  │
+│  │   • Hardware-backed Android KeyStore protection       │  │
+│  │   • NEVER pushed upstream directly                    │  │
+│  └───────────────────────────────────────────────────────┘  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+              📦 sgtotp.bak    │ (Export Local Codes Only)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│             Web Vault Import Compatibility Layer            │
+│       • Format sniffing: encrypted / plain / bare array     │
+│       • Client-side HKDF + AES-GCM-256 decryption           │
+│       • Enforced SHA-256 payload checksum verification      │
+│       • Base32 sanitization, fresh UUIDs, pod normalization │
+│       • Encrypted into vault_pearls (mirrors downstream)    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+1. **Remote Connection (Read-Only Mirror)**:
+   The Android app mirrors the user's web vault by querying `GET /api/vault`. Items with a `totp_secret` are decrypted on the mobile client using the mobile-derived ShellCryption key and displayed in a dedicated `"☁️ Synced from ShellGuard"` dashboard group. The mobile app never mutates or deletes remote vault items.
+
+2. **Local Creation (Zero-Upstream Pollution)**:
+   New 2FA seeds scanned via camera or imported from screenshot galleries on Android are tagged with `isLocalOnly = true` and stored in the local Room database. They are completely isolated from upstream API sync, ensuring offline autonomy and avoiding remote synchronization conflicts.
+
+3. **Interoperability Bridge (`sgtotp.bak`)**:
+   When backing up codes on Android, `BackupManager.kt` exports *only* local codes to avoid duplicating remote items. The exported `sgtotp.bak` file is encrypted client-side using `ShellCryptionEngine` (HKDF-SHA256 with salt `ownerUuid`, info `"clawchives-shellcryption-v1"`, AES-GCM-256 with AAD `totp_backup:{ownerUuid}`).
+
+4. **Web Vault Ingestion**:
+   In `ImportExportView.tsx`, the web client sniffs the backup format, prompts for the user's export PIN/passphrase if encrypted, decrypts and validates the SHA-256 integrity checksum client-side via `src/lib/sgtotpBackup.ts`, assigns fresh UUIDs, normalizes pod categories with `normalizePod()`, and commits the items as standard `vault_pearls`. On the subsequent Android sync cycle, these items mirror back down into the `"☁️ Synced from ShellGuard"` group.
+
+See [**compatibility_layer.md**](./compatibility_layer.md) for the complete byte-level envelope specification and test fixtures.
 
 ---
 

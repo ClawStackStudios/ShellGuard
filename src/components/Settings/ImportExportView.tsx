@@ -16,8 +16,14 @@ import {
   FolderSync
 } from "lucide-react";
 import { VaultItem, Lobster } from "../../types.ts";
-import { hashToken } from "../../lib/crypto.ts";
+import { hashToken, generateUUID } from "../../lib/crypto.ts";
 import { restAdapter } from "../../services/api/restAdapter.ts";
+import {
+  sniffSgTotpBackup,
+  parseSgTotpBackup,
+  mapSgTotpItemsToVaultItems
+} from "../../lib/sgtotpBackup.ts";
+import { Smartphone } from "lucide-react";
 
 interface ImportExportViewProps {
   items: VaultItem[];
@@ -40,6 +46,11 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
   const [importStatus, setImportStatus] = useState<"idle" | "success" | "error">("idle");
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  // sgtotp.bak import states
+  const [isSgtotpKeyModalOpen, setIsSgtotpKeyModalOpen] = useState(false);
+  const [sgtotpPendingText, setSgtotpPendingText] = useState("");
+  const [sgtotpKey, setSgtotpKey] = useState("");
+  const [sgtotpError, setSgtotpError] = useState<string | null>(null);
 
   const executeExportCSV = () => {
     const headers = ["Title", "Category", "Type", "Username", "URL/Notes"];
@@ -130,6 +141,27 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     reader.readAsText(file);
   };
 
+  /**
+   * Imports a ShellGuard-TOTP `sgtotp.bak` backup (encrypted envelope, plain export,
+   * or bare item array). Items are mapped client-side (fresh UUIDs, Base32-normalized
+   * seeds, normalized pods) and encrypted via lockTheClaw with vault_pearls_totp AAD.
+   */
+  const importSgTotp = (rawText: string, exportKey?: string) => {
+    const parsedBackup = parseSgTotpBackup(rawText, exportKey);
+    const mapped = mapSgTotpItemsToVaultItems(parsedBackup.items, () => generateUUID());
+    if (mapped.length === 0) {
+      throw new Error("No valid TOTP items found in the sgtotp.bak backup.");
+    }
+    if (onImportItems) {
+      onImportItems(mapped);
+    }
+    setImportStatus("success");
+    setImportMessage(
+      `Successfully imported ${mapped.length} TOTP record(s) from the sgtotp.bak backup${parsedBackup.kind === "encrypted" ? " (envelope decrypted & checksum verified)" : ""}.`
+    );
+    setImportJsonText("");
+  };
+
   const handleProcessImport = () => {
     if (!importJsonText.trim()) {
       setImportStatus("error");
@@ -142,6 +174,22 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     setImportMessage(null);
 
     try {
+      // ShellGuard-TOTP sgtotp.bak detection first — encrypted envelopes route to the key modal.
+      const kind = sniffSgTotpBackup(importJsonText);
+      if (kind === "encrypted") {
+        setSgtotpPendingText(importJsonText);
+        setSgtotpKey("");
+        setSgtotpError(null);
+        setIsSgtotpKeyModalOpen(true);
+        setIsImporting(false);
+        return;
+      }
+      if (kind === "plain" || kind === "array") {
+        importSgTotp(importJsonText);
+        setIsImporting(false);
+        return;
+      }
+
       const parsed = JSON.parse(importJsonText);
       let listToImport: any[] = [];
 
@@ -169,6 +217,26 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
       setImportMessage(err.message || "Invalid JSON syntax.");
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleSgtotpDecryptAndImport = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sgtotpKey.trim()) {
+      setSgtotpError("Enter the PIN or key used when exporting the backup on your device.");
+      return;
+    }
+    try {
+      importSgTotp(sgtotpPendingText, sgtotpKey);
+      setIsSgtotpKeyModalOpen(false);
+      setSgtotpPendingText("");
+      setSgtotpKey("");
+      setSgtotpError(null);
+    } catch (err: any) {
+      const msg = err.message === "SGTOTP_MISSING_KEY"
+        ? "Export key required."
+        : err.message || "Failed to decrypt the sgtotp.bak backup.";
+      setSgtotpError(msg);
     }
   };
 
@@ -498,6 +566,77 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
                         <span>Authorize & Download</span>
                       </>
                     )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ── SGTOTP.BAK EXPORT-KEY MODAL ── */}
+        {isSgtotpKeyModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => { setIsSgtotpKeyModalOpen(false); setSgtotpPendingText(""); setSgtotpKey(""); setSgtotpError(null); }}>
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.97 }}
+              transition={{ type: "spring", damping: 26, stiffness: 320 }}
+              className="bg-theme-surface border border-theme-subtle rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-claw-cyan/10 flex items-center justify-center">
+                  <Smartphone size={20} className="text-claw-cyan" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-theme-main">ShellGuard TOTP Backup</h3>
+                  <p className="text-xs text-theme-muted font-medium">Encrypted sgtotp.bak envelope detected</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-claw-cyan/10 border border-claw-cyan/30 rounded-xl text-claw-cyan text-xs leading-relaxed flex items-start gap-2">
+                <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+                <span>
+                  This backup was encrypted on your Android device. Enter the <strong>PIN or key used at export time</strong> to decrypt it locally. Decryption, checksum verification, and re-encryption all happen in your browser — the key is never sent to the server.
+                </span>
+              </div>
+
+              <form onSubmit={handleSgtotpDecryptAndImport} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    Export PIN / Key
+                  </label>
+                  <input
+                    type="password"
+                    value={sgtotpKey}
+                    onChange={(e) => setSgtotpKey(e.target.value)}
+                    placeholder="Export credential..."
+                    className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan focus:ring-1 focus:ring-claw-cyan outline-none transition-all text-theme-main font-mono"
+                    autoFocus
+                  />
+                </div>
+
+                {sgtotpError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle size={15} />
+                    <span>{sgtotpError}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setIsSgtotpKeyModalOpen(false); setSgtotpPendingText(""); setSgtotpKey(""); setSgtotpError(null); }}
+                    className="flex-1 px-4 py-2.5 rounded-xl font-bold border border-theme-subtle hover:bg-theme-base transition-colors cursor-pointer text-sm text-theme-main"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2.5 rounded-xl font-bold bg-claw-cyan hover:bg-cyan-500 text-black transition-colors cursor-pointer flex justify-center items-center gap-2 text-sm"
+                  >
+                    <Smartphone size={16} />
+                    <span>Decrypt & Import</span>
                   </button>
                 </div>
               </form>

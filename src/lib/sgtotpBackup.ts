@@ -63,6 +63,13 @@ export interface SgTotpPlainExport {
 
 export type SgTotpBackupKind = 'encrypted' | 'plain' | 'array';
 
+export interface ParsedSgTotpBackup {
+  kind: SgTotpBackupKind;
+  items: SgTotpBackupItem[];
+  ownerUuid?: string;
+  protectionMode?: string;
+}
+
 
 /** Sniffs which of the three accepted shapes a raw file body is, without decrypting. */
 export function sniffSgTotpBackup(rawText: string): SgTotpBackupKind {
@@ -227,6 +234,7 @@ export interface SgTotpImportCandidate {
   type: 'password';
   notes: string;
   totp_secret: string;
+  created_at: string;
   totpMeta: { algorithm: string; digits: number; period: number };
 }
 
@@ -234,6 +242,7 @@ export function mapSgTotpItemsToVaultItems(
   items: SgTotpBackupItem[],
   generateId: () => string
 ): SgTotpImportCandidate[] {
+  const now = new Date().toISOString();
   return items.map(item => ({
     id: generateId(),
     title: item.title,
@@ -244,6 +253,7 @@ export function mapSgTotpItemsToVaultItems(
     type: 'password' as const,
     notes: '',
     totp_secret: normalizeBase32Seed(item.secret),
+    created_at: item.localUpdatedAt ? new Date(item.localUpdatedAt).toISOString() : now,
     totpMeta: {
       algorithm: item.algorithm || 'SHA1',
       digits: item.digits || 6,

@@ -199,7 +199,7 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
       <div className="absolute top-[800px] right-[-10%] w-[600px] h-[600px] bg-[#06b6d4]/5 rounded-full blur-[140px] pointer-events-none z-0" />
       
       {/* FIXED HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-theme-base/85 backdrop-blur-xl border-b border-theme-subtle shadow-sm shadow-black/5 transition-colors">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-theme-base/85 backdrop-blur-xl border-b-2 border-purple-600 dark:border-red-500 shadow-sm shadow-black/5 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#e4048a]/20 to-[#06b6d4]/10 border border-[#e4048a]/30 flex items-center justify-center shadow-md shadow-[#e4048a]/10 overflow-hidden">

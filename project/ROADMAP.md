@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 7 transcribed (Baseline v0.0.0.7) — pre-genesis sprint COMPLETE. Phase 8: Genesis Release bracket v0.0.1 pending"
+current_position: "Phase 8 transcribed (Baseline v0.0.0.8) — Phase 9: Genesis Release & Origin Hardening pending (v0.0.1)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–7 transcribed (pre-genesis sprint complete) · Release era pending"
+  features_completed: "Phases 1–8 transcribed · Genesis + release era pending"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -404,5 +404,65 @@ components, agent-integration and architecture sections) with a
 > endpoints; the rendered protocol diagram matches `key-hierarchy-spec.md`
 > §2 exactly; the docs portal builds and deploys; every landing claim is
 > backed by runtime behavior (docs = app).
+
+---
+
+
+## Phase 8: Vault UX Renaissance — Master-Detail, Pure Pods & Lock Hardening [Baseline: v0.0.0.8 (Build 9)]
+
+> Phase Feature Set Overview:
+> The vault matures into its final shape. The dashboard is refactored to a
+> Bitwarden-style **master-detail architecture** (`VaultShell`, ItemList,
+> ItemDetail, unified `ItemFormModal`) replacing monolithic tabs; **all
+> hardcoded default pods are eliminated** (`DEFAULT_ROOT_PODS = []`) for pure
+> user-driven pod management; pod categories normalize via `normalizePod()`
+> with optimistic deletion updates; the vault lock hardens — every mutation
+> path guarded by `isLocked`; and state-aware **`NavIntent`** navigation lands
+> in the session manager. Claw-in navigation arrives (drag-and-drop key files,
+> stronger key validation), `LobsterKeysTab` is extracted, the generator binds
+> to the current identity, the TOTP issuer renames to ShellGuard, and the
+> attractor-beacon philosophy enters the README. *(Receipts: `c14121d`,
+> `fba8424`, `2afb3b8`, `f1694f2`, `4f3c1ab`, `6e33694`, `930375c`, `2dfa76c`,
+> `af07c27`, `916460c`, `095f19a`, `c4d3e4b`, `8e7c16d` — 2026-08-28/29.
+> Last pre-genesis phase: after this, the tags begin.)*
+
+- [ ] **Task 15: [Functionality] Pod Normalization, Zero Hardcoded Pods, Lock Hardening & NavIntent**
+
+Description: Eliminate every hardcoded default pod — `DEFAULT_ROOT_PODS = []`
+and `INITIAL_DEFAULT_COLORS = {}` — making pod management purely user-driven:
+pods display only when created by the user or assigned by items. Normalize
+all pod/category comparisons through `normalizePod()` (sub-pods match by
+`targetPod + "/"` prefix); fix sidebar layout, pod management UI and state
+sync bugs; make deletions optimistic so removed pods vanish immediately
+without server overwrite, cascading their items to uncategorized (`""`) —
+never to a fallback pod. Harden the vault lock: guard `handleRenamePod`,
+`handleDeletePod`, `SidebarFolderTree`, `PodModal`, item mutations
+(`lockTheClaw`, `updateTheClaw`, deletion), live search dropdowns and header
+add-menus behind `isLocked`. Add explicit `NavIntent` tracking to
+`sessionManager.ts` (`sg_nav_intent`): `"landing"` intent persists across
+manual logout; `"dashboard"` intent with quick-unlock modal on lock/reload.
+
+> Success Criteria: A fresh vault renders zero pods and remains fully
+> functional; an item in `Work/DevOps` is found by a `Work` tree filter;
+> deleted pods disappear instantly with items cascading to uncategorized;
+> no mutation succeeds while locked; reload after lock lands on the
+> dashboard with quick unlock, logout lands on landing.
+
+- [ ] **Task 16: [UI Component] Master-Detail Dashboard, Claw-In Gateway & Identity-Aware Tools**
+
+Description: Refactor the dashboard UI from monolithic tabs to a responsive
+two-pane **master-detail layout** — `VaultShell` hosting `ItemListPane` and
+`ItemDetailPane`, with a unified `ItemFormModal` for create/edit across all
+item types. Extract the `LobsterKeysTab` into its own dedicated component
+with updated styling. Add claw-in navigation to the gateway: drag-and-drop
+key file support and improved `hu-`/`lb-` key validation before submission.
+Integrate the current user identity into generator configuration; rename the
+default TOTP issuer to ShellGuard; remove obsolete lobster-keys knowledge
+docs. Weave the attractor-beacon / data-survival philosophy into the README.
+
+> Success Criteria: The two-pane layout renders responsively (detail pane on
+> desktop, sheet on mobile); a key file dropped on the gateway validates
+> before submission; the generator derives from the active identity; the
+> TOTP issuer reads "ShellGuard".
 
 ---

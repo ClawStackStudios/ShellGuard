@@ -24,7 +24,8 @@ flowchart TD
     Phase5["🔐 Stage 6: Phase 5 — Per-Row Metadata Encryption & Port Molt<br/>(Task 09: Metadata Encryption & Guard Registry · Task 10: Port Molt & Triple-Layer Docs)"]
     Phase6["🦞 Stage 7: Phase 6 — SuperLobster Admin Plane<br/>(Task 11: Admin API & requireAdmin · Task 12: Panel Suite & Admin Gate)"]
     Phase7["🐚 Stage 8: Phase 7 — Multi-Account, QuickLogin & Landing Gateway<br/>(Task 13: Session Manager & Multi-Account · Task 14: LandingView & AuthGateway)"]
-    Phase8["🥚 Stage 9: Phase 8 — Genesis Release v0.0.1<br/>(release-era bracket — pending transcription)"]
+    Phase8["🏛️ Stage 9: Phase 8 — Vault UX Renaissance<br/>(Task 15: Pods, Lock Hardening & NavIntent · Task 16: Master-Detail & Claw-In)"]
+    Phase9["🥚 Stage 10: Phase 9 — Genesis Release & Origin Hardening<br/>(v0.0.1 — release-era bracket, pending transcription)"]
     Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -470,6 +471,56 @@ fetches follow the active identity only, quick-unlock works without setup,
 both gateway modes authenticate against the real endpoints, the rendered
 protocol diagram matches key-hierarchy-spec.md §2, and the docs portal
 deploys!
+```
+
+---
+
+
+## 🏛️ Stage 9: Phase 8 Prompt — Vault UX Renaissance [Baseline: v0.0.0.8 (Build 9)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-8-vault-ux-renaissance--master-detail-pure-pods--lock-hardening-baseline-v00008-build-9)
+> for complete specifications on **Task 15** and **Task 16**.
+> **📖 Required Context Files for Phase 8**:
+> 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail & pod invariants), §6 (Claw-in & identity-aware tools).
+> 2. [`database-schema.md`](./database-schema.md) — §3 (Schema v1 category semantics).
+> 3. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 8 (Tasks 15 & 16)**:
+
+```markdown
+# PHASE 8 EXECUTION: Vault UX Renaissance [Baseline: v0.0.0.8 (Build 9)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 8 (Task 15: Pods, Lock Hardening & NavIntent · Task 16: Master-Detail & Claw-In).
+- `ui-ux-design-system.md`: §5–§6 (master-detail architecture, pod invariants, gateway tools).
+- `database-schema.md`: §3 (category semantics).
+- `verification-gates.md`: §2–§3 (suites, gates).
+
+Execute Phase 8 adhering to the Functionality + UI Component pairing:
+
+### Task 15: [Functionality] Pod Normalization, Zero Hardcoded Pods, Lock Hardening & NavIntent
+- DEFAULT_ROOT_PODS = []; INITIAL_DEFAULT_COLORS = {} — zero hardcoded pods.
+- normalizePod() for ALL pod/category comparisons; targetPod + "/" prefix
+  for sub-pods.
+- Optimistic deletions; pod deletion cascades items to uncategorized ("").
+- isLocked guards on every mutation path (pods, items, dropdowns, menus).
+- NavIntent in sessionManager (sg_nav_intent): "landing" on manual logout,
+  "dashboard" + quick unlock on lock/reload.
+
+### Task 16: [UI Component] Master-Detail Dashboard, Claw-In Gateway & Identity-Aware Tools
+- Refactor tabs → VaultShell two-pane master-detail (ItemListPane +
+  ItemDetailPane) with unified ItemFormModal; responsive detail-pane/sheet.
+- Extract LobsterKeysTab component; drag-and-drop key files + stronger
+  key validation on the gateway.
+- Generator binds to current identity; TOTP issuer renamed to ShellGuard;
+  attractor-beacon philosophy in README.
+
+Verify a fresh vault renders zero pods and stays functional, Work/DevOps
+items match a Work filter, deleted pods vanish instantly with items
+cascading to uncategorized, mutations fail while locked, NavIntent routes
+correctly, the two-pane layout is responsive, dropped key files validate,
+and the issuer reads "ShellGuard"!
 ```
 
 ---

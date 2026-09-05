@@ -58,7 +58,33 @@ dual-mode AuthGateway** embedded in `LandingView`:
 - `BouncyBrand.tsx` — animated brand element (spring bounce on the shell mark).
 - `LandingView.tsx` — hero, feature grid (carbon-based-first UX, `lb-` agent
   key delegation), protocol education section, footer navigation.
-- VitePress documentation portal (`docs/`) with GitHub Pages deployment —
-  the public face mirrors the in-app design language.
+---
+
+## §5. Master-Detail Vault Architecture & Pod Invariants (Phase 8)
+
+- **Three-pane master-detail** (`VaultShell`, `ItemListPane`, `ItemDetailPane`,
+  unified `ItemFormModal`) replaces monolithic tabs — Bitwarden-style layout.
+- **Zero hardcoded pods (inviolable)**: `DEFAULT_ROOT_PODS = []`,
+  `INITIAL_DEFAULT_COLORS = {}`. Pods exist only when the user creates them or
+  assigns items to them. No "Personal", no "Work" — nothing.
+- **Pod normalization invariant**: ALL comparisons between tree paths and item
+  categories go through `normalizePod()`; sub-pod matches use
+  `targetPod + "/"` prefix semantics.
+- **Optimistic mutations**: local state updates immediately, then syncs;
+  pod deletion cascades items to uncategorized (`""`).
+- **Lock discipline**: every mutation path is guarded by `isLocked` —
+  pod management, item mutations, add-menus all deny while locked.
+- **`NavIntent`**: explicit navigation intent (`sg_nav_intent` in
+  sessionManager) — `"landing"` persists across manual logout,
+  `"dashboard"` with quick unlock on lock/reload.
+
+## §6. Claw-In Navigation & Identity-Aware Tools
+
+- Drag-and-drop key files onto the gateway; improved `hu-`/`lb-` key
+  validation before submission.
+- `LobsterKeysTab` extracted into its own dedicated component.
+- Generator configuration binds to the **current user identity**;
+  TOTP issuer defaults renamed to ShellGuard.
 
 ---
+

@@ -142,6 +142,17 @@ export default defineConfig({
             { text: 'Database Schema Ground Truth', link: '/reference/blueprint-schema' },
             { text: 'Reef Modernist Design System', link: '/reference/design-system' },
             { text: 'ClawStack Lexicon (Glossary)', link: '/reference/glossary' },
+            { text: 'Privacy Policy', link: '/privacy' },
+          ]
+        }
+      ],
+
+      '/privacy': [
+        {
+          text: 'Legal & Compliance',
+          items: [
+            { text: 'Privacy Policy', link: '/privacy' },
+            { text: 'ClawStack Lexicon (Glossary)', link: '/reference/glossary' },
           ]
         }
       ]
@@ -152,7 +163,7 @@ export default defineConfig({
     ],
 
     footer: {
-      message: 'Sovereign Zero-Knowledge Secrets Vault. Released under AGPL-3.0.',
+      message: 'Sovereign Zero-Knowledge Secrets Vault. Released under AGPL-3.0. • <a href="/ShellGuard/privacy">Privacy Policy</a>',
       copyright: 'Copyright © 2026 ClawStack Studios & CrustAgent©™'
     }
   }

@@ -61,7 +61,7 @@ ShellGuard compiles into a single multi-stage container (`node:20-alpine`) runni
 2. Verify that the server is healthy and the database is initialized:
    ```bash
    curl http://localhost:6464/api/health
-   # {"success":true,"service":"ShellGuard API","version":"0.0.1.7","mode":"sqlite","uptime":14.2,"counts":{"vaultPearls":0,"secureNotes":0,"sshKeys":0,"attachments":0,"agentKeys":0}}
+   # {"success":true,"service":"ShellGuard API","version":"0.0.1.8","mode":"sqlite","uptime":14.2,"counts":{"vaultPearls":0,"secureNotes":0,"sshKeys":0,"attachments":0,"agentKeys":0}}
    ```
 
 ### Step 3: Launch Vault & First-Time Molting

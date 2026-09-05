@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.1.8] - 2026-09-04
+
 ### Added
 - **Full Documentation Bridge Parity & Missing Index Hubs:** Built and integrated missing top-level index pages across the canonical documentation portal:
   - `docs/vault-features/index.md`: Hub for zero-knowledge vault features, Grotto pod hierarchy, Bitwarden-style custom fields, file attachments, generator, and import/export.

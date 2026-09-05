@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 3 transcribed (Baseline v0.0.0.3) — Phase 4: Per-Row Encryption & Port Molt pending (v0.0.0.4)"
+current_position: "Phase 4 transcribed (Baseline v0.0.0.4) — Phase 5: Per-Row Metadata Encryption & Port Molt pending (v0.0.0.5)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–3 transcribed · Phases 4–18 pending transcription"
+  features_completed: "Phases 1–4 transcribed · Phases 5–18 pending transcription"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -174,4 +174,58 @@ persist. Revocation never affects human sessions. Add
 > `requireHuman` surfaces; settings persist per owner across sessions.
 
 ---
+
+## Phase 4: Test Oracle, Container Deployment & License [Baseline: v0.0.0.4 (Build 5)]
+
+> Phase Feature Set Overview:
+> The app becomes provable and shippable. A Vitest + supertest harness lands
+> with per-suite `DATA_DIR` isolation (integration, security incl. cross-owner
+> isolation, vault-crud incl. the opacity invariant, settings, build gates);
+> the Bedrock learns to encrypt pre-existing plaintext databases in-place via
+> PRAGMA rekey; the repo is packaged as a multi-stage single-container image
+> with ghcr CI, compose stacks, an Unraid Community Applications template and
+> an agent skill document; the documentation suite is rebuilt truthful
+> (ARCHITECTURE, SECURITY, QUICKSTART, CONTRIBUTING, README, ROADMAP); the
+> integration wrinkles are fixed; and AGPL-3.0 is adopted with audit fixes.
+> *(Receipts: `f06fe7b`, `5246b7d`, `2a9b85a`, `7eeb265`, `695a092`, `f33a580`
+> — 2026-08-24/26. Task B pairs as an infrastructure component.)*
+
+- [ ] **Task 07: [Functionality] Test Harness with Per-Suite Isolation & In-Place Encryption Recognition**
+
+Description: Build the Vitest + supertest verification oracle:
+`tests/auth-flow.test.ts`, `tests/security.test.ts` (cross-owner isolation
+fails closed, opacity invariant, rate limits), `tests/vault-crud.test.ts`
+(uniform CRUD across all four domains), `tests/settings.test.ts`,
+`tests/build-gates.test.ts` (lint/type/build encoded as executable tests),
+and unit tests for the error handler. Helpers: `testDb.ts`, `testAuth.ts`,
+`testFactories.ts` — every suite gets its own `DATA_DIR` sandbox before the
+server module is dynamically imported. Fix the integration wrinkles
+(`695a092`): test wiring, schema validation, import paths. Teach the Bedrock
+connection to recognize a plaintext database created under an active
+`DB_ENCRYPTION_KEY` and encrypt it in-place via SQLCipher `PRAGMA rekey`
+(`f06fe7b`).
+
+> Success Criteria: All suites pass in isolation and in parallel with zero
+> shared state; a cross-owner access attempt fails in tests, proving tenancy;
+> a plaintext DB under an active key is transparently rekeyed to ciphertext.
+
+- [ ] **Task 08: [Infrastructure Component] Single-Container Packaging, ghcr CI, Unraid Template & Documentation Truthfulness**
+
+Description: Package the application as a multi-stage `node:20-alpine`
+single-container image with a `PUID`/`PGID`-aware entrypoint and healthcheck;
+publish to `ghcr.io/clawstackstudios/shellguard` via a `docker-publish.yml`
+workflow; provide prod/dev compose stacks and a `.dockerignore` that keeps
+the lockfile. Ship the Unraid Community Applications template (WebUI port,
+appdata bind mount, PUID 99/PGID 100 advanced defaults) and the agent skill
+document (`skills/shellguard/SKILL.md`). Rebuild the documentation suite
+truthful to the runtime: `ARCHITECTURE.md`, `SECURITY.md`, `QUICKSTART.md`,
+`CONTRIBUTING.md`, expanded `README.md`, `BLUEPRINT.md` schema-v1 accuracy.
+Adopt **AGPL-3.0** and fix npm audit findings.
+
+> Success Criteria: The image builds, boots on a fresh `DATA_DIR`, and passes
+> its healthcheck; CI publishes the image on push; the Unraid template
+> installs; every doc claim is backed by runtime behavior (docs = app).
+
+---
+
 

@@ -20,14 +20,17 @@ flowchart TD
     Phase1["🥚 Stage 2: Phase 1 — Scaffold, Auth & API Molt<br/>(Task 01: Full-Stack Scaffold & Ownership-Scoped API · Task 02: Landing UI, Header & AI Studio Molt)"]
     Phase2["🗄️ Stage 3: Phase 2 — SQLite Bedrock & Security Kernel<br/>(Task 03: Bedrock, Migrations, Audit & Kernel · Task 04: Envelope Unwrap & Twin-Port Runtime)"]
     Phase3["🔗 Stage 4: Phase 3 — Vault CRUD & Lobster Keys<br/>(Task 05: Validated CRUD & Ownership Scoping · Task 06: Lobster Keys Lifecycle & Settings)"]
-    Phase4["🧊 Stage 5: Phase 4 — Bedrock Hardening & Per-Row Encryption<br/>(v0.0.0.4 — pending transcription)"]
-    Summit["🏔️ … walk continues: Phases 3–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
+    Phase4["🧪 Stage 5: Phase 4 — Test Oracle & Container Deployment<br/>(Task 07: Test Harness & Rekey Recognition · Task 08: Container Packaging & Docs Truthfulness)"]
+    Phase5["🧊 Stage 6: Phase 5 — Per-Row Metadata Encryption & Port Molt<br/>(v0.0.0.5 — pending transcription)"]
+    Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
     UploadContext --> Phase1
     Phase1 --> Phase2
     Phase2 --> Phase3
-    Phase3 --> Summit
+    Phase3 --> Phase4
+    Phase4 --> Phase5
+    Phase5 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -252,6 +255,59 @@ closed, unvalidated bodies rejected, a minted agent key constrained to its
 permissions/rate limit/expiry, revoked keys rejected without touching human
 sessions, and settings persisting per owner!
 ```
+
+
+## 🧪 Stage 5: Phase 4 Prompt — Test Oracle, Container Deployment & License [Baseline: v0.0.0.4 (Build 5)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-4-test-oracle-container-deployment--license-baseline-v00004-build-5)
+> for complete specifications on **Task 07** and **Task 08**.
+> **📖 Required Context Files for Phase 4**:
+> 1. [`verification-gates.md`](./verification-gates.md) — §1 (Harness), §2 (Suites), §3 (Build gates).
+> 2. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations).
+> 3. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains).
+
+Copy and paste this prompt to execute **Phase 4 (Tasks 07 & 08)**:
+
+```markdown
+# PHASE 4 EXECUTION: Test Oracle, Container Deployment & License [Baseline: v0.0.0.4 (Build 5)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 4 (Task 07: Test Harness & Rekey Recognition · Task 08: Container Packaging & Docs Truthfulness).
+- `verification-gates.md`: §1–§3 (harness, suites, build gates).
+- `database-schema.md`: §1–§2 (DATA_DIR layout, migrations).
+- `routes-and-contracts.md`: §3 (vault domains & verb-permission map).
+
+Execute Phase 4 adhering to the Functionality + Infrastructure pairing:
+
+### Task 07: [Functionality] Test Harness with Per-Suite Isolation & In-Place Encryption Recognition
+- Build the Vitest + supertest oracle: auth-flow, security (cross-owner
+  isolation, opacity invariant, rate limits), vault-crud (all four domains),
+  settings, build-gates (lint/type/build as executable tests), error-handler
+  unit tests — with testDb/testAuth/testFactories helpers.
+- Per-suite `DATA_DIR` sandboxes created before dynamic server import; no
+  shared state, parallel-safe.
+- Fix integration wrinkles: test wiring, schema validation, import paths.
+- Bedrock connection recognizes a plaintext DB under an active
+  `DB_ENCRYPTION_KEY` and encrypts in-place via SQLCipher `PRAGMA rekey`.
+
+### Task 08: [Infrastructure Component] Single-Container Packaging, ghcr CI, Unraid Template & Documentation Truthfulness
+- Multi-stage `node:20-alpine` Dockerfile, PUID/PGID entrypoint, healthcheck;
+  docker-publish.yml → ghcr.io; prod/dev compose stacks; lockfile-keeping
+  .dockerignore.
+- Unraid Community Applications template + agent skill document
+  (`skills/shellguard/SKILL.md`).
+- Rebuild docs truthful to runtime: ARCHITECTURE, SECURITY, QUICKSTART,
+  CONTRIBUTING, README, BLUEPRINT schema-v1 accuracy.
+- Adopt AGPL-3.0; fix npm audit findings.
+
+Verify all suites pass in isolation and parallel with zero shared state,
+cross-owner access fails closed in tests, a plaintext DB rekeys transparently,
+the container builds and boots healthy on a fresh DATA_DIR, and every doc
+claim matches runtime behavior!
+```
+
+---
 
 ---
 

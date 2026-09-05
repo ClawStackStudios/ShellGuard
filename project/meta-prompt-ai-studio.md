@@ -26,7 +26,8 @@ flowchart TD
     Phase7["🐚 Stage 8: Phase 7 — Multi-Account, QuickLogin & Landing Gateway<br/>(Task 13: Session Manager & Multi-Account · Task 14: LandingView & AuthGateway)"]
     Phase8["🏛️ Stage 9: Phase 8 — Vault UX Renaissance<br/>(Task 15: Pods, Lock Hardening & NavIntent · Task 16: Master-Detail & Claw-In)"]
     Phase9["🥚 Stage 10: Phase 9 — Genesis Release & Origin Hardening<br/>(Task 17: Origin-Safety Fallbacks · Task 18: Genesis Release Protocol) 🏷️"]
-    Phase10["🔧 Stage 11: Phase 10 — Deployment Hotfixes & Dev Loop<br/>(v0.0.1.2 — pending transcription)"]
+    Phase10["🔧 Stage 11: Phase 10 — Deployment Hotfixes & Dev Loop<br/>(Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File) 🏷️"]
+    Phase11["🚀 Stage 12: Phase 11 — Release Publishing CI<br/>(v0.0.1.3 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -570,4 +571,45 @@ package.json agree!
 ```
 
 ---
+
+## 🔧 Stage 11: Phase 10 Prompt — Deployment Hotfixes & Dev-Loop Formalization [v0.0.1.2 (Build 11)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-10-deployment-hotfixes--dev-loop-formalization-v0012-build-11)
+> for complete specifications on **Task 19** and **Task 20**.
+> **📖 Required Context Files for Phase 10**:
+> 1. [`verification-gates.md`](./verification-gates.md) — §4 (Verification principle), §5 (Release protocol).
+
+Copy and paste this prompt to execute **Phase 10 (Tasks 19 & 20)**:
+
+```markdown
+# PHASE 10 EXECUTION: Deployment Hotfixes & Dev-Loop Formalization [v0.0.1.2 (Build 11)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 10 (Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File).
+- `verification-gates.md`: §4–§5 (verification principle, release protocol).
+
+Execute Phase 10 adhering to the Process + Release pairing:
+
+### Task 19: [Process Component] Full Development Loop Rules & Workflows
+- `.agents/rules/docs-hygiene.md`: docs evolve in the same change as the
+  code they describe; deferred doc updates are incomplete tasks.
+- `.agents/workflows/start-task.md`: branch isolation, memory-bank load,
+  receipt discipline.
+- `.agents/workflows/finish-task.md`: verification gates, handoff, commit
+  grammar.
+
+### Task 20: [Release Component] Rolling RELEASE File & Hotfix Version Bump
+- git mv RELEASE-v0.0.1.md RELEASE-v0.0.1.2.md; rewrite contents for the
+  hotfix — exactly one RELEASE-v*.md, forever.
+- package.json → 0.0.1.2; README version reference; CHANGELOG hotfix entry.
+- Follow the release grammar: tag → RELEASE doc → CHANGELOG → bump.
+
+Verify the repo contains exactly one RELEASE file named for the current
+version, the rules are agent-consumable as written, docs-hygiene is
+enforced by finish-task, and CHANGELOG and package.json agree!
+```
+
+---
+
 

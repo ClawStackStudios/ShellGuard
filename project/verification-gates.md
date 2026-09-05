@@ -44,3 +44,22 @@ Every phase in the spine ends with a verify line tied to these gates. The rule:
 prove, and the suites are updated in the same phase as the behavior they verify.
 
 ---
+
+## §5. The Release Protocol (release-era grammar)
+
+Established at genesis, formalized across release phases:
+
+1. **Rolling RELEASE file** — exactly one `RELEASE-v*.md` exists at any time.
+   Each release `git mv`s it upward (`RELEASE-v0.0.1.md` →
+   `RELEASE-v0.0.1.2.md` → …) and rewrites its contents — release notes are
+   never accumulated as separate files.
+2. **Release grammar**: tag `vX.Y.Z` → RELEASE doc rewritten → CHANGELOG
+   entry → `package.json` bump — in that order, with the commit ledger as
+   receipts. The RELEASE doc's feature list must match the roadmap's
+   transcribed phases for that bracket.
+3. **Dev-loop rules** (`.agents/`): `docs-hygiene` (documentation evolves in
+   the same change as the code it describes), `start-task` / `finish-task`
+   workflows — the agent contract that keeps docs and app welded together.
+
+---
+

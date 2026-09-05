@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 9 transcribed (Genesis v0.0.1 🏷️) — Phase 10: Deployment Hotfixes & Dev Loop pending (v0.0.1.2)"
+current_position: "Phase 10 transcribed (v0.0.1.2 🏷️) — Phase 11: Release Publishing CI pending (v0.0.1.3)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–9 transcribed (genesis tagged) · Release era in progress"
+  features_completed: "Phases 1–10 transcribed · Release era in progress"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -509,5 +509,49 @@ bump, in that order, with the commit ledger as receipts.
 > Success Criteria: The tag `v0.0.1` exists; `RELEASE-v0.0.1.md` documents
 > the sprint honestly (its feature list matches the roadmap Phases 1–8);
 > CHANGELOG and package.json agree; the released artifact builds and boots.
+
+
+## Phase 10: Deployment Hotfixes & Dev-Loop Formalization [v0.0.1.2 (Build 11)]
+
+> Phase Feature Set Overview:
+> The first post-genesis hotfix bracket — and the build system grows teeth.
+> The full development loop is formalized as agent-consumable rules and
+> workflows (`.agents/rules/docs-hygiene.md`, `.agents/workflows/start-task.md`
+> and `finish-task.md`) welding documentation to the code it describes. The
+> **rolling RELEASE file model is born**: `RELEASE-v0.0.1.md` is `git mv`'d
+> upward to `RELEASE-v0.0.1.2.md` and rewritten — release notes never
+> accumulate as separate files. Version bumps to `0.0.1.2` for deployment
+> hotfixes. *(Receipts: `7d513b0`, `753c913`, `841e0d7`, `1132a12` —
+> 2026-08-29. A pure process bracket: both tasks are process/release
+> components — the first phase with no runtime code.)*
+
+- [ ] **Task 19: [Process Component] Full Development Loop Rules & Workflows**
+
+Description: Formalize the agent development contract under `.agents/`:
+`rules/docs-hygiene.md` (documentation must evolve in the same change as the
+code it describes — deferred doc updates are incomplete tasks),
+`workflows/start-task.md` (branch isolation, memory-bank load, receipt
+discipline) and `workflows/finish-task.md` (verification gates, handoff,
+commit grammar). These rules govern every subsequent phase of this roadmap —
+including the transcription of the roadmap itself.
+
+> Success Criteria: The rules are agent-consumable as written; docs-hygiene
+> is enforced by the finish-task workflow; every later phase's commit trail
+> follows the start/finish grammar.
+
+- [ ] **Task 20: [Release Component] Rolling RELEASE File & Hotfix Version Bump**
+
+Description: Establish the rolling release-notes model: `git mv
+RELEASE-v0.0.1.md RELEASE-v0.0.1.2.md` and rewrite the contents for the
+hotfix — exactly one `RELEASE-v*.md` exists at any time, forever. Bump
+`package.json` to `0.0.1.2`, update `README.md` version reference, append
+the CHANGELOG hotfix entry. The tag `v0.0.1.2` follows the release grammar:
+tag → RELEASE doc → CHANGELOG → version bump.
+
+> Success Criteria: The repo contains exactly one RELEASE file, named for
+> the current version; CHANGELOG and package.json agree; the release grammar
+> of §5 of the verification oracle is followed exactly.
+
+---
 
 ---

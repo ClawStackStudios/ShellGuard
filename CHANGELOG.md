@@ -3,6 +3,13 @@
 ## [Unreleased]
 
 ### Added
+- **Full Documentation Bridge Parity & Missing Index Hubs:** Built and integrated missing top-level index pages across the canonical documentation portal:
+  - `docs/vault-features/index.md`: Hub for zero-knowledge vault features, Grotto pod hierarchy, Bitwarden-style custom fields, file attachments, generator, and import/export.
+  - `docs/deployment/index.md`: Hub for self-hosting infrastructure, unified container runtime, production environment variables matrix, and health check monitoring.
+  - `docs/reference/index.md`: Hub for database schemas, design tokens, terminology glossary, mobile companion, and legal compliance.
+- **Bitwarden-Style Custom Fields Documentation:** Documented in `docs/vault-features/the-grotto.md` covering all 4 field types (`Text`, `Hidden`, `Checkbox`, `Linked`) and client-side ShellCryption AAD namespaces (`vault_pearls_custom:{id}`).
+- **Native LAN TLS & WebCrypto Fallback Documentation:** Documented in `docs/deployment/reverse-proxy.md` and `docs/deployment/unraid.md` covering persistent self-signed EC P-256 certificate generation (`TLS_ENABLED=true`) and pure TypeScript WebCrypto fallback for insecure HTTP LAN IPs.
+- **ShellGuard-TOTP Android Backup Import Documentation:** Documented in `docs/vault-features/import-export.md` covering client-side format sniffing, interactive passphrase prompt, HKDF-SHA256/AES-GCM-256 decryption, AAD verification, and pod normalization.
 - **ShellGuard-TOTP Native Companion Documentation Suite:** Published comprehensive documentation portal for the Android 2FA companion under `docs/companion/`:
   - `docs/companion/index.md`: System topology, One-Way Mirror Sync architecture, Mermaid dataflow, and key capabilities.
   - `docs/companion/security.md`: Android KeyStore (TEE / StrongBox Keymaster), `BiometricPrompt` zero-exposure biometrics, `FLAG_SECURE` window screenshot protection, and in-memory cryptographic zeroization.
@@ -12,6 +19,10 @@
 - **Official Privacy Policy & Google Play Store Compliance:** Established canonical `docs/privacy.md` with explicit regulatory and technical disclosures (zero data collection, zero telemetry, local in-memory CameraX QR scanning, hardware Keystore biometric isolation, Storage Access Framework backups, and `FLAG_SECURE` window protection).
 - **Dedicated ShellGuard-TOTP Android Companion Specification:** Added Section 5 in the privacy policy with a direct deep-link anchor (`#shellguard-totp-android-companion`) and a Google Play Data Safety Fast-Card table for app store submission.
 - **VitePress & UI Navigation Touchpoints:** Integrated Privacy Policy into VitePress Reference sidebar, route mapping (`/privacy`), documentation footer, and the web application `LandingView` footer.
+
+### Fixed
+- **Database Schema Ground Truth Correction:** Fully reconciled `docs/reference/blueprint-schema.md` with actual migrations and runtime database tables: corrected `lobsters` table name (previously mislabeled `users`), primary keys (`id` vs `uuid`), `agent_keys` table name (previously `lobster_keys`), added `custom_fields` column, added indexes, and documented `audit_logs` in `audit.sqlite`.
+- **Health Check Documentation Parity:** Updated `docs/getting-started/quickstart.md` and `docs/deployment/index.md` with the exact JSON payload returned by `GET /api/health` from `server.ts`.
 
 ### Changed
 - **Test Engine Sequential Stability:** Configured `fileParallelism: false` in `vitest.config.ts` to prevent Express port and SQLite migration lock contention across full-suite test runs.

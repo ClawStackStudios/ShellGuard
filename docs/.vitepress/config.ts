@@ -112,6 +112,7 @@ export default defineConfig({
         {
           text: 'Vault Features',
           items: [
+            { text: 'Overview & Zero-Knowledge', link: '/vault-features/' },
             { text: 'The Grotto & Pods', link: '/vault-features/the-grotto' },
             { text: 'Password Attachments', link: '/vault-features/attachments' },
             { text: 'Pearl Password Generator', link: '/vault-features/pearl-generator' },
@@ -148,6 +149,7 @@ export default defineConfig({
         {
           text: 'Deployment & Operations',
           items: [
+            { text: 'Deployment Overview', link: '/deployment/' },
             { text: 'Docker & Compose Stacks', link: '/deployment/docker' },
             { text: 'Unraid Community Apps', link: '/deployment/unraid' },
             { text: 'Reverse Proxy & TLS', link: '/deployment/reverse-proxy' },
@@ -160,6 +162,7 @@ export default defineConfig({
         {
           text: 'Technical Reference',
           items: [
+            { text: 'Reference Overview', link: '/reference/' },
             { text: 'Database Schema Ground Truth', link: '/reference/blueprint-schema' },
             { text: 'Reef Modernist Design System', link: '/reference/design-system' },
             { text: 'ClawStack Lexicon (Glossary)', link: '/reference/glossary' },

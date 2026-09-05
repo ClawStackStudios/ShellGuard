@@ -90,23 +90,65 @@ flowchart LR
 ## 3-Step Rapid Onboarding
 
 <Steps>
-  <Step title="1. Launch the Container" number="1">
+  <Step title="1. Configure & Generate Keys" number="1">
+
+Generate your master database encryption key and SuperLobster admin token:
 
 ```bash
-# Generate DB Encryption Key (Layer 2 & 3)
+# Generate 256-bit DB Encryption Key (Layer 2 & 3)
 openssl rand -base64 32
 
-# Launch the unified container stack
-docker compose up -d --wait
+# Generate secure SuperLobster Admin Token
+openssl rand -hex 24
+```
+
+Create `docker-compose.yml` in your deployment directory:
+
+```yaml
+services:
+  shellguard:
+    image: ghcr.io/clawstackstudios/shellguard:latest
+    container_name: shellguard
+    restart: unless-stopped
+    ports:
+      - "6464:6464"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=6464
+      - DATA_DIR=/app/data
+      - DB_ENCRYPTION_KEY=YOUR_GENERATED_BASE64_KEY
+      - ADMIN_TOKEN=YOUR_GENERATED_ADMIN_TOKEN
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:6464/api/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
 ```
   </Step>
 
-  <Step title="2. Molt Your Human Identity Key" number="2">
-    Navigate to <a href="http://localhost:6464" target="_blank">http://localhost:6464</a>. Generate your sovereign 67-character <code>hu-</code> key and download your backup identity JSON. <b>There are no passwords or reset links.</b>
+  <Step title="2. Start & Verify the Container" number="2">
+
+Launch the container stack in detached mode and verify database connectivity:
+
+```bash
+# Launch the container stack
+docker compose up -d --wait
+
+# Confirm system health
+curl http://localhost:6464/api/health
+```
   </Step>
 
-  <Step title="3. Lock Your Pearls & Spawn Agents" number="3">
-    Store your logins, TOTP authenticators, and SSH credentials in The Grotto, then issue scoped <code>lb-</code> keys to your AI coding agents in <b>Settings &rarr; Agent Keys</b>.
+  <Step title="3. Launch Vault & Molt Your Identity" number="3">
+
+Open [http://localhost:6464](http://localhost:6464) in your web browser:
+
+1. **Molt Identity Key**: Generate your sovereign 67-character `hu-` master key and download your recovery identity JSON. **There are no central passwords, reset emails, or account recovery links.**
+2. **Lock Your Pearls**: Store passwords, TOTP authenticators, SSH keys, attachments, and custom fields in **The Grotto**.
+3. **Spawn AI Agents**: Issue scoped, revocable `lb-` LobsterKeys in **Settings &rarr; Agent Keys** for autonomous AI coding agents.
   </Step>
 </Steps>
 

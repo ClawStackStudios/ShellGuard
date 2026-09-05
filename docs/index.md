@@ -138,13 +138,13 @@ Launch the container stack in detached mode and verify database connectivity:
 docker compose up -d --wait
 
 # Confirm system health
-curl http://localhost:6464/api/health
+curl http://[IP-ADDRESS]:6464/api/health
 ```
   </Step>
 
   <Step title="3. Launch Vault & Molt Your Identity" number="3">
 
-Open [http://localhost:6464](http://localhost:6464) in your web browser:
+Open http://[IP-ADDRESS]:6464 in your web browser:
 
 1. **Molt Identity Key**: Generate your sovereign 67-character `hu-` master key and download your recovery identity JSON. **There are no central passwords, reset emails, or account recovery links.**
 2. **Lock Your Pearls**: Store passwords, TOTP authenticators, SSH keys, attachments, and custom fields in **The Grotto**.

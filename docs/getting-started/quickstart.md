@@ -10,31 +10,66 @@ Get your sovereign ShellGuard reef up and running in minutes using Docker Compos
 
 ShellGuard compiles into a single multi-stage container (`node:20-alpine`) running the Vite-built React UI and Express 5 API on port **`:6464`**.
 
-### 1. Generate an Encryption Key
-```bash
-# Generate 256-bit base64 key for Layer 2 (metadata) & Layer 3 (SQLCipher)
-openssl rand -base64 32
-```
+### Step 1: Configure & Generate Keys
 
-### 2. Configure Environment
-Create a `.env` file or export your variables:
-```bash
-DB_ENCRYPTION_KEY=your_generated_base64_key_here
-ADMIN_TOKEN=your_strong_admin_token_here
-PORT=6464
-```
+1. Create a directory for your deployment:
+   ```bash
+   mkdir -p shellguard && cd shellguard
+   ```
 
-### 3. Launch the Stack
-```bash
-docker compose up -d --wait
-```
+2. Generate the master database encryption key and SuperLobster admin token:
+   ```bash
+   # Generate 256-bit DB Encryption Key (Layer 2 metadata & Layer 3 SQLCipher)
+   openssl rand -base64 32
 
-### 4. Verify Reef Health
-```bash
-curl http://localhost:6464/api/health
-# {"success":true,"data":{"status":"ok","version":"0.0.1","database":"connected"}}
-```
-Open **[http://localhost:6464](http://localhost:6464)** in your web browser.
+   # Generate SuperLobster Admin Token
+   openssl rand -hex 24
+   ```
+
+3. Create `docker-compose.yml`:
+   ```yaml
+   services:
+     shellguard:
+       image: ghcr.io/clawstackstudios/shellguard:latest
+       container_name: shellguard
+       restart: unless-stopped
+       ports:
+         - "6464:6464"
+       volumes:
+         - ./data:/app/data
+       environment:
+         - NODE_ENV=production
+         - PORT=6464
+         - DATA_DIR=/app/data
+         - DB_ENCRYPTION_KEY=your_generated_base64_key_here
+         - ADMIN_TOKEN=your_generated_admin_token_here
+       healthcheck:
+         test: ["CMD", "wget", "-qO-", "http://localhost:6464/api/health"]
+         interval: 15s
+         timeout: 10s
+         retries: 5
+         start_period: 15s
+   ```
+
+### Step 2: Start & Verify the Container
+
+1. Launch the unified container stack in detached mode:
+   ```bash
+   docker compose up -d --wait
+   ```
+
+2. Verify that the server is healthy and the database is initialized:
+   ```bash
+   curl http://localhost:6464/api/health
+   # {"success":true,"service":"ShellGuard API","version":"0.0.1.7","mode":"sqlite","uptime":14.2,"counts":{"vaultPearls":0,"secureNotes":0,"sshKeys":0,"attachments":0,"agentKeys":0}}
+   ```
+
+### Step 3: Launch Vault & First-Time Molting
+
+1. Open **[http://localhost:6464](http://localhost:6464)** in your web browser.
+2. Click **Molt New Identity** to generate your sovereign 67-character `hu-` master key.
+3. Download and securely store your identity recovery JSON kit. **There are no central passwords, reset emails, or account recovery links.**
+4. Enter your vault dashboard (**The Grotto**) to begin storing secrets and issuing agent delegation keys.
 
 ---
 

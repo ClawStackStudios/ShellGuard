@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 1 transcribed (Baseline v0.0.0.1) — Phase 2: SQLite Bedrock & Security Kernel pending (v0.0.0.2)"
+current_position: "Phase 2 transcribed (Baseline v0.0.0.2) — Phase 3: Vault CRUD & Lobster Keys pending (v0.0.0.3)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phase 1 transcribed · Phases 2–18 pending transcription"
+  features_completed: "Phases 1–2 transcribed · Phases 3–18 pending transcription"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -71,10 +71,59 @@ three-pane master-detail dashboard arrives in a later phase.
 > Success Criteria: Landing shell renders on unified tokens; header is a reusable
 > component consumed by all top-level views; Hatch Vault button navigates to setup.
 
+## Phase 2: SQLite Bedrock, Security Kernel & Identity Bridge [Baseline: v0.0.0.2 (Build 3)]
+
+> Phase Feature Set Overview:
+> The vault gains its Bedrock and its armor. The storage layer is rebuilt as a
+> `DATA_DIR` sandbox — transactional SQL migrations with a tracked runner, WAL
+> pragmas, and a segregated append-only audit database with zero-knowledge
+> redaction. The server is armored with the Express 5 security kernel (helmet
+> CSP, CORS config, scoped body limits, per-route rate limiters, zod validation,
+> centralized error handler, HTTPS redirect, hardened TTL parser, constant-time
+> crypto utils). ShellKey identity endpoints (register/token) assemble the
+> kernel; the client learns to unwrap the uniform `{success, data}` envelope;
+> and the twin-port dev topology is pinned. *(Receipts: `10e3af9`, `302c17d`,
+> `df7b994`, `826ffbf`, `7f62ca9`, `227a747`, `5337e8e` — 2026-08-24/25.)*
+
+- [ ] **Task 03: [Functionality] SQLite Bedrock, Transactional Migrations, Audit DB & Security Kernel**
+
+Description: Swap the database driver to `better-sqlite3-multiple-ciphers`
+(enabling later SQLCipher at rest). Rebuild storage as the `DATA_DIR` bedrock:
+`migrations/0001_initial.{up,down}.sql` define clean schema v1 (`lobsters`,
+`api_tokens`, `vault_pearls`, `vault_secure_notes`, `vault_ssh_keys` — payload
+columns hold opaque ShellCryption ciphertext); `migrationRunner.ts` tracks
+`schema_migrations` with transactional all-or-nothing application; the legacy
+inline-DDL singleton and root `shellguard.db` are deleted; routers repoint at
+the database singleton. Add `scripts/scuttle-reset.ts` for fresh-start wipes.
+Create the segregated append-only `audit.sqlite` with `createAuditLogger()` —
+rows must NEVER carry vault payload or identity artifacts (fail-closed
+redaction on lookalike field names). Assemble the Express 5 security kernel:
+`httpsRedirect` → `helmet` (vault CSP) → CORS config → scoped body limits
+(1mb global / 32mb attachments) → global/auth/per-key rate limiters → zod
+validation → centralized error handler; plus hardened TTL parsing
+(`30m`/`12h`/`24h`/`7d`/`never`/ISO/bare-minutes) and constant-time comparison
+utilities. Add `POST /api/auth/register` and `POST /api/auth/token` — the
+server transmits and stores only SHA-256 key hashes, never plaintext keys.
+
+> Success Criteria: Fresh `DATA_DIR` boot creates schema v1 via tracked
+> transactional migrations; the audit DB exists as a separate file whose rows
+> redact sensitive details; the middleware chain orders correctly (auth before
+> rate limits); a key hash round-trips register → token issuance; plaintext
+> keys are rejected end-to-end.
+
+- [ ] **Task 04: [Integration Component] Client Envelope Unwrap, Session Handoff & Twin-Port Runtime**
+
+Description: Teach the client the server's language. `restAdapter.ts` unwraps
+the uniform `{success, data}` envelope centrally — views never parse raw
+responses. `LoginView.tsx` and `SetupView.tsx` consume the unwrapped session
+(`token`, `type`, `user`) handed back by the identity endpoints, and `App.tsx`
+routes on it. Pin the twin-port runtime topology: Vite dev server on
+`:4545` proxying `/api` to the API server on `:4646`, with `tsconfig` project
+references split for server/client compilation contexts.
+
+> Success Criteria: A register → login → vault-fetch journey works through the
+> unwrapped envelope; failed requests surface typed errors from the adapter;
+> the dev topology runs both processes concurrently with the proxy wired.
+
 ---
 
-<!-- Next: Phase 2 — SQLite Bedrock & Security Kernel [Baseline: v0.0.0.2 (Build 3)]
-     Receipts: 10e3af9 (multiple-ciphers driver), 302c17d (DATA_DIR bedrock +
-     transactional migrations + segregated audit db), df7b994 (singleton repoint),
-     826ffbf (Express 5 security kernel), 7f62ca9 (shellkey identity endpoints),
-     227a747 (envelope unwrap), 5337e8e (twin-port topology). -->

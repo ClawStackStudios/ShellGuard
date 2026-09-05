@@ -40,8 +40,9 @@ flowchart LR
 - **Client**: React 18 + Vite + Tailwind; environment config for ShellCryption and app URL.
 - **Server**: Express 5 + better-sqlite3 ("Bedrock"), `helmet`, CORS, zod validation.
 - **Ports (v0)**: twin-port topology — web `:4545`, API `:4646`.
-  *(Molted to `:6464` web / `:6565` API in Phase 2; production collapses to
-  a single port serving `dist/` + API.)*
+  *(Molted upward through later phases: `5353`/`5454`, then the final
+  `:6464` web / `:6565` API; production collapses to a single port
+  serving `dist/` + API.)*
 - **Database (v0)**: three tables — `lobsters` (users), `vault_pearls`
   (passwords, secure notes, cards, SSH keys), `lobster_keys` (agent keys).
 

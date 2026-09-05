@@ -18,13 +18,15 @@ flowchart TD
     Step0["🚀 Stage 0: The Void → 'First Build' Scaffold Prompt<br/>(Full-Stack Foundation: React/Vite + Express/SQLite + Security)"]
     UploadContext["📂 Stage 1: Upload Context Files into AI Studio Project"]
     Phase1["🥚 Stage 2: Phase 1 — Scaffold, Auth & API Molt<br/>(Task 01: Full-Stack Scaffold & Ownership-Scoped API · Task 02: Landing UI, Header & AI Studio Molt)"]
-    Phase2["🗄️ Stage 3: Phase 2 — SQLite Bedrock & Security Kernel<br/>(v0.0.0.2 — pending transcription)"]
+    Phase2["🗄️ Stage 3: Phase 2 — SQLite Bedrock & Security Kernel<br/>(Task 03: Bedrock, Migrations, Audit & Kernel · Task 04: Envelope Unwrap & Twin-Port Runtime)"]
+    Phase3["🔗 Stage 4: Phase 3 — Vault CRUD & Lobster Keys<br/>(v0.0.0.3 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 3–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
     UploadContext --> Phase1
     Phase1 --> Phase2
-    Phase2 --> Summit
+    Phase2 --> Phase3
+    Phase3 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -141,6 +143,66 @@ Execute Phase 1 adhering to the Functionality + UI Component pairing:
 Verify the server boots with all three tables, an `hu-` key authenticates,
 a vault item round-trips with ownership scoping, an `lb-` key is denied
 outside its permissions, and the landing shell renders on unified tokens!
+```
+
+
+## 🗄️ Stage 3: Phase 2 Prompt — SQLite Bedrock, Security Kernel & Identity Bridge [Baseline: v0.0.0.2 (Build 3)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-2-sqlite-bedrock-security-kernel--identity-bridge-baseline-v00002-build-3)
+> for complete specifications on **Task 03** and **Task 04**.
+> **📖 Required Context Files for Phase 2**:
+> 1. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations), §3 (Schema v1), §4 (Audit redaction).
+> 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §1 (Uniform envelope), §2 (Auth identity endpoints).
+> 3. [`architecture.md`](./architecture.md) — §4 (Invariants).
+
+Copy and paste this prompt to execute **Phase 2 (Tasks 03 & 04)**:
+
+```markdown
+# PHASE 2 EXECUTION: SQLite Bedrock, Security Kernel & Identity Bridge [Baseline: v0.0.0.2 (Build 3)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 2 (Task 03: Bedrock, Migrations, Audit DB & Security Kernel · Task 04: Envelope Unwrap & Twin-Port Runtime).
+- `database-schema.md`: §1–§4 (layout, migrations, schema v1, audit redaction).
+- `routes-and-contracts.md`: §1–§2 (uniform envelope, identity endpoints).
+- `architecture.md`: §4 (Threat Model & Invariants).
+
+Execute Phase 2 adhering to the Functionality + Integration pairing:
+
+### Task 03: [Functionality] SQLite Bedrock, Transactional Migrations, Audit DB & Security Kernel
+- Swap the database driver to `better-sqlite3-multiple-ciphers`.
+- Rebuild storage as the `DATA_DIR` bedrock:
+  - `migrations/0001_initial.{up,down}.sql` define clean schema v1
+    (`lobsters`, `api_tokens`, `vault_pearls`, `vault_secure_notes`,
+    `vault_ssh_keys`) — payload columns hold opaque ShellCryption ciphertext.
+  - `migrationRunner.ts` tracks `schema_migrations`, transactional application.
+  - Delete the legacy inline-DDL singleton and root `shellguard.db`;
+    repoint all routers at the database singleton.
+  - Add `scripts/scuttle-reset.ts` fresh-start wipe tooling.
+- Create the segregated append-only `audit.sqlite` with `createAuditLogger()`
+  enforcing the zero-knowledge redaction invariant (fail-closed on lookalike
+  field names).
+- Assemble the Express 5 security kernel in strict order:
+  `httpsRedirect` → `helmet` (vault CSP) → CORS config → scoped body limits
+  (1mb global / 32mb attachments) → global/auth/per-key rate limiters →
+  zod validation → centralized error handler.
+- Add hardened TTL parsing (`30m`/`12h`/`24h`/`7d`/`never`/ISO/bare-minutes)
+  and constant-time comparison utilities.
+- Add `POST /api/auth/register` and `POST /api/auth/token` — transmit and
+  store only SHA-256 key hashes, never plaintext keys.
+
+### Task 04: [Integration Component] Client Envelope Unwrap, Session Handoff & Twin-Port Runtime
+- `restAdapter.ts` unwraps the uniform `{success, data}` envelope centrally;
+  views never parse raw responses.
+- `LoginView.tsx` / `SetupView.tsx` consume the unwrapped session; `App.tsx`
+  routes on it.
+- Pin twin-port topology: Vite `:4545` proxying `/api` → API `:4646`, with
+  tsconfig project references split for server/client contexts.
+
+Verify a fresh `DATA_DIR` boot applies schema v1 transactionally, the audit DB
+redacts sensitive details, the middleware chain orders auth before rate limits,
+a key hash round-trips register → token, and the client completes a
+register → login → vault-fetch journey through the unwrapped envelope!
 ```
 
 ---

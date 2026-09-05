@@ -660,6 +660,7 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
             <a className="hover:text-[#e4048a] transition-colors" href="#features">Features</a>
             <a className="hover:text-[#e4048a] transition-colors" href="#security">Posture</a>
             <a className="hover:text-[#e4048a] transition-colors" href="#gateway">Gateway</a>
+            <a className="hover:text-[#e4048a] transition-colors" href="https://clawstackstudios.github.io/ShellGuard/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
           </div>
         </div>
       </footer>

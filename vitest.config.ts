@@ -29,5 +29,6 @@ export default defineConfig({
     hookTimeout: 30_000,
     // Each suite file owns its server singleton; keep files isolated from one another.
     isolate: true,
+    fileParallelism: false,
   },
 });

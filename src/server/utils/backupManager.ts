@@ -22,6 +22,7 @@ import crypto from 'crypto';
 import Database from 'better-sqlite3-multiple-ciphers';
 import type { Database as DB } from 'better-sqlite3-multiple-ciphers';
 import { DATA_DIR } from '../database/connection.js';
+import { getAppVersion } from './version.js';
 
 export const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 
@@ -90,7 +91,7 @@ export async function performBackup(
 
     const manifest: BackupManifest = {
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version ?? '0.0.0',
+      version: getAppVersion(),
       files: filesWritten.map(f => ({
         name: path.basename(f),
         sha256: sha256File(f),

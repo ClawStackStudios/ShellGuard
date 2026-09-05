@@ -38,12 +38,12 @@ When an administrator deletes a user, ShellGuard performs an atomic database tra
 1. **Confirmation Guard**: The admin must type the exact username to unlock the deletion button.
 2. **Server Double-Check**: The backend verifies `expect === target_username` before proceeding.
 3. **Atomic Purge**:
-   - `DELETE FROM users WHERE uuid = ?`
-   - `DELETE FROM user_tokens WHERE user_uuid = ?`
-   - `DELETE FROM lobster_keys WHERE owner_uuid = ?`
    - `DELETE FROM vault_pearls WHERE owner_uuid = ?`
    - `DELETE FROM vault_secure_notes WHERE owner_uuid = ?`
    - `DELETE FROM vault_ssh_keys WHERE owner_uuid = ?`
    - `DELETE FROM vault_secure_attachments WHERE owner_uuid = ?`
-   - `DELETE FROM user_settings WHERE user_uuid = ?`
+   - `DELETE FROM agent_keys WHERE owner_uuid = ?`
+   - `DELETE FROM api_tokens WHERE owner_uuid = ?`
+   - `DELETE FROM settings WHERE owner_uuid = ?`
+   - `DELETE FROM lobsters WHERE uuid = ?`
 4. **Forensic Log**: An `ADMIN_USER_DELETED` event is recorded in `audit.sqlite` with the actor sentinel `SUPERLOBSTER` and item counts prior to deletion.

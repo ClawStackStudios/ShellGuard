@@ -84,7 +84,7 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 | Prefix | Type | Scope | Storage |
 |---|---|---|---|
 | `hu-` | Human Identity Key (ShellKey©™) | One-Field login lookup; **seeds BOTH authentication AND ShellCryption** — the single most critical piece of data in your vault | Server DB (`key_hash` UNIQUE index, hash only) |
-| `lb-` | Lobster/Agent Key | Scoped automated access | Server DB (`lobster_keys`, hashed, revocable) |
+| `lb-` | Lobster/Agent Key | Scoped automated access | Server DB (`agent_keys`, hashed, revocable) |
 | `api-` | REST Session Token | API session access, TTL-bound | Server DB (`api_tokens`), short-lived |
 
 > [!CAUTION]
@@ -111,6 +111,8 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 - The `api-` token lives in `sessionStorage` under the exported constant `sg_api_token` — it evaporates on tab close, logout, or inactivity lock ("Retract").
 - The derived AES-GCM ShellCryption key is non-extractable and held only in session memory; closing the tab destroys it.
 - Encryption uses per-field random IVs and AAD bound to `table:recordId`, so ciphertexts cannot be transplanted between rows.
+- Custom Fields (`custom_fields`) adhere to the same zero-knowledge invariant: client-side AAD binds fields to `${table}:${recordId}:custom_fields`, ensuring tamper-resistant field integrity.
+- ShellGuard-TOTP Android Companion interop adheres to zero-knowledge parity; companion keys leverage hardware-backed Android KeyStore / StrongBox enclaves, and backup exports (`sgtotp.bak`) are encrypted end-to-end with AES-256-GCM.
 - Generator history stays in `sessionStorage`; preferences synced to the server are non-secret only (theme, generator defaults, pods, security timeout).
 - Exports of decrypted vault contents require **re-entering the `hu-` key** even mid-session (Settings → Import/Export).
 
@@ -328,7 +330,7 @@ These are written specifically for a **vault**: assume the attacker wants your p
 
 Instead, report privately:
 
-1. **Email**: Reach out to the maintainer directly (see GitHub profile).
+1. **Email**: Reach out to ClawStack Studios directly at `clawstackstudios@protonmail.com`.
 2. **Include**:
    - Description of the vulnerability
    - Steps to reproduce
@@ -405,7 +407,9 @@ The ciphers are equally strong either way. What differs is the transport guarant
 - **Full key system technicalities**: See [ARCHITECTURE.md § Key System Architecture](./ARCHITECTURE.md)
 - **Deployment instructions**: See [README.md § Running with Docker](./README.md) and [QUICKSTART.md](./QUICKSTART.md)
 - **Contribution security standards**: See [CONTRIBUTING.md](./CONTRIBUTING.md)
-- **ClawStack security alignment**: See [CRUSTSECURITY.md](./CRUSTSECURITY.md)
+- **Privacy Policy & Google Play compliance**: See [docs/privacy.md](./docs/privacy.md)
+- **Agent Customizations & Security Rules**: See [.agents/](file:///.agents/)
+- **Interactive Documentation Portal**: See [docs/](file:///docs/)
 
 ---
 

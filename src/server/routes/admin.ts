@@ -31,6 +31,7 @@ import { validateBody } from '../middleware/validate.js';
 import { AdminSchemas } from '../validation/schemas.js';
 import { adminAuthLimiter } from '../middleware/rateLimiter.js';
 import { performBackup, listBackups } from '../utils/backupManager.js';
+import { getAppVersion } from '../utils/version.js';
 
 const router = Router();
 
@@ -194,7 +195,7 @@ router.get('/status', requireAdmin, (_req, res) => {
   res.json({
     success: true,
     data: {
-      version: process.env.npm_package_version ?? '0.0.0',
+      version: getAppVersion(),
       nodeEnv: process.env.NODE_ENV ?? 'development',
       dbType: 'sqlite (better-sqlite3-multiple-ciphers)',
       sqlcipherActive: Boolean(process.env.DB_ENCRYPTION_KEY),

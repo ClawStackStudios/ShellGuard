@@ -1,4 +1,25 @@
 ---
+Date: 2026-09-05
+TaskRef: "Root Documentation Alignment & Runtime Version Resolver Parity"
+
+Learnings:
+- Discovered that reading `process.env.npm_package_version` in Node.js captures whatever version existed at the moment the process was launched by `npm`. For long-running server processes or direct `tsx` / Docker invocations without npm, this variable becomes stale or undefined (`0.0.0`).
+- Implemented `src/server/utils/version.ts` with `getAppVersion()` to dynamically resolve from `package.json` with multi-tier fallback, guaranteeing zero-drift version presentation across `/api/admin/status` (`v{status.version}` in SuperLobster panel), `/api/health`, and backup manifests.
+- Reconciled root documentation (`ARCHITECTURE.md`, `BLUEPRINT.md`, `SECURITY.md`, `README.md`, `CONTRIBUTING.md`, `ROADMAP.md`, `ADMIN.md`, `docs/superlobster/management.md`) against active schema truth (`agent_keys`, `lobsters`, `(owner_uuid, key)`, `custom_fields`), 14 Vitest suites (204 unit tests), and removed all dead links (`CRUSTSECURITY.md`, relative `CRUSTAGENT.md`).
+
+Difficulties:
+- Identifying why the admin panel was rendering `v0.0.1.7`: `process.env.npm_package_version` in running server processes was frozen to the environment set at boot time. Resolved by switching to dynamic file reads via `getAppVersion()`.
+
+Successes:
+- Reconciled all 8 root documentation files with ground-truth runtime reality.
+- Created `tests/unit/version.test.ts` (14/14 suites, 204 unit tests passed 100% green).
+- Passed full verification loop: `docs:build` (0 errors), `lint` (0 errors), `test` (100% green), `build` (0 errors).
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Dynamic `package.json` version resolver vs environment variable caching.
+---
+
+---
 Date: 2026-09-04
 TaskRef: "Prepare ShellGuard Release v0.0.1.8 (Privacy Policy, Mobile Companion Portal, Bridge Parity)"
 

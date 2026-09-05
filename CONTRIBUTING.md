@@ -138,13 +138,13 @@ git checkout -b feat/my-new-feature
 
 ## 📬 Submitting a Pull Request
 
-1. Run `npm run lint && npm run build` — zero errors required.
+1. Run `npm run lint && npm run build && npm run docs:build` — zero errors required.
 2. Run `npm run test:full` if you touched server behavior, auth, or validation.
 3. Ensure new API endpoints have Zod schemas in `src/server/validation/` and audit coverage in their handlers.
 4. Update [ARCHITECTURE.md](./ARCHITECTURE.md) if you added or moved files (especially `src/server/` structure) or introduced a deliberate ClawChives delta.
 5. Update [BLUEPRINT.md](./BLUEPRINT.md) for any schema v1 evolution (with its migration number).
 6. Update [ROADMAP.md](./ROADMAP.md) if your change completes or introduces a roadmap item.
-7. Update [CRUSTAGENT.md](./CRUSTAGENT.md) / [src/CRUSTAGENT.md](./src/CRUSTAGENT.md) phase tracking if you completed a phase item.
+7. Update [.agents/memory-bank/progress.md](file:///.agents/memory-bank/progress.md) and [src/CRUSTAGENT.md](./src/CRUSTAGENT.md) if you completed a roadmap phase item.
 8. Write a clear PR description: **what** changed, **why**, and **how to test**.
 9. Link any related GitHub Issues.
 
@@ -169,5 +169,8 @@ For **security vulnerabilities**, see [SECURITY.md § Reporting a Vulnerability]
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Architecture, patterns, and hard constraints
 - **[QUICKSTART.md](./QUICKSTART.md)** — First-hatch walkthrough
 - **[SECURITY.md](./SECURITY.md)** — Security policy and hardening guide
-- **[CRUSTSECURITY.md](./CRUSTSECURITY.md)** — ClawStack©™ standards alignment
+- **[BLUEPRINT.md](./BLUEPRINT.md)** — Schema v1 data reefs and migration truth
+- **[ADMIN.md](./ADMIN.md)** — SuperLobster Panel operational runbook & backup gates
 - **[ROADMAP.md](./ROADMAP.md)** — Current and future development direction
+- **[docs/](file:///docs/)** — Interactive documentation portal & Android companion guide
+- **[.agents/](file:///.agents/)** — Agent memory bank, behavioral rules, and release workflows

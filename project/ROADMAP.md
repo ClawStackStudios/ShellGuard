@@ -468,7 +468,7 @@ docs. Weave the attractor-beacon / data-survival philosophy into the README.
 ---
 
 
-## Phase 9: Genesis Release & Origin Hardening [v0.0.1 (Build 10) — 🏷️ First Tag]
+## Phase 9: Genesis Release & Origin Hardening [v0.0.1 (Build 10) — First Tag]
 
 > Phase Feature Set Overview:
 > The reef is born into the world. The README sheds ASCII art for its Unicode

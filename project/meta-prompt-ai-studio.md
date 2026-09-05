@@ -530,7 +530,7 @@ and the issuer reads "ShellGuard"!
 
 ## 🥚 Stage 10: Phase 9 Prompt — Genesis Release & Origin Hardening [v0.0.1 (Build 10) — 🏷️ First Tag]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-9-genesis-release--origin-hardening-v001-build-10--️-first-tag)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-9-genesis-release--origin-hardening-v001-build-10--first-tag)
 > for complete specifications on **Task 17** and **Task 18**.
 > **📖 Required Context Files for Phase 9**:
 > 1. [`architecture.md`](./architecture.md) — §1 (System role), §4 (Invariants).

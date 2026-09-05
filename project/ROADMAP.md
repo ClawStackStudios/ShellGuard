@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 6 transcribed (Baseline v0.0.0.6) — Phase 7: Multi-Account, QuickLogin & Landing Gateway pending (v0.0.0.7)"
+current_position: "Phase 7 transcribed (Baseline v0.0.0.7) — pre-genesis sprint COMPLETE. Phase 8: Genesis Release bracket v0.0.1 pending"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–6 transcribed · Phases 7–18 pending transcription"
+  features_completed: "Phases 1–7 transcribed (pre-genesis sprint complete) · Release era pending"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -344,5 +344,65 @@ document the plane across `README.md`, `ARCHITECTURE.md`, `SECURITY.md`,
 > DB; the UI fails gracefully when the panel does not exist (T1).
 
 ---
+
+---
+
+
+## Phase 7: Multi-Account, QuickLogin & Landing Gateway [Baseline: v0.0.0.7 (Build 8)]
+
+> Phase Feature Set Overview:
+> The client grows a face and a memory. `sessionManager.ts` introduces
+> client-side multi-account sessions with per-identity isolation and active
+> identity switching; `App.tsx` and `Header.tsx` refactor onto the new lobster
+> state model; `QuickLoginModal` delivers the lock/unlock surface for switching
+> known accounts or re-unlocking without full login; `LandingView` is rebuilt
+> as the branded hero with the compact dual-mode **AuthGateway** (ClawChives
+> pattern port — human `hu-` / agent `lb-` tabs) that doubles as protocol
+> education, rendering the actual key-lifecycle diagram and the invariant
+> verbatim: *"✅ hu- keys NEVER sent plaintext"*. The knowledge system molts
+> alongside: the memory bank is untracked from the repo (agent-internal state
+> stays local), `.env.example` gains a gitignore exception, and the VitePress
+> documentation portal deploys to GitHub Pages.
+> *(Core receipts: `5f777d7`, `8a89260`, `0d9f83c`, `b882ecb`, `0ed7f8a` —
+> 2026-08-27/28. Docs receipt: `09a36e2`. Build-system receipt: `bc5cfc2`.)*
+
+- [ ] **Task 13: [Functionality] Session Manager, Multi-Account State & Lock/Unlock Flow**
+
+Description: Implement `src/lib/sessionManager.ts`: client-side multi-account
+session store holding per-identity sessions (token, type, user profile) with
+identity isolation and active-identity switching. Refactor `App.tsx` and
+`Header.tsx` onto the new lobster state model — the active identity drives
+the vault data fetch, the header shows the account switcher, and login/setup
+flows write through the session manager. Add the QuickLogin flow state:
+locked/reload states resolve through `QuickLoginModal` (switch known accounts
+or re-unlock the current identity), improving auth state management across
+`LoginView`, `SetupView` and the vault view. Untrack the agent memory bank
+from the repo (`.claude/` stays local — agent-internal state never pollutes
+the canonical tree) and add `.env.example` to the gitignore exception list.
+
+> Success Criteria: Two identities can hold simultaneous sessions without
+> data bleed; switching the active identity re-fetches that identity's vault
+> only; a locked vault re-unlocks through the quick flow without re-entering
+> setup; the repo tree contains no agent-internal memory state.
+
+- [ ] **Task 14: [UI Component] LandingView Hero, Dual-Mode AuthGateway & VitePress Portal**
+
+Description: Rebuild `src/components/LandingView.tsx` as the branded landing:
+hero section, feature grid (carbon-based-first UX, `lb-` agent key
+delegation for sub-agents), and the compact **AuthGateway** (ClawChives
+pattern port) — dual tabs for human (`hu-`) and agent (`lb-`) authentication
+with monospace brand-colored key inputs and a Hatch CTA into the vault. The
+gateway doubles as education: render the actual key-lifecycle protocol
+diagram (`Client → generates(hu-key) → derives(AES-GCM-256) → hashes(SHA-256)
+→ POST /api/auth/register`) with the invariant stated verbatim. Polish
+`BouncyBrand.tsx` with spring-bounce brand motion. Ship the VitePress
+documentation suite (`docs/` with OpenClaw-inspired portal, themed Vue
+components, agent-integration and architecture sections) with a
+`deploy-docs.yml` GitHub Pages workflow.
+
+> Success Criteria: The gateway authenticates both modes against the real
+> endpoints; the rendered protocol diagram matches `key-hierarchy-spec.md`
+> §2 exactly; the docs portal builds and deploys; every landing claim is
+> backed by runtime behavior (docs = app).
 
 ---

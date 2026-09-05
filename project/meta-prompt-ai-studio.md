@@ -23,7 +23,8 @@ flowchart TD
     Phase4["🧪 Stage 5: Phase 4 — Test Oracle & Container Deployment<br/>(Task 07: Test Harness & Rekey Recognition · Task 08: Container Packaging & Docs Truthfulness)"]
     Phase5["🔐 Stage 6: Phase 5 — Per-Row Metadata Encryption & Port Molt<br/>(Task 09: Metadata Encryption & Guard Registry · Task 10: Port Molt & Triple-Layer Docs)"]
     Phase6["🦞 Stage 7: Phase 6 — SuperLobster Admin Plane<br/>(Task 11: Admin API & requireAdmin · Task 12: Panel Suite & Admin Gate)"]
-    Phase7["🐚 Stage 8: Phase 7 — Multi-Account, QuickLogin & Landing Gateway<br/>(v0.0.0.7 — pending transcription)"]
+    Phase7["🐚 Stage 8: Phase 7 — Multi-Account, QuickLogin & Landing Gateway<br/>(Task 13: Session Manager & Multi-Account · Task 14: LandingView & AuthGateway)"]
+    Phase8["🥚 Stage 9: Phase 8 — Genesis Release v0.0.1<br/>(release-era bracket — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -34,7 +35,8 @@ flowchart TD
     Phase4 --> Phase5
     Phase5 --> Phase6
     Phase6 --> Phase7
-    Phase7 --> Summit
+    Phase7 --> Phase8
+    Phase8 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -418,5 +420,56 @@ the panel renders each API section with graceful T1 failure!
 ```
 
 ---
+
+---
+
+
+## 🐚 Stage 8: Phase 7 Prompt — Multi-Account, QuickLogin & Landing Gateway [Baseline: v0.0.0.7 (Build 8)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-7-multi-account-quicklogin--landing-gateway-baseline-v00007-build-8)
+> for complete specifications on **Task 13** and **Task 14**.
+> **📖 Required Context Files for Phase 7**:
+> 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §1 (Tokens), §2 (Gateway pattern), §3 (Session UX), §4 (Brand motion).
+> 2. [`key-hierarchy-spec.md`](./key-hierarchy-spec.md) — §2 (Lifecycle rules).
+> 3. [`routes-and-contracts.md`](./routes-and-contracts.md) — §1–§2 (Envelope, identity endpoints).
+
+Copy and paste this prompt to execute **Phase 7 (Tasks 13 & 14)**:
+
+```markdown
+# PHASE 7 EXECUTION: Multi-Account, QuickLogin & Landing Gateway [Baseline: v0.0.0.7 (Build 8)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 7 (Task 13: Session Manager & Multi-Account State · Task 14: LandingView & AuthGateway).
+- `ui-ux-design-system.md`: §1–§4 (tokens, gateway pattern, session UX, brand motion).
+- `key-hierarchy-spec.md`: §2 (hu-/lb- lifecycle rules).
+- `routes-and-contracts.md`: §1–§2 (envelope, identity endpoints).
+
+Execute Phase 7 adhering to the Functionality + UI Component pairing:
+
+### Task 13: [Functionality] Session Manager, Multi-Account State & Lock/Unlock Flow
+- `src/lib/sessionManager.ts`: per-identity sessions (token, type, user),
+  identity isolation, active-identity switching.
+- Refactor `App.tsx` + `Header.tsx` onto the lobster state model; active
+  identity drives the vault fetch; header hosts the account switcher.
+- QuickLogin flow state: locked/reload resolves through QuickLoginModal
+  (switch known accounts or re-unlock current identity).
+- Untrack the agent memory bank from the repo; `.env.example` gitignore
+  exception.
+
+### Task 14: [UI Component] LandingView Hero, Dual-Mode AuthGateway & VitePress Portal
+- `LandingView.tsx`: hero, feature grid, compact dual-mode AuthGateway
+  (human hu- / agent lb- tabs, monospace brand inputs, Hatch CTA).
+- Render the key-lifecycle protocol diagram with the invariant verbatim:
+  "✅ hu- keys NEVER sent plaintext".
+- Polish `BouncyBrand.tsx` spring-bounce motion.
+- VitePress docs suite + deploy-docs.yml GitHub Pages workflow.
+
+Verify two identities hold simultaneous sessions without data bleed, vault
+fetches follow the active identity only, quick-unlock works without setup,
+both gateway modes authenticate against the real endpoints, the rendered
+protocol diagram matches key-hierarchy-spec.md §2, and the docs portal
+deploys!
+```
 
 ---

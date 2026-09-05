@@ -20,7 +20,7 @@ tests/data-*/
 *.sw?
 
 # Agents
-.agents/
-.claude/
-.clinerules/
+# .agents/
+# .claude/
+# .clinerules/
 .crustagent/

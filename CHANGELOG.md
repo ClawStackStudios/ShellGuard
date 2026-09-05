@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+- **Official Privacy Policy & Google Play Store Compliance:** Established canonical `docs/privacy.md` with explicit regulatory and technical disclosures (zero data collection, zero telemetry, local in-memory CameraX QR scanning, hardware Keystore biometric isolation, Storage Access Framework backups, and `FLAG_SECURE` window protection).
+- **Dedicated ShellGuard-TOTP Android Companion Specification:** Added Section 5 in the privacy policy with a direct deep-link anchor (`#shellguard-totp-android-companion`) and a Google Play Data Safety Fast-Card table for app store submission.
+- **VitePress & UI Navigation Touchpoints:** Integrated Privacy Policy into VitePress Reference sidebar, route mapping (`/privacy`), documentation footer, and the web application `LandingView` footer.
+
+### Changed
+- **Test Engine Sequential Stability:** Configured `fileParallelism: false` in `vitest.config.ts` to prevent Express port and SQLite migration lock contention across full-suite test runs.
+
 ## [0.0.1.7] - 2026-09-03
 
 ### Added

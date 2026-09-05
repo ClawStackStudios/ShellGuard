@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 5 transcribed (Baseline v0.0.0.5) — Phase 6: SuperLobster Admin Plane & Multi-Account pending (v0.0.0.6)"
+current_position: "Phase 6 transcribed (Baseline v0.0.0.6) — Phase 7: Multi-Account, QuickLogin & Landing Gateway pending (v0.0.0.7)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–5 transcribed · Phases 6–18 pending transcription"
+  features_completed: "Phases 1–6 transcribed · Phases 7–18 pending transcription"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -281,5 +281,68 @@ across `ARCHITECTURE.md`, `SECURITY.md`, `README.md`, `QUICKSTART.md` and
 > Success Criteria: A single grep finds no stale port references; the app
 > boots on the molted ports in dev, container and template contexts; the
 > docs' encryption model matches the runtime's three layers exactly.
+
+
+## Phase 6: SuperLobster Admin Plane [Baseline: v0.0.0.6 (Build 7)]
+
+> Phase Feature Set Overview:
+> The reef gets an operator. A token-gated instance-administration plane lands
+> at `/superlobster` — outside the zero-knowledge user model but strictly
+> fenced by its own threat model: no `ADMIN_TOKEN` ⇒ no panel (routes 503),
+> volatile in-memory sessions with 20-minute sliding expiry and an isolated
+> `httpOnly` cookie namespace, constant-time token verification, dedicated
+> rate limiting. The admin API covers lobster management with cascade
+> deletion, read-only diagnostics, whitelist-only settings, the segregated
+> audit log, and fail-safe Online-Backup-API snapshots with manifest +
+> rotation — no HTTP restore, offline `scripts/restore.ts` procedure instead.
+> The full panel suite ships as eight components plus the `BouncyBrand`
+> brand-motion component and the admin-login hash alias. The agent build
+> system also molts: the memory bank restructures under `.claude/`
+> *(build-system receipts: `eab0272`, `8f47b35`, `9eb0f7e`)*.
+> *(Core receipts: `5e789cc`, `4d23433` — 2026-08-27/28. First appearance of
+> `attachmentUtils.ts` — the attachments architecture begins here.)*
+
+- [ ] **Task 11: [Functionality] Admin API, requireAdmin Middleware & Offline Restore Validator**
+
+Description: Implement `src/server/middleware/requireAdmin.ts` with the
+T1/T2 threat model: routes return `503` without `ADMIN_TOKEN`; sessions are
+volatile in-memory with 20-minute sliding expiry; `sg_admin_session`
+`httpOnly`/`SameSite=Strict` cookie, separate from user Bearer tokens;
+constant-time token comparison; dedicated `adminAuthLimiter`. Implement
+`src/server/routes/admin.ts`: session auth (`POST /auth`, `GET /verify`,
+`POST /logout`), strict-metadata lobster list and cascade `DELETE /users/:uuid`,
+read-only `GET /status` and `GET /uptime`, whitelist-only
+`GET`/`PATCH /settings`, `GET /audit` against the segregated `audit.sqlite`,
+and fail-safe `POST /backup` (Online-Backup-API, manifest + rotation) with
+`GET /backups` — never swapping, restoring or deleting the audit DB over
+HTTP. Add `scripts/restore.ts` as the offline restore validator and
+`ADMIN.md` documenting the secrets-aware threat model. The Bedrock
+connection gains the audit-db segregation guard. First sprout of
+`src/lib/attachmentUtils.ts` (attachment helpers) for panel metrics.
+
+> Success Criteria: Without `ADMIN_TOKEN` every admin route returns `503`;
+> a restart invalidates all admin sessions; non-constant-time comparison is
+> absent; restore is impossible over HTTP; a failed backup never corrupts
+> the live database; settings edits fail closed outside the whitelist.
+
+- [ ] **Task 12: [UI Component] SuperLobster Panel Suite, Admin Gate & BouncyBrand**
+
+Description: Implement the eight-component admin suite under
+`src/components/Admin/`: `SuperLobsterContext` (volatile session state +
+verify loop), `SuperLobsterLogin` (token gate with the admin-login hash
+alias), `SuperLobsterPanel` (tabbed shell), `SuperLobsterStatus`
+(diagnostics + uptime), `SuperLobsterUsers` (strict-metadata management +
+cascade delete), `SuperLobsterSettings` (whitelist-only editor),
+`SuperLobsterAudit` (log viewer) and `SuperLobsterBackups` (snapshot
+trigger + manifest). Add `src/components/ui/BouncyBrand.tsx` as the
+brand-motion component. Update `App.tsx` routing for `/superlobster` and
+document the plane across `README.md`, `ARCHITECTURE.md`, `SECURITY.md`,
+`QUICKSTART.md`, `BLUEPRINT.md` and `.env.example`.
+
+> Success Criteria: The panel is unreachable without a valid admin session;
+> every tab reflects its API section; the audit viewer reads the segregated
+> DB; the UI fails gracefully when the panel does not exist (T1).
+
+---
 
 ---

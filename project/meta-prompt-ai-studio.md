@@ -22,7 +22,8 @@ flowchart TD
     Phase3["🔗 Stage 4: Phase 3 — Vault CRUD & Lobster Keys<br/>(Task 05: Validated CRUD & Ownership Scoping · Task 06: Lobster Keys Lifecycle & Settings)"]
     Phase4["🧪 Stage 5: Phase 4 — Test Oracle & Container Deployment<br/>(Task 07: Test Harness & Rekey Recognition · Task 08: Container Packaging & Docs Truthfulness)"]
     Phase5["🔐 Stage 6: Phase 5 — Per-Row Metadata Encryption & Port Molt<br/>(Task 09: Metadata Encryption & Guard Registry · Task 10: Port Molt & Triple-Layer Docs)"]
-    Phase6["🦞 Stage 7: Phase 6 — SuperLobster Admin Plane & Multi-Account<br/>(v0.0.0.6 — pending transcription)"]
+    Phase6["🦞 Stage 7: Phase 6 — SuperLobster Admin Plane<br/>(Task 11: Admin API & requireAdmin · Task 12: Panel Suite & Admin Gate)"]
+    Phase7["🐚 Stage 8: Phase 7 — Multi-Account, QuickLogin & Landing Gateway<br/>(v0.0.0.7 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -32,7 +33,8 @@ flowchart TD
     Phase3 --> Phase4
     Phase4 --> Phase5
     Phase5 --> Phase6
-    Phase6 --> Summit
+    Phase6 --> Phase7
+    Phase7 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -364,5 +366,57 @@ decrypting transparently, ShellCryption columns remain byte-for-byte
 untouched, the no-op mode works without a key, no stale port references
 remain, and the docs' encryption model matches runtime exactly!
 ```
+
+
+## 🦞 Stage 7: Phase 6 Prompt — SuperLobster Admin Plane [Baseline: v0.0.0.6 (Build 7)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-6-superlobster-admin-plane-baseline-v00006-build-7)
+> for complete specifications on **Task 11** and **Task 12**.
+> **📖 Required Context Files for Phase 6**:
+> 1. [`admin-suite-spec.md`](./admin-suite-spec.md) — §1–§4 (threat model, API, inviolable rules, component architecture).
+> 2. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+> 3. [`routes-and-contracts.md`](./routes-and-contracts.md) — §1 (Uniform envelope).
+
+Copy and paste this prompt to execute **Phase 6 (Tasks 11 & 12)**:
+
+```markdown
+# PHASE 6 EXECUTION: SuperLobster Admin Plane [Baseline: v0.0.0.6 (Build 7)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 6 (Task 11: Admin API & requireAdmin · Task 12: Panel Suite & Admin Gate).
+- `admin-suite-spec.md`: §1–§4 (T1/T2 threat model, admin API, inviolable rules, components).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+- `routes-and-contracts.md`: §1 (uniform envelope).
+
+Execute Phase 6 adhering to the Functionality + UI Component pairing:
+
+### Task 11: [Functionality] Admin API, requireAdmin Middleware & Offline Restore Validator
+- `requireAdmin.ts`: T1 (no ADMIN_TOKEN ⇒ 503), T2 (volatile in-memory
+  sessions, 20-min sliding expiry, sg_admin_session httpOnly/SameSite=Strict
+  cookie separate from Bearer tokens), constant-time comparison,
+  dedicated adminAuthLimiter.
+- `admin.ts`: POST /auth, GET /verify, POST /logout; strict-metadata
+  GET /users + cascade DELETE /users/:uuid; GET /status, /uptime;
+  whitelist-only GET/PATCH /settings; GET /audit (segregated audit.sqlite);
+  fail-safe POST /backup (Online-Backup-API, manifest + rotation) +
+  GET /backups. Never swap/restore/delete the audit DB over HTTP.
+- `scripts/restore.ts` offline restore validator; ADMIN.md threat model doc.
+- First sprout of `src/lib/attachmentUtils.ts`.
+
+### Task 12: [UI Component] SuperLobster Panel Suite, Admin Gate & BouncyBrand
+- Eight components under `src/components/Admin/`: Context, Login (hash
+  alias), Panel (tabs), Status, Users, Settings, Audit, Backups.
+- `src/components/ui/BouncyBrand.tsx` brand-motion component.
+- `App.tsx` routing for /superlobster; docs across README, ARCHITECTURE,
+  SECURITY, QUICKSTART, BLUEPRINT, .env.example.
+
+Verify every admin route returns 503 without ADMIN_TOKEN, a restart kills
+all admin sessions, restore is impossible over HTTP, a failed backup never
+touches the live DB, settings edits fail closed outside the whitelist, and
+the panel renders each API section with graceful T1 failure!
+```
+
+---
 
 ---

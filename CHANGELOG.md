@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Changed
+- **Root Documentation Systemic Alignment:** Reconciled `ARCHITECTURE.md`, `BLUEPRINT.md`, `SECURITY.md`, `README.md`, `CONTRIBUTING.md`, `ROADMAP.md`, `ADMIN.md`, and `docs/superlobster/management.md` to reflect runtime schema truth (`agent_keys`, `lobsters`, `(owner_uuid, key)`, `custom_fields`), 14 Vitest suites (204 unit tests), Bitwarden-style Custom Fields, Native LAN TLS, pure-TS WebCrypto fallback engine, `sgtotp.bak` Android backup imports, and Zero-Waste Release Automation.
+- **Dead Link Remediation:** Replaced legacy/broken references to `CRUSTSECURITY.md` and relative `CRUSTAGENT.md` across root documentation with canonical links to `docs/`, `docs/privacy.md`, `.agents/`, and `src/CRUSTAGENT.md`.
+- **Dynamic Application Version Resolver:** Introduced `src/server/utils/version.ts` (`getAppVersion()`) dynamically resolving from `package.json` with multi-tier fallback, replacing fragile environment variable reads in `src/server/routes/admin.ts`, `src/server/utils/backupManager.ts`, and `server.ts` to ensure consistent `v0.0.1.8` presentation in the SuperLobster Admin Panel.
+- **Package Lockfile Parity:** Synchronized top-level package version in `package-lock.json` to `0.0.1.8`.
+
+### Added
+- **Version Resolver Unit Tests:** Added `tests/unit/version.test.ts` asserting semver compliance and package ground-truth matching.
+
 ## [0.0.1.8] - 2026-09-04
 
 ### Added

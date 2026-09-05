@@ -30,6 +30,7 @@ import settingsRoutes    from './src/server/routes/settings.js';
 import adminRoutes       from './src/server/routes/admin.js';
 import { performBackup } from './src/server/utils/backupManager.js';
 import { ensureTlsMaterials } from './src/server/utils/tlsManager.js';
+import { getAppVersion } from './src/server/utils/version.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -175,11 +176,9 @@ app.get('/api/health', (_req, res) => {
     attachments:   (db.prepare('SELECT COUNT(*) as c FROM vault_secure_attachments').get() as any).c,
     agentKeys:     (db.prepare("SELECT COUNT(*) as c FROM agent_keys WHERE is_active = 1").get() as any).c,
   };
-  const pkgPath = path.join(process.cwd(), 'package.json');
-  const pkgVersion = fs.existsSync(pkgPath) ? JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version : 'unknown';
 
   res.json({
-    success: true, service: 'ShellGuard API', version: pkgVersion,
+    success: true, service: 'ShellGuard API', version: getAppVersion(),
     mode: 'sqlite', uptime: process.uptime(), counts,
   });
 });

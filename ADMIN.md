@@ -86,9 +86,9 @@ Vaultwarden gave its admin panel full config-editing power because container ope
 
 **No HTTP restore endpoint.** Stop → place file in `DATA_DIR` → set `DB_ENCRYPTION_KEY` → start. `scuttle:restore` helper validates (file opens with key, schema check) and prints instructions; never auto-swaps. WAL hygiene documented. `audit.sqlite` survives restores.
 
-### 3.4 User Export/Import (Tier 1 — already exists)
+### 3.4 User Export/Import (Tier 1 — Recovery & Sync)
 
-`ImportExportView.tsx`: CSV metadata export + hu-key-gated JSON export/import. Primary recovery path.
+`ImportExportView.tsx`: CSV metadata export + hu-key-gated decrypted/encrypted JSON export/import, plus native `sgtotp.bak` backup container import from the [ShellGuard-TOTP](https://github.com/ClawStackStudios/ShellGuard-TOTP) Android companion. Primary user-level recovery and offline sync path.
 
 ---
 

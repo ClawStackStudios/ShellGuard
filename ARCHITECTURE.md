@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.1. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.1.8. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 
@@ -34,7 +34,7 @@
 ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
-├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.1)
+├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.1.8)
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
@@ -46,28 +46,58 @@ ShellGuard/
 ├── 🐳 docker-entrypoint.sh            # PUID/PGID remap, chown DATA_DIR, su-exec privilege drop
 ├── 📄 .dockerignore                   # Excludes node_modules/.git/dist/data — keeps the lockfile IN
 ├── 📄 shellguard-unraid-template.xml  # Community Applications template
-├── ⚙️ .github/workflows/docker-publish.yml  # CI → ghcr.io/clawstackstudios/shellguard
+│
+├── ⚙️ .github/workflows/
+│   ├── docker-publish.yml             # Container build & publish to GHCR
+│   ├── release.yml                    # Zero-waste release pipeline with chained mirror synchronization
+│   └── deploy-docs.yml                # Automated VitePress docs deployment to GitHub Pages
+│
+├── 📚 docs/                           # Canonical VitePress Documentation Portal
+│   ├── .vitepress/config.ts           # Navigation, sidebar hierarchies, and theme tokens
+│   ├── index.md                       # Documentation landing & 3-step rapid onboarding
+│   ├── privacy.md                     # Official Privacy Policy (Google Play compliant)
+│   ├── getting-started/               # Quickstart & setup guides
+│   ├── vault-features/                # Grotto, Custom Fields, Attachments, Generator, Imports
+│   ├── deployment/                    # Docker, Unraid, Reverse Proxy & Native LAN TLS
+│   ├── reference/                     # Blueprint schema, design system, glossary
+│   └── companion/                     # ShellGuard-TOTP Android Companion Documentation Suite
+│
+├── 🤖 .agents/                        # Antigravity Agent Customization Architecture
+│   ├── memory-bank/                   # Persistent architectural context, progress, and learnings
+│   ├── rules/                         # Behavioral guardrails, git hygiene, docs hygiene
+│   ├── skills/                        # Procedural capabilities (e.g. ui-webdev)
+│   ├── templates/                     # Standardized scaffolds (e.g. release-template.md)
+│   └── workflows/                     # Interactive protocols (draft-release, version-update, start-task)
 │
 ├── 🗄️ migrations/
-│   ├── 0001_initial.up.sql            # Schema v1 baseline (lobsters, vault_*, settings…)
+│   ├── 0001_initial.up.sql            # Schema v1 baseline (lobsters, vault_*, agent_keys, settings…)
 │   ├── 0001_initial.down.sql          # Rollback
 │   ├── 0002_metadata_encryption.up.sql   # Per-row metadata encryption support
-│   └── 0002_metadata_encryption.down.sql # Rollback metadata encryption
+│   ├── 0002_metadata_encryption.down.sql # Rollback metadata encryption
+│   ├── 0003_custom_fields.up.sql      # Bitwarden-style Custom Fields (TEXT default '[]')
+│   └── 0003_custom_fields.down.sql    # Rollback custom fields
 │
 ├── 🔧 scripts/
 │   ├── scuttle-reset.ts               # Scuttles data-dev/ or data/ (--env production|development)
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # Vitest + supertest suites, per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 13 Vitest + supertest suites, per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
 │   ├── vault-crud.test.ts             # Envelope shapes + opacity invariant
-│   ├── settings.test.ts
-│   ├── metadata-encryption.test.ts    # Per-row AES-256-GCM: unit crypto, API round-trip,
-│   │                                  # backward-compat passthrough
-│   └── build-gates.test.ts            # Asserts Dockerfile/config shape before CI does
+│   ├── settings.test.ts               # Per-user KV read/write & human-only enforcement
+│   ├── metadata-encryption.test.ts    # Per-row AES-256-GCM unit crypto & API round-trip
+│   ├── admin.test.ts                  # SuperLobster Panel auth, session & backup gates
+│   ├── tls.test.ts                    # Native LAN TLS generation & redirect checks
+│   ├── build-gates.test.ts            # Asserts Dockerfile/config shape before CI does
+│   └── unit/                          # Isolated unit test suites
+│       ├── customFields.test.ts       # 4 custom field types & client AAD namespaces
+│       ├── sessionManager.test.ts     # Multi-account session & reload navigation intent
+│       ├── sgtotpBackup.test.ts       # ShellGuard-TOTP backup decryption & pod mapping
+│       ├── webCryptoFallback.test.ts  # Pure TS WebCrypto engine for plain-HTTP LAN
+│       └── middleware/errorHandler.test.ts # Zod, UNIQUE, FK, and prod masking gates
 │
 └── src/
     ├── config/                        # ◀ Server-side configuration
@@ -92,13 +122,13 @@ ShellGuard/
     │   │   └── httpsRedirect.ts       #   ENFORCE_HTTPS redirect behind TRUST_PROXY awareness
     │   ├── routes/
     │   │   ├── auth.ts                #   register/token/validate (+ SG-only me/profile)
-    │   │   ├── vault.ts               #   Pearl logins CRUD
-    │   │   ├── notes.ts               #   Secure notes CRUD
-    │   │   ├── sshKeys.ts             #   SSH key CRUD
+    │   │   ├── vault.ts               #   Pearl logins CRUD (with custom_fields support)
+    │   │   ├── notes.ts               #   Secure notes CRUD (with custom_fields support)
+    │   │   ├── sshKeys.ts             #   SSH key CRUD (with custom_fields support)
     │   │   ├── attachments.ts         #   Attachment CRUD (32mb body limit here only)
     │   │   ├── agentKeys.ts           #   LobsterKeys©™ lifecycle (create/revoke/delete)
     │   │   ├── settings.ts            #   Per-user KV preferences
-    │   │   ├── admin.ts               #   SuperLobster Panel API (ADMIN_TOKEN cookie-session; ADMIN.md)
+    │   │   └── admin.ts               #   SuperLobster Panel API (ADMIN_TOKEN cookie-session; ADMIN.md)
     │   ├── utils/
     │   │   ├── auditLogger.ts         #   audit.log() with extended redaction list (delta #2)
     │   │   ├── crypto.ts              #   generateString/generateId/constantTimeCompare
@@ -106,12 +136,15 @@ ShellGuard/
     │   │   ├── parsers.ts             #   Row mappers (incl. parseAgentKey)
     │   │   ├── fieldEncryption.ts     #   Per-row AES-256-GCM metadata encryption,
     │   │   │                          #   HKDF key derivation, singleton fieldCipher
-    │   │   └── metadataGuard.ts       #   Column registry, prepareWrite/prepareRead/
-    │   │                              #   prepareReadAll helpers
+    │   │   ├── metadataGuard.ts       #   Column registry, prepareWrite/prepareRead/
+    │   │   │                          #   prepareReadAll helpers
+    │   │   ├── version.ts             #   Ground-truth application version resolver
+    │   │   └── tls.ts                 #   Native EC P-256 LAN TLS self-signed cert engine
     │   └── validation/schemas.ts      #   AuthSchemas + entity schemas (title ≤255, url ≤2048…)
     │
     ├── lib/                           # ◀ Client crypto & utilities
     │   ├── shellCryption.ts           #   HKDF(hu-, uuid) → AES-GCM-256; {v,alg,iv,ct,aad} blobs
+    │   ├── customFields.ts            #   Bitwarden-style custom fields schema & AAD binders
     │   ├── crypto.ts                  #   hashToken (SHA-256), rejection-sampling key generation
     │   ├── generator.ts               #   Password generator, complexity scoring, TOTP helpers
     │   ├── podUtils.ts                #   Nested pod (folder) tree, colors, counts
@@ -130,7 +163,7 @@ ShellGuard/
     │
     ├── services/api/restAdapter.ts    # ◀ HTTP adapter: unwraps {success,data}, Bearer injection,
     │                                  #   exported ApiError + SESSION_KEYS constants
-    ├── types.ts                       #   Shared interfaces (VaultItem, SecureNote, SshKey…)
+    ├── types.ts                       #   Shared interfaces (VaultItem, SecureNote, SshKey, CustomField…)
     ├── App.tsx                        #   Root view router (~25 REST call sites)
     └── main.tsx                       #   React mount point
 ```
@@ -355,7 +388,7 @@ classDiagram
 
 ✓ lb- keys MUST use browser crypto.getRandomValues()
   └─ Same entropy profile, generated in Settings → Agent Keys
-  └─ Hashed before storage in lobster_keys.api_key
+  └─ Hashed before storage in agent_keys.api_key
 
 ✓ api- tokens MUST use server crypto.randomBytes()
   └─ 16 bytes entropy → 32 hex chars, prefixed "api-"
@@ -616,11 +649,18 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `security.test.ts` | **Cross-owner isolation (highest-value invariant)**, permission-bypass attempts, `hu-`/`lb-`/`api-` format enforcement, entropy assertions, 6 bad logins → 429 |
 | `vault-crud.test.ts` | Envelope shapes, **opacity invariant** (server stores client blob byte-for-byte, decryptable by nobody server-side), attachment size rejection |
 | `settings.test.ts` | Per-user KV read/write, human-only enforcement |
-| `unit/errorHandler.test.ts` | Parse→400, UNIQUE→409, FK→400, prod-safe 500 |
 | `metadata-encryption.test.ts` | Per-row AES-256-GCM: unit crypto, API round-trip, backward-compat passthrough |
+| `admin.test.ts` | SuperLobster Panel auth, session cookie lifecycle, whitelist settings, and backup gates |
+| `tls.test.ts` | Native LAN TLS self-signed certificate generation, SAN validation, and HTTP-to-HTTPS redirect |
 | `build-gates.test.ts` | Dockerfile/config shape gates before CI publishes |
+| `unit/middleware/errorHandler.test.ts` | Parse→400, UNIQUE→409, FK→400, prod-safe 500 |
+| `unit/customFields.test.ts` | 4 custom field types (text, hidden, boolean, linked), validation, and AAD binding |
+| `unit/sessionManager.test.ts` | Multi-account session management, key switching, and page reload navigation persistence |
+| `unit/sgtotpBackup.test.ts` | ShellGuard-TOTP Android companion backup container decryption, payload validation, and pod mapping |
+| `unit/webCryptoFallback.test.ts` | Pure TypeScript WebCrypto fallback engine (HKDF, PBKDF2, AES-256-GCM, SHA-256) for non-secure HTTP LAN |
+| `unit/version.test.ts` | Dynamic ground-truth version resolution and semver structure validation |
 
-Run them: `npm test` (all), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 14 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 
@@ -641,8 +681,13 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 9 | `src/config/corsConfig.ts` in TypeScript (CC ships `.js`) | Strict-TS codebase |
 | 10 | Lockfile kept out of `.dockerignore`; `npm ci` in images | CC's exclusion is a reproducibility bug worth not inheriting |
 | 11 | PUT→`canEdit`, POST→`canWrite`, DELETE→`canDelete`, GET→`canRead` | CC permission convention; safe due to fresh start |
-| 12 | No admin routes/`requireAdmin`/admin UI this cycle | Deferred per locked decision — see [ROADMAP.md](./ROADMAP.md) |
+| 12 | SuperLobster Admin Panel (`/admin`, `ADMIN_TOKEN`, cookie session, whitelist-only settings, zero plaintext vault access) | Production administration and database backups without exposing client secrets — see [ADMIN.md](./ADMIN.md) |
 | 13 | Per-row metadata encryption (AES-256-GCM) of title/username/url/category/notes/file_name via DB_ENCRYPTION_KEY | Defense-in-depth: agents see decrypted metadata but never secrets; stolen DB files have encrypted metadata even without SQLCipher |
+| 14 | Bitwarden-Style Custom Fields (4 types: text, hidden, boolean, linked) encrypted client-side in `custom_fields` | Extensible key-value and secret metadata per item without compromising zero-knowledge isolation |
+| 15 | Native LAN TLS Engine (`TLS_ENABLED=true`, automatic EC P-256 self-signed certificate generation with SANs, fallback HTTP redirect) | Out-of-the-box browser WebCrypto support on home LAN IPs without mandatory reverse proxy setup |
+| 16 | Pure TypeScript WebCrypto Fallback (`webCryptoFallback.ts` implementing HKDF, PBKDF2, AES-GCM, SHA-256) | Guarantees zero-knowledge vault decryption functions even when accessed over plain HTTP on LAN |
+| 17 | ShellGuard-TOTP Android Companion Import (`sgtotp.bak` backup container decryption, pod tree mapping, multi-account import) | Seamless ecosystem interop with the offline Android companion app |
+| 18 | Zero-Waste Release Automation (`.github/workflows/release.yml` with tag/`--release` filtering, automated mirror of `RELEASE.md` into GitHub releases) | CI/CD cost efficiency and synchronized release notes across repository and GitHub Releases |
 
 ---
 
@@ -654,17 +699,26 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 **For security model, vulnerability reporting, and vault threat scenarios:**
 → See [SECURITY.md](./SECURITY.md)
 
-**For ClawStack©™ standards alignment and verification evidence:**
-→ See [CRUSTSECURITY.md](./CRUSTSECURITY.md)
+**For privacy policy and Google Play compliance:**
+→ See [docs/privacy.md](./docs/privacy.md)
 
-**For schema v1 data reefs and topology map:**
+**For agent customization architecture, rules, and workflows:**
+→ See [.agents/](file:///.agents/)
+
+**For schema v1 data reefs, migrations, and topology map:**
 → See [BLUEPRINT.md](./BLUEPRINT.md)
 
 **For project roadmap and future development:**
 → See [ROADMAP.md](./ROADMAP.md)
 
+**For administrator panel threat model and operational guide:**
+→ See [ADMIN.md](./ADMIN.md)
+
 **For quick-start instructions and environment setup:**
 → See [QUICKSTART.md](./QUICKSTART.md) and [README.md](./README.md)
+
+**For the full interactive documentation portal:**
+→ See [docs/](file:///docs/)
 
 ---
 

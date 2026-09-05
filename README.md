@@ -68,6 +68,8 @@
 - 🗝️ **ClawKeys©™ Identity** — Passwordless login with a generated `hu-` identity key; short-lived `api-` bearer tokens carry every request.
 - 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
 - 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 10 MB per file), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
+- 🏷️ **Custom Fields** — Bitwarden-style custom fields (Text, Hidden, Boolean, Linked) across logins, notes, and SSH keys. Hidden custom fields are sealed client-side via AES-GCM-256 with AAD integrity verification.
+- 🔒 **Native LAN TLS & WebCrypto Fallback** — Automatic EC P-256 self-signed certificates with SANs (`TLS_ENABLED=true`) for instant browser WebCrypto support on LAN IPs, plus a pure-TypeScript WebCrypto fallback engine (`webCryptoFallback.ts`) for plain HTTP LAN setups.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
 - 💾 **Data Survival & Resilient Backups** — Born from real-world disaster recovery: painless dual-layer backups (live-consistent Online Backup API SQLite snapshots + comprehensive client-side encrypted vault exports with attachments and keys) designed to ensure you never face a catastrophic lock-out.
 - 📤 **Sovereign Exports & Imports** — Metadata CSV export, re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments, plus native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
@@ -228,6 +230,10 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 | `TOKEN_TTL_DEFAULT` | `1440` | Session token TTL — accepts `30m`/`12h`/`24h`/`7d`/`never`, ISO timestamps or bare minutes |
 | `TRUST_PROXY` | `false` | Set `true` behind a reverse proxy (correct client IPs for rate limiting/HTTPS redirect) |
 | `CORS_ORIGIN` | *(LAN-open)* | Restrict API access to specific origin(s), comma-separated |
+| `TLS_ENABLED` | `false` | When `true`, automatically generates/loads EC P-256 self-signed certificates with SANs for localhost & LAN IPs, serving HTTPS directly on `PORT` |
+| `TLS_CERT_PATH` | `""` | Optional filesystem path to custom PEM certificate file (used when `TLS_ENABLED=true`) |
+| `TLS_KEY_PATH` | `""` | Optional filesystem path to custom PEM private key file (used when `TLS_ENABLED=true`) |
+| `ADMIN_TOKEN` | `""` | Secret passkey for the SuperLobster Admin Panel (`/admin`). When set, enables secure system management and backups |
 | `ENFORCE_HTTPS` | `false` | Redirect HTTP→HTTPS when terminating TLS in-process |
 | `HTTPS_PORT` | `4647` | Port checked when `ENFORCE_HTTPS=true` |
 | `AUTH_RATE_WINDOW` / `AUTH_RATE_LIMIT` | `900000` / `5` | Brute-force protection window (ms) and attempt cap on auth endpoints |
@@ -480,12 +486,15 @@ ShellGuard/
 | [**SECURITY.md**](./SECURITY.md) | Security model, OWASP coverage, vault threat scenarios, hardening checklist |
 | [**QUICKSTART.md**](./QUICKSTART.md) | Step-by-step first hatch: Docker or npm, registration, encryption |
 | [**CONTRIBUTING.md**](./CONTRIBUTING.md) | Development standards, twin-verbatim policy, PR checklist |
-| [**CRUSTSECURITY.md**](./CRUSTSECURITY.md) | ClawStack©™ standards alignment matrix |
+| [**ADMIN.md**](./ADMIN.md) | SuperLobster Panel threat model, operational runbook & disaster recovery |
 | [**BLUEPRINT.md**](./BLUEPRINT.md) | Schema v1 data reefs and topology map |
-| [**ROADMAP.md**](./ROADMAP.md) | Changelog and future molts |
-| [**CRUSTAGENT.md**](./CRUSTAGENT.md) | Agent intelligence handshake and stability locks |
+| [**ROADMAP.md**](./ROADMAP.md) | Changelog and completed/future molts |
 | [**DESIGN.md**](./DESIGN.md) | Reef Modernist design tokens and component language |
 | [**compatibility_layer.md**](./compatibility_layer.md) | ShellGuard-TOTP Android `sgtotp.bak` backup format & 1-way sync bridge specification |
+| [**docs/**](./docs/) | Full interactive documentation site (VitePress portal) |
+| [**docs/privacy.md**](./docs/privacy.md) | Official Privacy Policy & Google Play Store compliance |
+| [**.agents/**](file:///.agents/) | Antigravity Agent Customization architecture, memory bank, rules & workflows |
+| [**src/CRUSTAGENT.md**](./src/CRUSTAGENT.md) | Source-level stability locks and lobsterized coding patterns |
 
 ---
 

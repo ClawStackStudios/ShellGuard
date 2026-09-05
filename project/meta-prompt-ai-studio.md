@@ -19,7 +19,8 @@ flowchart TD
     UploadContext["📂 Stage 1: Upload Context Files into AI Studio Project"]
     Phase1["🥚 Stage 2: Phase 1 — Scaffold, Auth & API Molt<br/>(Task 01: Full-Stack Scaffold & Ownership-Scoped API · Task 02: Landing UI, Header & AI Studio Molt)"]
     Phase2["🗄️ Stage 3: Phase 2 — SQLite Bedrock & Security Kernel<br/>(Task 03: Bedrock, Migrations, Audit & Kernel · Task 04: Envelope Unwrap & Twin-Port Runtime)"]
-    Phase3["🔗 Stage 4: Phase 3 — Vault CRUD & Lobster Keys<br/>(v0.0.0.3 — pending transcription)"]
+    Phase3["🔗 Stage 4: Phase 3 — Vault CRUD & Lobster Keys<br/>(Task 05: Validated CRUD & Ownership Scoping · Task 06: Lobster Keys Lifecycle & Settings)"]
+    Phase4["🧊 Stage 5: Phase 4 — Bedrock Hardening & Per-Row Encryption<br/>(v0.0.0.4 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 3–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -206,3 +207,51 @@ register → login → vault-fetch journey through the unwrapped envelope!
 ```
 
 ---
+
+## 🔗 Stage 4: Phase 3 Prompt — Vault CRUD, Lobster Keys & Settings Storage [Baseline: v0.0.0.3 (Build 4)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-3-vault-crud-lobster-keys--settings-storage-baseline-v00003-build-4)
+> for complete specifications on **Task 05** and **Task 06**.
+> **📖 Required Context Files for Phase 3**:
+> 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map), §4 (Lobster Keys lifecycle), §5 (Settings).
+> 2. [`key-hierarchy-spec.md`](./key-hierarchy-spec.md) — §1–§4 (key types, lifecycles, permissions, human-only gates).
+> 3. [`database-schema.md`](./database-schema.md) — §3 (Schema v1), §4 (Audit redaction).
+
+Copy and paste this prompt to execute **Phase 3 (Tasks 05 & 06)**:
+
+```markdown
+# PHASE 3 EXECUTION: Vault CRUD, Lobster Keys & Settings Storage [Baseline: v0.0.0.3 (Build 4)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 3 (Task 05: Validated Vault CRUD · Task 06: Lobster Keys Lifecycle & Settings).
+- `routes-and-contracts.md`: §3–§5 (vault domains, verb→permission map, agent keys, settings).
+- `key-hierarchy-spec.md`: §2–§4 (lifecycles, claw-strength permissions, requireHuman gates).
+- `database-schema.md`: §3–§4 (schema v1, audit redaction).
+
+Execute Phase 3 adhering to the Functionality + Security Component pairing:
+
+### Task 05: [Functionality] Validated Vault CRUD — Four Domains, Ownership Scoping & Audit Trail
+- Consolidate vault routing into `src/server/routes/` (`vault.ts`, `notes.ts`,
+  `sshKeys.ts`, `attachments.ts`); delete the legacy `src/services/vault/*`.
+- Uniform contract per domain: GET (canRead) · POST (canWrite + zod) ·
+  PUT /:id (canEdit + zod) · DELETE /:id (canDelete).
+- Scope every query by `owner_uuid` from the authenticated identity; audit
+  every mutation; treat payload columns as opaque ShellCryption ciphertext.
+- Extend `src/server/validation/schemas.ts` with per-domain schemas.
+
+### Task 06: [Security Component] Lobster Keys Lifecycle Parity & Settings Storage
+- `src/server/routes/agentKeys.ts`: GET / POST (mint: scoped permissions,
+  rate_limit, expires_at, behind authLimiter) / PATCH /:id/revoke / DELETE /:id
+  — all requireHuman; plaintext returned once, only hashes persist.
+- `src/server/routes/settings.ts`: GET/PUT /api/settings/:key (requireHuman).
+- Delete legacy `src/services/agents/` and `src/services/auth/` remnants.
+
+Verify all four vault domains round-trip with cross-owner access failing
+closed, unvalidated bodies rejected, a minted agent key constrained to its
+permissions/rate limit/expiry, revoked keys rejected without touching human
+sessions, and settings persisting per owner!
+```
+
+---
+

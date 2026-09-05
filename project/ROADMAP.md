@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 2 transcribed (Baseline v0.0.0.2) — Phase 3: Vault CRUD & Lobster Keys pending (v0.0.0.3)"
+current_position: "Phase 3 transcribed (Baseline v0.0.0.3) — Phase 4: Per-Row Encryption & Port Molt pending (v0.0.0.4)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–2 transcribed · Phases 3–18 pending transcription"
+  features_completed: "Phases 1–3 transcribed · Phases 4–18 pending transcription"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -124,6 +124,54 @@ references split for server/client compilation contexts.
 > Success Criteria: A register → login → vault-fetch journey works through the
 > unwrapped envelope; failed requests surface typed errors from the adapter;
 > the dev topology runs both processes concurrently with the proxy wired.
+
+---
+
+
+## Phase 3: Vault CRUD, Lobster Keys & Settings Storage [Baseline: v0.0.0.3 (Build 4)]
+
+> Phase Feature Set Overview:
+> The vault learns to do business. The legacy `src/services/*` layer molts into
+> the canonical `src/server/routes/*` kernel; four vault domains (passwords,
+> notes, SSH keys, attachments) ship a uniform validated CRUD contract with
+> ownership scoping, zod schemas and audit-on-mutation; the Lobster Keys©™
+> lifecycle reaches parity (mint with scoped permissions, rate limits, expiry,
+> revoke, delete — humans only); and server-side settings storage lands as a
+> durable preference mirror. *(Receipts: `0150bd3`, `7d11c7a`, `b6a4703` —
+> 2026-08-25. A pure backend day: Task B pairs as a security component.)*
+
+- [ ] **Task 05: [Functionality] Validated Vault CRUD — Four Domains, Ownership Scoping & Audit Trail**
+
+Description: Consolidate all vault routing into `src/server/routes/` —
+`vault.ts`, `notes.ts`, `sshKeys.ts`, `attachments.ts` — and delete the legacy
+`src/services/vault/*` routers. Each domain implements the uniform contract:
+`GET` (canRead) · `POST` (canWrite + zod `validateBody`) · `PUT /:id`
+(canEdit + validateBody) · `DELETE /:id` (canDelete). Every query scopes
+`owner_uuid` from the authenticated identity, never request parameters; every
+mutation writes an audit entry. Payload columns (`secret`, `content`,
+`key_value`, `file_data`, `totp_secret`, `attachments`) pass through as opaque
+ShellCryption ciphertext — the server never inspects them. Extend
+`src/server/validation/schemas.ts` with per-domain create/update schemas.
+
+> Success Criteria: All four domains round-trip through the uniform contract;
+> a cross-owner access attempt fails closed; a payload column is never read
+> server-side (opacity invariant); unvalidated bodies are rejected by zod.
+
+- [ ] **Task 06: [Security Component] Lobster Keys Lifecycle Parity & Settings Storage**
+
+Description: Implement the full Lobster Keys©™ lifecycle in
+`src/server/routes/agentKeys.ts`: `GET` (list), `POST` (mint with scoped
+permissions, `rate_limit`, `expires_at` — behind `authLimiter` and
+`AgentKeySchemas.create`), `PATCH /:id/revoke`, `DELETE /:id` — all
+`requireHuman`. Minted keys return plaintext exactly once; only hashes
+persist. Revocation never affects human sessions. Add
+`src/server/routes/settings.ts`: `GET`/`PUT /api/settings/:key` with
+`requireHuman` for durable per-owner preference storage. Delete the legacy
+`src/services/agents/` and `src/services/auth/` remnants.
+
+> Success Criteria: A minted agent key works only within its permissions and
+> rate limit; an expired or revoked key is rejected; agents are refused on all
+> `requireHuman` surfaces; settings persist per owner across sessions.
 
 ---
 

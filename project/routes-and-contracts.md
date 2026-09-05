@@ -64,3 +64,58 @@ TTLs parse through the hardened parser (`src/server/utils/parsers.ts`):
   beyond the client-side ShellCryption key derivation.
 
 ---
+
+## §3. Vault Domain Endpoints (Phase 3)
+
+Four vault domains, one uniform CRUD contract each. Routers live in
+`src/server/routes/` — the legacy `src/services/*` layer is deleted:
+
+| Domain | Router | Payload columns (opaque blobs) |
+|:---|:---|:---|
+| Passwords | `vault.ts` (`/api/vault`) | `secret`, `totp_secret`, `attachments` |
+| Secure Notes | `notes.ts` (`/api/notes`) | `content` |
+| SSH Keys | `sshKeys.ts` (`/api/ssh`) | `key_value` |
+| Attachments | `attachments.ts` (`/api/attachments`) | `file_data` |
+
+**Verb → Permission mapping (inviolable, all four domains):**
+
+| HTTP Verb | Middleware chain | Permission |
+|:---|:---|:---|
+| `GET /` | `requireAuth` → `requirePermission('canRead')` | read |
+| `POST /` | `requireAuth` → `requirePermission('canWrite')` → `validateBody` | create |
+| `PUT /:id` | `requireAuth` → `requirePermission('canEdit')` → `validateBody` | update |
+| `DELETE /:id` | `requireAuth` → `requirePermission('canDelete')` | delete |
+
+Every query is scoped `WHERE owner_uuid = ?` from the authenticated identity —
+never from a request parameter. Every mutation writes an audit entry.
+Request bodies are validated by zod schemas in `src/server/validation/schemas.ts`
+(`VaultSchemas.create`, `VaultSchemas.update`, …) — a route without a schema
+does not ship.
+
+---
+
+## §4. Lobster Keys Lifecycle (`/api/agent-keys`)
+
+Agent keys are minted, listed, revoked and deleted by **humans only**:
+
+| Endpoint | Middleware | Effect |
+|:---|:---|:---|
+| `GET /api/agent-keys` | `requireAuth` → `requireHuman` | list all keys for owner |
+| `POST /api/agent-keys` | `requireAuth` → `requireHuman` → `authLimiter` → `validateBody(AgentKeySchemas.create)` | mint key with scoped permissions, `rate_limit`, `expires_at` |
+| `PATCH /api/agent-keys/:id/revoke` | `requireAuth` → `requireHuman` | revoke without deletion |
+| `DELETE /api/agent-keys/:id` | `requireAuth` → `requireHuman` | hard delete |
+
+Minted keys are returned **once** in plaintext (`lb-…`); only the hash persists.
+Revocation must not affect human sessions.
+
+---
+
+## §5. Server-Side Settings Storage (`/api/settings/:key`)
+
+- `GET /api/settings/:key` and `PUT /api/settings/:key`, both
+  `requireAuth` → `requireHuman` — agents never read or write instance settings.
+- Values are stored server-side per owner; the client treats the endpoint as a
+  durable preference mirror (theme accents, behavior toggles arrive in later phases).
+
+---
+

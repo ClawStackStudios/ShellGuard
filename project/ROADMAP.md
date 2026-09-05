@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 8 transcribed (Baseline v0.0.0.8) — Phase 9: Genesis Release & Origin Hardening pending (v0.0.1)"
+current_position: "Phase 9 transcribed (Genesis v0.0.1 🏷️) — Phase 10: Deployment Hotfixes & Dev Loop pending (v0.0.1.2)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–8 transcribed · Genesis + release era pending"
+  features_completed: "Phases 1–9 transcribed (genesis tagged) · Release era in progress"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -464,5 +464,50 @@ docs. Weave the attractor-beacon / data-survival philosophy into the README.
 > desktop, sheet on mobile); a key file dropped on the gateway validates
 > before submission; the generator derives from the active identity; the
 > TOTP issuer reads "ShellGuard".
+
+---
+
+
+## Phase 9: Genesis Release & Origin Hardening [v0.0.1 (Build 10) — 🏷️ First Tag]
+
+> Phase Feature Set Overview:
+> The reef is born into the world. The README sheds ASCII art for its Unicode
+> block-text identity; the genesis release is cut — the first `RELEASE-v0.0.1.md`,
+> CHANGELOG restructure and version bump. Then the first production-hardening
+> lesson: on non-secure HTTP LAN origins, Chromium blocks `data:` URI downloads
+> and withholds `crypto.randomUUID`/entropy — so all downloads move to
+> in-memory `Blob` + `URL.createObjectURL`, and UUID/entropy generation gains
+> multi-tier fallbacks (`crypto.randomUUID` → `getRandomValues` v4 →
+> `Math.random` v4 last resort). *(Receipts: `f029872`, `dd4b701`, `946e774`,
+> `893083c`, merge `c0baf0e` — 2026-08-29. Tag `v0.0.1` lands here.)*
+
+- [ ] **Task 17: [Functionality] Origin-Safety Fallbacks — Blob Downloads & Entropy Resilience**
+
+Description: Replace every `data:` URI download with in-memory `Blob` +
+`URL.createObjectURL` and revocation on completion — `attachmentUtils.ts`
+(attachment/QR downloads) and `crypto.ts` — because Chromium blocks `data:`
+downloads on insecure origins (self-hosted HTTP LAN). Add multi-tier
+fallbacks to `src/lib/crypto.ts`: `crypto.randomUUID` when available →
+`getRandomValues`-built v4 UUID → seeded `Math.random` v4 UUID as last
+resort, with equivalent entropy fallbacks for key material generation, so
+zero-knowledge flows survive on non-secure LAN origins.
+
+> Success Criteria: Attachments and QR codes download successfully over
+> plain HTTP LAN; UUID/entropy generation never throws regardless of
+> `crypto.subtle`/`randomUUID` availability; secure-origin behavior is
+> unchanged.
+
+- [ ] **Task 18: [Release Component] Genesis Release Protocol**
+
+Description: Cut the first release: replace the ASCII logo with the Unicode
+block-text identity in `README.md`; write `RELEASE-v0.0.1.md` (themed,
+commit-ledger-backed release notes); restructure `CHANGELOG.md` with the
+genesis entry; bump `package.json` to `0.0.1`. Establish the release grammar
+the pipeline will reuse: tag `v0.0.1` → RELEASE doc → CHANGELOG → version
+bump, in that order, with the commit ledger as receipts.
+
+> Success Criteria: The tag `v0.0.1` exists; `RELEASE-v0.0.1.md` documents
+> the sprint honestly (its feature list matches the roadmap Phases 1–8);
+> CHANGELOG and package.json agree; the released artifact builds and boots.
 
 ---

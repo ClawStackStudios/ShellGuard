@@ -25,7 +25,8 @@ flowchart TD
     Phase6["🦞 Stage 7: Phase 6 — SuperLobster Admin Plane<br/>(Task 11: Admin API & requireAdmin · Task 12: Panel Suite & Admin Gate)"]
     Phase7["🐚 Stage 8: Phase 7 — Multi-Account, QuickLogin & Landing Gateway<br/>(Task 13: Session Manager & Multi-Account · Task 14: LandingView & AuthGateway)"]
     Phase8["🏛️ Stage 9: Phase 8 — Vault UX Renaissance<br/>(Task 15: Pods, Lock Hardening & NavIntent · Task 16: Master-Detail & Claw-In)"]
-    Phase9["🥚 Stage 10: Phase 9 — Genesis Release & Origin Hardening<br/>(v0.0.1 — release-era bracket, pending transcription)"]
+    Phase9["🥚 Stage 10: Phase 9 — Genesis Release & Origin Hardening<br/>(Task 17: Origin-Safety Fallbacks · Task 18: Genesis Release Protocol) 🏷️"]
+    Phase10["🔧 Stage 11: Phase 10 — Deployment Hotfixes & Dev Loop<br/>(v0.0.1.2 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -38,7 +39,8 @@ flowchart TD
     Phase6 --> Phase7
     Phase7 --> Phase8
     Phase8 --> Phase9
-    Phase9 --> Summit
+    Phase9 --> Phase10
+    Phase10 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -525,3 +527,47 @@ and the issuer reads "ShellGuard"!
 ```
 
 ---
+
+## 🥚 Stage 10: Phase 9 Prompt — Genesis Release & Origin Hardening [v0.0.1 (Build 10) — 🏷️ First Tag]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-9-genesis-release--origin-hardening-v001-build-10--️-first-tag)
+> for complete specifications on **Task 17** and **Task 18**.
+> **📖 Required Context Files for Phase 9**:
+> 1. [`architecture.md`](./architecture.md) — §1 (System role), §4 (Invariants).
+> 2. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 9 (Tasks 17 & 18)**:
+
+```markdown
+# PHASE 9 EXECUTION: Genesis Release & Origin Hardening [v0.0.1 (Build 10)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 9 (Task 17: Origin-Safety Fallbacks · Task 18: Genesis Release Protocol).
+- `architecture.md`: §1, §4 (system role, invariants).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Execute Phase 9 adhering to the Functionality + Release pairing:
+
+### Task 17: [Functionality] Origin-Safety Fallbacks — Blob Downloads & Entropy Resilience
+- Replace all `data:` URI downloads with in-memory Blob +
+  URL.createObjectURL (+ revocation) in attachmentUtils.ts and crypto.ts —
+  Chromium blocks data: downloads on insecure HTTP LAN origins.
+- Multi-tier fallbacks in src/lib/crypto.ts: crypto.randomUUID →
+  getRandomValues v4 → Math.random v4 last resort; equivalent entropy
+  fallbacks for key material.
+
+### Task 18: [Release Component] Genesis Release Protocol
+- README Unicode block-text identity.
+- RELEASE-v0.0.1.md (themed, commit-ledger-backed); CHANGELOG genesis
+  entry; package.json → 0.0.1.
+- Establish release grammar: tag → RELEASE doc → CHANGELOG → version bump.
+
+Verify attachments and QR downloads work over plain HTTP LAN, UUID/entropy
+generation never throws regardless of crypto availability, the v0.0.1 tag
+exists with honest release notes matching Phases 1-8, and CHANGELOG and
+package.json agree!
+```
+
+---
+

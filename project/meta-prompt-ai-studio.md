@@ -37,7 +37,8 @@ flowchart TD
     Phase5 --> Phase6
     Phase6 --> Phase7
     Phase7 --> Phase8
-    Phase8 --> Summit
+    Phase8 --> Phase9
+    Phase9 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work

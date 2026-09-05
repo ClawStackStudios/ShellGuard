@@ -1,26 +1,5 @@
 ---
 Date: 2026-09-04
-TaskRef: "Optimize GitHub Actions Release Pipeline Triggers & Chained Mirror Synchronization"
-
-Learnings:
-- GitHub Actions evaluates job-level `if:` expressions on the server before provisioning runner VMs. Adding job-level guards (`startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '--release')`) eliminates billable runner minute waste on standard non-release development commits.
-- Chaining the `mirror` job after `release` (`needs: [release]` with `always()` and `needs.release.result == 'success' || needs.release.result == 'skipped'`) ensures releases and tags exist before mirroring executes, avoiding race conditions and eliminating the previous skip gate.
-- Gating `mirror` so it excludes `workflow_dispatch` while including `--release`, tag pushes, and root `RELEASE-v*.md` updates cleanly syncs the GitHub Release body directly from the root markdown document whenever a release is published or updated.
-
-Difficulties:
-- None; YAML syntax was verified with Python's safe_load and docs build verified cleanly.
-
-Successes:
-- Optimized `.github/workflows/release.yml` with job-level guards for `release` and `mirror`.
-- Chained `mirror` to run seamlessly on release publications.
-- Clean push to `origin main` recorded.
-
-Improvements_Identified_For_Consolidation:
-- Document zero-runner-waste release pipeline architecture pattern in `systemPatterns.md`.
----
-
----
-Date: 2026-09-04
 TaskRef: "Prepare ShellGuard Release v0.0.1.8 (Privacy Policy, Mobile Companion Portal, Bridge Parity)"
 
 Learnings:

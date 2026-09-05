@@ -61,6 +61,17 @@
 - Re-read ±15 lines around the insertion point afterward to confirm syntax boundaries survived intact.
 - *Rationale:* Boundary inserts can clip multi-line closing brackets or type annotations.
 
+**Pattern: Zero-Waste GitHub Actions Release & Chained Mirror Pipeline**
+- In `.github/workflows/release.yml`, enforce job-level server-evaluated `if:` conditions (`startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '--release')`).
+- Standard non-release development commits skip before VM runner allocation, consuming 0 billable runner minutes.
+- Chain the `mirror` job sequentially after `release` (`needs: [release]` with `always()` and success/skipped guards) to run on `--release` and tag pushes, updating the GitHub Release body via `gh release edit "$TAG" --notes-file "$FILE"`. Exclude manual `workflow_dispatch`.
+- *Rationale:* Ensures root `RELEASE-v*.md` is the single source of truth mirrored automatically without race conditions or wasted CI runner resources.
+
+**Pattern: First-Class Git Persistence for Agent Customizations (`.agents/`)**
+- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and memory bank files are tracked in Git and never ignored in `.gitignore`.
+- Commit memory bank updates (`activeContext.md`, `progress.md`) alongside corresponding feature code and release tasks.
+- *Rationale:* Preserves agent architectural memory, behavioral guardrails, and automated release workflows across resets, workstations, CI runners, and collaborators.
+
 ---
 
 ## Express / API

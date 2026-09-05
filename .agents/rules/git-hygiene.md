@@ -48,3 +48,8 @@ trigger: always_on
 
 ## Rebase hygiene
 - When rebasing, avoid opening editors: set `GIT_EDITOR=:` and `GIT_SEQUENCE_EDITOR=:` (or pass `--no-edit`).
+
+## Agent Customization & Memory Bank Tracking
+- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and memory bank files are first-class repository citizens and MUST NOT be gitignored.
+- Commit memory bank updates (`activeContext.md`, `progress.md`, `raw_reflection_log.md`) and rule/workflow adjustments alongside the code and release tasks they belong to.
+- Do NOT commit ephemeral runtime agent scratchpads, local IDE cache files (e.g. `.crustagent/`), or temporary debug dumps.

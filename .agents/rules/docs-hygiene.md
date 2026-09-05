@@ -23,6 +23,7 @@ Documentation updates should not be isolated to a separate "chore: update docs" 
 ## 5. Release Documentation & Template Protocol
 When preparing a version increment or release:
 - **Use Official Release Template:** Draft `RELEASE-vX.Y.Z.N.md` in the repository root adhering strictly to `[.agents/templates/release-template.md](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.agents/templates/release-template.md)`.
+- **Single Source of Truth:** The root `RELEASE-vX.Y.Z.N.md` file is the sole ground truth for release notes. No newest-file fallbacks or auto-generated release notes are permitted.
 - **Synchronize Central Anchors:** In the same release preparation commit, synchronize `package.json` (`version`), `README.md` (version badge), and `CHANGELOG.md` (`## [X.Y.Z.N] - YYYY-MM-DD`).
-- **Automated Publication Trigger:** Pushing with `--release vX.Y.Z.N` in the commit message or pushing tag `vX.Y.Z.N` automatically executes `[.github/workflows/release.yml](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.github/workflows/release.yml)` to publish the release with the markdown notes.
+- **Automated Publication & Chained Mirroring:** Pushing with `--release vX.Y.Z.N` in the commit message or pushing tag `vX.Y.Z.N` executes `[.github/workflows/release.yml](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.github/workflows/release.yml)`. The workflow publishes the release and sequentially triggers the `mirror` job (`gh release edit`) to guarantee the live GitHub Release body matches the root markdown document verbatim.
 

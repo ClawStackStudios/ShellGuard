@@ -53,7 +53,7 @@ Run a full verification loop:
 
 ## 🚀 Step 4: Upstream Synchronization & GitHub Release Publication
 
-Releases are made official by pushing code, pushing the annotated tag, and generating the GitHub Release object.
+Releases are made official by pushing code, pushing the annotated tag, and generating the GitHub Release object. The release pipeline in `.github/workflows/release.yml` uses server-evaluated job-level `if:` guards to eliminate runner VM provisioning on standard development commits, while sequentially chaining the `mirror` job.
 
 1. **Option A: Commit Message Flag (Claurst Style — Recommended):**
    Include `--release vX.Y.Z.N` in the commit message:
@@ -64,7 +64,7 @@ Releases are made official by pushing code, pushing the annotated tag, and gener
    AI: <Summary of changes, test verification, and documentation synchronization>"
    git push origin main
    ```
-   *(Note: Pushing a commit containing `--release vX.Y.Z.N` to `main` automatically creates the remote tag, locates `RELEASE-vX.Y.Z.N.md`, and publishes the release via GitHub Actions.)*
+   *(Note: Pushing a commit containing `--release vX.Y.Z.N` to `main` executes `release` to publish the release and tag, followed immediately by `mirror` to sync the body verbatim from `RELEASE-vX.Y.Z.N.md`.)*
 
 2. **Option B: Tag Push:**
    ```bash
@@ -73,4 +73,9 @@ Releases are made official by pushing code, pushing the annotated tag, and gener
    git push origin vX.Y.Z.N
    ```
 
-3. **Verify Release Status:** Confirm the release appears live on GitHub under `https://github.com/ClawStackStudios/ShellGuard/releases`.
+3. **Pipeline Invariants & Mirror Synchronization:**
+   - **Zero-Waste Server Evaluation**: Commits on `main` lacking `--release` skip both `release` and `mirror` before allocating an `ubuntu-latest` VM (0 billable minutes consumed).
+   - **Sequential Chaining (`needs: [release]`)**: `mirror` waits for `release` to ensure the release object and tag exist, then mirrors the root `RELEASE-vX.Y.Z.N.md` notes into the GitHub Release via `gh release edit`.
+   - **Manual Dispatch Exclusion**: Manual `workflow_dispatch` triggers execute only the `release` job and bypass `mirror`.
+
+4. **Verify Release Status:** Confirm the release appears live on GitHub under `https://github.com/ClawStackStudios/ShellGuard/releases`.

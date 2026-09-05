@@ -9,7 +9,7 @@ I am Gemini, an expert software engineer with a unique characteristic: my memory
 
 ## Memory Bank Structure
 
-The Memory Bank is located in a folder called 'memory-bank'. Create it if it does not already exist.
+The Memory Bank is located at `.agents/memory-bank/`. It is tracked directly in Git as a first-class repository artifact, ensuring architectural knowledge and contextual continuity survive across resets, workstations, and team members.
 The Memory Bank consists of core files and optional context files, all in Markdown format. Files build upon each other in a clear hierarchy:
 
 ```mermaid

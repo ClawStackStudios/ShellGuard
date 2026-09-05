@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### Added
+- **ShellGuard-TOTP Native Companion Documentation Suite:** Published comprehensive documentation portal for the Android 2FA companion under `docs/companion/`:
+  - `docs/companion/index.md`: System topology, One-Way Mirror Sync architecture, Mermaid dataflow, and key capabilities.
+  - `docs/companion/security.md`: Android KeyStore (TEE / StrongBox Keymaster), `BiometricPrompt` zero-exposure biometrics, `FLAG_SECURE` window screenshot protection, and in-memory cryptographic zeroization.
+  - `docs/companion/sync-and-backups.md`: Encrypted `.sgtotp.bak` (`shellguard-totp-backup-v1`) wire format, HKDF-SHA256, AES-GCM-256 with AAD verification, and client-side web vault import walkthrough.
+  - `docs/companion/totp-engine.md`: RFC 6238 mathematical computation model (HMAC-SHA1/256/512), RFC 4648 Base32 sanitization, `otpauth://` URI parameter decoding, and CameraX + ML Kit real-time barcode scanning.
+- **VitePress Portal Integration:** Added top-level `Mobile Companion` navigation item and sidebar group to `docs/.vitepress/config.ts`, added companion card to `docs/index.md`, and cross-linked privacy disclosures.
 - **Official Privacy Policy & Google Play Store Compliance:** Established canonical `docs/privacy.md` with explicit regulatory and technical disclosures (zero data collection, zero telemetry, local in-memory CameraX QR scanning, hardware Keystore biometric isolation, Storage Access Framework backups, and `FLAG_SECURE` window protection).
 - **Dedicated ShellGuard-TOTP Android Companion Specification:** Added Section 5 in the privacy policy with a direct deep-link anchor (`#shellguard-totp-android-companion`) and a Google Play Data Safety Fast-Card table for app store submission.
 - **VitePress & UI Navigation Touchpoints:** Integrated Privacy Policy into VitePress Reference sidebar, route mapping (`/privacy`), documentation footer, and the web application `LandingView` footer.

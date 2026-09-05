@@ -42,6 +42,7 @@ export default defineConfig({
       { text: 'Get Started', link: '/getting-started/' },
       { text: 'Architecture & Security', link: '/architecture/' },
       { text: 'Vault Features', link: '/vault-features/' },
+      { text: 'Mobile Companion', link: '/companion/' },
       { text: 'Agent API', link: '/agent-integration/' },
       { text: 'SuperLobster', link: '/superlobster/' },
       { text: 'Deployment', link: '/deployment/' },
@@ -49,6 +50,26 @@ export default defineConfig({
     ],
 
     sidebar: {
+      '/companion/': [
+        {
+          text: 'Mobile Companion',
+          items: [
+            { text: 'Overview & Mirror Sync', link: '/companion/' },
+            { text: 'Security & Hardware Enclaves', link: '/companion/security' },
+            { text: 'Sync & Encrypted Backups', link: '/companion/sync-and-backups' },
+            { text: 'RFC 6238 TOTP Engine', link: '/companion/totp-engine' },
+            { text: 'Privacy Policy', link: '/privacy#shellguard-totp-android-companion' },
+          ]
+        },
+        {
+          text: 'Ecosystem & Interop',
+          items: [
+            { text: 'The Grotto & TOTP Seeds', link: '/vault-features/the-grotto' },
+            { text: 'Vault Import & Export', link: '/vault-features/import-export' },
+            { text: 'Threat Model & Hardening', link: '/architecture/threat-model' },
+          ]
+        }
+      ],
       '/getting-started/': [
         {
           text: 'Getting Started',
@@ -142,6 +163,7 @@ export default defineConfig({
             { text: 'Database Schema Ground Truth', link: '/reference/blueprint-schema' },
             { text: 'Reef Modernist Design System', link: '/reference/design-system' },
             { text: 'ClawStack Lexicon (Glossary)', link: '/reference/glossary' },
+            { text: 'ShellGuard-TOTP Companion', link: '/companion/' },
             { text: 'Privacy Policy', link: '/privacy' },
           ]
         }

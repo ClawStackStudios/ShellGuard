@@ -57,6 +57,9 @@ features:
   <Card title="Deployment & Ops" href="/deployment/docker" icon="🐳" tag="Ops">
     Docker Compose production stacks, Unraid Community Applications template, and Caddy/Nginx TLS setup.
   </Card>
+  <Card title="Mobile Companion" href="/companion/" icon="📱" tag="Android">
+    Sovereign offline-first 2FA companion with hardware KeyStore isolation, CameraX QR scanning, and mirror sync.
+  </Card>
 </CardGrid>
 
 ---

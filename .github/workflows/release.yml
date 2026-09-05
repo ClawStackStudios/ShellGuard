@@ -21,6 +21,7 @@ on:
       - main
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -30,6 +31,11 @@ env:
 
 jobs:
   release:
+    name: Publish GitHub Release 🚀
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '--release')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code 🛡️
@@ -99,7 +105,18 @@ jobs:
 
   mirror:
     name: Mirror RELEASE Document into the GitHub Release 🪞
-    if: github.ref == 'refs/heads/main'
+    needs: [release]
+    if: |
+      always() &&
+      (needs.release.result == 'success' || needs.release.result == 'skipped') &&
+      github.event_name != 'workflow_dispatch' &&
+      (
+        startsWith(github.ref, 'refs/tags/v') ||
+        contains(github.event.head_commit.message, '--release') ||
+        contains(github.event.head_commit.message, 'RELEASE-') ||
+        contains(join(github.event.head_commit.added, ','), 'RELEASE-') ||
+        contains(join(github.event.head_commit.modified, ','), 'RELEASE-')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -109,27 +126,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Skip when this push already triggers the release job 💬
-        id: gate
-        run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          if echo "$COMMIT_MSG" | grep -iE -- '--release[ =]+v?[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' > /dev/null; then
-            echo "Release flag present in the HEAD commit — the release job owns publication. Mirror skipped."
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "No release flag — mirror may sync changed release documents."
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Mirror Changed Release Documents 🪞
-        if: steps.gate.outputs.skip != 'true'
         run: |
           BEFORE="${{ github.event.before }}"
           if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
-            # Unknown parent (first push / force push): consider every existing document
+            # Unknown parent (first push / force push / tag push): consider every existing document
             CHANGED=$(ls -1 RELEASE-v*.md 2>/dev/null || true)
           else
             CHANGED=$(git diff --name-only "$BEFORE" "${{ github.sha }}" -- 'RELEASE-v*.md' || true)
+          fi
+          if [ -z "$CHANGED" ]; then
+            CHANGED=$(ls -1 RELEASE-v*.md 2>/dev/null || true)
           fi
           CHANGED=$(echo "$CHANGED" | grep -v '^$' || true)
           if [ -z "$CHANGED" ]; then

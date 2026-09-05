@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 4 transcribed (Baseline v0.0.0.4) — Phase 5: Per-Row Metadata Encryption & Port Molt pending (v0.0.0.5)"
+current_position: "Phase 5 transcribed (Baseline v0.0.0.5) — Phase 6: SuperLobster Admin Plane & Multi-Account pending (v0.0.0.6)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–4 transcribed · Phases 5–18 pending transcription"
+  features_completed: "Phases 1–5 transcribed · Phases 6–18 pending transcription"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -229,3 +229,57 @@ Adopt **AGPL-3.0** and fix npm audit findings.
 ---
 
 
+
+
+## Phase 5: Per-Row Metadata Encryption & Port Molt [Baseline: v0.0.0.5 (Build 6)]
+
+> Phase Feature Set Overview:
+> The second encryption layer descends. Server-side AES-256-GCM metadata
+> encryption (title, username, url, category, notes, file_name) protects the
+> sensitive-but-searchable columns, keyed from `DB_ENCRYPTION_KEY` via
+> HKDF-SHA256 — governed by the `metadataGuard` registry, which deliberately
+> excludes all client ShellCryption columns (the double-encryption firewall).
+> Self-describing `SG-META` envelopes live in the same TEXT columns; legacy
+> plaintext decrypts transparently on read; one-shot scripts convert existing
+> rows. The dev/prod ports molt (`4545→5353`, `4646→5454`) across runtime,
+> Docker, templates, tests and docs; and the triple-layer encryption model
+> is documented. *(Receipts: `b71af08`, `8f74e8a`, `416c5c2` — 2026-08-26/27.
+> Task B pairs as a configuration component.)*
+
+- [ ] **Task 09: [Functionality] Per-Row AES-256-GCM Metadata Encryption with Guard Registry**
+
+Description: Implement `src/server/utils/fieldEncryption.ts`: derive the AES-256
+key from `DB_ENCRYPTION_KEY` (base64) via `hkdfSync` (salt
+`shellguard-metadata-encryption-v1`, info `sg-meta-aes-256-gcm`); encrypt
+metadata fields as self-describing `{v:1, alg:'SG-META', iv, ct}` JSON
+envelopes in the same TEXT columns (Node native crypto, 96-bit IVs, empty
+strings pass through, no-op passthrough without the key). Implement
+`src/server/utils/metadataGuard.ts` as the single column registry
+(`prepareWrite`/`prepareRead`) for `vault_pearls`, `vault_secure_notes`,
+`vault_ssh_keys`, `vault_secure_attachments` — and NEVER register client
+ShellCryption columns (`secret`, `content`, `key_value`, `file_data`,
+`totp_secret`). Wire `prepareWrite`/`prepareRead` into all four vault domain
+routes. Add `migrations/0002_metadata_encryption.{up,down}.sql` and the
+one-shot `scripts/encrypt-existing-metadata.ts` /
+`scripts/decrypt-existing-metadata.ts` converters.
+
+> Success Criteria: With `DB_ENCRYPTION_KEY` set, metadata columns persist as
+> `SG-META` envelopes and legacy plaintext rows decrypt transparently on read;
+> ShellCryption columns remain byte-for-byte untouched; without the key,
+> everything is a passthrough; the converters are idempotent.
+
+- [ ] **Task 10: [Configuration Component] Port Molt & Triple-Layer Encryption Documentation**
+
+Description: Migrate the twin-port topology upward — dev/prod
+`4545→5353` (web) and `4646→5454` (API) — consistently across `package.json`
+scripts, `apiConfig.ts`, Dockerfile, compose stacks, the Unraid template,
+test configuration and documentation. Document the **triple-layer encryption
+model** (client ShellCryption → server per-row metadata → SQLCipher at rest)
+across `ARCHITECTURE.md`, `SECURITY.md`, `README.md`, `QUICKSTART.md` and
+`BLUEPRINT.md`, including the ClawKey backup guidance.
+
+> Success Criteria: A single grep finds no stale port references; the app
+> boots on the molted ports in dev, container and template contexts; the
+> docs' encryption model matches the runtime's three layers exactly.
+
+---

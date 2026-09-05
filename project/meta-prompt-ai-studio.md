@@ -21,7 +21,8 @@ flowchart TD
     Phase2["🗄️ Stage 3: Phase 2 — SQLite Bedrock & Security Kernel<br/>(Task 03: Bedrock, Migrations, Audit & Kernel · Task 04: Envelope Unwrap & Twin-Port Runtime)"]
     Phase3["🔗 Stage 4: Phase 3 — Vault CRUD & Lobster Keys<br/>(Task 05: Validated CRUD & Ownership Scoping · Task 06: Lobster Keys Lifecycle & Settings)"]
     Phase4["🧪 Stage 5: Phase 4 — Test Oracle & Container Deployment<br/>(Task 07: Test Harness & Rekey Recognition · Task 08: Container Packaging & Docs Truthfulness)"]
-    Phase5["🧊 Stage 6: Phase 5 — Per-Row Metadata Encryption & Port Molt<br/>(v0.0.0.5 — pending transcription)"]
+    Phase5["🔐 Stage 6: Phase 5 — Per-Row Metadata Encryption & Port Molt<br/>(Task 09: Metadata Encryption & Guard Registry · Task 10: Port Molt & Triple-Layer Docs)"]
+    Phase6["🦞 Stage 7: Phase 6 — SuperLobster Admin Plane & Multi-Account<br/>(v0.0.0.6 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -30,7 +31,8 @@ flowchart TD
     Phase2 --> Phase3
     Phase3 --> Phase4
     Phase4 --> Phase5
-    Phase5 --> Summit
+    Phase5 --> Phase6
+    Phase6 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -311,3 +313,56 @@ claim matches runtime behavior!
 
 ---
 
+
+
+## 🔐 Stage 6: Phase 5 Prompt — Per-Row Metadata Encryption & Port Molt [Baseline: v0.0.0.5 (Build 6)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-5-per-row-metadata-encryption--port-molt-baseline-v00005-build-6)
+> for complete specifications on **Task 09** and **Task 10**.
+> **📖 Required Context Files for Phase 5**:
+> 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §1 (Triple-layer model), §2 (Field encryption), §3 (Guard registry & firewall), §4 (Migration & tooling).
+> 2. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR), §2 (Migrations).
+> 3. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 5 (Tasks 09 & 10)**:
+
+```markdown
+# PHASE 5 EXECUTION: Per-Row Metadata Encryption & Port Molt [Baseline: v0.0.0.5 (Build 6)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 5 (Task 09: Per-Row Metadata Encryption · Task 10: Port Molt & Triple-Layer Docs).
+- `encryption-layers-spec.md`: §1–§4 (triple-layer model, field encryption, firewall, tooling).
+- `database-schema.md`: §1–§2 (layout, migrations).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Execute Phase 5 adhering to the Functionality + Configuration pairing:
+
+### Task 09: [Functionality] Per-Row AES-256-GCM Metadata Encryption with Guard Registry
+- `src/server/utils/fieldEncryption.ts`: HKDF-SHA256 key from
+  `DB_ENCRYPTION_KEY` (salt `shellguard-metadata-encryption-v1`, info
+  `sg-meta-aes-256-gcm`); `{v:1, alg:'SG-META', iv, ct}` envelopes in the
+  same TEXT columns; Node native crypto; 96-bit IVs; empty strings pass
+  through; no-op passthrough without the key.
+- `src/server/utils/metadataGuard.ts`: single registry (`prepareWrite` /
+  `prepareRead`) for vault_pearls, vault_secure_notes, vault_ssh_keys,
+  vault_secure_attachments — NEVER register client ShellCryption columns
+  (secret, content, key_value, file_data, totp_secret).
+- Wire into all four vault domain routes.
+- `migrations/0002_metadata_encryption.{up,down}.sql` + one-shot
+  encrypt/decrypt converter scripts (idempotent via envelope detection).
+
+### Task 10: [Configuration Component] Port Molt & Triple-Layer Encryption Documentation
+- Migrate ports `4545→5353` (web) / `4646→5454` (API) across package.json,
+  apiConfig.ts, Dockerfile, compose stacks, Unraid template, tests, docs.
+- Document the triple-layer encryption model (ShellCryption → per-row
+  metadata → SQLCipher) across ARCHITECTURE, SECURITY, README, QUICKSTART,
+  BLUEPRINT, including ClawKey backup guidance.
+
+Verify metadata columns persist as SG-META envelopes with legacy plaintext
+decrypting transparently, ShellCryption columns remain byte-for-byte
+untouched, the no-op mode works without a key, no stale port references
+remain, and the docs' encryption model matches runtime exactly!
+```
+
+---

@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 12 transcribed (v0.0.1.4 🏷️) — Phase 13: Bitwarden-Style Custom Fields pending (v0.0.1.5 Milestone)"
+current_position: "Phase 13 transcribed (v0.0.1.5 ★Milestone) — Phase 14: Native LAN TLS pending (v0.0.1.6)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–12 transcribed · Release era in progress"
+  features_completed: "Phases 1–13 transcribed (custom-fields milestone) · Release era in progress"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -650,6 +650,59 @@ GitHub Pages styling) and broadened main-branch triggers in
 > Success Criteria: The VitePress portal renders styled under its GitHub
 > Pages subpath; docs CI triggers on main pushes; exactly one RELEASE file
 > named for the current version; CHANGELOG and package.json agree.
+
+---
+
+
+## Phase 13: Bitwarden-Style Custom Fields [v0.0.1.5 (Build 14) — Milestone]
+
+> Phase Feature Set Overview:
+> The vault grows Bitwarden-style custom fields — four types (📝 Text,
+> 🔒 Hidden, ☑️ Checkbox, 🔗 Linked) across all vault item types. Migration
+> `0003_custom_fields` adds a `custom_fields` TEXT column to the three
+> item tables; fields are **client-ShellCrypted** with distinct AAD
+> namespaces per item type (`vault_pearls_custom:{id}`,
+> `vault_secure_notes_custom:{id}`, `vault_ssh_keys_custom:{id}`) and stay
+> **off the metadataGuard registry** — the double-encryption firewall holds.
+> The modal UX is polished alongside: restructured custom-fields section,
+> dropdown positioning with backdrop dismissal, scrollable body with pinned
+> header/footer. *(Receipts: `6270418`, `dcad9b9`, `cef78c4`, `9c08b39`,
+> `a21bdc1`, `d482116`, merge `6686dc3`, `8c3b1a3` — 2026-08-29/30.)*
+
+- [ ] **Task 25: [Functionality] Custom Fields Data Layer — Migration, Types & Opaque-Blob Routing**
+
+Description: Implement the `CustomField` model in `src/types.ts` —
+`CustomFieldType` (`text` | `hidden` | `checkbox` | `linked`),
+`CustomFieldLinkedProperty` (`username` | `password` | `url` | `notes` |
+`totp`), and the `CustomField` interface (linked fields store the source
+property name; resolution happens at render time). Add
+`migrations/0003_custom_fields.{up,down}.sql` — `custom_fields TEXT
+DEFAULT ''` on the three item tables, holding client-ShellCrypted JSON.
+Wire `custom_fields` through `vault.ts`, `notes.ts`, `sshKeys.ts` routes
+and validation schemas as an **opaque blob**: length/type validated, content
+never inspected, never registered in metadataGuard. Encrypt client-side with
+distinct AAD namespaces per item type.
+
+> Success Criteria: Fields round-trip encrypted across all three domains;
+> the blob is byte-for-byte opaque server-side; AAD verification fails on
+> cross-item substitution; `custom_fields` is absent from the metadataGuard
+> registry (firewall holds).
+
+- [ ] **Task 26: [UI Component] Custom Fields Editor & Detail Renderers, Modal Polish**
+
+Description: Restructure the custom-fields section in `ItemFormModal` —
+add-field dropdown with corrected positioning and backdrop dismissal; modal
+layout with scrollable body and pinned header/footer. Implement per-type
+rendering in `ItemDetailPane`: Text (plaintext + copy), Hidden (masked with
+eye-toggle reveal + copy), Checkbox (status chip), Linked (`Linked to
+[Property]` badge with live value resolution against the decrypted parent —
+including `totp` rendering the live 30-second countdown display). Update the
+README license badge to AGPL-3.0; molt the RELEASE file and cut `v0.0.1.5`.
+
+> Success Criteria: All four field types create, edit and render correctly
+> across pearls, notes and SSH keys; linked fields update live when the
+> parent property changes; the modal scrolls internally with pinned chrome;
+> the milestone is tagged with a matching RELEASE file.
 
 ---
 

@@ -29,7 +29,8 @@ flowchart TD
     Phase10["🔧 Stage 11: Phase 10 — Deployment Hotfixes & Dev Loop<br/>(Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File) 🏷️"]
     Phase11["🚀 Stage 12: Phase 11 — Release Publishing CI & Iconography<br/>(Task 21: Release Workflow & GHCR Triggers · Task 22: SVG Icons & Doc Re-Alignment)"]
     Phase12["🔒 Stage 13: Phase 12 — WebCrypto Fallback Engine<br/>(Task 23: Pure TS Crypto Engine · Task 24: Release & Docs CI)"]
-    Phase13["🎛️ Stage 14: Phase 13 — Bitwarden-Style Custom Fields<br/>(v0.0.1.5 Milestone — pending transcription)"]
+    Phase13["🎛️ Stage 14: Phase 13 — Bitwarden-Style Custom Fields<br/>(Task 25: Data Layer & AAD Namespaces · Task 26: Editor & Renderers) ★Milestone"]
+    Phase14["🌐 Stage 15: Phase 14 — Native LAN TLS<br/>(v0.0.1.6 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 13–18<br/>through the release brackets v0.0.1.4 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -46,7 +47,8 @@ flowchart TD
     Phase10 --> Phase11
     Phase11 --> Phase12
     Phase12 --> Phase13
-    Phase13 --> Summit
+    Phase13 --> Phase14
+    Phase14 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -699,6 +701,59 @@ Verify ShellCryption round-trips succeed with crypto.subtle undefined,
 fallback output is byte-identical to native vectors, dropping a key file
 never navigates away, the portal renders under its Pages subpath, and
 exactly one RELEASE file exists!
+```
+
+---
+
+
+## 🎛️ Stage 14: Phase 13 Prompt — Bitwarden-Style Custom Fields [v0.0.1.5 (Build 14) — Milestone]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-13-bitwarden-style-custom-fields-v0015-build-14--milestone)
+> for complete specifications on **Task 25** and **Task 26**.
+> **📖 Required Context Files for Phase 13**:
+> 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §3 (Guard registry & firewall), §4 (Custom fields data model).
+> 2. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §7 (Custom fields render behavior).
+> 3. [`database-schema.md`](./database-schema.md) — §2 (Migrations).
+
+Copy and paste this prompt to execute **Phase 13 (Tasks 25 & 26)**:
+
+```markdown
+# PHASE 13 EXECUTION: Bitwarden-Style Custom Fields [v0.0.1.5 (Build 14) — Milestone]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 13 (Task 25: Custom Fields Data Layer · Task 26: Editor & Renderers).
+- `encryption-layers-spec.md`: §3–§4 (firewall, custom fields model & AAD namespaces).
+- `ui-ux-design-system.md`: §7 (render behavior per field type).
+- `database-schema.md`: §2 (migrations).
+
+Execute Phase 13 adhering to the Functionality + UI Component pairing:
+
+### Task 25: [Functionality] Custom Fields Data Layer — Migration, Types & Opaque-Blob Routing
+- types.ts: CustomFieldType (text|hidden|checkbox|linked),
+  CustomFieldLinkedProperty (username|password|url|notes|totp), CustomField
+  interface (linked stores source property name; resolution at render).
+- migrations/0003_custom_fields.{up,down}.sql: custom_fields TEXT DEFAULT ''
+  on vault_pearls, vault_secure_notes, vault_ssh_keys.
+- Route custom_fields through vault/notes/sshKeys + schemas as an opaque
+  blob: length/type validated, never inspected, never in metadataGuard.
+- Client-side ShellCryption with per-item-type AAD namespaces
+  (vault_pearls_custom:{id}, vault_secure_notes_custom:{id},
+  vault_ssh_keys_custom:{id}).
+
+### Task 26: [UI Component] Custom Fields Editor & Detail Renderers, Modal Polish
+- ItemFormModal: restructured custom-fields section; add-field dropdown
+  positioning + backdrop; scrollable body, pinned header/footer.
+- ItemDetailPane per-type rendering: Text (copy), Hidden (mask + eye
+  toggle + copy), Checkbox (status chip), Linked (badge + live resolution,
+  totp → live 30s countdown).
+- README AGPL-3.0 badge; molt RELEASE file; cut v0.0.1.5.
+
+Verify fields round-trip encrypted across all three domains, the blob is
+byte-for-byte opaque server-side, AAD verification fails on cross-item
+substitution, custom_fields is absent from the metadataGuard registry, all
+four types render correctly, and linked fields update live when the parent
+property changes!
 ```
 
 ---

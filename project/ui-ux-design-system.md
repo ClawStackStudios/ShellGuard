@@ -86,5 +86,23 @@ dual-mode AuthGateway** embedded in `LandingView`:
 - Generator configuration binds to the **current user identity**;
   TOTP issuer defaults renamed to ShellGuard.
 
+## §7. Custom Fields Render Behavior (Phase 13)
+
+`ItemFormModal` hosts the custom-fields section (restructured with dropdown
+positioning + backdrop for the add-field menu; scrollable body with pinned
+header/footer). `ItemDetailPane` renders per type:
+
+| Type | Render behavior |
+|:---|:---|
+| 📝 **Text** | Label, plaintext value, one-click copy button |
+| 🔒 **Hidden** | Label, masked value (`••••••••`), eye toggle reveal, one-click copy |
+| ☑️ **Checkbox** | Label, boolean status chip (`☑ Enabled` / `☐ Disabled`) |
+| 🔗 **Linked** | Label, `Linked to [Property]` badge, dynamically resolved value from the parent item (username / password / url / notes), copy button; `totp` renders the live `TotpDisplay` with 30s countdown |
+
+Linked fields are **live views**, not copies — the stored `value` is the
+source property name; resolution happens at render time against the
+decrypted parent item.
+
 ---
+
 

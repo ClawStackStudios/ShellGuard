@@ -70,6 +70,37 @@ and empty strings pass through unchanged. Unknown tables are passthrough.
 - `migrations/0002_metadata_encryption.{up,down}.sql` — the schema-side accompaniment.
 - `scripts/encrypt-existing-metadata.ts` / `scripts/decrypt-existing-metadata.ts` —
   one-shot in-place converters for existing rows (idempotent via envelope detection).
+- `migrations/0003_custom_fields.{up,down}.sql` (Phase 13) — adds a
+  `custom_fields` TEXT column to `vault_pearls`, `vault_secure_notes`,
+  `vault_ssh_keys`. The column holds **client-ShellCrypted `CustomField[]`
+  JSON** and stays **off the metadataGuard registry**.
+
+### A. Custom Fields Data Model (Phase 13)
+
+```typescript
+type CustomFieldType = "text" | "hidden" | "checkbox" | "linked";
+type CustomFieldLinkedProperty = "username" | "password" | "url" | "notes" | "totp";
+
+interface CustomField {
+  id: string;
+  name: string;
+  type: CustomFieldType;
+  // text/hidden: the value; checkbox: "true"/"false";
+  // linked: resolved at render time, stored as source property name.
+  value: string;
+  linkedProperty?: CustomFieldLinkedProperty;
+}
+```
+
+- **Client-side encryption with distinct AAD namespaces per item type**:
+  `vault_pearls_custom:{id}`, `vault_secure_notes_custom:{id}`,
+  `vault_ssh_keys_custom:{id}` — same ShellCryption engine, namespace
+  isolates cross-item substitution.
+- Server treatment: opaque blob — validated only for length/type, stored
+  byte-for-byte, never inspected, never registered in metadataGuard.
+
+---
+
 ## §5. The WebCrypto Fallback Engine (Phase 12)
 
 **Problem**: on non-secure browser origins (self-hosted HTTP LAN, e.g. Unraid

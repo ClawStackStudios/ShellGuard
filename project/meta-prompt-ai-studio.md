@@ -31,7 +31,8 @@ flowchart TD
     Phase12["🔒 Stage 13: Phase 12 — WebCrypto Fallback Engine<br/>(Task 23: Pure TS Crypto Engine · Task 24: Release & Docs CI)"]
     Phase13["🎛️ Stage 14: Phase 13 — Bitwarden-Style Custom Fields<br/>(Task 25: Data Layer & AAD Namespaces · Task 26: Editor & Renderers) ★Milestone"]
     Phase14["🌐 Stage 15: Phase 14 — Native LAN TLS<br/>(Task 27: TLS Manager & TOFU · Task 28: --release Flag & Docs Sync)"]
-    Phase15["📥 Stage 16: Phase 15 — sgtotp.bak Import Compatibility<br/>(v0.0.1.7 — pending transcription)"]
+    Phase15["📥 Stage 16: Phase 15 — sgtotp.bak Import Compatibility<br/>(Task 29: Parser & Client-Side Decryption · Task 30: ImportExportView & Strict Mirror)"]
+    Phase16["🏔️ Stage 17: Phase 16 — Docs Bridge Parity & Version Resolver<br/>(v0.0.1.8 — pending transcription · SUMMIT)"]
     Summit["🏔️ … walk continues: Phases 13–18<br/>through the release brackets v0.0.1.4 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -50,7 +51,8 @@ flowchart TD
     Phase12 --> Phase13
     Phase13 --> Phase14
     Phase14 --> Phase15
-    Phase15 --> Summit
+    Phase15 --> Phase16
+    Phase16 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -803,6 +805,60 @@ Verify a fresh instance boots HTTPS with a fingerprint stable across
 restarts, the cert validates for the LAN IP, HSTS appears exactly on native
 TLS termination, all TLS tests pass, a --release commit publishes without a
 manual tag, and no agent-internal state remains tracked!
+```
+
+---
+
+
+## 📥 Stage 16: Phase 15 Prompt — `sgtotp.bak` Import Compatibility Layer [v0.0.1.7 (Build 16)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-15-sgtotpbak-import-compatibility-layer-v0017-build-16)
+> for complete specifications on **Task 29** and **Task 30**.
+> **📖 Required Context Files for Phase 15**:
+> 1. [`import-export-spec.md`](./import-export-spec.md) — §2 (Compatibility layer contract), §3 (Import security invariants).
+> 2. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §5 (WebCrypto fallback engine).
+> 3. [`compatibility_layer.md`](../compatibility_layer.md) — the cross-project format contract (root).
+
+Copy and paste this prompt to execute **Phase 15 (Tasks 29 & 30)**:
+
+```markdown
+# PHASE 15 EXECUTION: sgtotp.bak Import Compatibility Layer [v0.0.1.7 (Build 16)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 15 (Task 29: sgtotpBackup Parser · Task 30: ImportExportView & Strict Mirror).
+- `import-export-spec.md`: §2–§3 (compatibility contract, security invariants).
+- `encryption-layers-spec.md`: §5 (fallback engine — LAN-safe primitives).
+- `compatibility_layer.md` (root): the cross-project format contract.
+
+Execute Phase 15 adhering to the Functionality + UI Component pairing:
+
+### Task 29: [Functionality] sgtotpBackup.ts Parser, Client-Side Decryption & Timestamp Preservation
+- Sniff: shellguard-totp-backup-v1 (encrypted) /
+  shellguard-totp-plain-export-v1 / bare BackupItemDto[].
+- Decrypt: HKDF-SHA256 (ikm = export key, salt = envelope.ownerUuid,
+  info = clawchives-shellcryption-v1) → AES-GCM-256, AAD
+  totp_backup:{ownerUuid} — via pure TS fallback primitives.
+- Enforce SHA-256 checksum over the exact decrypted item-array string
+  (post-decrypt).
+- Map: fresh UUIDs (never reuse Android ids), normalizePod() categories,
+  algorithm/digits/period passthrough, original localUpdatedAt preserved.
+- Full round-trip tests incl. checksum mismatch + AAD tamper.
+- Write compatibility_layer.md as the cross-project contract.
+
+### Task 30: [UI Component] ImportExportView Format Sniffing, Key Modal & Strict Release Mirror
+- ImportExportView: sniff on selection, PIN/key modal for encrypted
+  envelopes, count preview, sanitized errors.
+- release.yml: strict RELEASE-doc mirror — exact-version RELEASE-<tag>.md
+  resolution, hard fail, no auto-notes; body = RELEASE file verbatim.
+- Dynamic theme engine (light/dark + multi-accent); AGENTS.md for the
+  companion; landing header dark-mode divider fix; molt RELEASE; cut
+  v0.0.1.7.
+
+Verify all three formats import on HTTP LAN origins, checksum mismatch and
+AAD tamper abort before persistence, seeds re-encrypt under
+vault_pearls_totp:{id}, timestamps survive, the Release body matches the
+RELEASE file byte-for-byte, and themes switch live!
 ```
 
 ---

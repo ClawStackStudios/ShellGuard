@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 14 transcribed (v0.0.1.6 🏷️) — Phase 15: sgtotp.bak Import Compatibility pending (v0.0.1.7)"
+current_position: "Phase 15 transcribed (v0.0.1.7 🏷️) — Phase 16: Docs Bridge Parity & Version Resolver pending (v0.0.1.8 · SUMMIT)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–14 transcribed · Release era in progress"
+  features_completed: "Phases 1–15 transcribed (bridge complete) · Summit bracket pending"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -765,6 +765,69 @@ RELEASE file and cut `v0.0.1.6`.
 > DESIGN.md matches the runtime UI patterns exactly; no agent-internal
 > state remains tracked; the companion docs seed exists at the summit of
 > the cross-project bridge.
+
+---
+
+
+## Phase 15: `sgtotp.bak` Import Compatibility Layer [v0.0.1.7 (Build 16)]
+
+> Phase Feature Set Overview:
+> The bridge completes. The web vault learns to open its Android sibling's
+> backups: `sgtotpBackup.ts` parses the `sgtotp.bak` format (encrypted
+> `shellguard-totp-backup-v1` envelopes, plaintext exports, bare item
+> arrays), decrypting client-side via HKDF-SHA256 (salt = `ownerUuid`,
+> AAD `totp_backup:{ownerUuid}`) + AES-GCM-256 through the **pure TS
+> fallback primitives** (LAN-safe), with the enforced SHA-256 checksum over
+> the exact decrypted string. Items map to fresh-UUID vault pearls,
+> `normalizePod()` categories, original timestamps preserved;
+> `ImportExportView` sniffs formats with the PIN/key modal. Companion work:
+> the **strict RELEASE-doc mirror** in `release.yml` (exact-version
+> resolution, hard fail, no auto-notes), the dynamic theme engine with
+> multi-accent support, `AGENTS.md` for the Gemini identity in the Android
+> companion tree, and the landing-header dark-mode brand fix.
+> *(Receipts: `138952b`, `b0fcc47`, `7054595`, `074eab0`, `7b7a90c`,
+> `68da985`, `0b259f7`, `2d7d9a2`, `b125fab`, `fc7e9df`, merge `c6d17d8` —
+> 2026-08-30 → 09-03. Contract source of truth: `compatibility_layer.md`.)*
+
+- [ ] **Task 29: [Functionality] `sgtotpBackup.ts` Parser, Client-Side Decryption & Timestamp Preservation**
+
+Description: Implement the parser/mapper in `src/lib/sgtotpBackup.ts` —
+contract mirrored from the Android `BackupManager.kt` +
+`ShellCryptionEngine.kt`: sniff encrypted `shellguard-totp-backup-v1`,
+plaintext `shellguard-totp-plain-export-v1`, or bare `BackupItemDto[]`;
+decrypt envelopes client-side (HKDF-SHA256: ikm = export key, salt =
+`envelope.ownerUuid`, info = `clawchives-shellcryption-v1` → AES-GCM-256,
+AAD `totp_backup:{ownerUuid}`) using the pure TS fallback primitives; verify
+the SHA-256 checksum over the exact decrypted item-array string (post-decrypt,
+byte-reproducible). Map items to vault pearls with **fresh UUIDs**,
+`normalizePod()` categories, `algorithm`/`digits`/`period` passthrough, and
+**original `localUpdatedAt` preserved** as `created_at`. Prove the full
+crypto round-trip in `tests/unit/sgtotpBackup.test.ts` (encrypted fixture,
+plaintext, bare array, checksum mismatch, AAD tamper). Write
+`compatibility_layer.md` as the cross-project format contract.
+
+> Success Criteria: All three input formats import correctly on HTTP LAN
+> origins; a checksum mismatch or AAD tamper aborts before persistence;
+> imported seeds re-encrypt under `vault_pearls_totp:{id}`; timestamps
+> survive the journey; Android ids are never reused.
+
+- [ ] **Task 30: [UI Component] ImportExportView Format Sniffing, Key Modal & Strict Release Mirror**
+
+Description: Extend `ImportExportView.tsx`: detect sgtotp formats on file
+selection, prompt for the export key/PIN via a modal for encrypted
+envelopes, show the imported-count preview, and commit through the parser
+with sanitized errors. In CI: rewrite `release.yml` to the **strict
+RELEASE-doc mirror** — exact-version `RELEASE-<tag>.md` resolution with hard
+failure (no auto-notes, no fallback) so the GitHub Release body is the
+RELEASE file verbatim. Implement the dynamic theme engine (adaptive
+light/dark + multi-accent support) in the client; add `AGENTS.md` for the
+companion's Gemini identity; fix the landing header's dark-mode brand
+divider; molt the RELEASE file and cut `v0.0.1.7`.
+
+> Success Criteria: Encrypted backups import via the key modal with
+> sanitized failure modes; the GitHub Release body matches the RELEASE file
+> byte-for-byte or the pipeline fails loudly; themes switch live across
+> light/dark and all accents; the bridge is usable end-to-end on LAN.
 
 ---
 

@@ -29,7 +29,7 @@ flowchart TD
     Phase10["🔧 Stage 11: Phase 10 — Deployment Hotfixes & Dev Loop<br/>(Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File) 🏷️"]
     Phase11["🚀 Stage 12: Phase 11 — Release Publishing CI & Iconography<br/>(Task 21: Release Workflow & GHCR Triggers · Task 22: SVG Icons & Doc Re-Alignment)"]
     Phase12["🔒 Stage 13: Phase 12 — WebCrypto Fallback Engine<br/>(v0.0.1.4 — pending transcription)"]
-    Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
+    Summit["🏔️ … walk continues: Phases 13–18<br/>through the release brackets v0.0.1.4 → v0.0.1.8"]
 
     Step0 --> UploadContext
     UploadContext --> Phase1
@@ -42,7 +42,9 @@ flowchart TD
     Phase7 --> Phase8
     Phase8 --> Phase9
     Phase9 --> Phase10
-    Phase10 --> Summit
+    Phase10 --> Phase11
+    Phase11 --> Phase12
+    Phase12 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work

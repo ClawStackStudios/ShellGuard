@@ -555,7 +555,7 @@ tag → RELEASE doc → CHANGELOG → version bump.
 ---
 
 
-## Phase 11: Release Publishing CI & Iconography [v0.0.1.3 (Build 12) — 🏷️]
+## Phase 11: Release Publishing CI & Iconography [v0.0.1.3 (Build 12)]
 
 > Phase Feature Set Overview:
 > The pipeline begins to run itself. A GitHub Actions workflow auto-publishes

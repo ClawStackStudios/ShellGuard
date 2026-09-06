@@ -33,7 +33,7 @@ flowchart TD
     Phase14["🌐 Stage 15: Phase 14 — Native LAN TLS<br/>(Task 27: TLS Manager & TOFU · Task 28: --release Flag & Docs Sync)"]
     Phase15["📥 Stage 16: Phase 15 — sgtotp.bak Import Compatibility<br/>(Task 29: Parser & Client-Side Decryption · Task 30: ImportExportView & Strict Mirror)"]
     Phase16["🏔️ Stage 17: Phase 16 — Docs Bridge Parity & Version Resolver<br/>(v0.0.1.8 — pending transcription · SUMMIT)"]
-    Summit["🏔️ … walk continues: Phases 13–18<br/>through the release brackets v0.0.1.4 → v0.0.1.8"]
+    Summit["🏔️ SUMMIT — v0.0.1.8 parity reached<br/>(16 phases · 32 task pairs · 9 oracles · receipts = HEAD)"]
 
     Step0 --> UploadContext
     UploadContext --> Phase1
@@ -55,8 +55,9 @@ flowchart TD
     Phase16 --> Summit
 ```
 
-> **Transcription state**: Phases marked *(pending transcription)* exist as real work
-> in git history but not yet as stages in this spine. The walk is in progress.
+> **Transcription state**: ✅ **COMPLETE** — all 16 phases transcribed
+> (`v0.0.0.0` void → `v0.0.1.8` parity). Every stage is live; the walk and
+> the codebase occupy the same commit.
 
 ---
 
@@ -125,7 +126,7 @@ project so subsequent stages can reference them:
 
 ## 🥚 Stage 2: Phase 1 Prompt — Scaffold, Auth & API Molt [Baseline: v0.0.0.1 (Build 2)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-1-scaffold-auth--api-molt-baseline-v00001-build-2)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-1-scaffold-auth--api-molt-baseline-v0001-build-2)
 > for complete specifications on **Task 01** and **Task 02**.
 > **📖 Required Context Files for Phase 1**:
 > 1. [`architecture.md`](./architecture.md) — §2 (Boundaries), §3 (Topology), §4 (Invariants).
@@ -174,7 +175,7 @@ outside its permissions, and the landing shell renders on unified tokens!
 
 ## 🗄️ Stage 3: Phase 2 Prompt — SQLite Bedrock, Security Kernel & Identity Bridge [Baseline: v0.0.0.2 (Build 3)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-2-sqlite-bedrock-security-kernel--identity-bridge-baseline-v00002-build-3)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-2-sqlite-bedrock-security-kernel--identity-bridge-baseline-v0002-build-3)
 > for complete specifications on **Task 03** and **Task 04**.
 > **📖 Required Context Files for Phase 2**:
 > 1. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations), §3 (Schema v1), §4 (Audit redaction).
@@ -235,7 +236,7 @@ register → login → vault-fetch journey through the unwrapped envelope!
 
 ## 🔗 Stage 4: Phase 3 Prompt — Vault CRUD, Lobster Keys & Settings Storage [Baseline: v0.0.0.3 (Build 4)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-3-vault-crud-lobster-keys--settings-storage-baseline-v00003-build-4)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-3-vault-crud-lobster-keys--settings-storage-baseline-v0003-build-4)
 > for complete specifications on **Task 05** and **Task 06**.
 > **📖 Required Context Files for Phase 3**:
 > 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map), §4 (Lobster Keys lifecycle), §5 (Settings).
@@ -281,7 +282,7 @@ sessions, and settings persisting per owner!
 
 ## 🧪 Stage 5: Phase 4 Prompt — Test Oracle, Container Deployment & License [Baseline: v0.0.0.4 (Build 5)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-4-test-oracle-container-deployment--license-baseline-v00004-build-5)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-4-test-oracle-container-deployment--license-baseline-v0004-build-5)
 > for complete specifications on **Task 07** and **Task 08**.
 > **📖 Required Context Files for Phase 4**:
 > 1. [`verification-gates.md`](./verification-gates.md) — §1 (Harness), §2 (Suites), §3 (Build gates).
@@ -337,7 +338,7 @@ claim matches runtime behavior!
 
 ## 🔐 Stage 6: Phase 5 Prompt — Per-Row Metadata Encryption & Port Molt [Baseline: v0.0.0.5 (Build 6)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-5-per-row-metadata-encryption--port-molt-baseline-v00005-build-6)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-5-per-row-metadata-encryption--port-molt-baseline-v0005-build-6)
 > for complete specifications on **Task 09** and **Task 10**.
 > **📖 Required Context Files for Phase 5**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §1 (Triple-layer model), §2 (Field encryption), §3 (Guard registry & firewall), §4 (Migration & tooling).
@@ -388,7 +389,7 @@ remain, and the docs' encryption model matches runtime exactly!
 
 ## 🦞 Stage 7: Phase 6 Prompt — SuperLobster Admin Plane [Baseline: v0.0.0.6 (Build 7)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-6-superlobster-admin-plane-baseline-v00006-build-7)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-6-superlobster-admin-plane-baseline-v0006-build-7)
 > for complete specifications on **Task 11** and **Task 12**.
 > **📖 Required Context Files for Phase 6**:
 > 1. [`admin-suite-spec.md`](./admin-suite-spec.md) — §1–§4 (threat model, API, inviolable rules, component architecture).
@@ -442,7 +443,7 @@ the panel renders each API section with graceful T1 failure!
 
 ## 🐚 Stage 8: Phase 7 Prompt — Multi-Account, QuickLogin & Landing Gateway [Baseline: v0.0.0.7 (Build 8)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-7-multi-account-quicklogin--landing-gateway-baseline-v00007-build-8)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-7-multi-account-quicklogin--landing-gateway-baseline-v0007-build-8)
 > for complete specifications on **Task 13** and **Task 14**.
 > **📖 Required Context Files for Phase 7**:
 > 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §1 (Tokens), §2 (Gateway pattern), §3 (Session UX), §4 (Brand motion).
@@ -493,7 +494,7 @@ deploys!
 
 ## 🏛️ Stage 9: Phase 8 Prompt — Vault UX Renaissance [Baseline: v0.0.0.8 (Build 9)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-8-vault-ux-renaissance--master-detail-pure-pods--lock-hardening-baseline-v00008-build-9)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-8-vault-ux-renaissance--master-detail-pure-pods--lock-hardening-baseline-v0008-build-9)
 > for complete specifications on **Task 15** and **Task 16**.
 > **📖 Required Context Files for Phase 8**:
 > 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail & pod invariants), §6 (Claw-in & identity-aware tools).
@@ -862,5 +863,67 @@ RELEASE file byte-for-byte, and themes switch live!
 ```
 
 ---
+
+
+## 🏔️ Stage 17: Phase 16 Prompt — Docs Bridge Parity, Agentic Infrastructure & Version Resolver [v0.0.1.8 (Build 17) — SUMMIT]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-16-docs-bridge-parity-agentic-infrastructure--version-resolver-v0018-build-17--summit)
+> for complete specifications on **Task 31** and **Task 32**.
+> **📖 Required Context Files for Phase 16**:
+> 1. [`README.md`](./README.md) — the pipeline contract itself (the walk's lesson).
+> 2. [`verification-gates.md`](./verification-gates.md) — §4–§5 (Verification principle, release protocol).
+> 3. [`import-export-spec.md`](./import-export-spec.md) — §2 (Companion bridge).
+
+Copy and paste this prompt to execute **Phase 16 (Tasks 31 & 32)**:
+
+```markdown
+# PHASE 16 EXECUTION: Docs Bridge Parity, Agentic Infrastructure & Version Resolver [v0.0.1.8 (Build 17) — SUMMIT]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 16 (Task 31: Agentic Infrastructure & Version Resolver · Task 32: Privacy, Parity & Mirror).
+- `README.md`: the pipeline contract.
+- `verification-gates.md`: §4–§5 (verification principle, release protocol).
+- `import-export-spec.md`: §2 (companion bridge).
+
+Execute Phase 16 adhering to the Functionality + Documentation pairing:
+
+### Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver
+- .agents/memory-bank/ core files + android/ sub-bank (api-client,
+  crypto-spec, room-schema, totp-engine, ui-compose-models); workflow
+  templates; agentic rule sets.
+- Synchronize release-pipeline invariants; formalize agent git tracking.
+- src/server/utils/version.ts: getAppVersion() from package.json with
+  multi-tier fallback; replace env reads in admin.ts, backupManager.ts,
+  server.ts; tests/unit/version.test.ts.
+
+### Task 32: [Documentation Component] Privacy Policy, Docs Bridge Parity & Chained Mirror Release
+- docs/privacy.md (Play-compliant zero-knowledge disclosures) + portal
+  cross-links; docs/companion/ suite.
+- Two-sided bridge parity across ARCHITECTURE, BLUEPRINT, SECURITY,
+  README, ADMIN, CONTRIBUTING + docs portal.
+- release.yml: optimized triggers + chained mirror job; placeholder IPs in
+  install guide; molt RELEASE to v0.0.1.8; cut via --release commit flag.
+
+Verify the presented version always equals package.json, the memory bank
+loads a cold agent into full context, both sides of every documentation
+bridge match runtime truth, a RELEASE-file edit on main re-syncs the
+published release, and the summit tag exists — the walk and the codebase
+occupy the same commit!
+```
+
+---
+
+## 🏔️ The Summit
+
+The spine is complete: **Stage 0 (the void) → Stage 17 (v0.0.1.8 parity)** —
+16 transcribed phases, 32 task pairs, 9 oracles, every receipt a real commit,
+every success criterion a real gate. Anyone cloning this repository can paste
+these prompts into a fresh agent and rebuild the exact application, phase by
+phase, from nothing.
+
+*"Build the docs first, and so tightly, the application has no choice but to
+follow that."* — the lesson of ShellGuard-TOTP, now written into ShellGuard's
+own genome.
 
 

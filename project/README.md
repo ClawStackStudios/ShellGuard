@@ -81,4 +81,7 @@ suite that still runs today.
 *Origin note: ShellGuard was first built in Google AI Studio (see Phase 1: the
 scaffold commit shipped with `patch_*.cjs` scripts, molted out in the same gap).
 The TOTP companion later proved the lesson that produced this folder:
-**build the docs first, and so tightly, the application has no choice but to follow.***
+**build the docs first, and so tightly, the application has no choice but to follow.**
+
+**Status**: ✅ Reverse-build complete — 16 phases, `v0.0.0.0` → `v0.0.1.8`,
+receipt-backed end to end. The `/project` folder is the application's genome.*

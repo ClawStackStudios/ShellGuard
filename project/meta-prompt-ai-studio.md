@@ -28,7 +28,8 @@ flowchart TD
     Phase9["🥚 Stage 10: Phase 9 — Genesis Release & Origin Hardening<br/>(Task 17: Origin-Safety Fallbacks · Task 18: Genesis Release Protocol) 🏷️"]
     Phase10["🔧 Stage 11: Phase 10 — Deployment Hotfixes & Dev Loop<br/>(Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File) 🏷️"]
     Phase11["🚀 Stage 12: Phase 11 — Release Publishing CI & Iconography<br/>(Task 21: Release Workflow & GHCR Triggers · Task 22: SVG Icons & Doc Re-Alignment)"]
-    Phase12["🔒 Stage 13: Phase 12 — WebCrypto Fallback Engine<br/>(v0.0.1.4 — pending transcription)"]
+    Phase12["🔒 Stage 13: Phase 12 — WebCrypto Fallback Engine<br/>(Task 23: Pure TS Crypto Engine · Task 24: Release & Docs CI)"]
+    Phase13["🎛️ Stage 14: Phase 13 — Bitwarden-Style Custom Fields<br/>(v0.0.1.5 Milestone — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 13–18<br/>through the release brackets v0.0.1.4 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -44,7 +45,8 @@ flowchart TD
     Phase9 --> Phase10
     Phase10 --> Phase11
     Phase11 --> Phase12
-    Phase12 --> Summit
+    Phase12 --> Phase13
+    Phase13 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -654,6 +656,49 @@ Verify a tag push publishes a Release matching the RELEASE file
 byte-for-byte, GHCR receives semver tags, exactly one RELEASE file exists,
 no stale version references remain, and the favicon renders the brand
 gradient!
+```
+
+---
+
+
+## 🔒 Stage 13: Phase 12 Prompt — Pure TypeScript WebCrypto Fallback Engine [v0.0.1.4 (Build 13)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-12-pure-typescript-webcrypto-fallback-engine-v0014-build-13)
+> for complete specifications on **Task 23** and **Task 24**.
+> **📖 Required Context Files for Phase 12**:
+> 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §1 (Triple-layer model), §5 (WebCrypto fallback engine).
+> 2. [`verification-gates.md`](./verification-gates.md) — §4–§5 (Verification principle, release protocol).
+
+Copy and paste this prompt to execute **Phase 12 (Tasks 23 & 24)**:
+
+```markdown
+# PHASE 12 EXECUTION: Pure TypeScript WebCrypto Fallback Engine [v0.0.1.4 (Build 13)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 12 (Task 23: Fallback Engine · Task 24: Release & Docs CI).
+- `encryption-layers-spec.md`: §1, §5 (triple-layer model, fallback engine).
+- `verification-gates.md`: §4–§5 (verification principle, release protocol).
+
+Execute Phase 12 adhering to the Functionality + Release pairing:
+
+### Task 23: [Functionality] Pure TypeScript WebCrypto Fallback Engine
+- webCryptoFallback.ts: SHA-256 (FIPS 180-4), HMAC-SHA256 (RFC 2104),
+  HKDF (RFC 5869), AES-GCM-256 (SP 800-38D) — byte-identical with native.
+- Availability selector in crypto.ts; shellCryption.ts routed through it;
+  envelope format identical either way; callers never branch.
+- tests/unit/webCryptoFallback.test.ts proves native-vector parity.
+- Drag-drop preventDefault(); remaining QR downloads → Blob + ObjectURL.
+
+### Task 24: [Release Component] v0.0.1.4 Release & Docs CI Hardening
+- Molt RELEASE-v0.0.1.3.md → RELEASE-v0.0.1.4.md; CHANGELOG; version bump.
+- deploy-docs.yml: VITEPRESS_BASE env-driven base path (default
+  /ShellGuard/); broadened main triggers. README banner restyle.
+
+Verify ShellCryption round-trips succeed with crypto.subtle undefined,
+fallback output is byte-identical to native vectors, dropping a key file
+never navigates away, the portal renders under its Pages subpath, and
+exactly one RELEASE file exists!
 ```
 
 ---

@@ -70,8 +70,37 @@ and empty strings pass through unchanged. Unknown tables are passthrough.
 - `migrations/0002_metadata_encryption.{up,down}.sql` — the schema-side accompaniment.
 - `scripts/encrypt-existing-metadata.ts` / `scripts/decrypt-existing-metadata.ts` —
   one-shot in-place converters for existing rows (idempotent via envelope detection).
-- Migration 0003 in a later phase extends this pattern to custom fields
-  (`custom_fields` TEXT column) — which must **stay off the registry**
-  (client-encrypted via ShellCryption AAD namespaces).
+## §5. The WebCrypto Fallback Engine (Phase 12)
+
+**Problem**: on non-secure browser origins (self-hosted HTTP LAN, e.g. Unraid
+at `192.168.x.x`), `window.crypto.subtle` is **undefined** — the entire
+client-side ShellCryption stack would be dead on the most common self-host
+topology.
+
+**Solution**: `src/lib/webCryptoFallback.ts` — pure TypeScript implementations
+of the four primitives, **cryptographically identical byte-for-byte** with
+the native API:
+
+| Primitive | Standard |
+|:---|:---|
+| SHA-256 | FIPS 180-4 (full K256 constant table) |
+| HMAC-SHA256 | RFC 2104 |
+| HKDF (extract + expand) | RFC 5869 |
+| AES-GCM-256 | NIST SP 800-38D |
+
+- `crypto.ts` detects availability and routes: native `crypto.subtle` when
+  present, fallback engine when not — callers never branch.
+- `shellCryption.ts` routes through the same selector; envelope format is
+  identical either way (`{v, alg:'AES-GCM-256', iv, ct, aad}`).
+- **Test oracle**: `tests/unit/webCryptoFallback.test.ts` proves the TS
+  engine produces byte-identical output to native WebCrypto vectors.
+- **Companion UX fixes in the same bracket**: drag-drop handlers
+  `preventDefault()` so dropping a key file never navigates the browser
+  away; QR code downloads convert to `Blob` + `ObjectURL` (completing the
+  Phase 9 origin-safety migration).
+
+> Invariant: the fallback engine is **not** a different cipher stack — it is
+> the same stack, ported. Any divergence from native output is a defect.
 
 ---
+

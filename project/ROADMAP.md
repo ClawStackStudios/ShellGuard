@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 11 transcribed (v0.0.1.3 🏷️) — Phase 12: WebCrypto Fallback Engine pending (v0.0.1.4)"
+current_position: "Phase 12 transcribed (v0.0.1.4 🏷️) — Phase 13: Bitwarden-Style Custom Fields pending (v0.0.1.5 Milestone)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–11 transcribed · Release era in progress"
+  features_completed: "Phases 1–12 transcribed · Release era in progress"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -597,6 +597,59 @@ portal and `CHANGELOG.md`, purging legacy migration text.
 > Success Criteria: No stale version references remain (single grep); the
 > favicon renders the brand gradient; the docs tree contains no obsolete
 > knowledge files; the docs = app principle holds on every touched page.
+
+---
+
+
+## Phase 12: Pure TypeScript WebCrypto Fallback Engine [v0.0.1.4 (Build 13)]
+
+> Phase Feature Set Overview:
+> The second LAN-resilience lesson, and the deepest. On non-secure browser
+> origins `window.crypto.subtle` is undefined — the entire client-side
+> ShellCryption stack would be dead on the most common self-host topology
+> (Unraid at a LAN IP). The answer is `webCryptoFallback.ts`: a **427-line
+> pure TypeScript engine** — SHA-256 (FIPS 180-4, full K256 constant table),
+> HMAC-SHA256 (RFC 2104), HKDF (RFC 5869), AES-GCM-256 (NIST SP 800-38D) —
+> **cryptographically identical byte-for-byte** with native WebCrypto, behind
+> an availability selector so callers never branch. Proven by
+> `tests/unit/webCryptoFallback.test.ts` against native vectors. Companion
+> fixes complete the origin-safety migration: drag-drop `preventDefault()`
+> (dropping a key file no longer navigates away) and QR downloads → Blob.
+> Docs CI gains `VITEPRESS_BASE` and broader triggers; the README banner
+> restyles. *(Receipts: `977eab3`, `4319cb0`, `7df330e`, `415b1c8`, `71439cb`,
+> `8fff3f0`, `76a2347`, merge `d8251a2` — 2026-08-29.)*
+
+- [ ] **Task 23: [Functionality] Pure TypeScript WebCrypto Fallback Engine**
+
+Description: Implement `src/lib/webCryptoFallback.ts` with pure TypeScript
+implementations of SHA-256, HMAC-SHA256, HKDF (extract + expand), and
+AES-GCM-256 — byte-for-byte identical with the native WebCrypto API. Add the
+availability selector to `src/lib/crypto.ts` (native `crypto.subtle` when
+present, fallback engine when not) and route `src/lib/shellCryption.ts`
+through it — the `{v, alg:'AES-GCM-256', iv, ct, aad}` envelope format is
+identical either way and callers never branch. Prove parity with
+`tests/unit/webCryptoFallback.test.ts` (native-vector comparison). Fix the
+drag-drop navigation leak (`preventDefault()` in `App.tsx` /
+`GeneratorToolView.tsx`) and convert remaining QR downloads to Blob +
+ObjectURL.
+
+> Success Criteria: Full ShellCryption round-trips succeed on an origin
+> where `crypto.subtle` is undefined; fallback output is byte-identical to
+> native vectors; dropping a key file never navigates the browser; the
+> envelope format is indistinguishable between native and fallback paths.
+
+- [ ] **Task 24: [Release Component] v0.0.1.4 Release & Docs CI Hardening**
+
+Description: Molt the rolling RELEASE file (`git mv RELEASE-v0.0.1.3.md
+RELEASE-v0.0.1.4.md`), rewrite with the fallback-engine story, append the
+CHANGELOG entry, bump `package.json` to `0.0.1.4`. Harden docs CI:
+`VITEPRESS_BASE` environment-driven base path (default `/ShellGuard/` for
+GitHub Pages styling) and broadened main-branch triggers in
+`deploy-docs.yml`. Restyle the README banner.
+
+> Success Criteria: The VitePress portal renders styled under its GitHub
+> Pages subpath; docs CI triggers on main pushes; exactly one RELEASE file
+> named for the current version; CHANGELOG and package.json agree.
 
 ---
 

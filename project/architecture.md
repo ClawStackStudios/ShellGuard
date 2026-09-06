@@ -60,5 +60,35 @@ flowchart LR
    (key-hash verification, admin tokens) use constant-time compare, never `===`.
 5. **No hardcoded defaults**: pods/categories are 100% user-created.
 6. **Build features around security, not security around features.**
+7. **TLS is transport armor, not identity** — secrecy lives client-side (§5).
 
 ---
+
+## §5. Transport Security — Native LAN TLS (Phase 14)
+
+Self-hosted instances run on LAN IPs where Let's Encrypt is impossible; the
+server therefore runs **its own CA of one**:
+
+- **Activation**: `TLS_ENABLED=true` → `server.ts` wraps the Express app in
+  `https.createServer`; HSTS activates when TLS terminates natively
+  (or via `ENFORCE_HTTPS` upstream).
+- **Material resolution (three tiers)** — `src/server/utils/tlsManager.ts`:
+  1. **Bring-your-own** via `TLS_CERT_PATH` / `TLS_KEY_PATH`.
+  2. **Reuse** an existing generated pair in `DATA_DIR/certs/`
+     (fingerprint stays stable across restarts).
+  3. **Generate** a fresh 10-year **EC P-256** self-signed pair
+     (`selfsigned`, curve P-256) and persist it.
+- **SAN collection**: `localhost` + loopback + **every non-internal network
+  interface** — the cert is valid for however the operator reaches the box
+  (LAN IP, Tailscale IP, hostname).
+- **Fingerprint**: SHA-256 of the cert, logged at boot so operators can pin
+  trust on first use (TOFU).
+- **Test oracle**: `tests/tls.test.ts` — generation, persistence/reuse,
+  fingerprint stability, SAN completeness, conditional server protocol.
+
+> Invariant: TLS is **transport armor**, not identity — the zero-knowledge
+> model never depends on it. Client-side ShellCryption remains the secrecy
+> boundary; TLS protects metadata and availability.
+
+---
+

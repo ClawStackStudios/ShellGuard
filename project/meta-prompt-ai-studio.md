@@ -30,7 +30,8 @@ flowchart TD
     Phase11["🚀 Stage 12: Phase 11 — Release Publishing CI & Iconography<br/>(Task 21: Release Workflow & GHCR Triggers · Task 22: SVG Icons & Doc Re-Alignment)"]
     Phase12["🔒 Stage 13: Phase 12 — WebCrypto Fallback Engine<br/>(Task 23: Pure TS Crypto Engine · Task 24: Release & Docs CI)"]
     Phase13["🎛️ Stage 14: Phase 13 — Bitwarden-Style Custom Fields<br/>(Task 25: Data Layer & AAD Namespaces · Task 26: Editor & Renderers) ★Milestone"]
-    Phase14["🌐 Stage 15: Phase 14 — Native LAN TLS<br/>(v0.0.1.6 — pending transcription)"]
+    Phase14["🌐 Stage 15: Phase 14 — Native LAN TLS<br/>(Task 27: TLS Manager & TOFU · Task 28: --release Flag & Docs Sync)"]
+    Phase15["📥 Stage 16: Phase 15 — sgtotp.bak Import Compatibility<br/>(v0.0.1.7 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 13–18<br/>through the release brackets v0.0.1.4 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -48,7 +49,8 @@ flowchart TD
     Phase11 --> Phase12
     Phase12 --> Phase13
     Phase13 --> Phase14
-    Phase14 --> Summit
+    Phase14 --> Phase15
+    Phase15 --> Summit
 ```
 
 > **Transcription state**: Phases marked *(pending transcription)* exist as real work
@@ -754,6 +756,53 @@ byte-for-byte opaque server-side, AAD verification fails on cross-item
 substitution, custom_fields is absent from the metadataGuard registry, all
 four types render correctly, and linked fields update live when the parent
 property changes!
+```
+
+---
+
+
+## 🌐 Stage 15: Phase 14 Prompt — Native LAN TLS [v0.0.1.6 (Build 15)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-14-native-lan-tls-with-self-signed-certificates-v0016-build-15)
+> for complete specifications on **Task 27** and **Task 28**.
+> **📖 Required Context Files for Phase 14**:
+> 1. [`architecture.md`](./architecture.md) — §5 (Transport security), §4 (Invariants).
+> 2. [`verification-gates.md`](./verification-gates.md) — §2–§5 (Suites, gates, release protocol).
+
+Copy and paste this prompt to execute **Phase 14 (Tasks 27 & 28)**:
+
+```markdown
+# PHASE 14 EXECUTION: Native LAN TLS [v0.0.1.6 (Build 15)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 14 (Task 27: TLS Manager & Conditional HTTPS · Task 28: --release Flag & Docs Sync).
+- `architecture.md`: §4–§5 (invariants, transport security).
+- `verification-gates.md`: §2–§5 (suites, gates, release protocol).
+
+Execute Phase 14 adhering to the Functionality + CI/Configuration pairing:
+
+### Task 27: [Functionality] TLS Manager, Conditional HTTPS Server & TOFU Fingerprinting
+- tlsManager.ts three-tier resolution: BYO (TLS_CERT_PATH/TLS_KEY_PATH) →
+  reuse DATA_DIR/certs/ pair (stable fingerprint) → generate 10-year EC
+  P-256 self-signed and persist.
+- SANs: localhost + loopback + every non-internal interface.
+- server.ts: TLS_ENABLED=true → https.createServer; HSTS on native TLS;
+  boot logs protocol + SHA-256 fingerprint (TOFU).
+- TLS-aware Docker healthcheck + .env.example; SECURITY.md transport threat
+  model; QUICKSTART LAN-HTTPS recipe; tests/tls.test.ts oracle.
+
+### Task 28: [CI/Configuration Component] --release Publishing Flag & Documentation Sync
+- release.yml: commit-message `--release <version>` triggers automated
+  publication (rolling RELEASE file as body).
+- DESIGN.md sync (master-detail + custom fields); untrack .agents/ from
+  git index; release-notes hygiene; initialize Android companion docs;
+  molt RELEASE file; cut v0.0.1.6.
+
+Verify a fresh instance boots HTTPS with a fingerprint stable across
+restarts, the cert validates for the LAN IP, HSTS appears exactly on native
+TLS termination, all TLS tests pass, a --release commit publishes without a
+manual tag, and no agent-internal state remains tracked!
 ```
 
 ---

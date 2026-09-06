@@ -1,4 +1,17 @@
 ---
+Date: 2026-09-05
+TaskRef: "Reverse-Build `/project` Genome — ShellGuard (16 phases, summit)"
+
+Session_Summary:
+- Built `/project/` genome (16 phases / 32 task pairs / 9 oracles / 2,745 lines, 27 commits on `docs/reverse-project`, HEAD 68d73cd, pending merge to main). Receipt-matched to git via gap-walking; docs and codebase occupy the same commit (66d9ca4 parity).
+- Patterns consolidated to `consolidated_learnings.md` → "Documentation Systems": reverse-documentation method, GitHub anchor slug rules (v0001 not v00001; emoji variation-selector hazard), mermaid node/edge atomic maintenance, oracle-file section integrity. Raw details pruned per protocol.
+
+Session-Specific (not consolidated):
+- Shell integration intermittently failed to capture heredoc/multi-line command output — use editor-tool reads for verification instead of terminal reads in this environment.
+- The draft phase table placed genesis one phase too early; a 13-commit UX cluster (master-detail, zero-hardcoded pods, NavIntent, commits c14121d..8e7c16d) belonged to its own Phase 8. Lesson: boundary-check drafts against actual commit lists before transcribing.
+- The anchor-slug bug (v00001 vs v0001) was introduced BY a Phase 1 "fix" and propagated 11 passes — programmatic slug verification is now mandatory from pass 1.
+
+---
 Date: 2026-09-03
 TaskRef: "Prepare ShellGuard Release v0.0.1.7 & Session Learnings Consolidation"
 

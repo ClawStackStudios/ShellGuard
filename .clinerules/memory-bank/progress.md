@@ -39,7 +39,7 @@
 
 ## Current Status
 
-**v0.0.1.4** — Release v0.0.1.4 on branch `main`. Custom Fields (Text, Hidden, Checkbox, Linked) implemented and in [Unreleased]. LAN HTTP stability improvements: WebCrypto fallback for `crypto.subtle` undefined on HTTP origins, UUID entropy fallback, Blob-based file downloads. All pod management work from `fix/sidebar-and-pod-management` branch landed in `main`. **1 test failing** in `webCryptoFallback.test.ts` — needs investigation.
+**v0.0.1.8 — Reverse-build summit reached.** `project/` genome complete on branch `docs/reverse-project` (27 commits, `68d73cd`): 16 phases / 32 task pairs transcribed receipt-first from git (`v0.0.0.0` → `v0.0.1.8`), 9 spec oracles, meta-prompt spine Stage 0–17, 16/16 anchors + 18 edges verified. Awaiting merge to main. Runtime itself unchanged — this branch is docs-only.
 
 ## Known Issues
 

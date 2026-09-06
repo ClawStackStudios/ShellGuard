@@ -1,11 +1,11 @@
 ---
 roadmap_version: 1.0.0
 last_updated: 2026-09-05
-current_position: "Phase 10 transcribed (v0.0.1.2 🏷️) — Phase 11: Release Publishing CI pending (v0.0.1.3)"
+current_position: "Phase 11 transcribed (v0.0.1.3 🏷️) — Phase 12: WebCrypto Fallback Engine pending (v0.0.1.4)"
 transcription_state: "Reverse-build walk in progress: v0.0.0.0 (void) → v0.0.1.8 (summit). Stages added one phase at a time, receipt-backed by git."
 statistics:
   description: "Reverse-built deterministic roadmap for ShellGuard (web vault). Reconstructed post hoc from the git story: each phase's work matches the commits inside its release gap. Engineered in synergistic 2-task phases: Task A delivers core functionality, Task B delivers the corresponding UI/UX."
-  features_completed: "Phases 1–10 transcribed · Release era in progress"
+  features_completed: "Phases 1–11 transcribed · Release era in progress"
 ---
 
 # Reverse Project Roadmap — ShellGuard Secrets Vault (Web)
@@ -551,6 +551,52 @@ tag → RELEASE doc → CHANGELOG → version bump.
 > Success Criteria: The repo contains exactly one RELEASE file, named for
 > the current version; CHANGELOG and package.json agree; the release grammar
 > of §5 of the verification oracle is followed exactly.
+
+---
+
+
+## Phase 11: Release Publishing CI & Iconography [v0.0.1.3 (Build 12) — 🏷️]
+
+> Phase Feature Set Overview:
+> The pipeline begins to run itself. A GitHub Actions workflow auto-publishes
+> GitHub Releases on tag push; Docker GHCR builds trigger on tags with
+> semver-tag generation; the rolling RELEASE file molts to
+> `RELEASE-v0.0.1.3.md` with its commit ledger synced; the Unraid template
+> and browser favicon move to SVG (the `favicon.svg` that later seeds the
+> TOTP companion's launcher icon); obsolete `CRUSTAGENT.md`/`CRUSTSECURITY.md`
+> docs are removed and version references re-align to `v0.0.1` with legacy
+> migration text purged. *(Receipts: `20be1c3`, `d1bffb3`, `c6666a3`,
+> `1db4bf9`, `de2372a`, `050ff8e`, `0840653`, `50eef47`, `c0a9459`,
+> `6181084`, `0c1785c` — 2026-08-29.)*
+
+- [ ] **Task 21: [Functionality] Release Publishing Workflow & GHCR Tag Triggers**
+
+Description: Add `.github/workflows/release.yml`: on tag push, publish a
+GitHub Release whose body is the exact contents of the rolling
+`RELEASE-v*.md` — no auto-generated notes, no fallback. Trigger
+`docker-publish.yml` on tag pushes with semver-derived image tags
+(`v0.0.1.3`, `0.0.1.3`, `latest`). Bump to `v0.0.1.3`: molt the rolling
+RELEASE file upward (`git mv RELEASE-v0.0.1.2.md RELEASE-v0.0.1.3.md`),
+rewrite contents with the bracket's changes, sync the commit ledger, append
+the CHANGELOG entry.
+
+> Success Criteria: Pushing `v0.0.1.3` publishes a GitHub Release whose body
+> matches the RELEASE file byte-for-byte; GHCR receives semver image tags;
+> the repo still contains exactly one RELEASE file.
+
+- [ ] **Task 22: [Configuration Component] SVG Iconography & Documentation Re-Alignment**
+
+Description: Convert the Unraid template icon and browser favicon to SVG —
+`public/favicon.svg` carries the bioluminescent shield with the
+`#e4048a → #ec4899 → #06b6d4` gradient (the artwork later inherited by the
+ShellGuard-TOTP launcher). Remove obsolete `CRUSTAGENT.md` and
+`CRUSTSECURITY.md`; re-align every version reference to `v0.0.1` across
+`ARCHITECTURE.md`, `README.md`, `ROADMAP.md`, `QUICKSTART.md`, the docs
+portal and `CHANGELOG.md`, purging legacy migration text.
+
+> Success Criteria: No stale version references remain (single grep); the
+> favicon renders the brand gradient; the docs tree contains no obsolete
+> knowledge files; the docs = app principle holds on every touched page.
 
 ---
 

@@ -27,7 +27,8 @@ flowchart TD
     Phase8["🏛️ Stage 9: Phase 8 — Vault UX Renaissance<br/>(Task 15: Pods, Lock Hardening & NavIntent · Task 16: Master-Detail & Claw-In)"]
     Phase9["🥚 Stage 10: Phase 9 — Genesis Release & Origin Hardening<br/>(Task 17: Origin-Safety Fallbacks · Task 18: Genesis Release Protocol) 🏷️"]
     Phase10["🔧 Stage 11: Phase 10 — Deployment Hotfixes & Dev Loop<br/>(Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File) 🏷️"]
-    Phase11["🚀 Stage 12: Phase 11 — Release Publishing CI<br/>(v0.0.1.3 — pending transcription)"]
+    Phase11["🚀 Stage 12: Phase 11 — Release Publishing CI & Iconography<br/>(Task 21: Release Workflow & GHCR Triggers · Task 22: SVG Icons & Doc Re-Alignment)"]
+    Phase12["🔒 Stage 13: Phase 12 — WebCrypto Fallback Engine<br/>(v0.0.1.4 — pending transcription)"]
     Summit["🏔️ … walk continues: Phases 6–18<br/>through the release brackets v0.0.1 → v0.0.1.8"]
 
     Step0 --> UploadContext
@@ -608,6 +609,49 @@ Execute Phase 10 adhering to the Process + Release pairing:
 Verify the repo contains exactly one RELEASE file named for the current
 version, the rules are agent-consumable as written, docs-hygiene is
 enforced by finish-task, and CHANGELOG and package.json agree!
+```
+
+---
+
+
+## 🚀 Stage 12: Phase 11 Prompt — Release Publishing CI & Iconography [v0.0.1.3 (Build 12)]
+
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP.md`](./ROADMAP.md#phase-11-release-publishing-ci--iconography-v0013-build-12)
+> for complete specifications on **Task 21** and **Task 22**.
+> **📖 Required Context Files for Phase 11**:
+> 1. [`verification-gates.md`](./verification-gates.md) — §5 (Release protocol).
+> 2. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §1 (Brand tokens/gradient).
+
+Copy and paste this prompt to execute **Phase 11 (Tasks 21 & 22)**:
+
+```markdown
+# PHASE 11 EXECUTION: Release Publishing CI & Iconography [v0.0.1.3 (Build 12)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `ROADMAP.md`: Phase 11 (Task 21: Release Publishing Workflow · Task 22: SVG Iconography & Doc Re-Alignment).
+- `verification-gates.md`: §5 (release protocol, rolling RELEASE file).
+- `ui-ux-design-system.md`: §1 (brand gradient).
+
+Execute Phase 11 adhering to the Functionality + Configuration pairing:
+
+### Task 21: [Functionality] Release Publishing Workflow & GHCR Tag Triggers
+- .github/workflows/release.yml: on tag push, publish a GitHub Release with
+  the body exactly = rolling RELEASE-v*.md contents (no auto-notes).
+- docker-publish.yml triggers on tags with semver image tags.
+- Molt RELEASE-v0.0.1.2.md → RELEASE-v0.0.1.3.md (git mv), rewrite, sync
+  commit ledger; CHANGELOG entry; version bump.
+
+### Task 22: [Configuration Component] SVG Iconography & Documentation Re-Alignment
+- Unraid template icon + browser favicon → SVG (favicon.svg, brand
+  gradient #e4048a → #ec4899 → #06b6d4).
+- Remove CRUSTAGENT.md / CRUSTSECURITY.md; re-align all version references
+  to v0.0.1; purge legacy migration text.
+
+Verify a tag push publishes a Release matching the RELEASE file
+byte-for-byte, GHCR receives semver tags, exactly one RELEASE file exists,
+no stale version references remain, and the favicon renders the brand
+gradient!
 ```
 
 ---

@@ -17,9 +17,9 @@ YOU (build session)
   │  pastes ONE thing: the meta prompt for the current stage
   ▼
 meta-prompt-ai-studio.md ── Stage N          (the SPINE)
-  │  "see ROADMAP.md, Phase N"
+  │  "see ../ROADMAP.md (window) / ROADMAP-HISTORY.md (archive), Phase N"
   ▼
-ROADMAP.md ── Phase N (exactly 2 tasks)      (the ROUTER)
+../ROADMAP.md + ROADMAP-HISTORY.md ── Phase N (exactly 2 tasks)  (the ROUTER)
   │  Task A [Functionality] → "see shellcryption-spec.md §2"
   │  Task B [UI Component]  → "see ui-ux-design-system.md §4"
   ▼
@@ -35,7 +35,7 @@ Agent builds it ── HOW is its discretion; WHAT is fully pinned
 |:---|:---|:---|
 | **1. Orchestration** | `meta-prompt-ai-studio.md` | The *sequencer*. One staged prompt per phase; tells the builder where to look and what to verify. Prevents context degradation by feeding only the slices each stage needs. |
 | **2. Ground Truth Specs** | `architecture.md`, `shellcryption-spec.md`, `routes-and-contracts.md`, `database-schema.md`, `key-hierarchy-spec.md`, `import-export-spec.md`, `admin-suite-spec.md`, `ui-ux-design-system.md` | The *invariants*. Security-critical logic is fully specified so no agent improvises on crypto, tenancy, or the key hierarchy. |
-| **3. Schedule** | `ROADMAP.md` | The *router*. Never contains implementation detail — points at spec sections for each task. Separation of schedule (roadmap) from truth (specs) from sequence (spine). |
+| **3. Schedule** | `../ROADMAP.md` (active window) + `../.agents/memory-bank/ROADMAP-HISTORY.md` (Phases 1–13 archive) | The *router*. Never contains implementation detail — points at spec sections for each task. Separation of schedule (roadmap) from truth (specs) from sequence (spine). |
 
 ## 🏷️ Version Grammar
 
@@ -69,7 +69,7 @@ suite that still runs today.
 
 ## 🚀 How to Rebuild ShellGuard From This Folder Alone
 
-1. Read `ROADMAP.md` frontmatter for current position and version grammar.
+1. Read `../ROADMAP.md` (and `../.agents/memory-bank/ROADMAP-HISTORY.md` for Phases 1–13) for current position and version grammar.
 2. Open `meta-prompt-ai-studio.md`, find the stage matching your position.
 3. Attach the Required Reference Files listed in that stage's header.
 4. Paste the stage's fenced prompt block.
@@ -84,4 +84,6 @@ The TOTP companion later proved the lesson that produced this folder:
 **build the docs first, and so tightly, the application has no choice but to follow.**
 
 **Status**: ✅ Reverse-build complete — 16 phases, `v0.0.0.0` → `v0.0.1.8`,
-receipt-backed end to end. The `/project` folder is the application's genome.*
+receipt-backed end to end. **Phase 17 [v0.0.1.9] is queued forward** (coherence-audit
+security hotfix; Tasks 33/34 — see `../ROADMAP.md`). The `/project` folder is the
+application's genome, now 10 oracles strong.*

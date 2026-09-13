@@ -383,15 +383,16 @@ classDiagram
 
 ```
 ✓ hu- keys MUST use browser crypto.getRandomValues()
-  └─ 32 bytes entropy → hex-encoded 64 chars
+  └─ 64 base62 chars (A–Z a–z 0–9) via crypto.getRandomValues;
+      Math.random last-resort fallback on insecure origins (Phase 9)
   └─ Stored ONLY as SHA-256 hash in lobsters.key_hash (UNIQUE index)
 
 ✓ lb- keys MUST use browser crypto.getRandomValues()
   └─ Same entropy profile, generated in Settings → Agent Keys
   └─ Hashed before storage in agent_keys.api_key
 
-✓ api- tokens MUST use server crypto.randomBytes()
-  └─ 16 bytes entropy → 32 hex chars, prefixed "api-"
+✓ api- tokens MUST use server crypto.randomInt() (no modulo bias)
+  └─ 32 base62 chars, prefixed "api-"
   └─ Issued per session, expires_at enforced on every request
 
 ✓ Key comparison ALWAYS constant-time (XOR accumulator / timingSafeEqual)

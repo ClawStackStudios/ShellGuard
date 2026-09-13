@@ -9,6 +9,8 @@
 - **Package Lockfile Parity:** Synchronized top-level package version in `package-lock.json` to `0.0.1.8`.
 
 ### Added
+- **ShellCryption Client-Side Encryption Oracle (`project/shellcryption-spec.md`):** 10th spec oracle — HKDF derivation (ikm=`hu-` key, salt=userUuid, info=`clawchives-shellcryption-v1`), envelope format, AAD namespace registry, decrypt passthrough ladder, engine selector, and the zero-knowledge invariants. Resolves the last dangling reference in the genome.
+- **Phase 17 [v0.0.1.9] Queued — Key Ledger Hardening & Pod Purity (Tasks 33/34):** the forward queue's new head — closes two coherence-audit findings (agent-key hash ledger; server-side 'Personal' default purge). Forward queue renumbered to Phases 17–21 / Tasks 33–42 across the root roadmap and the genome spine (Stage 18).
 - **Version Resolver Unit Tests:** Added `tests/unit/version.test.ts` asserting semver compliance and package ground-truth matching.
 
 ## [0.0.1.8] - 2026-09-04
@@ -32,6 +34,7 @@
 - **VitePress & UI Navigation Touchpoints:** Integrated Privacy Policy into VitePress Reference sidebar, route mapping (`/privacy`), documentation footer, and the web application `LandingView` footer.
 
 ### Fixed
+- **Genome Coherence Audit:** repointed 50 dangling `project/ROADMAP.md` references to the roadmap system (root sliding window + `ROADMAP-HISTORY.md` archive); corrected key-material alphabet claims (hex → base62) in `ARCHITECTURE.md` and `key-hierarchy-spec.md`; removed stale token-storage wording from `routes-and-contracts.md`; genome README/meta-prompt updated for the 10-oracle, 17-phase state.
 - **Database Schema Ground Truth Correction:** Fully reconciled `docs/reference/blueprint-schema.md` with actual migrations and runtime database tables: corrected `lobsters` table name (previously mislabeled `users`), primary keys (`id` vs `uuid`), `agent_keys` table name (previously `lobster_keys`), added `custom_fields` column, added indexes, and documented `audit_logs` in `audit.sqlite`.
 - **Health Check Documentation Parity:** Updated `docs/getting-started/quickstart.md` and `docs/deployment/index.md` with the exact JSON payload returned by `GET /api/health` from `server.ts`.
 

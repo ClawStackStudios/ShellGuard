@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { Shield, Clock, Trash2, XCircle, Eye, EyeOff, Copy, CheckCircle, Download, AlertTriangle, Key } from 'lucide-react';
+import { Shield, Clock, Trash2, XCircle, AlertTriangle, Key, Eye, EyeOff, Copy, CheckCircle } from 'lucide-react';
 import { LobsterKey } from './LobsterKeysTab';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * Full mask: every character becomes a dot — no leading/trailing cleartext.
+ * Applied to the key FINGERPRINT (Phase 17: the plaintext key is hash-only
+ * server-side and is revealed exactly once, in the wizard's generated step,
+ * which uses the same replace(/./g, '•') mask).
+ */
 function maskKey(key: string): string {
-  if (!key || key.length < 12) return '••••••••••••';
-  return key.slice(0, 6) + '••••••••••••' + key.slice(-4);
+  if (!key) return '••••••••••••';
+  return key.replace(/./g, '•');
 }
 
 function formatDate(dateStr: string): string {
@@ -39,7 +45,10 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
   const [copied, setCopied] = useState(false);
 
   const isActive = lobster.is_active !== undefined ? Boolean(lobster.is_active) : (lobster.isActive ?? true);
-  const displayKey = lobster.api_key || lobster.apiKey || lobster.key || '';
+  // Phase 17 (Key Ledger): the card carries the SHA-256 fingerprint — key
+  // material is never present in list responses. Row structure is 1:1 with
+  // CaraBase (masked by default, eye toggle, copy) over that fingerprint.
+  const displayKey = ((lobster as any).keyFingerprint as string | null | undefined) ?? '';
   const permissions = parsePermissions(lobster.permissions);
   const permKeys = Object.keys(permissions).filter((k) => permissions[k] && k.startsWith('can'));
 
@@ -53,11 +62,11 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(displayKey);
       } else {
-        const textArea = document.createElement("textarea");
+        const textArea = document.createElement('textarea');
         textArea.value = displayKey;
         document.body.appendChild(textArea);
         textArea.select();
-        document.execCommand("copy");
+        document.execCommand('copy');
         document.body.removeChild(textArea);
       }
       setCopied(true);
@@ -65,28 +74,6 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
     } catch (err) {
       console.error('Failed to copy', err);
     }
-  };
-
-  const handleDownload = () => {
-    const keyData = {
-      type: 'lobster_key',
-      key: displayKey,
-      id: lobster.id,
-      name: lobster.name,
-      createdAt: createdAt,
-      permissions,
-      expirationDate,
-      rateLimit
-    };
-    const blob = new Blob([JSON.stringify(keyData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lobster_key_${lobster.name.replace(/\s+/g, '_').toLowerCase()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -162,7 +149,7 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
                 if (permName === 'Edit') colorClass = 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20';
                 if (permName === 'Move') colorClass = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
                 if (permName === 'Delete') colorClass = 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
-                
+
                 return (
                   <span key={k} className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${colorClass}`}>
                     {permName}
@@ -202,14 +189,12 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
         ) : null}
       </div>
 
-      {/* ── Key display ─────────────────────────────────────────────────── */}
+      {/* ── Key display (CaraBase 1:1 structure over the fingerprint) ──── */}
       <div className="pt-4 border-t border-theme-subtle">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden flex-1">
             <Key className="w-4 h-4 flex-shrink-0 text-theme-muted" />
-            <code className={`text-sm font-mono truncate px-2.5 py-1 rounded-lg bg-theme-base border border-theme-subtle ${
-              isVisible ? 'text-claw-cyan font-bold' : 'text-theme-muted'
-            }`}>
+            <code className="text-sm font-mono truncate text-theme-muted">
               {displayKey ? (isVisible ? displayKey : maskKey(displayKey)) : '••••••••••••'}
             </code>
           </div>
@@ -232,17 +217,6 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
                 title="Copy key"
               >
                 {copied ? <CheckCircle className="w-4 h-4 text-claw-cyan" /> : <Copy className="w-4 h-4" />}
-              </button>
-            )}
-            {/* Download */}
-            {displayKey && (
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="p-2 rounded-xl text-theme-muted hover:text-claw-cyan hover:bg-theme-base transition-colors"
-                title="Download key JSON"
-              >
-                <Download className="w-4 h-4" />
               </button>
             )}
           </div>

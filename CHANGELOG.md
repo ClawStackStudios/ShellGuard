@@ -1,14 +1,17 @@
 # Changelog — ShellGuard
 
-## [Unreleased]
+## [0.0.1.9] - 2026-09-13
 
 ### Changed
+- **Lobster Keys Card UI — CaraBase 1:1 Key Row:** the card's key display row now matches CaraBase exactly (masked by default with the verbatim `maskKey()` algorithm — first 6 + •••••••••••• + last 4 — Eye/EyeOff toggle, Copy with 2s Copied feedback). The row operates over the SHA-256 fingerprint (hash ledger intact — the plaintext key appears exactly once, in the wizard). Tab heading/subtitle and delete-confirmation wording aligned to CaraBase verbatim.
 - **Root Documentation Systemic Alignment:** Reconciled `ARCHITECTURE.md`, `BLUEPRINT.md`, `SECURITY.md`, `README.md`, `CONTRIBUTING.md`, `ROADMAP.md`, `ADMIN.md`, and `docs/superlobster/management.md` to reflect runtime schema truth (`agent_keys`, `lobsters`, `(owner_uuid, key)`, `custom_fields`), 14 Vitest suites (204 unit tests), Bitwarden-style Custom Fields, Native LAN TLS, pure-TS WebCrypto fallback engine, `sgtotp.bak` Android backup imports, and Zero-Waste Release Automation.
 - **Dead Link Remediation:** Replaced legacy/broken references to `CRUSTSECURITY.md` and relative `CRUSTAGENT.md` across root documentation with canonical links to `docs/`, `docs/privacy.md`, `.agents/`, and `src/CRUSTAGENT.md`.
 - **Dynamic Application Version Resolver:** Introduced `src/server/utils/version.ts` (`getAppVersion()`) dynamically resolving from `package.json` with multi-tier fallback, replacing fragile environment variable reads in `src/server/routes/admin.ts`, `src/server/utils/backupManager.ts`, and `server.ts` to ensure consistent `v0.0.1.8` presentation in the SuperLobster Admin Panel.
 - **Package Lockfile Parity:** Synchronized top-level package version in `package-lock.json` to `0.0.1.8`.
 
 ### Added
+- **ShellCryption Client-Side Encryption Oracle (`project/shellcryption-spec.md`):** 10th spec oracle — HKDF derivation (ikm=`hu-` key, salt=userUuid, info=`clawchives-shellcryption-v1`), envelope format, AAD namespace registry, decrypt passthrough ladder, engine selector, and the zero-knowledge invariants. Resolves the last dangling reference in the genome.
+- **Phase 17 Implemented — Key Ledger Hardening & Pod Purity (Tasks 33/34) [SECURITY]:** `lb-` agent keys are now stored as SHA-256 hashes only — the plaintext `api_key` column is retired via migration 0004 + in-place backfill (legacy keys keep authenticating; live agent tokens re-pointed from raw-key owner_uuid to agent row id; ledger VACUUMed so no plaintext ghost pages remain). Mint returns plaintext exactly once; every list response carries only the fingerprint; the key card shows the `HASHED` fingerprint. The hardcoded `DEFAULT 'Personal'` is purged from all four category columns and the `category || 'Personal'` fallback removed from vault/notes/sshKeys/attachments — uncategorized items persist as `""`. Proven by `tests/agent-key-hash.test.ts` (6 tests: DB byte-scan, raw exchange, sentinel, revoke, uncategorized, legacy-backfill unit oracle) — all suites green.
 - **Version Resolver Unit Tests:** Added `tests/unit/version.test.ts` asserting semver compliance and package ground-truth matching.
 
 ## [0.0.1.8] - 2026-09-04
@@ -32,6 +35,7 @@
 - **VitePress & UI Navigation Touchpoints:** Integrated Privacy Policy into VitePress Reference sidebar, route mapping (`/privacy`), documentation footer, and the web application `LandingView` footer.
 
 ### Fixed
+- **Genome Coherence Audit:** repointed 50 dangling `project/ROADMAP.md` references to the roadmap system (root sliding window + `ROADMAP-HISTORY.md` archive); corrected key-material alphabet claims (hex → base62) in `ARCHITECTURE.md` and `key-hierarchy-spec.md`; removed stale token-storage wording from `routes-and-contracts.md`; genome README/meta-prompt updated for the 10-oracle, 17-phase state.
 - **Database Schema Ground Truth Correction:** Fully reconciled `docs/reference/blueprint-schema.md` with actual migrations and runtime database tables: corrected `lobsters` table name (previously mislabeled `users`), primary keys (`id` vs `uuid`), `agent_keys` table name (previously `lobster_keys`), added `custom_fields` column, added indexes, and documented `audit_logs` in `audit.sqlite`.
 - **Health Check Documentation Parity:** Updated `docs/getting-started/quickstart.md` and `docs/deployment/index.md` with the exact JSON payload returned by `GET /api/health` from `server.ts`.
 

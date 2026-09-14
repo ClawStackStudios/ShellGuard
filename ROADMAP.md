@@ -2,106 +2,436 @@
 
 *Where the reef has been, and where it molts next.*
 
----
-
-## 📜 Changelog — Completed Molts
-
-### ✅ Hardening & Ecosystem Evolution (v0.0.1.1 – v0.0.1.8)
-
-- [x] **Multi-User Architecture & Session Manager** — Client-side multi-account session management (`sessionManager.ts`), active key switching, identity isolation, and reload navigation persistence (`sessionManager.test.ts`).
-- [x] **Bitwarden-Style Custom Fields** — Migration `0003_custom_fields.up.sql`, 4 custom field types (text, hidden, boolean, linked) with client-side AES-GCM-256 AAD integrity binding.
-- [x] **Native LAN TLS & WebCrypto Fallback** — Automatic EC P-256 self-signed certificate generation with SANs (`TLS_ENABLED=true`), plus pure-TS WebCrypto fallback engine (`webCryptoFallback.ts`) for zero-knowledge decryption over bare HTTP LAN.
-- [x] **ShellGuard-TOTP Android Companion & Bridge** — Dedicated native Android 2FA companion app with biometrics and KeyStore isolation; seamless `sgtotp.bak` backup container import.
-- [x] **Zero-Waste Release Pipeline** — Optimized GitHub Actions workflow (`release.yml`) triggering only on tags or `--release` commits, automatically mirroring `RELEASE.md` directly into GitHub Releases.
-- [x] **Interactive Documentation Portal** — Interactive VitePress documentation site with rapid onboarding, Android companion guide, and Google Play Store compliant privacy policy (`docs/privacy.md`).
-
-### ✅ Architecture Parity v0.0.1 (2026-08) — SQLite Bedrock & ClawChives Twin
-
-> The defining molt: ShellGuard refactored onto the exact architecture of its sibling app ClawChives (bookmark manager).
-
-- [x] **SQLite bedrock** — `DATA_DIR` layout (`db.sqlite` + segregated append-only `audit.sqlite`), WAL/NORMAL/foreign_keys pragmas, `better-sqlite3-multiple-ciphers` driver with optional SQLCipher at rest
-- [x] **Transactional migrations** — `migrations/0001_initial.{up,down}.sql` define clean schema v1; runner tracks `schema_migrations`; legacy inline-DDL singleton deleted along with root `shellguard.db`
-- [x] **Security kernel** — Express 5 with full middleware chain: TRUST_PROXY → httpsRedirect → helmet (vault CSP) → cors config → scoped body limits (1mb global / 32mb attachments) → rate limiters (global/auth/per-key LRU) → zod validation → centralized error handler
-- [x] **Auth parity** — ClawChives key-hash identity ported wholesale (register/token/validate + SG-only `me`/`profile`, `lookup` dropped); constant-time comparison; fixed TTL parser (`30m`/`12h`/`24h`/`7d`/`never`/ISO/bare-minutes)
-- [x] **Zero-knowledge invariant locked** — server stores only `{v, alg, iv, ct, aad}` ShellCryption blobs with AAD binding `table:recordId`
-- [x] **Domain API parity** — hardened CRUD for pearls/notes/SSH keys/attachments with ownership scoping, audit-on-mutation, `{success,data}` envelope; LobsterKeys©™ lifecycle parity (expiry, rate limits, revoke); new server-side settings storage
-- [x] **Twin-port dev topology** — Vite `:6464` strict-port proxying `/api` → API `:6565`; single-port production serving `dist/` + API
-- [x] **Test harness** — 13 vitest + supertest suites (auth-flow, security incl. cross-owner isolation, vault-crud incl. opacity invariant, settings, metadata-encryption, admin, tls, unit tests) with per-suite `DATA_DIR` isolation
-- [x] **Containerization** — multi-stage node:20-alpine single image, PUID/PGID entrypoint, healthcheck, compose prod/dev stacks, `.dockerignore` that keeps the lockfile
-- [x] **CI** — docker-publish workflow → `ghcr.io/clawstackstudios/shellguard`
-- [x] **Unraid template** — Community Applications XML (WebUI `:6464`, appdata bind mount, PUID 99/PGID 100 advanced defaults)
-- [x] **Agent skill document** — `skills/shellguard/SKILL.md` served at `/skill.md`
-- [x] **Documentation suite** — README, ARCHITECTURE (with deltas appendix), SECURITY, QUICKSTART, CONTRIBUTING, BLUEPRINT (schema v1 truthfulness), ADMIN, and docs portal
-- [x] **Password attachments rework** — reference model: each file stored as its own ShellCrypted `vault_secure_attachments` record, pearls link them via a JSON ID array; file-upload UI (click/drag, 10 MB per-file hard cap, unlimited attachments), download buttons, pearl delete cascade-deletes linked attachments
-- [x] **Per-Row Encryption** — shipped in v0.0.1: server-side AES-256-GCM metadata encryption (title, username, url, category, notes, file_name) keyed from `DB_ENCRYPTION_KEY` via HKDF, alongside client-side ShellCryption™; in-place envelopes with legacy-plaintext backward compatibility
-- [x] **SuperLobster Panel (admin plane)** — `ADMIN_TOKEN`-gated panel at `/superlobster` with secrets-aware threat model (ADMIN.md): strict-metadata lobster management + cascade delete, read-only diagnostics, whitelist-only settings, failsafe Online-Backup-API backups with manifest + rotation; no download, no HTTP restore (offline Vaultwarden-style procedure + `scuttle:restore` validator)
-- [x] **Bulk operations** — multi-select checkboxes with tri-state select-all, confirmed bulk delete with in-progress state, endpoint-mapped per-type deletion; password bulk deletes cascade their linked attachments
-
-### ✅ MVP & Scaffold (v0.1.x)
-
-- [x] ClawKeys©™ auth (`hu-` identity, `api-` sessions) and vault CRUD (pearls)
-- [x] Lobster Key management (`lb-`) with granular permissions
-- [x] Ocean Dark theme and Reef Modernist design language ([DESIGN.md](./DESIGN.md))
-- [x] Core UI components: Landing, Setup, Login, Vault views with lobsterized aesthetic
-- [x] Branding and mascot integration aligned with ClawStack Studios' style
-
-### ✅ Post-MVP Features
-
-- [x] Metadata CSV export button in vault settings (title, category, type)
-- [x] Configurable inactivity auto-lock ("Retract") redirecting to login
-- [x] Dedicated settings menu section for export + lock controls
-- [x] Category filter dropdown in PasswordVaultView (Personal / Work / Custom pods)
-- [x] Protected decrypted JSON export requiring fresh ShellKey©™ re-authentication
-- [x] Settings sidebar redesign with Dashboard return navigation
-- [x] Quick Actions on vault list rows (copy username/password to clipboard)
-- [x] Framer Motion layout animations for vault grid add/delete/filter
-- [x] Cryptographically secure password generator with length/charset configuration and complexity scoring
-- [x] TOTP support (seed generation, QR codes, live codes via otpauth)
-- [x] Nested color-coded pods (folder trees) with counts
+> **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
+> *Preserves the Active Forward Queue (Phase 17+) and the 3 most recent completed phases (Phases 14, 15, and 16).*
+> *Historical Phases 1 through 13 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
-## 🌊 Queue — Next Molts
+### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-> Prioritized backlog. Nothing here is committed until planned.
-
-### 🔜 High Priority
-
-- [ ] **Attachment BLOB migration** — move base64 attachment payloads into proper SQLite BLOB columns with streaming reads (today they ride as base64 text within the body-limit envelope)
-- [ ] **Tagging system** — tag field on item schema, add/remove tags in edit view, sidebar filter by tag
-- [ ] **Bulk import endpoint** — batch pearl import with partial-failure reporting
-
-### 🔬 Under Consideration
-
-- [x] **Admin control plane** — shipped as the SuperLobster Panel (v0.3.0) after its dedicated threat-model pass (ADMIN.md). Argon2id `ADMIN_TOKEN` hashing documented as a future hardening option.
-- [x] **Release automation** — shipped in v0.0.1.8 with `.github/workflows/release.yml` tag & `--release` filtering and automatic `RELEASE.md` mirror.
-- [ ] **Auto-lock "Retract" animation** — latch-closing visual confirmation when locking manually
-- [ ] **Monolith decomposition** — PasswordVaultView (~2150 lines) and App.tsx (~1100 lines) sliced into feature modules (mechanical edits only during parity work; this deserves its own effort)
-- [ ] **Onboarding flow** — guided first-hatch tour woven into the lobsterized theme
-
-### 🧬 Distant Shores (Vision)
-
-- [ ] **ShellCryption©™ v2** — hardware-backed key storage (WebAuthn PRF / secure enclave)
-- [ ] **Audit Reef surfacing** — user-facing security timeline of agent access
-- [x] **Mobile Shell (ShellGuard-TOTP Android Companion)** — Native Android companion app live at [ShellGuard-TOTP](https://github.com/ClawStackStudios/ShellGuard-TOTP)
-- [x] **Biometric Claws** — Biometric unlock shipped in ShellGuard-TOTP Android companion
-- [ ] **P2P Sync** — synchronize grottos across reefs without a central server
+- **Current Production Release**: `v0.0.1.8 (Build 17)`
+- **Next Planned Milestone**: `v0.0.1.9 (Build 18)` (Phase 17)
+- **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
+- **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 17 completes, Phase 14 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
 
 ---
 
-# DO NOT IMPLEMENT WITHOUT PLANNING
+## 🌊 Queue — Active Forward Phases (The Next Molts)
 
-Items below this line are captured ideas, not commitments. Each needs a written plan (threat model where security-relevant) before implementation.
+### Phase 17: Key Ledger Hardening & Pod Purity [v0.0.1.9 (Build 18) — Security Hotfix]
 
-- Apply further 'lobsterized' visual polish across remaining surfaces (color schemes, typography, aesthetic cohesion).
-- Extend quick actions and responsive behaviors across all vault item types.
-- Evaluate passkey/WebAuthn unlock as an alternative to One-Field Login.
-- Explore encrypted sharing of individual pearls between identities (careful: touches the zero-knowledge invariant).
+> Phase Feature Set Overview:
+> Closes the two docs-vs-runtime contradictions surfaced by the documentation
+> coherence audit. The `agent_keys` ledger currently stores `lb-` keys in
+> plaintext while every spec claims hashes-only — the ledger is brought to
+> spec: migration 0004 adds `key_hash`, hashes existing keys in place (live
+> keys keep authenticating), and the plaintext column is retired; minted keys
+> are returned exactly once and never persisted raw. The server-side hardcoded
+> pod is purged: `DEFAULT 'Personal'` is dropped from all four category columns
+> and the `category || 'Personal'` fallback is removed from every vault route —
+> the UI's zero-hardcoded-pods invariant (Phase 8) finally reaches the Bedrock.
+> *(Receipts: pending — forward phase, queued from the coherence audit.)*
 
-# DEVELOPMENT IDEAS — CAPTURED, NOT SCHEDULED
+- [x] **Task 33: [Functionality] Agent Key Hash Ledger & Pod Default Purge**
 
-Design explorations for the Reef Modernist language: dashboard widgets (vault health, password age, reused-secret sonar scan), notification systems, and themed micro-interactions. All UI work must respect the frozen spatial hierarchy documented in [DESIGN.md](./DESIGN.md).
+Description: Add `agent_keys.key_hash` via `migrations/0004_key_ledger.{up,down}.sql`
+— at migration time, every existing plaintext `api_key` is SHA-256 hashed in
+place so live keys keep authenticating; the plaintext column is then retired.
+Update `requireAuth` (agent path), the `/api/auth/token` sentinel search, and
+`agentKeys.ts` mint/list to store and compare **hashes only** via
+`constantTimeCompare`; minted plaintext is returned exactly once. Purge the
+hardcoded pod: drop `DEFAULT 'Personal'` from the `category` columns of
+`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys` and
+`vault_secure_attachments`, and remove the `category || 'Personal'` fallback
+from `vault.ts`, `notes.ts`, `sshKeys.ts` and `attachments.ts` — the default
+becomes `""` (uncategorized), matching the client's `normalizePod()`
+semantics. Zod schemas pass `category` through unmodified. Prove it in
+`tests/agent-key-hash.test.ts` (hash-only storage, pre-migration key still
+authenticates, plaintext returned once, revoke/expiry unchanged) and extend
+`tests/vault-crud.test.ts` with uncategorized-default assertions.
+
+> Success Criteria: A raw DB dump contains no plaintext `lb-` keys; a
+> pre-migration key still authenticates after migration; a minted key's
+> plaintext is returned exactly once and never stored; a fresh vault renders
+> zero pods and `""` categories stay `""` (no "Personal" resurrection);
+> the full test oracle passes.
+
+- [x] **Task 34: [UI Component] Key Fingerprint Display & Pod Purity Confirmation**
+
+Description: Update `LobsterKeysTab.tsx` to render a SHA-256 fingerprint
+(first 8 hex chars + `…`) on every key card instead of any key material, with
+a one-time "keys secured" notice after the ledger migration. Confirm pod
+purity end-to-end: `SidebarFolderTree.tsx` and `ItemFormModal.tsx` render zero
+phantom pods on a fresh boot, unassigned items show the uncategorized chip,
+and no code path re-introduces a default category. Sync the ledger change
+across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
+
+> Success Criteria: Key cards show fingerprints, never key material; a fresh
+> vault stays at zero pods through create → delete → reload; the docs match
+> the runtime (docs = app); the full test oracle passes.
 
 ---
 
-Maintained by CrustAgent©™
+### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 19)]
+
+> Phase Feature Set Overview:
+> Consolidates vault item architecture into primary, rich composite records adhering
+> to the Bitwarden model. Passwords/logins encapsulate embedded notes, live TOTP seeds,
+> attached files, and custom fields in a single cohesive entity. Decouples child
+> attachments from Pod item metrics so attached files never artificially inflate
+> folder counts. Introduces native in-browser WebCrypto ED25519/RSA-4096 SSH keypair
+> generation with downloadable public/private keys.
+> *(Source: Attractor Beacon §6, memory-bank/progress.md)*
+
+- [ ] **Task 35: [Functionality] Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine**
+
+Description: Refactor item composition contracts across client and server. Ensure
+`vault_pearls` serves as the primary composite entity embedding credentials, URI arrays,
+ShellCrypted rich notes, TOTP seeds, attachments, and custom fields. In `server.ts` and
+`vault.ts`, update count aggregation queries so child records in `vault_secure_attachments`
+are scoped strictly to parent items and excluded from root pod item tallies. Implement
+in-browser WebCrypto cryptographic SSH key generation (`generateKeyPair`) supporting
+Ed25519 and RSA-4096, outputting RFC-4716 public keys and PKCS#8 ShellCrypted private keys.
+Add test coverage in `tests/vault-crud.test.ts` and `tests/unit/keyGen.test.ts`.
+
+> Success Criteria: Creating a login with 3 attachments increases Pod item count by
+> exactly 1; generating an Ed25519 keypair produces valid OpenSSH/RFC formats; child
+> attachments cleanly cascade delete with the parent; 100% test oracle passes.
+
+- [ ] **Task 36: [UI Component] Bitwarden-Style Master Form, Live TOTP Embedding & Pod Item Count Reconciliation**
+
+Description: Redesign `ItemFormModal.tsx` and `ItemDetailPane.tsx` into a unified,
+Bitwarden-style master view: username, password with generation slider/strength gauge,
+URI list with launch buttons, embedded live-rendered TOTP token with 30-second progress ring,
+expandable rich notes, attachment drag-and-drop zone, and custom fields. Update
+`SidebarFolderTree.tsx` to display true primary item counts. Add the "Generate Keypair"
+action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-features/`.
+
+> Success Criteria: Vault view renders rich composite cards with embedded TOTP
+> countdowns and attachment action chips; folder badges accurately reflect primary
+> items; SSH key generator modal copies public keys and stores private keys in one click.
+
+---
+
+### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 20)]
+
+> Phase Feature Set Overview:
+> Migrates binary attachment payloads from base64 text strings into native SQLite BLOB
+> storage with chunked streaming reads and writes. Eliminates base64 33% memory inflation,
+> supports larger files up to 50MB, and enforces strict per-user storage quotas.
+> *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
+
+- [ ] **Task 37: [Functionality] Migration 0004 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
+
+Description: Create `migrations/0005_attachment_blobs.up.sql` altering or migrating
+`vault_secure_attachments` to store binary ciphertext in a `BLOB` column instead of `TEXT`.
+Update `src/server/routes/attachments.ts` with streaming Busboy/multer upload handlers
+piping direct encrypted streams into SQLite via incremental BLOB I/O (`openBlob()`).
+Enforce a 50MB per-file ceiling and 500MB total grotto quota per `owner_uuid`. Add
+integration tests in `tests/attachments-blob.test.ts`.
+
+> Success Criteria: Binary payloads round-trip cleanly without base64 encoding overhead;
+> attempting to upload over quota yields a 413 Payload Too Large; incremental BLOB reads
+> avoid spiking Node.js RSS memory; migrations pass backward-compatibility checks.
+
+- [ ] **Task 38: [UI Component] Streamed Progress Uploads, Chunked Decryption & File Previewers**
+
+Description: Update `attachmentUtils.ts` and file upload dropzones in `ItemFormModal.tsx`
+with real-time upload progress bars and cancel buttons. Implement client-side Web Streams
+API (`ReadableStream`/`WritableStream`) for AES-GCM decryption of large attachments without
+freezing the UI thread. Provide inline thumbnail previews for common image/PDF types.
+
+> Success Criteria: Uploading a 20MB file displays a smooth percentage progress bar;
+> downloading decrypts via streams with zero browser tab freezing; PDF/image previews
+> display within an encrypted object URL modal.
+
+---
+
+### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 21)]
+
+> Phase Feature Set Overview:
+> Introduces flexible, multi-dimensional categorization alongside hierarchical Pods.
+> Users can assign arbitrary colored tags to any vault item, filter across intersecting
+> tags in the sidebar, and execute scoped searches.
+> *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
+
+- [ ] **Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search**
+
+Description: Create `migrations/0006_vault_tags.up.sql` adding `tags` (ShellCrypted JSON array
+or junction table) across pearls, notes, and SSH keys. Update route handlers in `vault.ts`,
+`notes.ts`, and `sshKeys.ts` to support querying by tag intersection (`?tags=finance,infra`).
+Update audit logging to capture tag assignment events. Ensure tags respect client-side
+ShellCryption and per-row metadata encryption.
+
+> Success Criteria: Items support multiple tags; searching by tag filters accurately in
+> SQL with ownership scoping; tag mutations emit audit trail events; 100% test pass.
+
+- [ ] **Task 40: [UI Component] Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State**
+
+Description: Add tag input autocomplete chips in item edit modals with auto-suggested
+existing tags and color pickers. Add a collapsible "Tags" section in `SidebarFolderTree.tsx`
+displaying active tags with item counts. Thread active tag selection into the main vault filter
+state alongside search keywords and pod selection.
+
+> Success Criteria: Users can add/remove tags via keyboard chips; clicking a tag in the
+> sidebar instantly filters the vault grid; multi-tag filters combine with AND/OR logic.
+
+---
+
+### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 22)]
+
+> Phase Feature Set Overview:
+> Empowers high-volume vault ingestion and management: transactional bulk import endpoint
+> with granular per-record failure reporting, tri-state bulk selection actions, and confirmed
+> batch deletion with cascading cleanup.
+> *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
+
+- [ ] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
+
+Description: Implement `POST /api/vault/bulk-import` accepting an array of ShellCrypted
+items. Execute inside a database transaction with per-record validation: valid items are
+inserted, invalid items are skipped and returned in an `errors: [{index, reason}]` report.
+Update bulk delete endpoints to ensure atomic cascades across custom fields and attachments.
+
+> Success Criteria: Importing 100 items with 2 malformed records successfully persists
+> 98 items and returns an informative 207 Multi-Status / detailed error array; atomic deletes.
+
+- [ ] **Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal**
+
+Description: Expand bulk selection controls across all vault item views: select-all checkbox
+with tri-state (none, some, all), floating bulk action bar (Move to Pod, Assign Tag, Delete),
+and dedicated Import wizard with preview table and error resolution chips.
+
+> Success Criteria: Floating action bar appears when items are checked; bulk moving items
+> updates local React state optimistically; import error modal highlights skipped items.
+
+---
+
+## 🔬 Queue — Backlog & Distant Shores (Vision)
+
+> Prioritized backlog items captured for future formalization into paired phases.
+
+- [ ] **Auto-Lock "Retract" Animation** — Latch-closing visual confirmation and biometric iris animation when locking manually.
+- [ ] **Monolith Decomposition** — Decompose `PasswordVaultView.tsx` (~2150 lines) and `App.tsx` (~1100 lines) into modular domain hooks and sub-components.
+- [ ] **ShellCryption©™ v2 (Hardware Enclave)** — Hardware-backed key storage via WebAuthn PRF (Pseudo-Random Function) extension and Android StrongBox / Apple Secure Enclave.
+- [ ] **Audit Reef Security Timeline** — Interactive user-facing security timeline visualizing agent access, secret usage, and anomalous patterns.
+- [ ] **P2P Direct Sync** — Synchronize grottos across reefs without a central intermediary.
+
+---
+
+## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
+
+## Phase 14: Native LAN TLS with Self-Signed Certificates [v0.0.1.6 (Build 15)]
+
+> Phase Feature Set Overview:
+> The server encrypts its own transport. With `TLS_ENABLED=true`, `server.ts`
+> wraps Express in `https.createServer` with HSTS active; `tlsManager.ts`
+> resolves certificate materials in three tiers (bring-your-own via
+> `TLS_CERT_PATH`/`TLS_KEY_PATH` → reuse the persisted pair in
+> `DATA_DIR/certs/` with a stable fingerprint → generate a fresh 10-year
+> EC P-256 self-signed pair), collecting SANs for localhost, loopback and
+> every non-internal interface — valid however the operator reaches the box.
+> SHA-256 fingerprints log at boot for TOFU pinning; the Docker healthcheck
+> and `.env.example` become TLS-aware; 8 new tests in `tests/tls.test.ts`.
+> Companion work: `release.yml` gains `--release` commit-flag publishing,
+> `DESIGN.md` syncs with the master-detail and custom-fields patterns, the
+> `.agents/` directory molts out of the git index (agent rules go local,
+> like the memory bank), release-notes hygiene cleans the rolling model,
+> and the first Android companion documentation initializes — the
+> ShellGuard-TOTP bridge begins. *(Receipts: `fa72f67`, `2c13b39`,
+> `d982474`, `e8497bd`, `9aba894`, `33157ff`, `f35ba4a`, merge `02ed28e`,
+> `f3448c9` — 2026-08-29/30.)*
+
+- [ ] **Task 27: [Functionality] TLS Manager, Conditional HTTPS Server & TOFU Fingerprinting**
+
+Description: Implement `src/server/utils/tlsManager.ts` with the three-tier
+material resolution: (1) bring-your-own certs via `TLS_CERT_PATH` /
+`TLS_KEY_PATH`; (2) reuse an existing generated pair in `DATA_DIR/certs/`
+— the SHA-256 cert fingerprint stays stable across restarts; (3) generate
+a fresh 10-year EC P-256 self-signed pair and persist it. Collect SANs for
+`localhost`, loopback, and every non-internal network interface. In
+`server.ts`: `TLS_ENABLED=true` wraps Express in `https.createServer`;
+HSTS activates when TLS terminates natively; boot logs the protocol and
+fingerprint for trust-on-first-use. Make the Docker healthcheck and
+`.env.example` TLS-aware; document the transport threat model in
+`SECURITY.md` and the LAN-HTTPS recipe in `QUICKSTART.md`. Prove it all in
+`tests/tls.test.ts` (generation, persistence/reuse, fingerprint stability,
+SAN completeness, conditional protocol).
+
+> Success Criteria: A fresh instance boots HTTPS with a generated cert whose
+> fingerprint is stable across restarts; the cert validates for the LAN IP;
+> BYO certs are honored; HSTS is present exactly when TLS terminates
+> natively; all TLS tests pass.
+
+- [ ] **Task 28: [CI/Configuration Component] `--release` Publishing Flag & Documentation Sync**
+
+Description: Extend `release.yml`: commit messages containing `--release
+<version>` trigger automated release publication (the rolling RELEASE file
+as body) — releases no longer require manual tag pushes alone. Synchronize
+`DESIGN.md` with the modern master-detail layout and custom-fields
+patterns; untrack `.agents/` from the git index (agent rules live local,
+like the memory bank); clean release-notes hygiene for the rolling model;
+initialize the Android companion documentation suite (architecture specs
+and engineering guidelines — the ShellGuard-TOTP bridge begins); molt the
+RELEASE file and cut `v0.0.1.6`.
+
+> Success Criteria: A `--release` commit publishes without a manual tag;
+> DESIGN.md matches the runtime UI patterns exactly; no agent-internal
+> state remains tracked; the companion docs seed exists at the summit of
+> the cross-project bridge.
+
+---
+
+
+## Phase 15: `sgtotp.bak` Import Compatibility Layer [v0.0.1.7 (Build 16)]
+
+> Phase Feature Set Overview:
+> The bridge completes. The web vault learns to open its Android sibling's
+> backups: `sgtotpBackup.ts` parses the `sgtotp.bak` format (encrypted
+> `shellguard-totp-backup-v1` envelopes, plaintext exports, bare item
+> arrays), decrypting client-side via HKDF-SHA256 (salt = `ownerUuid`,
+> AAD `totp_backup:{ownerUuid}`) + AES-GCM-256 through the **pure TS
+> fallback primitives** (LAN-safe), with the enforced SHA-256 checksum over
+> the exact decrypted string. Items map to fresh-UUID vault pearls,
+> `normalizePod()` categories, original timestamps preserved;
+> `ImportExportView` sniffs formats with the PIN/key modal. Companion work:
+> the **strict RELEASE-doc mirror** in `release.yml` (exact-version
+> resolution, hard fail, no auto-notes), the dynamic theme engine with
+> multi-accent support, `AGENTS.md` for the Gemini identity in the Android
+> companion tree, and the landing-header dark-mode brand fix.
+> *(Receipts: `138952b`, `b0fcc47`, `7054595`, `074eab0`, `7b7a90c`,
+> `68da985`, `0b259f7`, `2d7d9a2`, `b125fab`, `fc7e9df`, merge `c6d17d8` —
+> 2026-08-30 → 09-03. Contract source of truth: `compatibility_layer.md`.)*
+
+- [ ] **Task 29: [Functionality] `sgtotpBackup.ts` Parser, Client-Side Decryption & Timestamp Preservation**
+
+Description: Implement the parser/mapper in `src/lib/sgtotpBackup.ts` —
+contract mirrored from the Android `BackupManager.kt` +
+`ShellCryptionEngine.kt`: sniff encrypted `shellguard-totp-backup-v1`,
+plaintext `shellguard-totp-plain-export-v1`, or bare `BackupItemDto[]`;
+decrypt envelopes client-side (HKDF-SHA256: ikm = export key, salt =
+`envelope.ownerUuid`, info = `clawchives-shellcryption-v1` → AES-GCM-256,
+AAD `totp_backup:{ownerUuid}`) using the pure TS fallback primitives; verify
+the SHA-256 checksum over the exact decrypted item-array string (post-decrypt,
+byte-reproducible). Map items to vault pearls with **fresh UUIDs**,
+`normalizePod()` categories, `algorithm`/`digits`/`period` passthrough, and
+**original `localUpdatedAt` preserved** as `created_at`. Prove the full
+crypto round-trip in `tests/unit/sgtotpBackup.test.ts` (encrypted fixture,
+plaintext, bare array, checksum mismatch, AAD tamper). Write
+`compatibility_layer.md` as the cross-project format contract.
+
+> Success Criteria: All three input formats import correctly on HTTP LAN
+> origins; a checksum mismatch or AAD tamper aborts before persistence;
+> imported seeds re-encrypt under `vault_pearls_totp:{id}`; timestamps
+> survive the journey; Android ids are never reused.
+
+- [ ] **Task 30: [UI Component] ImportExportView Format Sniffing, Key Modal & Strict Release Mirror**
+
+Description: Extend `ImportExportView.tsx`: detect sgtotp formats on file
+selection, prompt for the export key/PIN via a modal for encrypted
+envelopes, show the imported-count preview, and commit through the parser
+with sanitized errors. In CI: rewrite `release.yml` to the **strict
+RELEASE-doc mirror** — exact-version `RELEASE-<tag>.md` resolution with hard
+failure (no auto-notes, no fallback) so the GitHub Release body is the
+RELEASE file verbatim. Implement the dynamic theme engine (adaptive
+light/dark + multi-accent support) in the client; add `AGENTS.md` for the
+companion's Gemini identity; fix the landing header's dark-mode brand
+divider; molt the RELEASE file and cut `v0.0.1.7`.
+
+> Success Criteria: Encrypted backups import via the key modal with
+> sanitized failure modes; the GitHub Release body matches the RELEASE file
+> byte-for-byte or the pipeline fails loudly; themes switch live across
+> light/dark and all accents; the bridge is usable end-to-end on LAN.
+
+---
+
+
+## Phase 16: Docs Bridge Parity, Agentic Infrastructure & Version Resolver [v0.0.1.8 (Build 17) — Summit]
+
+> Phase Feature Set Overview:
+> The walk ends where the application stands today — and the documentation
+> system becomes a first-class citizen. The project scaffolds its agentic
+> knowledge infrastructure: a comprehensive memory bank (including a
+> dedicated `android/` sub-bank mirroring the companion's crypto, Room
+> schema, TOTP engine and UI models), workflow templates, and formalized
+> agentic rule sets — then synchronizes release-pipeline invariants and
+> formalizes agent git tracking. The **dynamic version resolver**
+> (`src/server/utils/version.ts`) replaces fragile env reads with
+> `package.json` ground truth (multi-tier fallback, unit-tested). The
+> official privacy policy and TOTP store disclosures land; the VitePress
+> companion suite publishes; two-sided bridge parity is achieved across
+> root documentation; the release pipeline gains optimized triggers and a
+> chained mirror job; the installation guide moves to placeholder IPs; and
+> the rolling RELEASE file molts to `v0.0.1.8`.
+> *(Receipts: `ddc35f5`, `124e4ab`, `80babe5`, `acab2ab`, `700c18c`,
+> `1244c5f`, `e61675b`, `bbcc2f5`, `a68008f`, `70d7d46`, `ec4e136`,
+> `0b6ad1f`, `82616f2`, merge `66d9ca4` — 2026-09-04/05. The walk and the
+> codebase now occupy the same commit.)*
+
+- [ ] **Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver**
+
+Description: Initialize the project scaffolding for agent collaboration: a
+comprehensive memory bank under `.agents/memory-bank/` — core files plus a
+dedicated `android/` sub-bank (api-client, crypto-spec, room-schema,
+totp-engine, ui-compose-models) mirroring the companion's internals —
+workflow templates, and agentic rule sets (attractor beacon, git hygiene,
+docs hygiene, continuous improvement). Synchronize release-pipeline
+invariants and formalize agent git tracking (two-layer commit grammar,
+staged-index discipline, verification gates). Implement
+`src/server/utils/version.ts` — `getAppVersion()` resolving dynamically
+from `package.json` with multi-tier fallback, replacing fragile env reads
+in `admin.ts`, `backupManager.ts` and `server.ts`; prove it with
+`tests/unit/version.test.ts` (semver compliance + package ground-truth
+match).
+
+> Success Criteria: The version presented in the SuperLobster panel, backups
+> and API always equals `package.json`; the resolver survives a missing env
+> var; the memory bank loads a cold agent into full project context; the
+> android/ sub-bank mirrors the companion's spec truth.
+
+- [ ] **Task 32: [Documentation Component] Privacy Policy, Docs Bridge Parity & Chained Mirror Release**
+
+Description: Publish the official privacy policy (`docs/privacy.md` —
+zero-knowledge disclosures compliant with Play Store requirements) with
+store disclosures cross-linked into the VitePress portal and CHANGELOG.
+Publish the ShellGuard-TOTP native companion documentation suite
+(`docs/companion/`: topology, security, sync-and-backups, totp-engine).
+Achieve two-sided bridge parity: every root doc (`ARCHITECTURE.md`,
+`BLUEPRINT.md`, `SECURITY.md`, `README.md`, `ADMIN.md`, `CONTRIBUTING.md`,
+docs portal) reconciled to runtime schema truth. Optimize `release.yml`
+triggers and chain the mirror job (release body re-syncs when the RELEASE
+file changes on main). Move the installation guide to placeholder IPs.
+Molt the RELEASE file to `v0.0.1.8` and cut the release through the
+`--release` commit-flag path.
+
+> Success Criteria: The docs claim nothing the runtime doesn't do — both
+> sides of every bridge verified; the privacy policy renders in the portal
+> and satisfies store disclosures; a RELEASE-file edit on main re-syncs the
+> published release body; the summit tag exists.
+
+---
+
+## 🏛️ Historical Archive (Phases 1 through 13)
+
+Earlier development phases (`v0.0.0.0` void through `v0.0.1.5` Build 14) are permanently archived in:
+👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
+
+| Phase | Version | Milestone Summary | Tasks |
+|:---|:---|:---|:---|
+| **Phase 1** | `Baseline: v0.0.0.1 (Build 2)` | Scaffold, Auth & API Molt | Tasks 01 & 02 |
+| **Phase 2** | `Baseline: v0.0.0.2 (Build 3)` | SQLite Bedrock, Security Kernel & Identity Bridge | Tasks 03 & 04 |
+| **Phase 3** | `Baseline: v0.0.0.3 (Build 4)` | Vault CRUD, Opacity Invariant & Lobster Keys | Tasks 05 & 06 |
+| **Phase 4** | `Baseline: v0.0.0.4 (Build 5)` | Test Oracle, Hardened Rekey & Container Deployment | Tasks 07 & 08 |
+| **Phase 5** | `v0.0.1 (Build 6) — Genesis` | Per-Row Metadata Encryption & Port Molt | Tasks 09 & 10 |
+| **Phase 6** | `Baseline: v0.0.0.5 (Build 7)` | SuperLobster Admin Plane & Failsafe Backups | Tasks 11 & 12 |
+| **Phase 7** | `Baseline: v0.0.0.6 (Build 8)` | Multi-Account Architecture, QuickLogin & Landing Gateway | Tasks 13 & 14 |
+| **Phase 8** | `Baseline: v0.0.0.7 (Build 9)` | Vault UX Renaissance — Pods, Lock Hardening & NavIntent | Tasks 15 & 16 |
+| **Phase 9** | `v0.0.1 (Build 10)` | Genesis Release, Origin-Safety Fallbacks & Version Alignment | Tasks 17 & 18 |
+| **Phase 10** | `v0.0.1.2 (Build 11)` | Deployment Hotfixes, Dev-Loop Rules & Rolling RELEASE File | Tasks 19 & 20 |
+| **Phase 11** | `v0.0.1.3 (Build 12)` | Release Publishing CI, SVG Iconography & Doc Re-Alignment | Tasks 21 & 22 |
+| **Phase 12** | `v0.0.1.4 (Build 13)` | Pure-TS WebCrypto Fallback Engine & Release Gating | Tasks 23 & 24 |
+| **Phase 13** | `v0.0.1.5 (Build 14)` | Bitwarden-Style Custom Fields & Dynamic Linked Properties | Tasks 25 & 26 |
+
+---

@@ -54,7 +54,8 @@ router.post('/token', authLimiter, validateBody(AuthSchemas.token), (req, res) =
     let agentKey = ownerKey;
 
     if (keyHash && !uuid) {
-      // 🛡️ Sentinel: Safe search for an active agent key whose SHA-256 hash matches the provided keyHash
+      // 🛡️ Sentinel (Phase 17): constant-time compare against the STORED key_hash —
+      // no plaintext exists server-side to hash anymore.
       const activeAgents = db.prepare('SELECT * FROM agent_keys WHERE is_active = 1').all() as any[];
       let providedKeyHash: Buffer;
       try {
@@ -65,31 +66,21 @@ router.post('/token', authLimiter, validateBody(AuthSchemas.token), (req, res) =
 
       for (const a of activeAgents) {
         try {
-          const storedKeyHash = crypto.createHash('sha256').update(a.api_key).digest();
-          if (crypto.timingSafeEqual(storedKeyHash, providedKeyHash)) {
+          if (a.key_hash && crypto.timingSafeEqual(Buffer.from(a.key_hash, 'hex'), providedKeyHash)) {
             agent = a;
-            agentKey = a.api_key;
           }
         } catch {}
       }
     } else {
       if (!agentKey?.startsWith('lb-')) return res.status(400).json({ success: false, error: 'Invalid agent key' });
-      agent = db.prepare('SELECT * FROM agent_keys WHERE api_key = ? AND is_active = 1').get(agentKey) as any;
+      // Phase 17: raw lb- key presented — hash it and look up the ledger
+      const presentedHash = crypto.createHash('sha256').update(agentKey).digest('hex');
+      agent = db.prepare('SELECT * FROM agent_keys WHERE key_hash = ? AND is_active = 1').get(presentedHash) as any;
     }
 
-    // 🛡️ Sentinel Security Patch: Timing-safe comparison with pre-hashing
-    let keyMatch = false;
-    if (agent && agentKey) {
-      try {
-        const storedKeyHash = crypto.createHash('sha256').update(agent.api_key).digest();
-        const providedKeyHash = keyHash
-          ? Buffer.from(keyHash, 'hex')
-          : crypto.createHash('sha256').update(agentKey).digest();
-        keyMatch = crypto.timingSafeEqual(storedKeyHash, providedKeyHash);
-      } catch {
-        keyMatch = false;
-      }
-    }
+    // Phase 17: a ledger hit IS the match (hash lookup); sentinel path already
+    // compared constant-time. Plaintext never exists server-side to re-hash.
+    const keyMatch = Boolean(agent);
 
     if (!agent || !keyMatch) {
       audit.log('AUTH_FAILURE', { action: 'login', outcome: 'failure', actor_type: 'agent', ip_address: req.ip, user_agent: req.headers['user-agent'] as string });
@@ -97,7 +88,7 @@ router.post('/token', authLimiter, validateBody(AuthSchemas.token), (req, res) =
     }
 
     const token = `api-${generateString(32)}`;
-    db.prepare('INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(token, agentKey, 'agent', new Date().toISOString(), expiresAt);
+    db.prepare('INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(token, agent.id, 'agent', new Date().toISOString(), expiresAt); // Phase 17: owner_uuid = agent row id
     audit.log('AUTH_SUCCESS', { actor: agent.id, actor_type: 'agent', action: 'login', outcome: 'success', ip_address: req.ip, user_agent: req.headers['user-agent'] as string });
     return res.status(201).json({ success: true, data: { token, type: 'agent', createdAt: new Date().toISOString(), expiresAt } });
   }

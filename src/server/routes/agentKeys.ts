@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import db, { audit } from '../database/index.js';
 
 import { generateId, generateString } from '../utils/crypto.js';
@@ -37,12 +38,19 @@ router.post('/', requireAuth, requireHuman, authLimiter, validateBody(AgentKeySc
       : calculateExpiry(req.body.expirationType);
   }
 
+  // 🛡️ Key Ledger (Phase 17): plaintext lb- keys are NEVER persisted.
+  // The raw key is returned exactly once in this response; only its SHA-256
+  // hash and fingerprint live in agent_keys from here on.
+  const rawKey = req.body.apiKey ?? `lb-${generateString(64)}`;
+  const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+
   const key = {
     id:              req.body.id ?? generateId(),
     owner_uuid:      authReq.userUuid,
     name,
     description:     req.body.description ?? null,
-    api_key:         req.body.apiKey ?? `lb-${generateString(64)}`,
+    key_hash:        keyHash,
+    key_fingerprint: keyHash.slice(0, 12),
     permissions:     JSON.stringify(req.body.permissions ?? {}),
     expiration_type: req.body.expirationType ?? 'never',
     expiration_date: expDate,
@@ -52,10 +60,11 @@ router.post('/', requireAuth, requireHuman, authLimiter, validateBody(AgentKeySc
     last_used:       null,
   };
 
-  db.prepare('INSERT INTO agent_keys (id,owner_uuid,name,description,api_key,permissions,expiration_type,expiration_date,rate_limit,is_active,created_at,last_used) VALUES (@id,@owner_uuid,@name,@description,@api_key,@permissions,@expiration_type,@expiration_date,@rate_limit,@is_active,@created_at,@last_used)').run(key);
+  db.prepare('INSERT INTO agent_keys (id,owner_uuid,name,description,key_hash,key_fingerprint,permissions,expiration_type,expiration_date,rate_limit,is_active,created_at,last_used) VALUES (@id,@owner_uuid,@name,@description,@key_hash,@key_fingerprint,@permissions,@expiration_type,@expiration_date,@rate_limit,@is_active,@created_at,@last_used)').run(key);
   audit.log('AGENT_KEY_CREATED', { actor: authReq.userUuid, actor_type: 'human', resource: key.id, action: 'create', outcome: 'success', ip_address: req.ip, user_agent: String(req.headers['user-agent'] ?? ''), details: { name: key.name } });
 
-  res.status(201).json({ success: true, data: parseAgentKey(db.prepare('SELECT * FROM agent_keys WHERE id = ? AND owner_uuid = ?').get(key.id, authReq.userUuid)) });
+  const created = parseAgentKey(db.prepare('SELECT * FROM agent_keys WHERE id = ? AND owner_uuid = ?').get(key.id, authReq.userUuid));
+  res.status(201).json({ success: true, data: { ...created, apiKey: rawKey } }); // plaintext returned ONCE
 });
 
 /** PATCH /api/agent-keys/:id/revoke */

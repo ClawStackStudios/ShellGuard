@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import db, { audit } from '../database/index.js';
 import { checkTokenExpiry } from '../utils/tokenExpiry.js';
 
@@ -55,7 +56,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       finalPermissions = HUMAN_PERMISSIONS;
       actualKeyType = 'human';
     } else if (row.owner_type === 'agent') {
-      const agent = db.prepare('SELECT owner_uuid, permissions, is_active, expiration_date FROM agent_keys WHERE api_key = ?').get(row.owner_uuid) as any;
+      // Phase 17: api_tokens.owner_uuid now holds the agent row id (migrated from raw keys)
+      const agent = db.prepare('SELECT owner_uuid, permissions, is_active, expiration_date FROM agent_keys WHERE id = ?').get(row.owner_uuid) as any;
       if (!agent) { res.status(401).json({ success: false, error: 'Agent for this token no longer exists' }); return; }
       if (!agent.is_active) { res.status(401).json({ success: false, error: 'Lobster Key Revoked, Are you art of this reef?' }); return; }
       if (agent.expiration_date && new Date(agent.expiration_date) < new Date()) { res.status(401).json({ success: false, error: 'Lobster Key expired' }); return; }
@@ -66,10 +68,12 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 
   if (keyType === 'agent') {
-    const row = db.prepare('SELECT * FROM agent_keys WHERE api_key = ? AND is_active = 1').get(key) as any;
+    // Phase 17: direct lb- Bearer auth — compare by SHA-256 hash (plaintext never stored)
+    const keyHash = crypto.createHash('sha256').update(key).digest('hex');
+    const row = db.prepare('SELECT * FROM agent_keys WHERE key_hash = ? AND is_active = 1').get(keyHash) as any;
     if (!row) { res.status(401).json({ success: false, error: 'Lobster Key Revoked, Are you art of this reef?' }); return; }
     if (row.expiration_date && new Date(row.expiration_date) < new Date()) { res.status(401).json({ success: false, error: 'Lobster Key expired' }); return; }
-    db.prepare('UPDATE agent_keys SET last_used = ? WHERE api_key = ?').run(new Date().toISOString(), key);
+    db.prepare('UPDATE agent_keys SET last_used = ? WHERE id = ?').run(new Date().toISOString(), row.id);
     finalUserUuid = row.owner_uuid;
     finalPermissions = JSON.parse(row.permissions || '{}');
     actualKeyType = 'agent';

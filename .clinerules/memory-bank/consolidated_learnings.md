@@ -4,6 +4,32 @@
 
 ---
 
+## Documentation Systems
+
+**Pattern: Reverse-Documentation (Genome Reconstruction)**
+- To give an existing app a build-pipeline genome: walk `git log --reverse` between tags, read each gap's diffs, transcribe 2-task pairs (Task A engine / Task B surface) with commit receipts, and write spec oracles only when a phase references them.
+- Draft phase tables are hypotheses; the git receipts are truth. Always boundary-check the draft against the actual commit list before writing phases.
+- Verify the finished chain by traversal: a cold reader must resolve spine → roadmap → spec sections making zero design decisions; every dangling reference found by traversal is a real bug.
+- *Rationale:* The docs become the app's genome — anyone can rebuild the organism from them. Drift between docs and code becomes structurally impossible when docs are receipt-backed.
+
+**Pattern: GitHub Anchor Slug Rules (markdown link targets)**
+- Slugs lowercase, strip punctuation WITHOUT replacement (dots gone: `v0.0.0.1` → `v0001`), spaces → `-`, consecutive spaces → consecutive `-`.
+- Emoji in headings: the base glyph is stripped but the **variation selector (U+FE0F) can survive** in the slug — unpredictable and untestable. Never put emoji in headings that are link targets.
+- Verify anchors programmatically (slug every heading, diff against every link) — eyeball checks miscount multi-dot version strings and silently propagate for many passes.
+- *Rationale:* One miscounted character in one anchor fix propagated through 8 links for 11 passes before a programmatic audit caught it.
+
+**Pattern: Mermaid Graph Atomic Maintenance**
+- Updating a flowchart NODE without rewiring its EDGES leaves orphaned paths — invisible in diffs, caught only by counting edges. Count invariant: edges = nodes + entry + summit (for a linear chain).
+- Bundle node update + edge rewiring + frontmatter + section-count check into ONE edit pass per change.
+- *Rationale:* Drift between node text and edges accumulated twice in one session before being caught.
+
+**Pattern: Oracle-File Section Integrity**
+- Large replace-edits on spec files can consume trailing sections when `old_text` boundaries are stale; `insert_line` at EOF fails silently with stale counts.
+- After any oracle edit: re-read ±15 lines around the boundary AND verify the `## §` header count.
+- *Rationale:* Two §-sections were silently consumed in one session; header-count checks made the failure class detectable in-pass.
+
+---
+
 ## Crypto & Encryption
 
 **Pattern: Native `crypto` over `webcrypto.subtle`**

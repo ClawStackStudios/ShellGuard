@@ -30,7 +30,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(Attach
     const toStore = await prepareWrite('vault_secure_attachments', {
       title: title.trim(),
       file_name: file_name || '',
-      category: category || 'Personal',
+      category: category || '',
     }, fieldCipher);
 
     db.prepare(`
@@ -42,10 +42,10 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(Attach
       action: 'attachment_uploaded',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || 'Personal', bytes: Buffer.byteLength(file_data || ''), mimeType: mime_type || '' },
+      details: { itemId: id, category: category || '', bytes: Buffer.byteLength(file_data || ''), mimeType: mime_type || '' },
     });
 
-    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || 'Personal' } });
+    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || '' } });
   } catch (err: any) {
     console.error('Attachments POST error:', err);
     if (err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' || err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -67,7 +67,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Attac
     const toStore = await prepareWrite('vault_secure_attachments', {
       title: title.trim(),
       file_name: file_name || '',
-      category: category || 'Personal',
+      category: category || '',
     }, fieldCipher);
 
     db.prepare('UPDATE vault_secure_attachments SET title = ?, file_data = ?, file_name = ?, mime_type = ?, category = ? WHERE id = ? AND owner_uuid = ?')
@@ -77,10 +77,10 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Attac
       action: 'attachment_updated',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || 'Personal', bytes: Buffer.byteLength(file_data || ''), mimeType: mime_type || '' },
+      details: { itemId: id, category: category || '', bytes: Buffer.byteLength(file_data || ''), mimeType: mime_type || '' },
     });
 
-    res.json({ success: true, data: { id, title: title.trim(), category: category || 'Personal' } });
+    res.json({ success: true, data: { id, title: title.trim(), category: category || '' } });
   } catch (err: any) {
     console.error('Attachments PUT error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure updating attachment.' });

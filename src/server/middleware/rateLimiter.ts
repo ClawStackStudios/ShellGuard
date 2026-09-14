@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction } from 'express';
 import db from '../database/index.js';
@@ -63,14 +64,17 @@ export const createAgentKeyRateLimiter = () => {
     let limit: number | null = null;
     let agentApiKey: string | null = null;
 
+    // Phase 17 (Key Ledger): agent buckets key on the key_fingerprint —
+    // api_key no longer exists and plaintext never reaches this middleware.
     if (key.startsWith('lb-')) {
-      const agent = db.prepare('SELECT api_key, rate_limit FROM agent_keys WHERE api_key = ? AND is_active = 1').get(key) as any;
-      if (agent?.rate_limit) { limit = agent.rate_limit; agentApiKey = agent.api_key; }
+      const keyHash = crypto.createHash('sha256').update(key).digest('hex');
+      const agent = db.prepare('SELECT id, key_fingerprint, rate_limit FROM agent_keys WHERE key_hash = ? AND is_active = 1').get(keyHash) as any;
+      if (agent?.rate_limit) { limit = agent.rate_limit; agentApiKey = agent.key_fingerprint; }
     } else if (key.startsWith('api-')) {
       const token = db.prepare('SELECT owner_uuid, owner_type FROM api_tokens WHERE key = ?').get(key) as any;
       if (token?.owner_type === 'agent') {
-        const agent = db.prepare('SELECT api_key, rate_limit FROM agent_keys WHERE api_key = ? AND is_active = 1').get(token.owner_uuid) as any;
-        if (agent?.rate_limit) { limit = agent.rate_limit; agentApiKey = agent.api_key; }
+        const agent = db.prepare('SELECT id, key_fingerprint, rate_limit FROM agent_keys WHERE id = ? AND is_active = 1').get(token.owner_uuid) as any;
+        if (agent?.rate_limit) { limit = agent.rate_limit; agentApiKey = agent.key_fingerprint; }
       }
     }
 

@@ -15,6 +15,7 @@ I am building and maintaining Lobsterized sovereign software. I prioritize user 
    - Encrypt all vault items, secure notes, SSH keys, and custom fields client-side using AES-256-GCM.
    - Always bind encryption to item-scoped AAD namespaces (`vault_pearls:{id}`, `vault_secure_notes_custom:{id}`, `vault_ssh_keys_custom:{id}`).
    - **Zero Double-Encryption:** Exclude client ciphertexts (e.g. `custom_fields`) from server-side `metadataGuard.ts` re-encryption.
+- ❌  render a partially masked secret — masks must cover the ENTIRE value (every character → •). Leading/trailing cleartext in a "masked" state is a leak, not a UX affordance.
 3. **Memory Zeroization:**
    - On lock or logout, immediately purge `shellKey` and all decrypted plaintext secrets from React state and memory.
 

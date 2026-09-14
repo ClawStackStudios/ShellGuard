@@ -1,4 +1,66 @@
 ---
+Date: 2026-09-13
+TaskRef: "Release v0.0.1.9 preparation (New Release Protocol)"
+
+Learnings:
+- v0.0.1.8 tag points at the main merge commit (66d9ca4), so the v0.0.1.9 ledger spans 26+ commits including the genome transcription docs — read the tag position before writing the ledger, do not assume the previous release was the last commit.
+- Docker daemon is not running in this environment (CLI only) — record the container check as environment-blocked when the Dockerfile is unchanged and the production build validates the runtime.
+
+Successes:
+- Release doc rolled via git mv (exactly one RELEASE-v*.md preserved), version triple synced, memory bank slid to 10.
+---
+---
+Date: 2026-09-13
+TaskRef: "Phase 17 implementation — key ledger hash + pod purity"
+
+Learnings:
+- SQLite DROP COLUMN fails on UNIQUE columns (auto-index) — keyLedger retire must REBUILD the table (create/copy/drop/rename + indexes), then VACUUM outside the transaction: freed pages keep plaintext at byte level until vacuum. Security migrations must think at the BYTE level, not just the schema level.
+- Migration runner is SQL-only; crypto backfills belong in a code module called right after runMigrations (same seam as rekey recognition). Order inside the backfill is load-bearing: rewrite api_tokens.owner_uuid (raw key to agent id) BEFORE hashing/dropping, all in one transaction.
+- A test that asserts the OLD buggy contract (Personal fallback encryption) must be rewritten in the same phase as the fix — metadata-encryption category test now asserts the uncategorized contract.
+- parseAgentKey now uses an explicit allow-list projection — spreading rows leaks new sensitive columns by default. Allow-list projections are the durable pattern.
+
+Difficulties:
+- One patch script crashed between writes (agentKeys) leaving auth.ts unpatched — detected only because the integration test failed with "no such column: api_key". Lesson: a crashing patch script can leave PARTIAL state; always re-grep the target pattern set after a script failure.
+
+Successes:
+- All three guarantees proven: raw byte-scan shows zero plaintext lb- keys; legacy pre-migration key authenticates after in-place hashing (unit oracle); mint plaintext appears exactly once.
+- Gates: tsc clean, 15 files / 210 tests, vite build clean.
+---
+---
+Date: 2026-09-13
+TaskRef: "Genome coherence audit — shellcryption-spec oracle, dangling refs, Phase 17 security hotfix queue"
+
+Learnings:
+- Traversal-as-audit catches both doc-doc and doc-code contradictions. Found 5: (1) missing shellcryption-spec.md oracle; (2) hex-vs-base62 key alphabet claims in 2 docs (code truth: generateBase62(64) client, crypto.randomInt over 62 chars server — never hex); (3) stale hardened-in-a-later-phase wording; (4) agent_keys stores PLAINTEXT lb- keys while 5 docs claim hashes-only; (5) category Personal fallback in all 4 vault routes + DEFAULT Personal in migration 0001 contradicting the locked zero-default-pods invariant.
+- Spec-first resolution: keep the normative spec claim, encode the code fix as the queued phase (Phase 17, Tasks 33/34, migration 0004 key_hash with in-place hashing so live keys survive). Never falsify docs to match broken code.
+- Lucas restructured the roadmap mid-session (root ROADMAP.md = sliding window; .agents/memory-bank/ROADMAP-HISTORY.md = Phases 1-13 archive; project/ROADMAP-bk.md deleted). Always re-stat the tree before patching; resolve anchors per phase (1-13 to HISTORY, 14+ to root window).
+- Renumber forward queues descending (Task 40-to-42 first) to avoid collisions, then sweep collateral names (migration 0004 collision resolved to 0005/0006).
+
+Difficulties:
+- Shell heredocs intermittently swallowed python stdout; resolved by redirecting to /tmp logs. Nested-quote python strings failed twice; line-based editing of the patch script was the robust path.
+
+Successes:
+- lint clean (tsc now fully clean), 14 files / 204 tests pass, vite build clean on the merged tree (Lucas's staged restructure + my changes together).
+- 50 dangling refs repointed with number-aware regex; mermaid edges kept atomic (node + 2 edges in one pass).
+
+Improvements_Identified_For_Consolidation:
+- Pattern: docs-vs-code contradiction found in audit → encode as queued phase; do not paper over.
+- Pattern: ShellGuard keys are base62 (A-Z a-z 0-9) via getRandomValues/randomInt modulo-bias-free selection; never document hex.
+---
+---
+Date: 2026-09-05
+TaskRef: "Reverse-Build `/project` Genome — ShellGuard (16 phases, summit)"
+
+Session_Summary:
+- Built `/project/` genome (16 phases / 32 task pairs / 9 oracles / 2,745 lines, 27 commits on `docs/reverse-project`, HEAD 68d73cd, pending merge to main). Receipt-matched to git via gap-walking; docs and codebase occupy the same commit (66d9ca4 parity).
+- Patterns consolidated to `consolidated_learnings.md` → "Documentation Systems": reverse-documentation method, GitHub anchor slug rules (v0001 not v00001; emoji variation-selector hazard), mermaid node/edge atomic maintenance, oracle-file section integrity. Raw details pruned per protocol.
+
+Session-Specific (not consolidated):
+- Shell integration intermittently failed to capture heredoc/multi-line command output — use editor-tool reads for verification instead of terminal reads in this environment.
+- The draft phase table placed genesis one phase too early; a 13-commit UX cluster (master-detail, zero-hardcoded pods, NavIntent, commits c14121d..8e7c16d) belonged to its own Phase 8. Lesson: boundary-check drafts against actual commit lists before transcribing.
+- The anchor-slug bug (v00001 vs v0001) was introduced BY a Phase 1 "fix" and propagated 11 passes — programmatic slug verification is now mandatory from pass 1.
+
+---
 Date: 2026-09-03
 TaskRef: "Prepare ShellGuard Release v0.0.1.7 & Session Learnings Consolidation"
 

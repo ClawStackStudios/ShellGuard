@@ -39,7 +39,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       title: title.trim(),
       username: username ? username.trim() : '',
       url: url ? url.trim() : '',
-      category: category || 'Personal',
+      category: category || '',
       notes: notes || '',
     }, fieldCipher);
 
@@ -66,12 +66,12 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       action: 'vault_item_created',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemType: type || 'password', itemId: id, category: category || 'Personal' },
+      details: { itemType: type || 'password', itemId: id, category: category || '' },
     });
 
     res.status(201).json({
       success: true,
-      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || 'Personal' },
+      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || '' },
     });
   } catch (err: any) {
     console.error('Vault POST error:', err);
@@ -100,7 +100,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       title: title.trim(),
       username: username ? username.trim() : '',
       url: url ? url.trim() : '',
-      category: category || 'Personal',
+      category: category || '',
       notes: notes || '',
     }, fieldCipher);
 
@@ -127,12 +127,12 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       action: 'vault_item_updated',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemType: type || 'password', itemId: id, category: category || 'Personal' },
+      details: { itemType: type || 'password', itemId: id, category: category || '' },
     });
 
     res.json({
       success: true,
-      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || 'Personal', notes: notes || '' },
+      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || '', notes: notes || '' },
     });
   } catch (err: any) {
     console.error('Vault PUT error:', err);

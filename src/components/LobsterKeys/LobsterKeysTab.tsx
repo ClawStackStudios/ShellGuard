@@ -22,9 +22,7 @@ export interface LobsterKey {
   id: string;
   name: string;
   description?: string | null;
-  key?: string;
-  apiKey?: string;
-  api_key?: string;
+  keyFingerprint?: string | null; // Phase 17: fingerprint only — key material never listed
   permissions: any;
   expiration_type?: string;
   expirationType?: string;
@@ -91,7 +89,10 @@ export function LobsterKeysTab() {
   };
 
   const handleKeyGenerated = (newKey: LobsterKey) => {
-    setKeys((prev) => [newKey, ...prev]);
+    // Phase 17: the mint response carries the plaintext exactly once (wizard
+    // reveal); scrub it before the key enters the card list state.
+    const { apiKey: _once, key: _k, api_key: _ak, ...scrubbed } = newKey as any;
+    setKeys((prev) => [scrubbed, ...prev]);
     setIsWizardOpen(false);
     toast.success('Lobster Key spawned successfully! 🦞');
   };
@@ -110,13 +111,10 @@ export function LobsterKeysTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-black text-theme-main flex items-center gap-2">
-            <span className="text-lobster-red">Lobster Keys</span>
-            <span className="text-xs px-2 py-0.5 rounded-md bg-lobster-red/10 text-lobster-red font-mono font-bold border border-lobster-red/20">
-              API
-            </span>
+            <span className="text-lobster-red">Lobster Keys©™</span>
           </h3>
           <p className="text-sm text-theme-muted mt-0.5">
-            Manage delegated access keys for external agents and automated services.
+            Manage API keys for external agents and automation
           </p>
         </div>
         <button
@@ -175,8 +173,8 @@ export function LobsterKeysTab() {
         onConfirm={() => {
           if (confirmDeleteId) executeDelete(confirmDeleteId);
         }}
-        title="Delete Lobster Key?"
-        description="Are you sure you want to delete this Lobster Key? Any external agents using it will permanently lose access to the Vault."
+        title="Delete LobsterKey?"
+        description="Are you sure you want to delete this LobsterKey? Any external agents using it will permanently lose access."
         confirmText="Delete Key"
       />
     </div>

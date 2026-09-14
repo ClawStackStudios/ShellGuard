@@ -1,5 +1,16 @@
 ---
 Date: 2026-09-13
+TaskRef: "Release v0.0.1.9 preparation (New Release Protocol)"
+
+Learnings:
+- v0.0.1.8 tag points at the main merge commit (66d9ca4), so the v0.0.1.9 ledger spans 26+ commits including the genome transcription docs — read the tag position before writing the ledger, do not assume the previous release was the last commit.
+- Docker daemon is not running in this environment (CLI only) — record the container check as environment-blocked when the Dockerfile is unchanged and the production build validates the runtime.
+
+Successes:
+- Release doc rolled via git mv (exactly one RELEASE-v*.md preserved), version triple synced, memory bank slid to 10.
+---
+---
+Date: 2026-09-13
 TaskRef: "Phase 17 implementation — key ledger hash + pod purity"
 
 Learnings:

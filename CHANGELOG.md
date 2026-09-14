@@ -1,6 +1,6 @@
 # Changelog — ShellGuard
 
-## [Unreleased]
+## [0.0.1.9] - 2026-09-13
 
 ### Changed
 - **Lobster Keys Card UI — CaraBase 1:1 Key Row:** the card's key display row now matches CaraBase exactly (masked by default with the verbatim `maskKey()` algorithm — first 6 + •••••••••••• + last 4 — Eye/EyeOff toggle, Copy with 2s Copied feedback). The row operates over the SHA-256 fingerprint (hash ledger intact — the plaintext key appears exactly once, in the wizard). Tab heading/subtitle and delete-confirmation wording aligned to CaraBase verbatim.

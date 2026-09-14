@@ -171,6 +171,7 @@ These are **hard blocks** — code that violates any of these **MUST** be reject
 - ❌ `NEVER` use non-constant-time equality (`===`) for security tokens.
 - ❌ `NEVER` expose decrypted secret values in API responses — server stores only opaque ShellCryption blobs.
 - ❌ `NEVER` register client-encrypted columns (`secret`, `custom_fields`, `totp_secret`, `content`, `key_value`, `file_data`) in `metadataGuard.ts`.
+- ❌ `NEVER` render a partially masked secret — masks must cover the ENTIRE value (every character → `•`). Leading/trailing cleartext in a "masked" state is a leak, not a UX affordance. (Masking algorithms that preserve prefixes/suffixes are rejected in review.)
 
 ---
 

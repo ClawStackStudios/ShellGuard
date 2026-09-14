@@ -5,13 +5,14 @@ import { LobsterKey } from './LobsterKeysTab';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * CaraBase-verbatim mask: first 6 + dots + last 4. Applied to the key
- * FINGERPRINT (Phase 17: the plaintext key is hash-only server-side and is
- * revealed exactly once, in the wizard's generated step).
+ * Full mask: every character becomes a dot — no leading/trailing cleartext.
+ * Applied to the key FINGERPRINT (Phase 17: the plaintext key is hash-only
+ * server-side and is revealed exactly once, in the wizard's generated step,
+ * which uses the same replace(/./g, '•') mask).
  */
 function maskKey(key: string): string {
-  if (!key || key.length < 12) return '••••••••••••';
-  return key.slice(0, 6) + '••••••••••••' + key.slice(-4);
+  if (!key) return '••••••••••••';
+  return key.replace(/./g, '•');
 }
 
 function formatDate(dateStr: string): string {

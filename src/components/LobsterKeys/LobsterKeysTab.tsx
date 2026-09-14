@@ -111,13 +111,10 @@ export function LobsterKeysTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-black text-theme-main flex items-center gap-2">
-            <span className="text-lobster-red">Lobster Keys</span>
-            <span className="text-xs px-2 py-0.5 rounded-md bg-lobster-red/10 text-lobster-red font-mono font-bold border border-lobster-red/20">
-              API
-            </span>
+            <span className="text-lobster-red">Lobster Keys©™</span>
           </h3>
           <p className="text-sm text-theme-muted mt-0.5">
-            Manage delegated access keys for external agents and automated services.
+            Manage API keys for external agents and automation
           </p>
         </div>
         <button
@@ -176,8 +173,8 @@ export function LobsterKeysTab() {
         onConfirm={() => {
           if (confirmDeleteId) executeDelete(confirmDeleteId);
         }}
-        title="Delete Lobster Key?"
-        description="Are you sure you want to delete this Lobster Key? Any external agents using it will permanently lose access to the Vault."
+        title="Delete LobsterKey?"
+        description="Are you sure you want to delete this LobsterKey? Any external agents using it will permanently lose access."
         confirmText="Delete Key"
       />
     </div>

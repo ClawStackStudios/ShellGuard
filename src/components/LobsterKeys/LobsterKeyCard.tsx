@@ -1,8 +1,18 @@
-import React from 'react';
-import { Shield, Clock, Trash2, XCircle, AlertTriangle, Key } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, Clock, Trash2, XCircle, AlertTriangle, Key, Eye, EyeOff, Copy, CheckCircle } from 'lucide-react';
 import { LobsterKey } from './LobsterKeysTab';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * CaraBase-verbatim mask: first 6 + dots + last 4. Applied to the key
+ * FINGERPRINT (Phase 17: the plaintext key is hash-only server-side and is
+ * revealed exactly once, in the wizard's generated step).
+ */
+function maskKey(key: string): string {
+  if (!key || key.length < 12) return '••••••••••••';
+  return key.slice(0, 6) + '••••••••••••' + key.slice(-4);
+}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -30,16 +40,40 @@ interface LobsterKeyCardProps {
 }
 
 export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const isActive = lobster.is_active !== undefined ? Boolean(lobster.is_active) : (lobster.isActive ?? true);
-  // Phase 17: cards show the SHA-256 fingerprint — key material is never
-  // present in list responses (reveal happens once, in the wizard).
-  const keyFingerprint = (lobster as any).keyFingerprint as string | null | undefined;
+  // Phase 17 (Key Ledger): the card carries the SHA-256 fingerprint — key
+  // material is never present in list responses. Row structure is 1:1 with
+  // CaraBase (masked by default, eye toggle, copy) over that fingerprint.
+  const displayKey = ((lobster as any).keyFingerprint as string | null | undefined) ?? '';
   const permissions = parsePermissions(lobster.permissions);
   const permKeys = Object.keys(permissions).filter((k) => permissions[k] && k.startsWith('can'));
 
   const createdAt = lobster.created_at || lobster.createdAt;
   const expirationDate = lobster.expiration_date || lobster.expirationDate;
   const rateLimit = lobster.rate_limit || lobster.rateLimit;
+
+  const handleCopy = async () => {
+    if (!displayKey) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(displayKey);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = displayKey;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
+  };
 
   return (
     <div
@@ -114,7 +148,7 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
                 if (permName === 'Edit') colorClass = 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20';
                 if (permName === 'Move') colorClass = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
                 if (permName === 'Delete') colorClass = 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
-                
+
                 return (
                   <span key={k} className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${colorClass}`}>
                     {permName}
@@ -154,21 +188,37 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
         ) : null}
       </div>
 
-      {/* ── Key fingerprint (Phase 17: material never listed) ──────────── */}
+      {/* ── Key display (CaraBase 1:1 structure over the fingerprint) ──── */}
       <div className="pt-4 border-t border-theme-subtle">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden flex-1">
             <Key className="w-4 h-4 flex-shrink-0 text-theme-muted" />
-            <code className="text-sm font-mono truncate px-2.5 py-1 rounded-lg bg-theme-base border border-theme-subtle text-theme-muted">
-              {keyFingerprint ? `${keyFingerprint}…` : '••••••••••••'}
+            <code className="text-sm font-mono truncate text-theme-muted">
+              {displayKey ? (isVisible ? displayKey : maskKey(displayKey)) : '••••••••••••'}
             </code>
           </div>
-          <span
-            className="text-[10px] px-2 py-0.5 rounded-md bg-claw-cyan/10 text-claw-cyan font-mono font-bold border border-claw-cyan/20 flex-shrink-0"
-            title="SHA-256 fingerprint — the full key was shown once at mint and is never stored"
-          >
-            HASHED
-          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Show/hide */}
+            <button
+              type="button"
+              onClick={() => setIsVisible((v) => !v)}
+              className="p-2 rounded-xl text-theme-muted hover:text-theme-main hover:bg-theme-base transition-colors"
+              title={isVisible ? 'Hide key' : 'Reveal key'}
+            >
+              {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+            {/* Copy */}
+            {displayKey && (
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="p-2 rounded-xl text-theme-muted hover:text-claw-cyan hover:bg-theme-base transition-colors"
+                title="Copy key"
+              >
+                {copied ? <CheckCircle className="w-4 h-4 text-claw-cyan" /> : <Copy className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

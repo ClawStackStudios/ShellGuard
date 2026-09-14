@@ -283,7 +283,7 @@ describe('API: metadata encryption active', () => {
     expect(row.secret).toBe(blob);
   });
 
-  test('non-empty category default is encrypted when cipher is active', async () => {
+  test('omitted category persists as uncategorized "" (Phase 17 pod purity)', async () => {
     const id = crypto.randomUUID();
     const blob = fakeShellCryption(id);
 
@@ -298,23 +298,24 @@ describe('API: metadata encryption active', () => {
       })
       .expect(201);
 
-    // The route does `category || 'Personal'`, so 'Personal' is the stored value.
-    // Since 'Personal' is non-empty, metadataGuard encrypts it.
+    // Phase 17 removed the `category || 'Personal'` fallback: the route now
+    // defaults to "" (uncategorized). Empty strings pass through metadataGuard
+    // unencrypted by design — an empty category carries nothing to protect.
     const row = srv.db!
       .prepare('SELECT category FROM vault_pearls WHERE id = ?')
       .get(id) as { category: string };
 
-    expect(row.category).not.toBe('');
-    expect(isEncryptedField(row.category)).toBe(true);
+    expect(row.category).toBe('');
+    expect(isEncryptedField(row.category)).toBe(false);
 
-    // But the API response should have returned plaintext 'Personal'
+    // The API response surfaces the same uncategorized value.
     const getRes = await request(srv.app)
       .get('/api/vault')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     const pearl = (getRes.body.data as any[]).find((r: any) => r.id === id);
-    expect(pearl.category).toBe('Personal');
+    expect(pearl.category).toBe('');
   });
 });
 

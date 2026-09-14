@@ -22,9 +22,7 @@ export interface LobsterKey {
   id: string;
   name: string;
   description?: string | null;
-  key?: string;
-  apiKey?: string;
-  api_key?: string;
+  keyFingerprint?: string | null; // Phase 17: fingerprint only — key material never listed
   permissions: any;
   expiration_type?: string;
   expirationType?: string;
@@ -91,7 +89,10 @@ export function LobsterKeysTab() {
   };
 
   const handleKeyGenerated = (newKey: LobsterKey) => {
-    setKeys((prev) => [newKey, ...prev]);
+    // Phase 17: the mint response carries the plaintext exactly once (wizard
+    // reveal); scrub it before the key enters the card list state.
+    const { apiKey: _once, key: _k, api_key: _ak, ...scrubbed } = newKey as any;
+    setKeys((prev) => [scrubbed, ...prev]);
     setIsWizardOpen(false);
     toast.success('Lobster Key spawned successfully! 🦞');
   };

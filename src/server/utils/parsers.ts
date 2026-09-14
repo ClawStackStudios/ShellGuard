@@ -2,8 +2,14 @@
 
 export function parseAgentKey(row: any) {
   if (!row) return null;
+  // Phase 17 (Key Ledger): explicit allow-list projection — key material and
+  // hash columns are structurally absent from every API response. The mint
+  // route attaches the plaintext apiKey to the ONE-TIME mint response only.
   return {
-    ...row,
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    keyFingerprint: row.key_fingerprint ?? null,
     permissions: JSON.parse(row.permissions ?? '{}'),
     isActive: Boolean(row.is_active),
     expirationType: row.expiration_type,
@@ -11,15 +17,5 @@ export function parseAgentKey(row: any) {
     rateLimit: row.rate_limit,
     createdAt: row.created_at,
     lastUsed: row.last_used,
-    apiKey: row.api_key,
-    // remove snake_case dupes
-    is_active: undefined,
-    expiration_type: undefined,
-    expiration_date: undefined,
-    rate_limit: undefined,
-    created_at: undefined,
-    last_used: undefined,
-    owner_uuid: undefined,
-    api_key: undefined,
   };
 }

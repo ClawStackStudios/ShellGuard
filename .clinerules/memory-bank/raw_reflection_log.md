@@ -1,5 +1,22 @@
 ---
 Date: 2026-09-13
+TaskRef: "Phase 17 implementation — key ledger hash + pod purity"
+
+Learnings:
+- SQLite DROP COLUMN fails on UNIQUE columns (auto-index) — keyLedger retire must REBUILD the table (create/copy/drop/rename + indexes), then VACUUM outside the transaction: freed pages keep plaintext at byte level until vacuum. Security migrations must think at the BYTE level, not just the schema level.
+- Migration runner is SQL-only; crypto backfills belong in a code module called right after runMigrations (same seam as rekey recognition). Order inside the backfill is load-bearing: rewrite api_tokens.owner_uuid (raw key to agent id) BEFORE hashing/dropping, all in one transaction.
+- A test that asserts the OLD buggy contract (Personal fallback encryption) must be rewritten in the same phase as the fix — metadata-encryption category test now asserts the uncategorized contract.
+- parseAgentKey now uses an explicit allow-list projection — spreading rows leaks new sensitive columns by default. Allow-list projections are the durable pattern.
+
+Difficulties:
+- One patch script crashed between writes (agentKeys) leaving auth.ts unpatched — detected only because the integration test failed with "no such column: api_key". Lesson: a crashing patch script can leave PARTIAL state; always re-grep the target pattern set after a script failure.
+
+Successes:
+- All three guarantees proven: raw byte-scan shows zero plaintext lb- keys; legacy pre-migration key authenticates after in-place hashing (unit oracle); mint plaintext appears exactly once.
+- Gates: tsc clean, 15 files / 210 tests, vite build clean.
+---
+---
+Date: 2026-09-13
 TaskRef: "Genome coherence audit — shellcryption-spec oracle, dangling refs, Phase 17 security hotfix queue"
 
 Learnings:

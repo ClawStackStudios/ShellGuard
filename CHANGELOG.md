@@ -10,7 +10,7 @@
 
 ### Added
 - **ShellCryption Client-Side Encryption Oracle (`project/shellcryption-spec.md`):** 10th spec oracle — HKDF derivation (ikm=`hu-` key, salt=userUuid, info=`clawchives-shellcryption-v1`), envelope format, AAD namespace registry, decrypt passthrough ladder, engine selector, and the zero-knowledge invariants. Resolves the last dangling reference in the genome.
-- **Phase 17 [v0.0.1.9] Queued — Key Ledger Hardening & Pod Purity (Tasks 33/34):** the forward queue's new head — closes two coherence-audit findings (agent-key hash ledger; server-side 'Personal' default purge). Forward queue renumbered to Phases 17–21 / Tasks 33–42 across the root roadmap and the genome spine (Stage 18).
+- **Phase 17 Implemented — Key Ledger Hardening & Pod Purity (Tasks 33/34) [SECURITY]:** `lb-` agent keys are now stored as SHA-256 hashes only — the plaintext `api_key` column is retired via migration 0004 + in-place backfill (legacy keys keep authenticating; live agent tokens re-pointed from raw-key owner_uuid to agent row id; ledger VACUUMed so no plaintext ghost pages remain). Mint returns plaintext exactly once; every list response carries only the fingerprint; the key card shows the `HASHED` fingerprint. The hardcoded `DEFAULT 'Personal'` is purged from all four category columns and the `category || 'Personal'` fallback removed from vault/notes/sshKeys/attachments — uncategorized items persist as `""`. Proven by `tests/agent-key-hash.test.ts` (6 tests: DB byte-scan, raw exchange, sentinel, revoke, uncategorized, legacy-backfill unit oracle) — all suites green.
 - **Version Resolver Unit Tests:** Added `tests/unit/version.test.ts` asserting semver compliance and package ground-truth matching.
 
 ## [0.0.1.8] - 2026-09-04

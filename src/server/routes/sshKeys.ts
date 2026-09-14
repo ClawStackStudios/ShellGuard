@@ -29,7 +29,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKey
     const toStore = await prepareWrite('vault_ssh_keys', {
       title: title.trim(),
       username: username || '',
-      category: category || 'Personal',
+      category: category || '',
     }, fieldCipher);
 
     db.prepare(`
@@ -41,10 +41,10 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKey
       action: 'ssh_key_created',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || 'Personal' },
+      details: { itemId: id, category: category || '' },
     });
 
-    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || 'Personal' } });
+    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || '' } });
   } catch (err: any) {
     console.error('SSH keys POST error:', err);
     if (err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' || err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -66,7 +66,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKe
     const toStore = await prepareWrite('vault_ssh_keys', {
       title: title.trim(),
       username: username || '',
-      category: category || 'Personal',
+      category: category || '',
     }, fieldCipher);
 
     db.prepare('UPDATE vault_ssh_keys SET title = ?, key_value = ?, username = ?, category = ?, custom_fields = ? WHERE id = ? AND owner_uuid = ?')
@@ -76,10 +76,10 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKe
       action: 'ssh_key_updated',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || 'Personal' },
+      details: { itemId: id, category: category || '' },
     });
 
-    res.json({ success: true, data: { id, title: title.trim(), category: category || 'Personal' } });
+    res.json({ success: true, data: { id, title: title.trim(), category: category || '' } });
   } catch (err: any) {
     console.error('SSH keys PUT error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure updating key.' });

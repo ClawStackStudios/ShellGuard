@@ -1,13 +1,8 @@
-import React, { useState } from 'react';
-import { Shield, Clock, Trash2, XCircle, Eye, EyeOff, Copy, CheckCircle, Download, AlertTriangle, Key } from 'lucide-react';
+import React from 'react';
+import { Shield, Clock, Trash2, XCircle, AlertTriangle, Key } from 'lucide-react';
 import { LobsterKey } from './LobsterKeysTab';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function maskKey(key: string): string {
-  if (!key || key.length < 12) return '••••••••••••';
-  return key.slice(0, 6) + '••••••••••••' + key.slice(-4);
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -35,59 +30,16 @@ interface LobsterKeyCardProps {
 }
 
 export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [copied, setCopied] = useState(false);
-
   const isActive = lobster.is_active !== undefined ? Boolean(lobster.is_active) : (lobster.isActive ?? true);
-  const displayKey = lobster.api_key || lobster.apiKey || lobster.key || '';
+  // Phase 17: cards show the SHA-256 fingerprint — key material is never
+  // present in list responses (reveal happens once, in the wizard).
+  const keyFingerprint = (lobster as any).keyFingerprint as string | null | undefined;
   const permissions = parsePermissions(lobster.permissions);
   const permKeys = Object.keys(permissions).filter((k) => permissions[k] && k.startsWith('can'));
 
   const createdAt = lobster.created_at || lobster.createdAt;
   const expirationDate = lobster.expiration_date || lobster.expirationDate;
   const rateLimit = lobster.rate_limit || lobster.rateLimit;
-
-  const handleCopy = async () => {
-    if (!displayKey) return;
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(displayKey);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = displayKey;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy', err);
-    }
-  };
-
-  const handleDownload = () => {
-    const keyData = {
-      type: 'lobster_key',
-      key: displayKey,
-      id: lobster.id,
-      name: lobster.name,
-      createdAt: createdAt,
-      permissions,
-      expirationDate,
-      rateLimit
-    };
-    const blob = new Blob([JSON.stringify(keyData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lobster_key_${lobster.name.replace(/\s+/g, '_').toLowerCase()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div
@@ -202,50 +154,21 @@ export function LobsterKeyCard({ lobster, onRevoke, onDelete }: LobsterKeyCardPr
         ) : null}
       </div>
 
-      {/* ── Key display ─────────────────────────────────────────────────── */}
+      {/* ── Key fingerprint (Phase 17: material never listed) ──────────── */}
       <div className="pt-4 border-t border-theme-subtle">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden flex-1">
             <Key className="w-4 h-4 flex-shrink-0 text-theme-muted" />
-            <code className={`text-sm font-mono truncate px-2.5 py-1 rounded-lg bg-theme-base border border-theme-subtle ${
-              isVisible ? 'text-claw-cyan font-bold' : 'text-theme-muted'
-            }`}>
-              {displayKey ? (isVisible ? displayKey : maskKey(displayKey)) : '••••••••••••'}
+            <code className="text-sm font-mono truncate px-2.5 py-1 rounded-lg bg-theme-base border border-theme-subtle text-theme-muted">
+              {keyFingerprint ? `${keyFingerprint}…` : '••••••••••••'}
             </code>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {/* Show/hide */}
-            <button
-              type="button"
-              onClick={() => setIsVisible((v) => !v)}
-              className="p-2 rounded-xl text-theme-muted hover:text-theme-main hover:bg-theme-base transition-colors"
-              title={isVisible ? 'Hide key' : 'Reveal key'}
-            >
-              {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-            {/* Copy */}
-            {displayKey && (
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="p-2 rounded-xl text-theme-muted hover:text-claw-cyan hover:bg-theme-base transition-colors"
-                title="Copy key"
-              >
-                {copied ? <CheckCircle className="w-4 h-4 text-claw-cyan" /> : <Copy className="w-4 h-4" />}
-              </button>
-            )}
-            {/* Download */}
-            {displayKey && (
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="p-2 rounded-xl text-theme-muted hover:text-claw-cyan hover:bg-theme-base transition-colors"
-                title="Download key JSON"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+          <span
+            className="text-[10px] px-2 py-0.5 rounded-md bg-claw-cyan/10 text-claw-cyan font-mono font-bold border border-claw-cyan/20 flex-shrink-0"
+            title="SHA-256 fingerprint — the full key was shown once at mint and is never stored"
+          >
+            HASHED
+          </span>
         </div>
       </div>
     </div>

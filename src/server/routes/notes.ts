@@ -28,7 +28,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
   try {
     const toStore = await prepareWrite('vault_secure_notes', {
       title: title.trim(),
-      category: category || 'Personal',
+      category: category || '',
     }, fieldCipher);
 
     db.prepare(`
@@ -40,10 +40,10 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
       action: 'note_created',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || 'Personal' },
+      details: { itemId: id, category: category || '' },
     });
 
-    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || 'Personal' } });
+    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || '' } });
   } catch (err: any) {
     console.error('Notes POST error:', err);
     if (err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' || err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -64,7 +64,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
 
     const toStore = await prepareWrite('vault_secure_notes', {
       title: title.trim(),
-      category: category || 'Personal',
+      category: category || '',
     }, fieldCipher);
 
     db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, custom_fields = ? WHERE id = ? AND owner_uuid = ?')
@@ -74,10 +74,10 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
       action: 'note_updated',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || 'Personal' },
+      details: { itemId: id, category: category || '' },
     });
 
-    res.json({ success: true, data: { id, title: title.trim(), category: category || 'Personal' } });
+    res.json({ success: true, data: { id, title: title.trim(), category: category || '' } });
   } catch (err: any) {
     console.error('Notes PUT error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure updating note.' });

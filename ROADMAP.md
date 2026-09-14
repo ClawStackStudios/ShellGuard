@@ -34,7 +34,7 @@
 > the UI's zero-hardcoded-pods invariant (Phase 8) finally reaches the Bedrock.
 > *(Receipts: pending — forward phase, queued from the coherence audit.)*
 
-- [ ] **Task 33: [Functionality] Agent Key Hash Ledger & Pod Default Purge**
+- [x] **Task 33: [Functionality] Agent Key Hash Ledger & Pod Default Purge**
 
 Description: Add `agent_keys.key_hash` via `migrations/0004_key_ledger.{up,down}.sql`
 — at migration time, every existing plaintext `api_key` is SHA-256 hashed in
@@ -58,7 +58,7 @@ authenticates, plaintext returned once, revoke/expiry unchanged) and extend
 > zero pods and `""` categories stay `""` (no "Personal" resurrection);
 > the full test oracle passes.
 
-- [ ] **Task 34: [UI Component] Key Fingerprint Display & Pod Purity Confirmation**
+- [x] **Task 34: [UI Component] Key Fingerprint Display & Pod Purity Confirmation**
 
 Description: Update `LobsterKeysTab.tsx` to render a SHA-256 fingerprint
 (first 8 hex chars + `…`) on every key card instead of any key material, with

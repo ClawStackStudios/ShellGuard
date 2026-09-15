@@ -1,5 +1,11 @@
 # Changelog — ShellGuard
 
+## [Unreleased]
+
+### Fixed
+- **Vault master-detail header flush:** the item-list (search) header and the Item Details header are pinned to a shared 64px height (`h-16`), so their bottom borders form one continuous line across the dashboard T-junction instead of stepping (left bar rendered ~59px vs right ~64px).
+- **Version resolver test de-hardcoded:** `tests/unit/version.test.ts` asserted a literal `'0.0.1.8'`, which silently failed after every version bump (latent failure shipped in v0.0.1.9). The invariant is now package.json ground truth + `X.Y.Z.N` shape only.
+
 ## [0.0.1.9] - 2026-09-13
 
 ### Changed

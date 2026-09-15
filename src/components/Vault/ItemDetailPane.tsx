@@ -69,7 +69,7 @@ export function ItemDetailPane({
   const content = (
     <div className="flex flex-col h-full bg-theme-base overflow-hidden relative">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-theme-subtle bg-theme-surface flex-shrink-0">
+      <div className="flex items-center justify-between px-4 h-16 border-b border-theme-subtle bg-theme-surface flex-shrink-0">
         <h3 className="font-bold text-lg">Item Details</h3>
         <div className="flex items-center gap-2">
           {item && (

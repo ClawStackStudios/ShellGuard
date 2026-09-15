@@ -1,5 +1,15 @@
 ---
 Date: 2026-09-13
+TaskRef: "Phase 22 queued — Reef Polish Pass (Task 43 eye relocation; Task 44 reserved)"
+
+Learnings:
+- Polish items collected hands-on (Lucas using the UI) queue as their own phase with a work-driven version label; No Forced Targets extends to provisional labels — mark them provisional in the header, decide the digit at release.
+- A reserved task slot (Task 44, "pending fill") lets the genome queue a phase before its story is complete — the strict 2-Task Pairing Law holds structurally as long as the reserved slot is explicit and gated (do-not-execute).
+- Ground the task description in measured code geometry (line refs, control positions) so the future executor makes zero design decisions — the traversal rule applies to polish phases too.
+- Editor-insert steps can consume the blank line before an anchor heading when the inserted text ends with a bare `---` — always end inserts with a trailing blank line and re-verify heading adjacency.
+---
+---
+Date: 2026-09-13
 TaskRef: "Genome post-additions — roadmap molt + Stage 19 hotfix record"
 
 Learnings:

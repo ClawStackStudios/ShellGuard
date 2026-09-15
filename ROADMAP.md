@@ -169,6 +169,47 @@ and dedicated Import wizard with preview table and error resolution chips.
   the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
   can never silently break it again.
 
+### Phase 22: Reef Polish Pass — Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 23)]
+
+> Phase Feature Set Overview:
+> A polish bracket of surgical interaction refinements — no schema, no API
+> contracts, no security surface. Each item relocates or realigns a control to
+> where the hand expects it. The version digit is decided by the completed work
+> (No Forced Targets policy); the queue position after Phase 21 makes the
+> provisional label `v0.0.2.4 (Build 23)`. *(Source: Lucas, 2026-09-13 —
+> post-v0.0.1.9 hands-on pass. Task 44 is reserved: more polish items are
+> being collected before execution.)*
+
+- [ ] **Task 43: [UI Component] Custom-Field Unmask Control Relocation — Eye Beside Copy**
+
+Description: In `ItemDetailPane.tsx`, the Custom Fields card currently renders
+the Unmask (Eye/EyeOff) toggle **inline with the masked value** on the left
+column (lines ~269–279) while the Copy button floats **far right** in its own
+column (~286–293) — the two controls for the same secret sit separated by the
+full card width. Relocate the Eye toggle into the right-hand action cluster,
+positioned **immediately to the left of the Copy button** (matching the main
+password field's eye+copy pairing at ~175–185), for hidden custom fields.
+Keep the masked-value cell (`••••••••••••` → value on reveal) in the value
+column; keep `revealedHiddenFields` state semantics unchanged; keep the full-
+value mask invariant (no partial masks — NEVER-list). Applies to hidden
+Custom Fields; text/checkbox/linked rows are unaffected.
+
+> Success Criteria: On a hidden custom field, Eye and Copy sit adjacent in the
+> right-hand control cluster (Eye immediately left of Copy); the mask shows the
+> ENTIRE value as dots; reveal state still toggles per-field; the full test
+> oracle passes; `tsc` and the production build stay clean.
+
+- [ ] **Task 44: [UI Component] Reserved — Additional Reef Polish Items (pending)**
+
+Description: RESERVED slot — Lucas is collecting additional polish items for
+this phase before execution begins. This task will be filled from the same
+hands-on pass that surfaced Task 43. Do not execute until the slot is filled
+and the phase is formally green-lit.
+
+> Success Criteria: TBD — defined when the reserved slot is filled.
+
+---
+
 ## 🔬 Queue — Backlog & Distant Shores (Vision)
 
 > Prioritized backlog items captured for future formalization into paired phases.

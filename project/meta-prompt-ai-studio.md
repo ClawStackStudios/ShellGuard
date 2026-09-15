@@ -61,7 +61,7 @@ flowchart TD
 
 > **Transcription state**: ✅ **COMPLETE** — all 16 phases transcribed
 > (`v0.0.0.0` void → `v0.0.1.8` parity). Every stage is live; the walk and
-> the codebase occupy the same commit. **Phase 17 (`v0.0.1.9`) is SHIPPED — the genome was released and the summit tag pushed.** Stage 19 below records the post-summit hotfix path.
+> the codebase occupy the same commit. **Phase 17 (`v0.0.1.9`) is SHIPPED — the genome was released and the summit tag pushed.** Stage 19 below records the post-summit hotfix path. **Stage 20 (Phase 22, Reef Polish) is queued — awaiting Task 44 fill + green-light.**
 
 ---
 
@@ -997,7 +997,49 @@ staying "" (no "Personal" resurrection), and the full test oracle passes!
 boundary* — run the full oracle AFTER the version bump, before the tag. Version-bump
 commits are code changes and belong inside the verification gate.
 
+
+## 🎨 Stage 20 (Queued): Phase 22 Prompt — Reef Polish Pass, Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-22-reef-polish-pass--control-ergonomics)
+> for complete specifications on **Task 43** and **Task 44**.
+> **⚠️ Execution state**: QUEUED — do not execute until Task 44's reserved slot
+> is filled and Lucas green-lits the phase.
+> **📖 Required Context Files for Phase 22**:
+> 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §7 (Custom fields render behavior; control ergonomics).
+> 2. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 22 (Tasks 43 & 44)** once green-lit:
+
+```markdown
+# PHASE 22 EXECUTION: Reef Polish Pass — Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 22 (Task 43: Custom-Field Unmask Control Relocation · Task 44: Reserved — pending fill).
+- `ui-ux-design-system.md`: §7 (custom fields render behavior).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+### Task 43: [UI Component] Custom-Field Unmask Control Relocation — Eye Beside Copy
+- ItemDetailPane.tsx: move the Eye/EyeOff toggle for hidden Custom Fields out
+  of the value column (inline after the masked text) into the right-hand
+  action cluster, immediately LEFT of the Copy button — matching the main
+  password field's eye+copy pairing.
+- Keep the masked-value cell in the value column; keep revealedHiddenFields
+  per-field state semantics; keep the full-value mask invariant (every
+  character → •, no partial masks).
+- text/checkbox/linked custom-field rows are unaffected.
+
+### Task 44: [UI Component] Reserved — Additional Reef Polish Items (pending)
+- RESERVED — filled by Lucas before execution. Do not proceed on an
+  unfilled slot.
+
+Verify Eye and Copy sit adjacent in the right-hand cluster on hidden custom
+fields, the mask covers the ENTIRE value, reveal toggles per-field, and the
+full test oracle + tsc + build stay clean!
+```
+
 ---
+
 ## 🏔️ The Summit
 
 The spine is complete: **Stage 0 (the void) → Stage 17 (v0.0.1.8 parity)** —

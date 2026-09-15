@@ -1,5 +1,17 @@
 ---
 Date: 2026-09-13
+TaskRef: "Genome post-additions — roadmap molt + Stage 19 hotfix record"
+
+Learnings:
+- Sliding-window molt sequence: completed phase moves to Completed Releases (receipts filled), oldest completed phase rolls to ROADMAP-HISTORY (+ archive-table row in the root), queue re-heads, versioning policy flips Current/Next. All four moves in one pass.
+- Post-summit hotfixes live outside the 2-Task Pairing Law — record them as unphased addendum entries with receipts so the genome stays receipt-honest without breaking the phase grammar.
+- The archive TABLE lives in the root ROADMAP (Historical Archive section), not in ROADMAP-HISTORY.md — anchor lookups across these two files burned one assert; check both before scripting.
+
+Successes:
+- ROADMAP restructured in one assert-guarded pass; meta-prompt Stage 19 records the header-flush hotfix + the "oracle AFTER the version bump" lesson.
+---
+---
+Date: 2026-09-13
 TaskRef: "v0.0.1.9 release execution (New Release Protocol, end-to-end)"
 
 Learnings:

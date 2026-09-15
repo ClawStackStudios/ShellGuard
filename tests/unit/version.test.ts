@@ -8,7 +8,9 @@ describe('getAppVersion resolver', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
     const ver = getAppVersion();
     expect(ver).toBe(pkg.version);
-    expect(ver).toBe('0.0.1.8');
+    // Version digits bump per release — the invariant is package.json ground truth
+    // + semver (X.Y.Z.N) shape, never a hardcoded literal that drifts every release.
+    expect(ver).toMatch(/^\d+\.\d+\.\d+\.\d+$/);
   });
 
   it('returns a valid semver string format', () => {

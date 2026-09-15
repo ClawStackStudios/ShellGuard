@@ -34,7 +34,7 @@ export function ItemListPane({
   return (
     <div className="flex flex-col h-full bg-theme-base lg:border-r border-theme-subtle">
       {/* Search Header */}
-      <div className="p-3 border-b border-theme-subtle bg-theme-surface flex-shrink-0 flex items-center gap-2">
+      <div className="px-3 h-16 border-b border-theme-subtle bg-theme-surface flex-shrink-0 flex items-center gap-2">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
           <input

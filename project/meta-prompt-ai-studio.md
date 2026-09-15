@@ -36,7 +36,7 @@ flowchart TD
     Phase15["📥 Stage 16: Phase 15 — sgtotp.bak Import Compatibility<br/>(Task 29: Parser & Client-Side Decryption · Task 30: ImportExportView & Strict Mirror)"]
     Phase16["🏔️ Stage 17: Phase 16 — Docs Bridge Parity & Version Resolver<br/>(Task 31: Agentic Infrastructure & Version Resolver · Task 32: Privacy, Parity & Mirror)"]
     Phase17["🔐 Stage 18: Phase 17 — Key Ledger Hardening & Pod Purity<br/>(Task 33: Agent Key Hash Ledger & Pod Default Purge · Task 34: Key Fingerprint Display & Pod Purity UI) 🏷️"]
-    Summit["🏔️ SUMMIT — v0.0.1.8 parity reached<br/>(16 transcribed phases · 34 task pairs · 10 oracles · receipts = HEAD) + Phase 17 queued"]
+    Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
 
     Step0 --> UploadContext
     UploadContext --> Phase1
@@ -61,7 +61,7 @@ flowchart TD
 
 > **Transcription state**: ✅ **COMPLETE** — all 16 phases transcribed
 > (`v0.0.0.0` void → `v0.0.1.8` parity). Every stage is live; the walk and
-> the codebase occupy the same commit. **Stage 18 (Phase 17, `v0.0.1.9`) is queued forward — the coherence-audit security hotfix.**
+> the codebase occupy the same commit. **Phase 17 (`v0.0.1.9`) is SHIPPED — the genome was released and the summit tag pushed.** Stage 19 below records the post-summit hotfix path.
 
 ---
 
@@ -974,11 +974,35 @@ staying "" (no "Personal" resurrection), and the full test oracle passes!
 ```
 
 
+## 🩹 Stage 19 (Post-Summit): Vault Header Flush & Version-Test Integrity [v0.0.1.9 hotfix — unphased]
+
+> This stage sits **outside** phase numbering — single-commit hotfixes shipped after
+> the v0.0.1.9 tag are recorded here so the spine stays receipt-honest. Post-summit
+> hotfixes do not follow the 2-Task Pairing Law; they are surgical single-commit fixes
+> appended below until the next phase absorbs them into its story.
+
+**Receipt:** `07ccd61` (2026-09-13) — `fix: flush vault master-detail headers + de-hardcode version test`
+
+**What it fixed:**
+1. **The dashboard T-junction** — the item-list search header (`ItemListPane`) and the
+   Item Details header (`ItemDetailPane`) rendered stepping border lines (left bar ~59px
+   via `p-3`, right ~64px via `p-4`). Both headers are pinned to a shared `h-16` so the
+   `border-b` rules form one continuous line, guaranteed regardless of inner content.
+2. **A latent test failure shipped inside v0.0.1.9** — `tests/unit/version.test.ts`
+   hardcoded `'0.0.1.8'` and silently failed after the release bump (the bump commit
+   landed after the last full oracle run). The test now asserts `package.json` ground
+   truth + `X.Y.Z.N` shape only — version bumps can never break it again.
+
+**The walk's lesson, extended:** a release cuts a *story boundary*, not a *quality
+boundary* — run the full oracle AFTER the version bump, before the tag. Version-bump
+commits are code changes and belong inside the verification gate.
+
+---
 ## 🏔️ The Summit
 
 The spine is complete: **Stage 0 (the void) → Stage 17 (v0.0.1.8 parity)** —
-16 transcribed phases, 32 task pairs, 10 oracles (incl. `shellcryption-spec.md`,
-added by the coherence audit), every receipt a real commit,
+17 phases (16 transcribed + Phase 17, shipped as `v0.0.1.9`), 34 task pairs,
+10 oracles (incl. `shellcryption-spec.md`), every receipt a real commit,
 every success criterion a real gate. Anyone cloning this repository can paste
 these prompts into a fresh agent and rebuild the exact application, phase by
 phase, from nothing.

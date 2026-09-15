@@ -3,76 +3,22 @@
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 17+) and the 3 most recent completed phases (Phases 14, 15, and 16).*
+> *Preserves the Active Forward Queue (Phase 18+) and the 3 most recent completed phases (Phases 15, 16, and 17).*
 > *Historical Phases 1 through 13 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.1.8 (Build 17)`
-- **Next Planned Milestone**: `v0.0.1.9 (Build 18)` (Phase 17)
+- **Current Production Release**: `v0.0.1.9 (Build 18)`
+- **Next Planned Milestone**: `v0.0.2.0 (Build 19)` (Phase 18)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 17 completes, Phase 14 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 18 completes, Phase 15 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
-
-### Phase 17: Key Ledger Hardening & Pod Purity [v0.0.1.9 (Build 18) — Security Hotfix]
-
-> Phase Feature Set Overview:
-> Closes the two docs-vs-runtime contradictions surfaced by the documentation
-> coherence audit. The `agent_keys` ledger currently stores `lb-` keys in
-> plaintext while every spec claims hashes-only — the ledger is brought to
-> spec: migration 0004 adds `key_hash`, hashes existing keys in place (live
-> keys keep authenticating), and the plaintext column is retired; minted keys
-> are returned exactly once and never persisted raw. The server-side hardcoded
-> pod is purged: `DEFAULT 'Personal'` is dropped from all four category columns
-> and the `category || 'Personal'` fallback is removed from every vault route —
-> the UI's zero-hardcoded-pods invariant (Phase 8) finally reaches the Bedrock.
-> *(Receipts: pending — forward phase, queued from the coherence audit.)*
-
-- [x] **Task 33: [Functionality] Agent Key Hash Ledger & Pod Default Purge**
-
-Description: Add `agent_keys.key_hash` via `migrations/0004_key_ledger.{up,down}.sql`
-— at migration time, every existing plaintext `api_key` is SHA-256 hashed in
-place so live keys keep authenticating; the plaintext column is then retired.
-Update `requireAuth` (agent path), the `/api/auth/token` sentinel search, and
-`agentKeys.ts` mint/list to store and compare **hashes only** via
-`constantTimeCompare`; minted plaintext is returned exactly once. Purge the
-hardcoded pod: drop `DEFAULT 'Personal'` from the `category` columns of
-`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys` and
-`vault_secure_attachments`, and remove the `category || 'Personal'` fallback
-from `vault.ts`, `notes.ts`, `sshKeys.ts` and `attachments.ts` — the default
-becomes `""` (uncategorized), matching the client's `normalizePod()`
-semantics. Zod schemas pass `category` through unmodified. Prove it in
-`tests/agent-key-hash.test.ts` (hash-only storage, pre-migration key still
-authenticates, plaintext returned once, revoke/expiry unchanged) and extend
-`tests/vault-crud.test.ts` with uncategorized-default assertions.
-
-> Success Criteria: A raw DB dump contains no plaintext `lb-` keys; a
-> pre-migration key still authenticates after migration; a minted key's
-> plaintext is returned exactly once and never stored; a fresh vault renders
-> zero pods and `""` categories stay `""` (no "Personal" resurrection);
-> the full test oracle passes.
-
-- [x] **Task 34: [UI Component] Key Fingerprint Display & Pod Purity Confirmation**
-
-Description: Update `LobsterKeysTab.tsx` to render a SHA-256 fingerprint
-(first 8 hex chars + `…`) on every key card instead of any key material, with
-a one-time "keys secured" notice after the ledger migration. Confirm pod
-purity end-to-end: `SidebarFolderTree.tsx` and `ItemFormModal.tsx` render zero
-phantom pods on a fresh boot, unassigned items show the uncategorized chip,
-and no code path re-introduces a default category. Sync the ledger change
-across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
-
-> Success Criteria: Key cards show fingerprints, never key material; a fresh
-> vault stays at zero pods through create → delete → reload; the docs match
-> the runtime (docs = app); the full test oracle passes.
-
----
 
 ### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 19)]
 
@@ -209,6 +155,20 @@ and dedicated Import wizard with preview table and error resolution chips.
 
 ---
 
+### Post-v0.0.1.9 Hotfixes (unphased — outside the 2-Task Pairing Law)
+
+> Single-commit hotfixes shipped after the v0.0.1.9 tag, before Phase 18 begins.
+> Documented here so the genome stays receipt-honest about post-release work.
+
+- [x] **Vault Master-Detail Header Flush & Version-Test Integrity** — receipt `07ccd61` (2026-09-13).
+  The item-list search header (`ItemListPane`) and the Item Details header (`ItemDetailPane`)
+  rendered stepping border lines at the dashboard T-junction (left bar ~59px vs right ~64px);
+  both are pinned to a shared `h-16` so the `border-b` rules form one continuous line.
+  Companion integrity fix: `tests/unit/version.test.ts` had hardcoded `'0.0.1.8'` — a latent
+  failure shipped inside v0.0.1.9 (the bump commit landed after the last full oracle run);
+  the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
+  can never silently break it again.
+
 ## 🔬 Queue — Backlog & Distant Shores (Vision)
 
 > Prioritized backlog items captured for future formalization into paired phases.
@@ -223,64 +183,57 @@ and dedicated Import wizard with preview table and error resolution chips.
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
-## Phase 14: Native LAN TLS with Self-Signed Certificates [v0.0.1.6 (Build 15)]
+### Phase 17: Key Ledger Hardening & Pod Purity [v0.0.1.9 (Build 18) — Security Hotfix] ✅
 
 > Phase Feature Set Overview:
-> The server encrypts its own transport. With `TLS_ENABLED=true`, `server.ts`
-> wraps Express in `https.createServer` with HSTS active; `tlsManager.ts`
-> resolves certificate materials in three tiers (bring-your-own via
-> `TLS_CERT_PATH`/`TLS_KEY_PATH` → reuse the persisted pair in
-> `DATA_DIR/certs/` with a stable fingerprint → generate a fresh 10-year
-> EC P-256 self-signed pair), collecting SANs for localhost, loopback and
-> every non-internal interface — valid however the operator reaches the box.
-> SHA-256 fingerprints log at boot for TOFU pinning; the Docker healthcheck
-> and `.env.example` become TLS-aware; 8 new tests in `tests/tls.test.ts`.
-> Companion work: `release.yml` gains `--release` commit-flag publishing,
-> `DESIGN.md` syncs with the master-detail and custom-fields patterns, the
-> `.agents/` directory molts out of the git index (agent rules go local,
-> like the memory bank), release-notes hygiene cleans the rolling model,
-> and the first Android companion documentation initializes — the
-> ShellGuard-TOTP bridge begins. *(Receipts: `fa72f67`, `2c13b39`,
-> `d982474`, `e8497bd`, `9aba894`, `33157ff`, `f35ba4a`, merge `02ed28e`,
-> `f3448c9` — 2026-08-29/30.)*
+> Closes the two docs-vs-runtime contradictions surfaced by the documentation
+> coherence audit. The `agent_keys` ledger currently stores `lb-` keys in
+> plaintext while every spec claims hashes-only — the ledger is brought to
+> spec: migration 0004 adds `key_hash`, hashes existing keys in place (live
+> keys keep authenticating), and the plaintext column is retired; minted keys
+> are returned exactly once and never persisted raw. The server-side hardcoded
+> pod is purged: `DEFAULT 'Personal'` is dropped from all four category columns
+> and the `category || 'Personal'` fallback is removed from every vault route —
+> the UI's zero-hardcoded-pods invariant (Phase 8) finally reaches the Bedrock.
+> *(Receipts: `7faf51d` — Tasks 33 & 34, `027506a` — release prep + tag `v0.0.1.9`, merge `9b5ec31` — 2026-09-13. Released & live.)*
 
-- [ ] **Task 27: [Functionality] TLS Manager, Conditional HTTPS Server & TOFU Fingerprinting**
+- [x] **Task 33: [Functionality] Agent Key Hash Ledger & Pod Default Purge**
 
-Description: Implement `src/server/utils/tlsManager.ts` with the three-tier
-material resolution: (1) bring-your-own certs via `TLS_CERT_PATH` /
-`TLS_KEY_PATH`; (2) reuse an existing generated pair in `DATA_DIR/certs/`
-— the SHA-256 cert fingerprint stays stable across restarts; (3) generate
-a fresh 10-year EC P-256 self-signed pair and persist it. Collect SANs for
-`localhost`, loopback, and every non-internal network interface. In
-`server.ts`: `TLS_ENABLED=true` wraps Express in `https.createServer`;
-HSTS activates when TLS terminates natively; boot logs the protocol and
-fingerprint for trust-on-first-use. Make the Docker healthcheck and
-`.env.example` TLS-aware; document the transport threat model in
-`SECURITY.md` and the LAN-HTTPS recipe in `QUICKSTART.md`. Prove it all in
-`tests/tls.test.ts` (generation, persistence/reuse, fingerprint stability,
-SAN completeness, conditional protocol).
+Description: Add `agent_keys.key_hash` via `migrations/0004_key_ledger.{up,down}.sql`
+— at migration time, every existing plaintext `api_key` is SHA-256 hashed in
+place so live keys keep authenticating; the plaintext column is then retired.
+Update `requireAuth` (agent path), the `/api/auth/token` sentinel search, and
+`agentKeys.ts` mint/list to store and compare **hashes only** via
+`constantTimeCompare`; minted plaintext is returned exactly once. Purge the
+hardcoded pod: drop `DEFAULT 'Personal'` from the `category` columns of
+`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys` and
+`vault_secure_attachments`, and remove the `category || 'Personal'` fallback
+from `vault.ts`, `notes.ts`, `sshKeys.ts` and `attachments.ts` — the default
+becomes `""` (uncategorized), matching the client's `normalizePod()`
+semantics. Zod schemas pass `category` through unmodified. Prove it in
+`tests/agent-key-hash.test.ts` (hash-only storage, pre-migration key still
+authenticates, plaintext returned once, revoke/expiry unchanged) and extend
+`tests/vault-crud.test.ts` with uncategorized-default assertions.
 
-> Success Criteria: A fresh instance boots HTTPS with a generated cert whose
-> fingerprint is stable across restarts; the cert validates for the LAN IP;
-> BYO certs are honored; HSTS is present exactly when TLS terminates
-> natively; all TLS tests pass.
+> Success Criteria: A raw DB dump contains no plaintext `lb-` keys; a
+> pre-migration key still authenticates after migration; a minted key's
+> plaintext is returned exactly once and never stored; a fresh vault renders
+> zero pods and `""` categories stay `""` (no "Personal" resurrection);
+> the full test oracle passes.
 
-- [ ] **Task 28: [CI/Configuration Component] `--release` Publishing Flag & Documentation Sync**
+- [x] **Task 34: [UI Component] Key Fingerprint Display & Pod Purity Confirmation**
 
-Description: Extend `release.yml`: commit messages containing `--release
-<version>` trigger automated release publication (the rolling RELEASE file
-as body) — releases no longer require manual tag pushes alone. Synchronize
-`DESIGN.md` with the modern master-detail layout and custom-fields
-patterns; untrack `.agents/` from the git index (agent rules live local,
-like the memory bank); clean release-notes hygiene for the rolling model;
-initialize the Android companion documentation suite (architecture specs
-and engineering guidelines — the ShellGuard-TOTP bridge begins); molt the
-RELEASE file and cut `v0.0.1.6`.
+Description: Update `LobsterKeysTab.tsx` to render a SHA-256 fingerprint
+(first 8 hex chars + `…`) on every key card instead of any key material, with
+a one-time "keys secured" notice after the ledger migration. Confirm pod
+purity end-to-end: `SidebarFolderTree.tsx` and `ItemFormModal.tsx` render zero
+phantom pods on a fresh boot, unassigned items show the uncategorized chip,
+and no code path re-introduces a default category. Sync the ledger change
+across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
 
-> Success Criteria: A `--release` commit publishes without a manual tag;
-> DESIGN.md matches the runtime UI patterns exactly; no agent-internal
-> state remains tracked; the companion docs seed exists at the summit of
-> the cross-project bridge.
+> Success Criteria: Key cards show fingerprints, never key material; a fresh
+> vault stays at zero pods through create → delete → reload; the docs match
+> the runtime (docs = app); the full test oracle passes.
 
 ---
 
@@ -433,5 +386,6 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.1.5` Build 14) are per
 | **Phase 11** | `v0.0.1.3 (Build 12)` | Release Publishing CI, SVG Iconography & Doc Re-Alignment | Tasks 21 & 22 |
 | **Phase 12** | `v0.0.1.4 (Build 13)` | Pure-TS WebCrypto Fallback Engine & Release Gating | Tasks 23 & 24 |
 | **Phase 13** | `v0.0.1.5 (Build 14)` | Bitwarden-Style Custom Fields & Dynamic Linked Properties | Tasks 25 & 26 |
+| **Phase 14** | `v0.0.1.6 (Build 15)` | Native LAN TLS, TOFU & --release Publishing | Tasks 27 & 28 |
 
 ---

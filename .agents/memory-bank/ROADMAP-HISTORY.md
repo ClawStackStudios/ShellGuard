@@ -689,3 +689,64 @@ README license badge to AGPL-3.0; molt the RELEASE file and cut `v0.0.1.5`.
 > the milestone is tagged with a matching RELEASE file.
 
 ---
+
+---
+
+## Phase 14: Native LAN TLS with Self-Signed Certificates [v0.0.1.6 (Build 15)]
+
+> Phase Feature Set Overview:
+> The server encrypts its own transport. With `TLS_ENABLED=true`, `server.ts`
+> wraps Express in `https.createServer` with HSTS active; `tlsManager.ts`
+> resolves certificate materials in three tiers (bring-your-own via
+> `TLS_CERT_PATH`/`TLS_KEY_PATH` → reuse the persisted pair in
+> `DATA_DIR/certs/` with a stable fingerprint → generate a fresh 10-year
+> EC P-256 self-signed pair), collecting SANs for localhost, loopback and
+> every non-internal interface — valid however the operator reaches the box.
+> SHA-256 fingerprints log at boot for TOFU pinning; the Docker healthcheck
+> and `.env.example` become TLS-aware; 8 new tests in `tests/tls.test.ts`.
+> Companion work: `release.yml` gains `--release` commit-flag publishing,
+> `DESIGN.md` syncs with the master-detail and custom-fields patterns, the
+> `.agents/` directory molts out of the git index (agent rules go local,
+> like the memory bank), release-notes hygiene cleans the rolling model,
+> and the first Android companion documentation initializes — the
+> ShellGuard-TOTP bridge begins. *(Receipts: `fa72f67`, `2c13b39`,
+> `d982474`, `e8497bd`, `9aba894`, `33157ff`, `f35ba4a`, merge `02ed28e`,
+> `f3448c9` — 2026-08-29/30.)*
+
+- [ ] **Task 27: [Functionality] TLS Manager, Conditional HTTPS Server & TOFU Fingerprinting**
+
+Description: Implement `src/server/utils/tlsManager.ts` with the three-tier
+material resolution: (1) bring-your-own certs via `TLS_CERT_PATH` /
+`TLS_KEY_PATH`; (2) reuse an existing generated pair in `DATA_DIR/certs/`
+— the SHA-256 cert fingerprint stays stable across restarts; (3) generate
+a fresh 10-year EC P-256 self-signed pair and persist it. Collect SANs for
+`localhost`, loopback, and every non-internal network interface. In
+`server.ts`: `TLS_ENABLED=true` wraps Express in `https.createServer`;
+HSTS activates when TLS terminates natively; boot logs the protocol and
+fingerprint for trust-on-first-use. Make the Docker healthcheck and
+`.env.example` TLS-aware; document the transport threat model in
+`SECURITY.md` and the LAN-HTTPS recipe in `QUICKSTART.md`. Prove it all in
+`tests/tls.test.ts` (generation, persistence/reuse, fingerprint stability,
+SAN completeness, conditional protocol).
+
+> Success Criteria: A fresh instance boots HTTPS with a generated cert whose
+> fingerprint is stable across restarts; the cert validates for the LAN IP;
+> BYO certs are honored; HSTS is present exactly when TLS terminates
+> natively; all TLS tests pass.
+
+- [ ] **Task 28: [CI/Configuration Component] `--release` Publishing Flag & Documentation Sync**
+
+Description: Extend `release.yml`: commit messages containing `--release
+<version>` trigger automated release publication (the rolling RELEASE file
+as body) — releases no longer require manual tag pushes alone. Synchronize
+`DESIGN.md` with the modern master-detail layout and custom-fields
+patterns; untrack `.agents/` from the git index (agent rules live local,
+like the memory bank); clean release-notes hygiene for the rolling model;
+initialize the Android companion documentation suite (architecture specs
+and engineering guidelines — the ShellGuard-TOTP bridge begins); molt the
+RELEASE file and cut `v0.0.1.6`.
+
+> Success Criteria: A `--release` commit publishes without a manual tag;
+> DESIGN.md matches the runtime UI patterns exactly; no agent-internal
+> state remains tracked; the companion docs seed exists at the summit of
+> the cross-project bridge.

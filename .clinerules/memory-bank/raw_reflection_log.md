@@ -1,5 +1,14 @@
 ---
 Date: 2026-09-13
+TaskRef: "Phase 22 expanded — unified search + consolidation spec"
+
+Learnings:
+- Search-in-a-zero-knowledge-vault design: the decrypted corpus ALREADY exists in client state (App.tsx decrypts pearls/notes/customs/attachments post-fetch), so robust search is pure client-side matching — the spec must pin the negative space: no ?q= params, no server endpoint, purge on lock.
+- The sidebar "search" is a pod-TREE filter (podSearch), not an item search — removal changes what the sidebar can do; name the behavioral delta in the spec (pod tree renders unfiltered) so removal is a conscious decision, not an accident.
+- Queue-task restructuring is safe pre-execution: renumbering/recombining queued tasks preserves the 2-Task Pairing Law as long as the phase story (A=engine, B=surface) still holds.
+---
+---
+Date: 2026-09-13
 TaskRef: "Phase 22 queued — Reef Polish Pass (Task 43 eye relocation; Task 44 reserved)"
 
 Learnings:

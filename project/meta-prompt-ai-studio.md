@@ -998,59 +998,64 @@ boundary* — run the full oracle AFTER the version bump, before the tag. Versio
 commits are code changes and belong inside the verification gate.
 
 
-## 🎨 Stage 20 (Queued): Phase 22 Prompt — Reef Polish Pass, Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
+## 🎨 Stage 20 (Queued): Phase 22 Prompt — Reef Polish Pass, Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-22-reef-polish-pass--control-ergonomics)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-22-reef-polish-pass--unified-search--control-ergonomics)
 > for complete specifications on **Task 43** and **Task 44**.
-> **⚠️ Execution state**: QUEUED — do not execute until Task 44's reserved slot
-> is filled and Lucas green-lits the phase.
+> **⚠️ Execution state**: QUEUED — green-light from Lucas still required
+> (the phase may absorb further hands-on items).
 > **📖 Required Context Files for Phase 22**:
-> 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §7 (Custom fields render behavior; control ergonomics).
-> 2. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+> 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail), §7 (Custom fields render behavior).
+> 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §6 (Invariants: plaintext purge on lock; search never transmitted).
+> 3. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
 
 Copy and paste this prompt to execute **Phase 22 (Tasks 43 & 44)** once green-lit:
 
 ```markdown
-# PHASE 22 EXECUTION: Reef Polish Pass — Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
+# PHASE 22 EXECUTION: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../ROADMAP.md`: Phase 22 (Task 43: Custom-Field Unmask Control Relocation · Task 44: Reserved — pending fill).
-- `ui-ux-design-system.md`: §7 (custom fields render behavior).
+- `../ROADMAP.md`: Phase 22 (Task 43: Robust Unified Vault Search Engine · Task 44: Search Bar Consolidation & Control Ergonomics).
+- `ui-ux-design-system.md`: §5, §7 (master-detail, custom fields render).
+- `shellcryption-spec.md`: §6 (invariants — plaintext purge on lock).
 - `verification-gates.md`: §2–§3 (suites, build gates).
 
-### Task 43: [UI Component] Custom-Field Unmask Control Relocation — Eye Beside Copy
-- ItemDetailPane.tsx: move the Eye/EyeOff toggle for hidden Custom Fields out
-  of the value column (inline after the masked text) into the right-hand
-  action cluster, immediately LEFT of the Copy button — matching the main
-  password field's eye+copy pairing.
-- Keep the masked-value cell in the value column; keep revealedHiddenFields
-  per-field state semantics; keep the full-value mask invariant (every
-  character → •, no partial masks).
-- text/checkbox/linked custom-field rows are unaffected.
+Execute Phase 22 adhering to the Functionality + UI Component pairing:
 
-### Task 44: [UI Component] Reserved — Additional Reef Polish Items (pending)
-- RESERVED — filled by Lucas before execution. Do not proceed on an
-  unfilled slot.
+### Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)
+- One shared searchQuery (lifted from ItemListPane to App.tsx/VaultShell)
+  matching case-insensitively across the ALREADY-DECRYPTED in-memory corpus
+  (vaultItems state): titles, keywords (usernames/URLs/note text),
+  attachment file names, note contents (decrypted), custom-field values.
+- Substring matching on a decrypt-once corpus; memoize; O(n) per keystroke
+  acceptable.
+- 🛡️ Zero-knowledge: the query NEVER leaves the browser — no ?q= params, no
+  server search endpoint; search state purged on lock/logout with the
+  shellKey.
+- VaultShell filter chain consumes the unified query; pod/type filters
+  compose with it (AND).
 
-Verify Eye and Copy sit adjacent in the right-hand cluster on hidden custom
-fields, the mask covers the ENTIRE value, reveal toggles per-field, and the
-full test oracle + tsc + build stay clean!
+### Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics
+- Remove the top-right header search from Layout/Header.tsx (input, dropdown,
+  searchInputRef/searchDropdownRef + App.tsx consumers).
+- Remove the sidebar pod-search input from Vault/SidebarFolderTree.tsx
+  (podSearch state; pod tree renders unfiltered).
+- ItemListPane's search becomes the single search surface, wired to the
+  unified engine.
+- Control ergonomics: ItemDetailPane Custom Fields — hidden-field Eye toggle
+  moves from inline-with-value into the right-hand action cluster,
+  immediately LEFT of Copy (matching the password field pairing); masked
+  value stays in the value column; revealedHiddenFields semantics unchanged;
+  full-value mask invariant (every character → •).
+
+Verify one search input renders in the vault UI, sidebar and header have no
+search controls, matches surface by title/keyword/attachment name/note
+content, zero search requests hit the network, lock purges the query, Eye
+sits immediately left of Copy on hidden custom fields, the mask covers the
+ENTIRE value, and the full test oracle + tsc + build stay clean!
 ```
 
 ---
 
 ## 🏔️ The Summit
-
-The spine is complete: **Stage 0 (the void) → Stage 17 (v0.0.1.8 parity)** —
-17 phases (16 transcribed + Phase 17, shipped as `v0.0.1.9`), 34 task pairs,
-10 oracles (incl. `shellcryption-spec.md`), every receipt a real commit,
-every success criterion a real gate. Anyone cloning this repository can paste
-these prompts into a fresh agent and rebuild the exact application, phase by
-phase, from nothing.
-
-*"Build the docs first, and so tightly, the application has no choice but to
-follow that."* — the lesson of ShellGuard-TOTP, now written into ShellGuard's
-own genome.
-
-

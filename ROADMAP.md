@@ -169,44 +169,69 @@ and dedicated Import wizard with preview table and error resolution chips.
   the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
   can never silently break it again.
 
-### Phase 22: Reef Polish Pass — Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 23)]
+### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 23)]
 
 > Phase Feature Set Overview:
-> A polish bracket of surgical interaction refinements — no schema, no API
-> contracts, no security surface. Each item relocates or realigns a control to
-> where the hand expects it. The version digit is decided by the completed work
-> (No Forced Targets policy); the queue position after Phase 21 makes the
-> provisional label `v0.0.2.4 (Build 23)`. *(Source: Lucas, 2026-09-13 —
-> post-v0.0.1.9 hands-on pass. Task 44 is reserved: more polish items are
-> being collected before execution.)*
+> A polish-and-ergonomics bracket in two movements: (1) **one search bar to
+> rule the reef** — the sidebar search and the top-right header search are
+> removed, the search above the password list becomes the single search
+> surface, and the engine behind it becomes robust (titles, keywords,
+> attachment file names, note contents — all client-side, zero-knowledge
+> preserved); (2) **control ergonomics** — the custom-field Unmask (Eye)
+> control moves beside Copy. No schema, no API contract changes; the server
+> NEVER receives a search query. The version digit is decided by the
+> completed work (No Forced Targets); the queue position after Phase 21 makes
+> the provisional label `v0.0.2.4 (Build 23)`. *(Source: Lucas, 2026-09-13 —
+> post-v0.0.1.9 hands-on pass; expanded with the search consolidation.)*
 
-- [ ] **Task 43: [UI Component] Custom-Field Unmask Control Relocation — Eye Beside Copy**
+- [ ] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
 
-Description: In `ItemDetailPane.tsx`, the Custom Fields card currently renders
-the Unmask (Eye/EyeOff) toggle **inline with the masked value** on the left
-column (lines ~269–279) while the Copy button floats **far right** in its own
-column (~286–293) — the two controls for the same secret sit separated by the
-full card width. Relocate the Eye toggle into the right-hand action cluster,
-positioned **immediately to the left of the Copy button** (matching the main
-password field's eye+copy pairing at ~175–185), for hidden custom fields.
-Keep the masked-value cell (`••••••••••••` → value on reveal) in the value
-column; keep `revealedHiddenFields` state semantics unchanged; keep the full-
-value mask invariant (no partial masks — NEVER-list). Applies to hidden
-Custom Fields; text/checkbox/linked rows are unaffected.
+Description: Implement the unified search engine in the client over the
+**already-decrypted in-memory corpus** (`vaultItems` state — `App.tsx` decrypts
+pearls, note `content`, custom fields and attachment rows into state after
+every fetch; no new decryption path is required). One shared `searchQuery`
+single-source-of-truth (lifted from `ItemListPane` to `App.tsx`/`VaultShell`)
+drives matching across, case-insensitively: item **titles**, **keywords**
+(usernames, URLs, note text), **attachment file names**
+(`vault_secure_attachments.file_name` metadata), **note contents** (decrypted
+plaintext held in memory), and custom-field values. Substring matching on a
+decrypt-once corpus (O(n) per keystroke is acceptable at vault scale; memoize
+the corpus so it is not rebuilt per keystroke). 🛡️ Zero-knowledge
+invariants: the query NEVER leaves the browser (no `?q=` params, no server
+search endpoint — the server cannot search what it cannot read); the search
+state and any result cache live in memory only and are purged on lock/logout
+with the shellKey. Update `VaultShell`'s filter chain to consume the unified
+query; keep type-filter and pod-scope filters composing with it (AND).
 
-> Success Criteria: On a hidden custom field, Eye and Copy sit adjacent in the
-> right-hand control cluster (Eye immediately left of Copy); the mask shows the
-> ENTIRE value as dots; reveal state still toggles per-field; the full test
-> oracle passes; `tsc` and the production build stay clean.
+> Success Criteria: Searching from the single search bar surfaces matches by
+> title, keyword (username/url), attachment file name, and note content; the
+> network tab shows zero search requests (query never transmitted); results
+> compose with pod/type filters; lock purges the query; the full test oracle
+> + `tsc` + build stay clean.
 
-- [ ] **Task 44: [UI Component] Reserved — Additional Reef Polish Items (pending)**
+- [ ] **Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics**
 
-Description: RESERVED slot — Lucas is collecting additional polish items for
-this phase before execution begins. This task will be filled from the same
-hands-on pass that surfaced Task 43. Do not execute until the slot is filled
-and the phase is formally green-lit.
+Description: Reduce the vault to **one search bar** — the one above the
+password list. (1) Remove the **top-right header search** from
+`Layout/Header.tsx` (input, dropdown, `searchInputRef`/`searchDropdownRef`
+props and their consumers in `App.tsx` — lines ~160–170). (2) Remove the
+**sidebar pod-search input** from `Vault/SidebarFolderTree.tsx`
+(`podSearch` state, `~lines 49, 62–65, 264`) — the pod tree renders
+unfiltered (pod-name filtering folds into future backlog if wanted). (3)
+`ItemListPane`'s search becomes the single surface, wired to the unified
+engine. (4) **Control ergonomics (fold-in from the original Task 43):** in
+`ItemDetailPane.tsx` Custom Fields, relocate the hidden-field Unmask
+(Eye/EyeOff) toggle from inline-with-value (~269–279) into the right-hand
+action cluster, **immediately left of Copy** (~286–293), matching the main
+password field's eye+copy pairing; masked-value cell stays in the value
+column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
+(every character → `•`, no partial masks — NEVER-list).
 
-> Success Criteria: TBD — defined when the reserved slot is filled.
+> Success Criteria: Exactly one search input renders in the vault UI (above
+> the list); sidebar and header contain no search controls; hidden custom
+> fields show Eye immediately left of Copy in the right-hand cluster; the
+> mask covers the ENTIRE value; reveal toggles per-field; the full test
+> oracle + `tsc` + build stay clean.
 
 ---
 

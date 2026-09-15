@@ -1,5 +1,19 @@
 # Changelog — ShellGuard
 
+## [0.0.1.9] - 2026-09-13
+
+### Added
+- **/project reverse-build genome** — meta-prompt spine (Stage 0→18), receipt-backed ROADMAP (16 phases / 32 task pairs), 10 spec oracles incl. new `shellcryption-spec.md`; Phases 1–13 archived to ROADMAP-HISTORY (sliding window).
+- **Phase 17 — Key Ledger Hardening** — migration 0004 + keyLedger.ts: SHA-256 hash-only `lb-` ledger, in-place backfill (legacy keys keep authenticating), api_tokens owner re-pointed to agent id, ledger rebuild + VACUUM (byte-level plaintext retirement).
+- **Pod purity** — DEFAULT 'Personal' dropped from all 4 category columns; `category || 'Personal'` fallback removed in vault/notes/sshKeys/attachments; uncategorized = "".
+- **LobsterKeys card — CaraBase 1:1 key row** — masked by default (FULL-value mask), Eye toggle, Copy w/ feedback; fingerprint listed; one-time wizard reveal.
+
+### Fixed
+- **Genome coherence audit** — 50 dangling refs repointed; key-alphabet claims corrected hex→base62 (ARCHITECTURE + key-hierarchy-spec); stale token-storage wording removed; old buggy metadata-encryption category test rewritten to the uncategorized contract.
+
+### Security
+- `lb-` agent keys: plaintext storage eliminated; sentinel + rate limiter on stored hashes; partial masking banned (NEVER-list).
+
 ## [0.0.1.4] - 2026-08-29
 
 ### Fixed

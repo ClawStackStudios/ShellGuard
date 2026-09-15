@@ -14,6 +14,7 @@
 - [x] **Pure user-driven pod management** — Zero hardcoded default pods ("Personal", "Work", etc. eliminated). All pods 100% user-created. Category normalization for correct pod operations. Optimistic local state updates with `skipScuttle` batch pattern. `restAdapter` generics + PATCH method.
 - [x] **Sidebar & Header Layout Polish** — Desktop sidebar collapse/expand toggle (`PanelLeftOpen`/`PanelLeftClose`), breadcrumbs aligned left, in-modal animated deletion confirmation.
 - [x] **Lobster Keys CaraBase Parity & Rate Limiter Hardening** — Full 4-step wizard, key cards, toast provider, and fixed auth-order rate-limiter bug.
+- [x] **v0.0.1.9 — /project Genome, Coherence Audit, Phase 17 Key Ledger Hardening & CaraBase Card Parity** — hash-only lb- ledger, pod purity, 10th oracle (shellcryption-spec), 0 dangling refs, full-value masking.
 - [x] **v0.0.1.2 — Insecure Origin UUID & Entropy Fallback** — Multi-tier RFC 4122 v4 UUID generator and secure entropy fallback for non-secure HTTP origins; LAN HTTP file downloads via Blob/URL.createObjectURL
 - [x] **v0.0.1.3 — Iconography & Favicon** — Official `shellguard-icon.svg` at `public/favicon.svg`, Unraid template icon URL; docs hygiene sweep
 - [x] **v0.0.1.4 — Pure TypeScript WebCrypto Fallback Engine** — Zero-dependency implementations of SHA-256, HMAC-SHA256, HKDF, AES-GCM-256 in `src/lib/webCryptoFallback.ts`; global drag-and-drop shield; TOTP QR code Blob downloads
@@ -39,7 +40,7 @@
 
 ## Current Status
 
-**v0.0.1.8 — Reverse-build summit reached.** `project/` genome complete on branch `docs/reverse-project` (27 commits, `68d73cd`): 16 phases / 32 task pairs transcribed receipt-first from git (`v0.0.0.0` → `v0.0.1.8`), 9 spec oracles, meta-prompt spine Stage 0–17, 16/16 anchors + 18 edges verified. Awaiting merge to main. Runtime itself unchanged — this branch is docs-only.
+**v0.0.1.9 (Build 18) — RELEASED & LIVE** (tag pushed; GitHub Release mirrors RELEASE-v0.0.1.9.md; main at 9b5ec31). Ships: /project genome + coherence audit (10 oracles, 0 dangling refs), Phase 17 Key Ledger Hardening (hash-only `lb-` keys — migration 0004 + keyLedger.ts backfill, VACUUM byte-level retirement) + pod purity (DEFAULT 'Personal' purged, fallback removed in 4 routes), and CaraBase 1:1 LobsterKeys card UI with full-value masking. Next: Phase 18 (v0.0.2.0) — rich composite items & in-browser keypair generation.
 
 ## Known Issues
 

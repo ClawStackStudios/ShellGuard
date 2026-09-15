@@ -156,3 +156,14 @@
 - Having hardcoded arrays (`DEFAULT_ROOT_PODS`, `DEFAULT_SUGGESTED_PODS`) forced into `getAllUniquePods` and `getStoredPodColors` caused phantom pods to resurrect on every render cycle even after deletion.
 - *Fix:* Remove all hardcoded defaults. Draw pods from `getStoredPodColors()` and actual item categories only.
 - *Rationale:* Users control their own pod structure. No forced defaults.
+
+---
+
+## Release Protocol
+
+**Pattern: Verify Pushes and Tag Position (v0.0.1.9, 2026-09-13)**
+- Read the previous tag's target commit before writing the release ledger — tags can point at merge commits, making the honest ledger longer than the visible story.
+- After `git push`, verify with `git ls-remote origin <ref>` — shell capture can report "Everything up-to-date" for a push that did not land.
+- Tag the release-prep commit itself so the tag points at a commit that CONTAINS the exact-version RELEASE file (release.yml hard-fails otherwise); the --no-ff merge to main comes after.
+- Environment-blocked verifications (e.g., Docker daemon unavailable) are recorded as blocked with justification — never claimed as run.
+- *Rationale:* the v0.0.1.9 release published correctly on the first try after these three checks; the catch-and-repush avoided a silent divergence between local main and origin.

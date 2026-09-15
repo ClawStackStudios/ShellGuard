@@ -1,5 +1,18 @@
 ---
 Date: 2026-09-13
+TaskRef: "v0.0.1.9 release execution (New Release Protocol, end-to-end)"
+
+Learnings:
+- Read the PREVIOUS TAG's position before writing the commit ledger — v0.0.1.8 pointed at the main merge (66d9ca4), not the last release-era commit, so the honest ledger spans the genome transcription docs too.
+- A git push can print "Everything up-to-date" through shell capture while the push did NOT land — always verify remote state with `git ls-remote origin <ref>` after pushing; the explicit re-push then showed 66d9ca4..9b5ec31.
+- The tag-push → release.yml → verbatim RELEASE-doc mirror worked exactly as specced: `gh release view` confirmed the body is the RELEASE file byte-for-byte. The hard-fail invariant (doc must exist at the tagged version) was satisfied by tagging the release-prep commit itself.
+- Docker daemon absence: record container verification as environment-blocked when the Dockerfile is unchanged and the production build validates the runtime — do not claim a container check that did not run.
+
+Successes:
+- Full protocol in order: gates (tsc / 210 tests / build) → doc roll (git mv, one file) → version triple → memory bank → commit → annotated tag on the doc-containing commit → --no-ff merge (9b5ec31) → push + verify → live release with mirrored body.
+---
+---
+Date: 2026-09-13
 TaskRef: "Release v0.0.1.9 preparation (New Release Protocol)"
 
 Learnings:

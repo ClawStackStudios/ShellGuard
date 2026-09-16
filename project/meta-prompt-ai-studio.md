@@ -10,8 +10,8 @@
 To ensure optimal token economy and avoid context degradation, development proceeds
 in deterministic 2-task stages mapped 1:1 to the roadmap system — the active
 sliding-window [`../ROADMAP.md`](../ROADMAP.md) and the historical archive
-[`ROADMAP-HISTORY.md`](../.agents/memory-bank/ROADMAP-HISTORY.md) (Phases 1–13).
-The full ascent — from `v0.0.0.0` (the void) to `v0.0.1.8` (current parity) — is
+[`ROADMAP-HISTORY.md`](../.agents/memory-bank/ROADMAP-HISTORY.md) (Phases 1–14).
+The full ascent — from `v0.0.0.0` (the void) to `v0.0.1.9` (current parity) — is
 recounted stage by stage. This spine **grows with the roadmap**: stages are added
 as each phase of the story is walked.
 
@@ -36,6 +36,13 @@ flowchart TD
     Phase15["📥 Stage 16: Phase 15 — sgtotp.bak Import Compatibility<br/>(Task 29: Parser & Client-Side Decryption · Task 30: ImportExportView & Strict Mirror)"]
     Phase16["🏔️ Stage 17: Phase 16 — Docs Bridge Parity & Version Resolver<br/>(Task 31: Agentic Infrastructure & Version Resolver · Task 32: Privacy, Parity & Mirror)"]
     Phase17["🔐 Stage 18: Phase 17 — Key Ledger Hardening & Pod Purity<br/>(Task 33: Agent Key Hash Ledger & Pod Default Purge · Task 34: Key Fingerprint Display & Pod Purity UI) 🏷️"]
+    Interlude185["🩹 Stage 18.5: Post-Summit Interlude — Vault Header Flush & Version-Test Integrity<br/>(receipt 07ccd61 · unphased · outside the 2-Task Pairing Law)"]
+    Phase18["🎨 Stage 19: Phase 18 — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation ⬜<br/>(Task 35: Composite Items, Decoupling & Keypair Engine · Task 36: Master Form, Live TOTP & Count Reconciliation)"]
+    Phase19["📦 Stage 20: Phase 19 — Attachment SQLite BLOB Migration & Streaming Architecture ⬜<br/>(Task 37: BLOB Storage, Streaming Handlers & Quotas · Task 38: Progress Uploads & File Previewers)"]
+    Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ⬜<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Multi-Filter State)"]
+    Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ⬜<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
+    Stage23["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ⬜<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
+    Stage24["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
     Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
 
     Step0 --> UploadContext
@@ -56,12 +63,25 @@ flowchart TD
     Phase14 --> Phase15
     Phase15 --> Phase16
     Phase16 --> Phase17
-    Phase17 --> Summit
+    Phase17 --> Interlude185
+    Interlude185 --> Phase18
+    Phase18 --> Phase19
+    Phase19 --> Phase20
+    Phase20 --> Phase21
+    Phase21 --> Stage23
+    Stage23 --> Stage24
+    Stage24 --> Summit
 ```
 
-> **Transcription state**: ✅ **COMPLETE** — all 16 phases transcribed
-> (`v0.0.0.0` void → `v0.0.1.8` parity). Every stage is live; the walk and
-> the codebase occupy the same commit. **Phase 17 (`v0.0.1.9`) is SHIPPED — the genome was released and the summit tag pushed.** Stage 19 below records the post-summit hotfix path. **Stage 20 (Phase 22, Reef Polish) is queued — awaiting Task 44 fill + green-light. **Stage 21 (Phase 23, Bitwarden-Model Integrity) is queued behind it.****
+> **Transcription state**: **17 phases transcribed** (Stage 0 → 18, `v0.0.0.0`
+> void → `v0.0.1.9` parity) — the walk and the codebase occupy the same commit
+> through the summit tag. **Phase 17 (`v0.0.1.9`) is SHIPPED** — the genome was
+> released and the summit tag pushed. **Stage 18.5** records the post-summit
+> hotfix receipt (`07ccd61`). **Stages 19–24 (Phases 18–23) are QUEUED** in the
+> active forward queue; each stage prompt is transcribed when its phase becomes
+> the next molt. Execution order is strictly chronological:
+> Phase 18 → 19 → 20 → 21 → 22 → 23 — the `Stage N = Phase N−1` invariant
+> holds across the whole spine, with the unphased hotfix at the decimal slot.
 
 ---
 
@@ -130,7 +150,7 @@ project so subsequent stages can reference them:
 
 ## 🥚 Stage 2: Phase 1 Prompt — Scaffold, Auth & API Molt [Baseline: v0.0.0.1 (Build 2)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-1-scaffold-auth--api-molt-baseline-v0001-build-2)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-1-scaffold-auth--api-molt-baseline-v0001-build-2)
 > for complete specifications on **Task 01** and **Task 02**.
 > **📖 Required Context Files for Phase 1**:
 > 1. [`architecture.md`](./architecture.md) — §2 (Boundaries), §3 (Topology), §4 (Invariants).
@@ -179,7 +199,7 @@ outside its permissions, and the landing shell renders on unified tokens!
 
 ## 🗄️ Stage 3: Phase 2 Prompt — SQLite Bedrock, Security Kernel & Identity Bridge [Baseline: v0.0.0.2 (Build 3)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-2-sqlite-bedrock-security-kernel--identity-bridge-baseline-v0002-build-3)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-2-sqlite-bedrock-security-kernel--identity-bridge-baseline-v0002-build-3)
 > for complete specifications on **Task 03** and **Task 04**.
 > **📖 Required Context Files for Phase 2**:
 > 1. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations), §3 (Schema v1), §4 (Audit redaction).
@@ -240,7 +260,7 @@ register → login → vault-fetch journey through the unwrapped envelope!
 
 ## 🔗 Stage 4: Phase 3 Prompt — Vault CRUD, Lobster Keys & Settings Storage [Baseline: v0.0.0.3 (Build 4)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-3-vault-crud-lobster-keys--settings-storage-baseline-v0003-build-4)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-3-vault-crud-lobster-keys--settings-storage-baseline-v0003-build-4)
 > for complete specifications on **Task 05** and **Task 06**.
 > **📖 Required Context Files for Phase 3**:
 > 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map), §4 (Lobster Keys lifecycle), §5 (Settings).
@@ -286,7 +306,7 @@ sessions, and settings persisting per owner!
 
 ## 🧪 Stage 5: Phase 4 Prompt — Test Oracle, Container Deployment & License [Baseline: v0.0.0.4 (Build 5)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-4-test-oracle-container-deployment--license-baseline-v0004-build-5)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-4-test-oracle-container-deployment--license-baseline-v0004-build-5)
 > for complete specifications on **Task 07** and **Task 08**.
 > **📖 Required Context Files for Phase 4**:
 > 1. [`verification-gates.md`](./verification-gates.md) — §1 (Harness), §2 (Suites), §3 (Build gates).
@@ -342,7 +362,7 @@ claim matches runtime behavior!
 
 ## 🔐 Stage 6: Phase 5 Prompt — Per-Row Metadata Encryption & Port Molt [Baseline: v0.0.0.5 (Build 6)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-5-per-row-metadata-encryption--port-molt-baseline-v0005-build-6)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-5-per-row-metadata-encryption--port-molt-baseline-v0005-build-6)
 > for complete specifications on **Task 09** and **Task 10**.
 > **📖 Required Context Files for Phase 5**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §1 (Triple-layer model), §2 (Field encryption), §3 (Guard registry & firewall), §4 (Migration & tooling).
@@ -393,7 +413,7 @@ remain, and the docs' encryption model matches runtime exactly!
 
 ## 🦞 Stage 7: Phase 6 Prompt — SuperLobster Admin Plane [Baseline: v0.0.0.6 (Build 7)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-6-superlobster-admin-plane-baseline-v0006-build-7)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-6-superlobster-admin-plane-baseline-v0006-build-7)
 > for complete specifications on **Task 11** and **Task 12**.
 > **📖 Required Context Files for Phase 6**:
 > 1. [`admin-suite-spec.md`](./admin-suite-spec.md) — §1–§4 (threat model, API, inviolable rules, component architecture).
@@ -447,7 +467,7 @@ the panel renders each API section with graceful T1 failure!
 
 ## 🐚 Stage 8: Phase 7 Prompt — Multi-Account, QuickLogin & Landing Gateway [Baseline: v0.0.0.7 (Build 8)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-7-multi-account-quicklogin--landing-gateway-baseline-v0007-build-8)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-7-multi-account-quicklogin--landing-gateway-baseline-v0007-build-8)
 > for complete specifications on **Task 13** and **Task 14**.
 > **📖 Required Context Files for Phase 7**:
 > 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §1 (Tokens), §2 (Gateway pattern), §3 (Session UX), §4 (Brand motion).
@@ -498,7 +518,7 @@ deploys!
 
 ## 🏛️ Stage 9: Phase 8 Prompt — Vault UX Renaissance [Baseline: v0.0.0.8 (Build 9)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-8-vault-ux-renaissance--master-detail-pure-pods--lock-hardening-baseline-v0008-build-9)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-8-vault-ux-renaissance--master-detail-pure-pods--lock-hardening-baseline-v0008-build-9)
 > for complete specifications on **Task 15** and **Task 16**.
 > **📖 Required Context Files for Phase 8**:
 > 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail & pod invariants), §6 (Claw-in & identity-aware tools).
@@ -547,7 +567,7 @@ and the issuer reads "ShellGuard"!
 
 ## 🥚 Stage 10: Phase 9 Prompt — Genesis Release & Origin Hardening [v0.0.1 (Build 10) — 🏷️ First Tag]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-9-genesis-release--origin-hardening-v001-build-10--first-tag)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-9-genesis-release--origin-hardening-v001-build-10--first-tag)
 > for complete specifications on **Task 17** and **Task 18**.
 > **📖 Required Context Files for Phase 9**:
 > 1. [`architecture.md`](./architecture.md) — §1 (System role), §4 (Invariants).
@@ -590,7 +610,7 @@ package.json agree!
 
 ## 🔧 Stage 11: Phase 10 Prompt — Deployment Hotfixes & Dev-Loop Formalization [v0.0.1.2 (Build 11)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-10-deployment-hotfixes--dev-loop-formalization-v0012-build-11)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-10-deployment-hotfixes--dev-loop-formalization-v0012-build-11)
 > for complete specifications on **Task 19** and **Task 20**.
 > **📖 Required Context Files for Phase 10**:
 > 1. [`verification-gates.md`](./verification-gates.md) — §4 (Verification principle), §5 (Release protocol).
@@ -631,7 +651,7 @@ enforced by finish-task, and CHANGELOG and package.json agree!
 
 ## 🚀 Stage 12: Phase 11 Prompt — Release Publishing CI & Iconography [v0.0.1.3 (Build 12)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-11-release-publishing-ci--iconography-v0013-build-12)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-11-release-publishing-ci--iconography-v0013-build-12)
 > for complete specifications on **Task 21** and **Task 22**.
 > **📖 Required Context Files for Phase 11**:
 > 1. [`verification-gates.md`](./verification-gates.md) — §5 (Release protocol).
@@ -674,7 +694,7 @@ gradient!
 
 ## 🔒 Stage 13: Phase 12 Prompt — Pure TypeScript WebCrypto Fallback Engine [v0.0.1.4 (Build 13)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-12-pure-typescript-webcrypto-fallback-engine-v0014-build-13)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-12-pure-typescript-webcrypto-fallback-engine-v0014-build-13)
 > for complete specifications on **Task 23** and **Task 24**.
 > **📖 Required Context Files for Phase 12**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §1 (Triple-layer model), §5 (WebCrypto fallback engine).
@@ -717,7 +737,7 @@ exactly one RELEASE file exists!
 
 ## 🎛️ Stage 14: Phase 13 Prompt — Bitwarden-Style Custom Fields [v0.0.1.5 (Build 14) — Milestone]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-13-bitwarden-style-custom-fields-v0015-build-14--milestone)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-13-bitwarden-style-custom-fields-v0015-build-14--milestone)
 > for complete specifications on **Task 25** and **Task 26**.
 > **📖 Required Context Files for Phase 13**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §3 (Guard registry & firewall), §4 (Custom fields data model).
@@ -770,7 +790,7 @@ property changes!
 
 ## 🌐 Stage 15: Phase 14 Prompt — Native LAN TLS [v0.0.1.6 (Build 15)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](./../ROADMAP.md#phase-14-native-lan-tls-with-self-signed-certificates-v0016-build-15)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-14-native-lan-tls-with-self-signed-certificates-v0016-build-15)
 > for complete specifications on **Task 27** and **Task 28**.
 > **📖 Required Context Files for Phase 14**:
 > 1. [`architecture.md`](./architecture.md) — §5 (Transport security), §4 (Invariants).
@@ -974,7 +994,7 @@ staying "" (no "Personal" resurrection), and the full test oracle passes!
 ```
 
 
-## 🩹 Stage 19 (Post-Summit): Vault Header Flush & Version-Test Integrity [v0.0.1.9 hotfix — unphased]
+## 🩹 Stage 18.5 (Post-Summit Interlude): Vault Header Flush & Version-Test Integrity [v0.0.1.9 hotfix — unphased]
 
 > This stage sits **outside** phase numbering — single-commit hotfixes shipped after
 > the v0.0.1.9 tag are recorded here so the spine stays receipt-honest. Post-summit
@@ -998,9 +1018,222 @@ boundary* — run the full oracle AFTER the version bump, before the tag. Versio
 commits are code changes and belong inside the verification gate.
 
 
-## 🎨 Stage 20 (Queued): Phase 22 Prompt — Reef Polish Pass, Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
+## 🎨 Stage 19 (Queued): Phase 18 Prompt — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 19)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-22-reef-polish-pass--unified-search--control-ergonomics)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-18-unified-bitwarden-style-item-composition--in-browser-keypair-generation-v0020-build-19)
+> for complete specifications on **Task 35** and **Task 36**.
+> **⚠️ Execution state**: QUEUED — executes after the Stage 18.5 interlude;
+> green-light from Lucas still required.
+> **📖 Required Context Files for Phase 18**:
+> 1. [`architecture.md`](./architecture.md) — §4 (Threat Model & Invariants).
+> 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1 (The firewall), §6 (Invariants — opaque payloads).
+> 3. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).
+> 4. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 18 (Tasks 35 & 36)** once green-lit:
+
+```markdown
+# PHASE 18 EXECUTION: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 19)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 18 (Task 35: Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine · Task 36: Bitwarden-Style Master Form, Live TOTP Embedding & Pod Item Count Reconciliation).
+- `architecture.md`: §4 (invariants).
+- `shellcryption-spec.md`: §1, §6 (opaque payloads, zero-knowledge invariants).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Execute Phase 18 adhering to the Functionality + UI Component pairing:
+
+### Task 35: [Functionality] Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine
+- Refactor item composition contracts across client and server: `vault_pearls`
+  serves as the primary composite entity embedding credentials, URI arrays,
+  ShellCrypted rich notes, TOTP seeds, attachments, and custom fields.
+- In `server.ts` and `vault.ts`, update count aggregation queries so child
+  records in `vault_secure_attachments` are scoped strictly to parent items
+  and excluded from root pod item tallies.
+- Implement in-browser WebCrypto cryptographic SSH key generation
+  (`generateKeyPair`) supporting Ed25519 and RSA-4096, outputting RFC-4716
+  public keys and PKCS#8 ShellCrypted private keys.
+- Prove it in `tests/vault-crud.test.ts` and `tests/unit/keyGen.test.ts`.
+
+### Task 36: [UI Component] Bitwarden-Style Master Form, Live TOTP Embedding & Pod Item Count Reconciliation
+- Redesign `ItemFormModal.tsx` and `ItemDetailPane.tsx` into a unified
+  Bitwarden-style master view: username, password with generation
+  slider/strength gauge, URI list with launch buttons, embedded live-rendered
+  TOTP token with 30-second progress ring, expandable rich notes, attachment
+  drag-and-drop zone, and custom fields.
+- Update `SidebarFolderTree.tsx` to display true primary item counts; add the
+  "Generate Keypair" action modal inside `SshKeyVaultView.tsx`.
+- Update documentation in `docs/vault-features/`.
+
+Verify creating a login with 3 attachments increases the Pod item count by
+exactly 1, an Ed25519 keypair generates valid OpenSSH/RFC formats, child
+attachments cascade delete with the parent, the vault renders rich composite
+cards with embedded TOTP countdowns, folder badges reflect primary items, and
+the full test oracle + tsc + build stay clean!
+```
+
+---
+
+## 📦 Stage 20 (Queued): Phase 19 Prompt — Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 20)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-19-attachment-sqlite-blob-migration--streaming-architecture-v0021-build-20)
+> for complete specifications on **Task 37** and **Task 38**.
+> **⚠️ Execution state**: QUEUED — executes after Phase 18; green-light from
+> Lucas still required.
+> **📖 Required Context Files for Phase 19**:
+> 1. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations).
+> 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains, attachments route).
+> 3. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1 (The firewall — `file_data` stays an opaque blob).
+> 4. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 19 (Tasks 37 & 38)** once green-lit:
+
+```markdown
+# PHASE 19 EXECUTION: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 20)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 19 (Task 37: Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement · Task 38: Streamed Progress Uploads, Chunked Decryption & File Previewers).
+- `database-schema.md`: §1–§2 (DATA_DIR layout, migrations).
+- `routes-and-contracts.md`: §3 (attachments route).
+- `shellcryption-spec.md`: §1 (the firewall — server never reads `file_data`).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Execute Phase 19 adhering to the Functionality + UI Component pairing:
+
+### Task 37: [Functionality] Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement
+- `migrations/0005_attachment_blobs.{up,down}.sql`: move binary ciphertext
+  from the base64 TEXT payload into a native SQLite BLOB column on
+  `vault_secure_attachments` (backward-compatible reads during the window).
+- Streaming upload handlers in `attachments.ts`: Busboy/multer piping direct
+  encrypted streams into SQLite via incremental BLOB I/O (`openBlob()`) —
+  no base64 inflation in memory.
+- Enforce a 50MB per-file ceiling and a 500MB total grotto quota per
+  `owner_uuid`. Prove it in `tests/attachments-blob.test.ts`.
+
+### Task 38: [UI Component] Streamed Progress Uploads, Chunked Decryption & File Previewers
+- Real-time upload progress bars and cancel buttons in `attachmentUtils.ts`
+  and the file-upload dropzones in `ItemFormModal.tsx`.
+- Client-side Web Streams API (`ReadableStream`/`WritableStream`) AES-GCM
+  decryption of large attachments without freezing the UI thread.
+- Inline thumbnail previews for common image/PDF types inside an encrypted
+  object-URL modal.
+
+Verify binary payloads round-trip cleanly without base64 overhead, attempting
+to upload over quota yields 413, incremental BLOB reads avoid spiking Node.js
+RSS memory, a 20MB upload shows a smooth percentage progress bar, streamed
+decryption never freezes the browser tab, previews render in the object-URL
+modal, and the full test oracle + tsc + build stay clean!
+```
+
+---
+
+## 🏷️ Stage 21 (Queued): Phase 20 Prompt — Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 21)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-20-vault-tagging-system--granular-filter-bar-v0022-build-21)
+> for complete specifications on **Task 39** and **Task 40**.
+> **⚠️ Execution state**: QUEUED — executes after Phase 19; green-light from
+> Lucas still required.
+> **📖 Required Context Files for Phase 20**:
+> 1. [`database-schema.md`](./database-schema.md) — §2 (Migrations), §3 (Schema v1).
+> 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).
+> 3. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1, §6 (ShellCrypted tag data; per-row metadata encryption).
+> 4. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail & pod invariants).
+> 5. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 20 (Tasks 39 & 40)** once green-lit:
+
+```markdown
+# PHASE 20 EXECUTION: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 21)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 20 (Task 39: Tag Schema & Indices, Tag Assignment Mutation & Scoped Search · Task 40: Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State).
+- `database-schema.md`: §2–§3 (migrations, schema).
+- `routes-and-contracts.md`: §3 (vault domains).
+- `shellcryption-spec.md`: §1, §6 (ShellCrypted tag payloads).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Execute Phase 20 adhering to the Functionality + UI Component pairing:
+
+### Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search
+- `migrations/0007_vault_tags.{up,down}.sql`: add `tags` (ShellCrypted JSON
+  array) across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+- Update route handlers in `vault.ts`, `notes.ts`, and `sshKeys.ts` to
+  support querying by tag intersection (`?tags=finance,infra`).
+- Update audit logging to capture tag assignment events; ensure tags respect
+  client-side ShellCryption and per-row metadata encryption.
+
+### Task 40: [UI Component] Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State
+- Tag input autocomplete chips in item edit modals with auto-suggested
+  existing tags and color pickers.
+- Collapsible "Tags" section in `SidebarFolderTree.tsx` displaying active
+  tags with item counts.
+- Thread active tag selection into the main vault filter state alongside
+  search keywords and pod selection.
+
+Verify items support multiple tags, tag filtering composes with pod and type
+filters under ownership scoping, tag mutations emit audit events, chips
+add/remove via keyboard, sidebar tag clicks instantly filter the vault grid,
+multi-tag filters combine with AND/OR logic, and the full test oracle + tsc +
+build stay clean!
+```
+
+---
+
+## 📥 Stage 22 (Queued): Phase 21 Prompt — Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 22)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-21-bulk-import-endpoint--batch-operations-v0023-build-22)
+> for complete specifications on **Task 41** and **Task 42**.
+> **⚠️ Execution state**: QUEUED — executes after Phase 20; green-light from
+> Lucas still required.
+> **📖 Required Context Files for Phase 21**:
+> 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).
+> 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1 (Opaque client-ciphertext payloads).
+> 3. [`database-schema.md`](./database-schema.md) — §2 (Migrations), §3 (Schema v1).
+> 4. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 21 (Tasks 41 & 42)** once green-lit:
+
+```markdown
+# PHASE 21 EXECUTION: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 22)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 21 (Task 41: Bulk Pearl Import Router & Partial-Failure Reporting Engine · Task 42: Multi-Select Tri-State Actions & Batch Import Modal).
+- `routes-and-contracts.md`: §3 (vault domains).
+- `shellcryption-spec.md`: §1 (opaque client-ciphertext payloads).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Execute Phase 21 adhering to the Functionality + UI Component pairing:
+
+### Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine
+- `POST /api/vault/bulk-import` accepting an array of ShellCrypted items,
+  executed inside a database transaction with per-record validation: valid
+  items inserted, invalid items skipped and returned in an
+  `errors: [{index, reason}]` report.
+- Update bulk delete endpoints to ensure atomic cascades across custom
+  fields and attachments, scoped by `owner_uuid`.
+
+### Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal
+- Expand bulk selection controls across all vault item views: select-all
+  checkbox with tri-state (none, some, all), floating bulk action bar
+  (Move to Pod, Assign Tag, Delete), and a dedicated Import wizard with
+  preview table and error resolution chips.
+
+Verify importing 100 items with 2 malformed records persists 98 and returns
+an informative 207 Multi-Status with a detailed error array, deletes cascade
+atomically, the floating action bar appears on selection, bulk moves update
+local state optimistically, the import error modal highlights skipped items,
+and the full test oracle + tsc + build stay clean!
+```
+
+---
+
+## 🎨 Stage 23 (Queued): Phase 22 Prompt — Reef Polish Pass, Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 23)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-22-reef-polish-pass--unified-search--control-ergonomics-work-driven-version--provisional-v0024-build-23)
 > for complete specifications on **Task 43** and **Task 44**.
 > **⚠️ Execution state**: QUEUED — green-light from Lucas still required
 > (the phase may absorb further hands-on items).
@@ -1057,9 +1290,9 @@ ENTIRE value, and the full test oracle + tsc + build stay clean!
 ```
 
 
-## 🧩 Stage 21 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 24)]
+## 🧩 Stage 24 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 24)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-23-bitwarden-model-item-integrity--attachment-parent-enforcement--dashboard-type-truth)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-23-bitwarden-model-item-integrity--attachment-parent-enforcement--dashboard-type-truth-work-driven-version--provisional-v0025-build-24)
 > for complete specifications on **Task 45** and **Task 46**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 22; green-light from
 > Lucas still required.
@@ -1091,7 +1324,7 @@ Bitwarden model (verified): attachments are never standalone vault items.
 - attachments.ts POST requires a parent item reference (zod + route guard);
   standalone creation rejected; parent's attachments JSON ID array gains the
   child id in the same transaction.
-- migrations/0005_attachment_integrity.{up,down}.sql + backfill: relink
+- migrations/0006_attachment_integrity.{up,down}.sql + backfill: relink
   orphans where a parent is determinable, otherwise QUARANTINE (hidden from
   lists, never deleted); audit quarantine events.
 - schemas.ts: Secure Notes CANNOT carry password credentials (no `secret`
@@ -1121,3 +1354,15 @@ deterministic, and the full test oracle + tsc + build stay clean!
 ---
 
 ## 🏔️ The Summit
+
+**v0.0.1.8 parity was reached at Stage 17** — the walk and the codebase occupied
+the same commit, and the summit tag was pushed. **Phase 17 (`v0.0.1.9`) shipped
+at Stage 18** with its security-hardening receipts (`7faf51d`, `027506a`,
+merge `9b5ec31`), followed by the post-summit hotfix recorded at **Stage 18.5**
+(`07ccd61`).
+
+The walk does not end at the summit — it molts. **Stages 19–24 (Phases 18–23)
+are queued** in the active forward queue of [`../ROADMAP.md`](../ROADMAP.md);
+each stage prompt is transcribed when its phase becomes the next molt. Receipts
+accrue per phase, the sliding window keeps the roadmap honest, and this spine
+grows with the roadmap — built for the delete key, severable without collapse.

@@ -1,5 +1,10 @@
 # Changelog — ShellGuard
 
+## [Unreleased] - 2026-09-15
+
+### Changed
+- **Genome chronology restored (Option C)** — original queue order stands: Phases 18–21 ahead of 22/23. Meta-prompt spine renumbered **Stage N = Phase N−1** (hotfix → Stage 18.5 Post-Summit Interlude, TOTP decimal pattern); new queued stages 19–24 authored/transcribed for Phases 18–23; mermaid extended through Summit; Summit section given its receipt-honest closing. Link audit: 26/26 roadmap links resolve — Stage 15's dangling Phase-14 anchor repaired to ROADMAP-HISTORY, partial Phase 22/23 anchors completed to full heading slugs, 13 archive link-texts corrected. Migration knock-on under restored order: Phase 19 owns `0005_attachment_blobs`, Phase 23 integrity renumbers to `0006`, Phase 20 tags to `0007`.
+
 ## [0.0.1.9] - 2026-09-13
 
 ### Added

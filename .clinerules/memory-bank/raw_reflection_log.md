@@ -1,4 +1,22 @@
 ---
+Date: 2026-09-15
+TaskRef: "Genome chronology reorganization — Option C (original queue restored), spine renumbered"
+
+Learnings:
+- Lucas ruled Option C: Phases 18–21 execute ahead of 22/23. The ROADMAP's "Next Planned Milestone v0.0.2.0 (Phase 18)" was RIGHT and the memory bank was the stale side — docs-vs-bank contradictions can cut either way; audit both sides before "fixing" either.
+- TOTP decimal-interlude pattern (their Stage 12.5) adopted: unphased hotfix = Stage 18.5, restoring the Stage N = Phase N−1 invariant spine-wide with zero anchor breakage for walked stages.
+- GitHub slug archaeology: anchors strip periods (v0.0.1.9 → v0019) and punctuation; em-dash/space runs become "--"; PARTIAL anchors never resolve (Phase 22/23 hrefs were partial) — always generate slugs from the full heading text.
+- Checker regex gotcha: non-greedy finditer (`^## .*?Stage \d`) truncates matches at the first digit — iterate full lines instead of m.group(0).
+- Batch-patch discipline paid off twice: assert-fail-closed prevented a partial write (E4 pattern was missing the ./ prefix), and the corrected re-run was provably safe.
+
+Improvements_Identified_For_Consolidation:
+- The genome link-audit script (GitHub-faithful slugger + file/anchor resolution + stage-order assertion) is reusable for the ROADMAP reorg pass and all future genome edits.
+- Pending: ROADMAP.md reorg pass (frontmatter, hotfix interlude placement, completed order 15→16→17, archive header 1–14, Phase 5 table-row fix, migration renumber sweep 0006/0007) — then project/README.md stale-claim sweep.
+
+Handoff_Package_Prepared: false
+---
+
+---
 Date: 2026-09-13
 TaskRef: "Session handoff — memory bank pointed at Phase 22; handoff package written"
 

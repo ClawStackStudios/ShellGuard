@@ -40,7 +40,7 @@
 
 ## Current Status
 
-**v0.0.1.9 (Build 18) — RELEASED & LIVE** (tag `v0.0.1.9`, GitHub Release mirrors RELEASE-v0.0.1.9.md; main synced). Post-release: unphased hotfix `07ccd61` (vault header flush + version-test de-hardcode) merged; genome grown (Stage 19 hotfix record; Stage 20 = Phase 22; Stage 21 = Phase 23). **NEXT: Phase 22 — Reef Polish Pass (Tasks 43/44), queued & gated on Lucas's green-light**; Phase 23 (Bitwarden-model item integrity, Tasks 45/46) queues behind it.
+**v0.0.1.9 (Build 18) — RELEASED & LIVE** (tag `v0.0.1.9`, GitHub Release mirrors RELEASE-v0.0.1.9.md; main synced). Post-release: unphased hotfix `07ccd61` merged; genome reorganized (2026-09-15, Option C): spine **Stage N = Phase N−1** restored — Stage 18.5 = hotfix interlude, Stages 19–22 = Phases 18–21 (queued), Stages 23/24 = Phases 22/23 (queued); 26/26 roadmap links verified. **NEXT: Phase 18 — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (Tasks 35/36, v0.0.2.0 / Build 19), queued & gated on Lucas's green-light**; Phases 19–21 follow, then Phase 22 (Reef Polish) and Phase 23 (Bitwarden-model integrity).
 
 ## Known Issues
 

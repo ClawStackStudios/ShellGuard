@@ -1,5 +1,7 @@
 # 📦 Task Handoff Package — Phase 22: Reef Polish Pass
 
+> ⚠️ **SUPERSEDED 2026-09-15 (Option C)** — the roadmap queue order was restored: **Phases 18–21 execute ahead of Phase 22/23**, so the **NEXT TASK is now Phase 18** (Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation, Tasks 35/36, v0.0.2.0 / Build 19). The spine renumbered: Stage 18.5 = hotfix interlude, Stages 19–22 = Phases 18–21, Stages 23/24 = Phases 22/23. The Phase 22/23 specs below remain valid and queued behind Phase 21; see `activeContext.md` entry 2026-09-15.
+
 **Created**: 2026-09-13
 **Session Context**: ~85% utilized — NEW SESSION REQUIRED
 **Next Task**: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics (Tasks 43/44)

@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- **Genome chronology restored (Option C, 2026-09-15)** — Phases 18–21 execute ahead of 22/23; meta-prompt spine renumbered Stage N = Phase N−1 (hotfix → Stage 18.5 interlude); queued stages 19–24 for Phases 18–23; 26/26 roadmap links verified.
 - **Vault Lock Hardening & Mutation Denial** — Strict enforcement of `isLocked` guards across all pod management (`handleRenamePod`, `handleDeletePod`, `SidebarFolderTree`, `PodModal`), item mutations (`lockTheClaw`, `updateTheClaw`, item deletion), live search dropdowns, and header `+` add action menus.
 - **Unified & State-Aware Navigation (`NavIntent`)** — Explicit `NavIntent` state tracking (`sg_nav_intent` in `sessionManager.ts`), preserving `"landing"` intent across reloads on manual logout ("Claw Out"), and preserving `"dashboard"` intent with quick unlock modal on lock/reload.
 - **Zero Hardcoded Default Pods** — Completely user-driven pod model with zero hardcoded defaults (`DEFAULT_ROOT_PODS = []`, `INITIAL_DEFAULT_COLORS = {}`). Pods are only displayed when explicitly created by the user or when assigned to vault items.

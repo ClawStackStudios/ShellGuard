@@ -1,5 +1,20 @@
 ---
 Date: 2026-09-13
+TaskRef: "Session handoff — memory bank pointed at Phase 22; handoff package written"
+
+Handoff_Context:
+- Session state: ~85% used — new session required.
+- Active work: Phase 22 queued (Tasks 43/44), gated on Lucas's green-light + possible Task 44 fill.
+- Pending decisions: Task 44 slot finalization; phase green-light; execution branch.
+
+Learnings_for_Continuity:
+- The next session's first moves are encoded in the handoff package: load bank → confirm phase finality → fresh branch → Task 43 → 44 → gates.
+- All session learnings already consolidated (full-mask rule, SQLite security-migration skill, batch-patch discipline, release protocol verification) — raw log carries only session-specific deltas.
+
+Handoff_Package_Prepared: true
+---
+---
+Date: 2026-09-13
 TaskRef: "Phase 23 queued — Bitwarden-model item integrity (Tasks 45/46)"
 
 Learnings:

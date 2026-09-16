@@ -40,7 +40,7 @@
 
 ## Current Status
 
-**v0.0.1.9 (Build 18) — RELEASED & LIVE** (tag pushed; GitHub Release mirrors RELEASE-v0.0.1.9.md; main at 9b5ec31). Ships: /project genome + coherence audit (10 oracles, 0 dangling refs), Phase 17 Key Ledger Hardening (hash-only `lb-` keys — migration 0004 + keyLedger.ts backfill, VACUUM byte-level retirement) + pod purity (DEFAULT 'Personal' purged, fallback removed in 4 routes), and CaraBase 1:1 LobsterKeys card UI with full-value masking. Next: Phase 18 (v0.0.2.0) — rich composite items & in-browser keypair generation.
+**v0.0.1.9 (Build 18) — RELEASED & LIVE** (tag `v0.0.1.9`, GitHub Release mirrors RELEASE-v0.0.1.9.md; main synced). Post-release: unphased hotfix `07ccd61` (vault header flush + version-test de-hardcode) merged; genome grown (Stage 19 hotfix record; Stage 20 = Phase 22; Stage 21 = Phase 23). **NEXT: Phase 22 — Reef Polish Pass (Tasks 43/44), queued & gated on Lucas's green-light**; Phase 23 (Bitwarden-model item integrity, Tasks 45/46) queues behind it.
 
 ## Known Issues
 

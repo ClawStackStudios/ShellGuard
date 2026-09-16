@@ -1,5 +1,16 @@
 ---
 Date: 2026-09-13
+TaskRef: "Phase 23 queued — Bitwarden-model item integrity (Tasks 45/46)"
+
+Learnings:
+- Bitwarden model verified from docs: ciphers are typed (Login/Secure Note/Card/Identity/SSH Key) and attachments are ALWAYS children of a cipher — never standalone items. ShellGuard's deviation: Header.tsx add menu offers "attachment", and uploadAttachmentRecord writes unparented rows (category: "Attachment").
+- Enforcement belongs server-side (route guard + zod + migration), UI belongs client-side (menu removal + type-truthful display) — the 2-Task Pairing Law maps naturally: A = integrity engine, B = surface truth.
+- Orphan policy: QUARANTINE, never delete — user data is sacred; flag hidden + audit the event.
+- Form-contract rule locked by Lucas: a standalone Secure Note may carry attachments but cannot embed password credentials (no secret payload on notes) — enforce in zod schemas, not just UI.
+- Bitwarden docs pages 404 on some deep links (vault-items); the attachments page is authoritative for the attachment-is-a-child pattern.
+---
+---
+Date: 2026-09-13
 TaskRef: "Phase 22 expanded — unified search + consolidation spec"
 
 Learnings:

@@ -235,6 +235,78 @@ column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
 
 ---
 
+### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 24)]
+
+> Phase Feature Set Overview:
+> Aligns ShellGuard's item model fully with the Bitwarden pattern (verified
+> against Bitwarden's documentation): vault items are ciphers of fixed types
+> (Password, Secure Note, SSH Key — Card/Identity out of scope) and
+> **attachments are NEVER standalone items** — they are encrypted children
+> bound to a parent. The database tables are already correctly separated
+> (`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`, and
+> `vault_secure_attachments` as children); what is missing is ENFORCEMENT:
+> today the '+' add menu offers '📎 Attachment' as a creatable type and the
+> attachments route accepts standalone rows (`category: "Attachment"` via
+> `uploadAttachmentRecord`). This phase closes both gaps and makes the
+> dashboard display type-truthful. Domain rules (locked by Lucas):
+> passwords may embed notes + attachments; a standalone Secure Note may have
+> attachments but CANNOT embed password credentials; SSH keys are their own
+> items. Orphan attachments are QUARANTINED, never deleted. The version digit
+> is decided by the completed work (No Forced Targets); the queue position
+> after Phase 22 makes the provisional label `v0.0.2.5 (Build 24)`.
+> *(Source: Lucas, 2026-09-13 — Bitwarden-pattern alignment pass.)*
+
+- [ ] **Task 45: [Functionality] Attachment Parent Enforcement, Orphan Quarantine & Form-Contract Rules**
+
+Description: Enforce parent linkage at the Bedrock. (1) `attachments.ts`:
+the POST route requires a parent item reference — reject standalone
+attachment creation with a validation error (zod schema gains a required
+parent linkage; keep the reference model: the parent's `attachments` JSON ID
+array gains the child id in the same transaction). PUT/DELETE unchanged.
+(2) Migration `0005_attachment_integrity.{up,down}.sql` + backfill: resolve
+orphan standalone attachment rows (the `category: 'Attachment'` rows written
+by `uploadAttachmentRecord` without a parent) — relink where a parent can be
+determined, otherwise QUARANTINE (flagged hidden from lists, never deleted;
+user data is sacred). Audit the quarantine events. (3) Form-contract rules in
+`src/server/validation/schemas.ts`: Secure Notes CANNOT carry password
+credentials (no `secret` payload on notes — rejected server-side);
+attachments are allowed on pearls, notes, and SSH keys per the locked domain
+rules. (4) Keep zero-knowledge: `file_data` remains an opaque ShellCryption
+blob — the server enforces LINKAGE, never content. Prove it in
+`tests/attachment-integrity.test.ts` (standalone creation rejected, orphan
+quarantine, relink path, note-with-password rejected).
+
+> Success Criteria: Standalone attachment creation fails closed with a clear
+> validation error; every attachment row is either parent-linked or
+> quarantined (never silently deleted); a Secure Note with a `secret` payload
+> is rejected; quarantine events are audited; zero-knowledge untouched (the
+> server still never reads `file_data`); the full test oracle + `tsc` + build
+> stay clean.
+
+- [ ] **Task 46: [UI Component] Bitwarden-Model Dashboard — Add-Menu Correction & Type-Truthful Display**
+
+Description: Make the UI tell the item-model truth. (1) Remove the
+'📎 Attachment' entry from the '+' add-item menu (`Layout/Header.tsx`
+~line 202, the `['password', 'note', 'key', 'attachment']` map) —
+attachments enter only through an item's create/edit form (`ItemFormModal`
+attachment section, which already implements the drag-and-drop + linked-
+attachment model). Sweep `VaultItemType` consumers (add-flow, filters, empty
+states) so 'attachment' never surfaces as a creatable type. (2) Dashboard
+display correctness: `ItemListPane` shows exactly the three primary types
+(Passwords, Secure Notes, SSH Keys) with correct icons/labels; attachments
+render ONLY inside their parent's detail pane (the existing `VaultShell`
+exclusion becomes a guarantee, not a filter accident). (3) Sorting:
+deterministic type-aware ordering — recency within type, with the type
+ordering Passwords → Secure Notes → SSH Keys (reviewable in the PR).
+(4) Empty states per type-filter reflect the real item model.
+
+> Success Criteria: No 'Attachment' option in any add surface; the list
+> contains exactly Passwords/Secure Notes/SSH Keys; attachments appear only
+> within their parent's detail; sorting is deterministic and type-aware;
+> the full test oracle + `tsc` + build stay clean.
+
+---
+
 ## 🔬 Queue — Backlog & Distant Shores (Vision)
 
 > Prioritized backlog items captured for future formalization into paired phases.

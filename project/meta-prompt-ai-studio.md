@@ -61,7 +61,7 @@ flowchart TD
 
 > **Transcription state**: ✅ **COMPLETE** — all 16 phases transcribed
 > (`v0.0.0.0` void → `v0.0.1.8` parity). Every stage is live; the walk and
-> the codebase occupy the same commit. **Phase 17 (`v0.0.1.9`) is SHIPPED — the genome was released and the summit tag pushed.** Stage 19 below records the post-summit hotfix path. **Stage 20 (Phase 22, Reef Polish) is queued — awaiting Task 44 fill + green-light.**
+> the codebase occupy the same commit. **Phase 17 (`v0.0.1.9`) is SHIPPED — the genome was released and the summit tag pushed.** Stage 19 below records the post-summit hotfix path. **Stage 20 (Phase 22, Reef Polish) is queued — awaiting Task 44 fill + green-light. **Stage 21 (Phase 23, Bitwarden-Model Integrity) is queued behind it.****
 
 ---
 
@@ -1054,6 +1054,68 @@ search controls, matches surface by title/keyword/attachment name/note
 content, zero search requests hit the network, lock purges the query, Eye
 sits immediately left of Copy on hidden custom fields, the mask covers the
 ENTIRE value, and the full test oracle + tsc + build stay clean!
+```
+
+
+## 🧩 Stage 21 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 24)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-23-bitwarden-model-item-integrity--attachment-parent-enforcement--dashboard-type-truth)
+> for complete specifications on **Task 45** and **Task 46**.
+> **⚠️ Execution state**: QUEUED — executes after Phase 22; green-light from
+> Lucas still required.
+> **📖 Required Context Files for Phase 23**:
+> 1. [`database-schema.md`](./database-schema.md) — §3 (separated item tables; `vault_secure_attachments` as children).
+> 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (vault domains & verb-permission map).
+> 3. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1, §6 (opaque blobs; the firewall).
+> 4. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 23 (Tasks 45 & 46)** once green-lit:
+
+```markdown
+# PHASE 23 EXECUTION: Bitwarden-Model Item Integrity [work-driven — provisional v0.0.2.5 (Build 24)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 23 (Task 45: Attachment Parent Enforcement, Orphan Quarantine & Form-Contract Rules · Task 46: Bitwarden-Model Dashboard).
+- `database-schema.md`: §3 (separated tables; attachments as children).
+- `routes-and-contracts.md`: §3 (vault domains, attachments route).
+- `shellcryption-spec.md`: §1, §6 (opaque blobs, firewall).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Domain rules (locked): passwords may embed notes + attachments; a standalone
+Secure Note may have attachments but CANNOT embed password credentials; SSH
+keys are their own items; orphan attachments are QUARANTINED, never deleted.
+Bitwarden model (verified): attachments are never standalone vault items.
+
+### Task 45: [Functionality] Attachment Parent Enforcement, Orphan Quarantine & Form-Contract Rules
+- attachments.ts POST requires a parent item reference (zod + route guard);
+  standalone creation rejected; parent's attachments JSON ID array gains the
+  child id in the same transaction.
+- migrations/0005_attachment_integrity.{up,down}.sql + backfill: relink
+  orphans where a parent is determinable, otherwise QUARANTINE (hidden from
+  lists, never deleted); audit quarantine events.
+- schemas.ts: Secure Notes CANNOT carry password credentials (no `secret`
+  payload on notes — rejected server-side); attachments allowed on pearls,
+  notes, SSH keys.
+- Zero-knowledge: file_data stays an opaque ShellCryption blob — the server
+  enforces LINKAGE, never content.
+- Prove it in tests/attachment-integrity.test.ts.
+
+### Task 46: [UI Component] Bitwarden-Model Dashboard — Add-Menu Correction & Type-Truthful Display
+- Remove '📎 Attachment' from the '+' add-item menu (Layout/Header.tsx ~202);
+  sweep VaultItemType consumers so 'attachment' never surfaces as a creatable
+  type; attachments enter only via ItemFormModal's attachment section.
+- ItemListPane shows exactly Passwords / Secure Notes / SSH Keys with correct
+  icons/labels; attachments render only inside their parent's detail pane.
+- Deterministic type-aware sorting: recency within type, type ordering
+  Passwords → Secure Notes → SSH Keys (reviewable in the PR).
+- Empty states per type-filter reflect the real item model.
+
+Verify standalone attachment creation fails closed, every attachment is
+parent-linked or quarantined (audited), a note with a password payload is
+rejected, the add menu has no Attachment option, the list shows exactly the
+three primary types with attachments only inside parents, sorting is
+deterministic, and the full test oracle + tsc + build stay clean!
 ```
 
 ---

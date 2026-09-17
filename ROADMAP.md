@@ -1,10 +1,20 @@
+---
+roadmap_version: 2.0.0
+last_updated: 2026-09-15
+current_position: "v0.0.1.9 (Build 18) — released & live; next Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (v0.0.2.0, Tasks 35/36) — queue 18 → 19 → 20 → 21 → 22 → 23"
+statistics:
+  description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
+  features_completed: "████████████████░░░ 74% (17 of 23 formalized phases)"
+  features_in_progress: "░░░░░░░░░ 0%"
+---
+
 # 🛡️ ShellGuard©™ Roadmap
 
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
 > *Preserves the Active Forward Queue (Phase 18+) and the 3 most recent completed phases (Phases 15, 16, and 17).*
-> *Historical Phases 1 through 13 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
+> *Historical Phases 1 through 14 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
@@ -69,7 +79,7 @@ action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-f
 > supports larger files up to 50MB, and enforces strict per-user storage quotas.
 > *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
 
-- [ ] **Task 37: [Functionality] Migration 0004 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
+- [ ] **Task 37: [Functionality] Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
 
 Description: Create `migrations/0005_attachment_blobs.up.sql` altering or migrating
 `vault_secure_attachments` to store binary ciphertext in a `BLOB` column instead of `TEXT`.
@@ -105,7 +115,7 @@ freezing the UI thread. Provide inline thumbnail previews for common image/PDF t
 
 - [ ] **Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search**
 
-Description: Create `migrations/0006_vault_tags.up.sql` adding `tags` (ShellCrypted JSON array
+Description: Create `migrations/0007_vault_tags.up.sql` adding `tags` (ShellCrypted JSON array
 or junction table) across pearls, notes, and SSH keys. Update route handlers in `vault.ts`,
 `notes.ts`, and `sshKeys.ts` to support querying by tag intersection (`?tags=finance,infra`).
 Update audit logging to capture tag assignment events. Ensure tags respect client-side
@@ -154,20 +164,6 @@ and dedicated Import wizard with preview table and error resolution chips.
 > updates local React state optimistically; import error modal highlights skipped items.
 
 ---
-
-### Post-v0.0.1.9 Hotfixes (unphased — outside the 2-Task Pairing Law)
-
-> Single-commit hotfixes shipped after the v0.0.1.9 tag, before Phase 18 begins.
-> Documented here so the genome stays receipt-honest about post-release work.
-
-- [x] **Vault Master-Detail Header Flush & Version-Test Integrity** — receipt `07ccd61` (2026-09-13).
-  The item-list search header (`ItemListPane`) and the Item Details header (`ItemDetailPane`)
-  rendered stepping border lines at the dashboard T-junction (left bar ~59px vs right ~64px);
-  both are pinned to a shared `h-16` so the `border-b` rules form one continuous line.
-  Companion integrity fix: `tests/unit/version.test.ts` had hardcoded `'0.0.1.8'` — a latent
-  failure shipped inside v0.0.1.9 (the bump commit landed after the last full oracle run);
-  the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
-  can never silently break it again.
 
 ### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 23)]
 
@@ -321,6 +317,134 @@ ordering Passwords → Secure Notes → SSH Keys (reviewable in the PR).
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
+### Phase 15: `sgtotp.bak` Import Compatibility Layer [v0.0.1.7 (Build 16)]
+
+> Phase Feature Set Overview:
+> The bridge completes. The web vault learns to open its Android sibling's
+> backups: `sgtotpBackup.ts` parses the `sgtotp.bak` format (encrypted
+> `shellguard-totp-backup-v1` envelopes, plaintext exports, bare item
+> arrays), decrypting client-side via HKDF-SHA256 (salt = `ownerUuid`,
+> AAD `totp_backup:{ownerUuid}`) + AES-GCM-256 through the **pure TS
+> fallback primitives** (LAN-safe), with the enforced SHA-256 checksum over
+> the exact decrypted string. Items map to fresh-UUID vault pearls,
+> `normalizePod()` categories, original timestamps preserved;
+> `ImportExportView` sniffs formats with the PIN/key modal. Companion work:
+> the **strict RELEASE-doc mirror** in `release.yml` (exact-version
+> resolution, hard fail, no auto-notes), the dynamic theme engine with
+> multi-accent support, `AGENTS.md` for the Gemini identity in the Android
+> companion tree, and the landing-header dark-mode brand fix.
+> *(Receipts: `138952b`, `b0fcc47`, `7054595`, `074eab0`, `7b7a90c`,
+> `68da985`, `0b259f7`, `2d7d9a2`, `b125fab`, `fc7e9df`, merge `c6d17d8` —
+> 2026-08-30 → 09-03. Contract source of truth: `compatibility_layer.md`.)*
+
+- [x] **Task 29: [Functionality] `sgtotpBackup.ts` Parser, Client-Side Decryption & Timestamp Preservation**
+
+Description: Implement the parser/mapper in `src/lib/sgtotpBackup.ts` —
+contract mirrored from the Android `BackupManager.kt` +
+`ShellCryptionEngine.kt`: sniff encrypted `shellguard-totp-backup-v1`,
+plaintext `shellguard-totp-plain-export-v1`, or bare `BackupItemDto[]`;
+decrypt envelopes client-side (HKDF-SHA256: ikm = export key, salt =
+`envelope.ownerUuid`, info = `clawchives-shellcryption-v1` → AES-GCM-256,
+AAD `totp_backup:{ownerUuid}`) using the pure TS fallback primitives; verify
+the SHA-256 checksum over the exact decrypted item-array string (post-decrypt,
+byte-reproducible). Map items to vault pearls with **fresh UUIDs**,
+`normalizePod()` categories, `algorithm`/`digits`/`period` passthrough, and
+**original `localUpdatedAt` preserved** as `created_at`. Prove the full
+crypto round-trip in `tests/unit/sgtotpBackup.test.ts` (encrypted fixture,
+plaintext, bare array, checksum mismatch, AAD tamper). Write
+`compatibility_layer.md` as the cross-project format contract.
+
+> Success Criteria: All three input formats import correctly on HTTP LAN
+> origins; a checksum mismatch or AAD tamper aborts before persistence;
+> imported seeds re-encrypt under `vault_pearls_totp:{id}`; timestamps
+> survive the journey; Android ids are never reused.
+
+- [x] **Task 30: [UI Component] ImportExportView Format Sniffing, Key Modal & Strict Release Mirror**
+
+Description: Extend `ImportExportView.tsx`: detect sgtotp formats on file
+selection, prompt for the export key/PIN via a modal for encrypted
+envelopes, show the imported-count preview, and commit through the parser
+with sanitized errors. In CI: rewrite `release.yml` to the **strict
+RELEASE-doc mirror** — exact-version `RELEASE-<tag>.md` resolution with hard
+failure (no auto-notes, no fallback) so the GitHub Release body is the
+RELEASE file verbatim. Implement the dynamic theme engine (adaptive
+light/dark + multi-accent support) in the client; add `AGENTS.md` for the
+companion's Gemini identity; fix the landing header's dark-mode brand
+divider; molt the RELEASE file and cut `v0.0.1.7`.
+
+> Success Criteria: Encrypted backups import via the key modal with
+> sanitized failure modes; the GitHub Release body matches the RELEASE file
+> byte-for-byte or the pipeline fails loudly; themes switch live across
+> light/dark and all accents; the bridge is usable end-to-end on LAN.
+
+---
+
+
+### Phase 16: Docs Bridge Parity, Agentic Infrastructure & Version Resolver [v0.0.1.8 (Build 17) — Summit]
+
+> Phase Feature Set Overview:
+> The walk ends where the application stands today — and the documentation
+> system becomes a first-class citizen. The project scaffolds its agentic
+> knowledge infrastructure: a comprehensive memory bank (including a
+> dedicated `android/` sub-bank mirroring the companion's crypto, Room
+> schema, TOTP engine and UI models), workflow templates, and formalized
+> agentic rule sets — then synchronizes release-pipeline invariants and
+> formalizes agent git tracking. The **dynamic version resolver**
+> (`src/server/utils/version.ts`) replaces fragile env reads with
+> `package.json` ground truth (multi-tier fallback, unit-tested). The
+> official privacy policy and TOTP store disclosures land; the VitePress
+> companion suite publishes; two-sided bridge parity is achieved across
+> root documentation; the release pipeline gains optimized triggers and a
+> chained mirror job; the installation guide moves to placeholder IPs; and
+> the rolling RELEASE file molts to `v0.0.1.8`.
+> *(Receipts: `ddc35f5`, `124e4ab`, `80babe5`, `acab2ab`, `700c18c`,
+> `1244c5f`, `e61675b`, `bbcc2f5`, `a68008f`, `70d7d46`, `ec4e136`,
+> `0b6ad1f`, `82616f2`, merge `66d9ca4` — 2026-09-04/05. The walk and the
+> codebase now occupy the same commit.)*
+
+- [x] **Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver**
+
+Description: Initialize the project scaffolding for agent collaboration: a
+comprehensive memory bank under `.agents/memory-bank/` — core files plus a
+dedicated `android/` sub-bank (api-client, crypto-spec, room-schema,
+totp-engine, ui-compose-models) mirroring the companion's internals —
+workflow templates, and agentic rule sets (attractor beacon, git hygiene,
+docs hygiene, continuous improvement). Synchronize release-pipeline
+invariants and formalize agent git tracking (two-layer commit grammar,
+staged-index discipline, verification gates). Implement
+`src/server/utils/version.ts` — `getAppVersion()` resolving dynamically
+from `package.json` with multi-tier fallback, replacing fragile env reads
+in `admin.ts`, `backupManager.ts` and `server.ts`; prove it with
+`tests/unit/version.test.ts` (semver compliance + package ground-truth
+match).
+
+> Success Criteria: The version presented in the SuperLobster panel, backups
+> and API always equals `package.json`; the resolver survives a missing env
+> var; the memory bank loads a cold agent into full project context; the
+> android/ sub-bank mirrors the companion's spec truth.
+
+- [x] **Task 32: [Documentation Component] Privacy Policy, Docs Bridge Parity & Chained Mirror Release**
+
+Description: Publish the official privacy policy (`docs/privacy.md` —
+zero-knowledge disclosures compliant with Play Store requirements) with
+store disclosures cross-linked into the VitePress portal and CHANGELOG.
+Publish the ShellGuard-TOTP native companion documentation suite
+(`docs/companion/`: topology, security, sync-and-backups, totp-engine).
+Achieve two-sided bridge parity: every root doc (`ARCHITECTURE.md`,
+`BLUEPRINT.md`, `SECURITY.md`, `README.md`, `ADMIN.md`, `CONTRIBUTING.md`,
+docs portal) reconciled to runtime schema truth. Optimize `release.yml`
+triggers and chain the mirror job (release body re-syncs when the RELEASE
+file changes on main). Move the installation guide to placeholder IPs.
+Molt the RELEASE file to `v0.0.1.8` and cut the release through the
+`--release` commit-flag path.
+
+> Success Criteria: The docs claim nothing the runtime doesn't do — both
+> sides of every bridge verified; the privacy policy renders in the portal
+> and satisfies store disclosures; a RELEASE-file edit on main re-syncs the
+> published release body; the summit tag exists.
+
+---
+
 ### Phase 17: Key Ledger Hardening & Pod Purity [v0.0.1.9 (Build 18) — Security Hotfix] ✅
 
 > Phase Feature Set Overview:
@@ -376,135 +500,21 @@ across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
 ---
 
 
-## Phase 15: `sgtotp.bak` Import Compatibility Layer [v0.0.1.7 (Build 16)]
-
-> Phase Feature Set Overview:
-> The bridge completes. The web vault learns to open its Android sibling's
-> backups: `sgtotpBackup.ts` parses the `sgtotp.bak` format (encrypted
-> `shellguard-totp-backup-v1` envelopes, plaintext exports, bare item
-> arrays), decrypting client-side via HKDF-SHA256 (salt = `ownerUuid`,
-> AAD `totp_backup:{ownerUuid}`) + AES-GCM-256 through the **pure TS
-> fallback primitives** (LAN-safe), with the enforced SHA-256 checksum over
-> the exact decrypted string. Items map to fresh-UUID vault pearls,
-> `normalizePod()` categories, original timestamps preserved;
-> `ImportExportView` sniffs formats with the PIN/key modal. Companion work:
-> the **strict RELEASE-doc mirror** in `release.yml` (exact-version
-> resolution, hard fail, no auto-notes), the dynamic theme engine with
-> multi-accent support, `AGENTS.md` for the Gemini identity in the Android
-> companion tree, and the landing-header dark-mode brand fix.
-> *(Receipts: `138952b`, `b0fcc47`, `7054595`, `074eab0`, `7b7a90c`,
-> `68da985`, `0b259f7`, `2d7d9a2`, `b125fab`, `fc7e9df`, merge `c6d17d8` —
-> 2026-08-30 → 09-03. Contract source of truth: `compatibility_layer.md`.)*
-
-- [ ] **Task 29: [Functionality] `sgtotpBackup.ts` Parser, Client-Side Decryption & Timestamp Preservation**
-
-Description: Implement the parser/mapper in `src/lib/sgtotpBackup.ts` —
-contract mirrored from the Android `BackupManager.kt` +
-`ShellCryptionEngine.kt`: sniff encrypted `shellguard-totp-backup-v1`,
-plaintext `shellguard-totp-plain-export-v1`, or bare `BackupItemDto[]`;
-decrypt envelopes client-side (HKDF-SHA256: ikm = export key, salt =
-`envelope.ownerUuid`, info = `clawchives-shellcryption-v1` → AES-GCM-256,
-AAD `totp_backup:{ownerUuid}`) using the pure TS fallback primitives; verify
-the SHA-256 checksum over the exact decrypted item-array string (post-decrypt,
-byte-reproducible). Map items to vault pearls with **fresh UUIDs**,
-`normalizePod()` categories, `algorithm`/`digits`/`period` passthrough, and
-**original `localUpdatedAt` preserved** as `created_at`. Prove the full
-crypto round-trip in `tests/unit/sgtotpBackup.test.ts` (encrypted fixture,
-plaintext, bare array, checksum mismatch, AAD tamper). Write
-`compatibility_layer.md` as the cross-project format contract.
-
-> Success Criteria: All three input formats import correctly on HTTP LAN
-> origins; a checksum mismatch or AAD tamper aborts before persistence;
-> imported seeds re-encrypt under `vault_pearls_totp:{id}`; timestamps
-> survive the journey; Android ids are never reused.
-
-- [ ] **Task 30: [UI Component] ImportExportView Format Sniffing, Key Modal & Strict Release Mirror**
-
-Description: Extend `ImportExportView.tsx`: detect sgtotp formats on file
-selection, prompt for the export key/PIN via a modal for encrypted
-envelopes, show the imported-count preview, and commit through the parser
-with sanitized errors. In CI: rewrite `release.yml` to the **strict
-RELEASE-doc mirror** — exact-version `RELEASE-<tag>.md` resolution with hard
-failure (no auto-notes, no fallback) so the GitHub Release body is the
-RELEASE file verbatim. Implement the dynamic theme engine (adaptive
-light/dark + multi-accent support) in the client; add `AGENTS.md` for the
-companion's Gemini identity; fix the landing header's dark-mode brand
-divider; molt the RELEASE file and cut `v0.0.1.7`.
-
-> Success Criteria: Encrypted backups import via the key modal with
-> sanitized failure modes; the GitHub Release body matches the RELEASE file
-> byte-for-byte or the pipeline fails loudly; themes switch live across
-> light/dark and all accents; the bridge is usable end-to-end on LAN.
+> 🕸️ **Post-Hoc Interlude — Post-v0.0.1.9 Hotfix Record (2026-09-13)** — unphased, outside the 2-Task Pairing Law
+> Single-commit hotfixes shipped after the v0.0.1.9 tag, before Phase 18 begins; documented here so the genome stays receipt-honest about post-release work.
+>
+> - [x] **Vault Master-Detail Header Flush & Version-Test Integrity** — receipt `07ccd61` (2026-09-13).
+>   The item-list search header (`ItemListPane`) and the Item Details header (`ItemDetailPane`)
+>   rendered stepping border lines at the dashboard T-junction (left bar ~59px vs right ~64px);
+>   both are pinned to a shared `h-16` so the `border-b` rules form one continuous line.
+>   Companion integrity fix: `tests/unit/version.test.ts` had hardcoded `'0.0.1.8'` — a latent
+>   failure shipped inside v0.0.1.9 (the bump commit landed after the last full oracle run);
+>   the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
+>   can never silently break it again.
 
 ---
 
-
-## Phase 16: Docs Bridge Parity, Agentic Infrastructure & Version Resolver [v0.0.1.8 (Build 17) — Summit]
-
-> Phase Feature Set Overview:
-> The walk ends where the application stands today — and the documentation
-> system becomes a first-class citizen. The project scaffolds its agentic
-> knowledge infrastructure: a comprehensive memory bank (including a
-> dedicated `android/` sub-bank mirroring the companion's crypto, Room
-> schema, TOTP engine and UI models), workflow templates, and formalized
-> agentic rule sets — then synchronizes release-pipeline invariants and
-> formalizes agent git tracking. The **dynamic version resolver**
-> (`src/server/utils/version.ts`) replaces fragile env reads with
-> `package.json` ground truth (multi-tier fallback, unit-tested). The
-> official privacy policy and TOTP store disclosures land; the VitePress
-> companion suite publishes; two-sided bridge parity is achieved across
-> root documentation; the release pipeline gains optimized triggers and a
-> chained mirror job; the installation guide moves to placeholder IPs; and
-> the rolling RELEASE file molts to `v0.0.1.8`.
-> *(Receipts: `ddc35f5`, `124e4ab`, `80babe5`, `acab2ab`, `700c18c`,
-> `1244c5f`, `e61675b`, `bbcc2f5`, `a68008f`, `70d7d46`, `ec4e136`,
-> `0b6ad1f`, `82616f2`, merge `66d9ca4` — 2026-09-04/05. The walk and the
-> codebase now occupy the same commit.)*
-
-- [ ] **Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver**
-
-Description: Initialize the project scaffolding for agent collaboration: a
-comprehensive memory bank under `.agents/memory-bank/` — core files plus a
-dedicated `android/` sub-bank (api-client, crypto-spec, room-schema,
-totp-engine, ui-compose-models) mirroring the companion's internals —
-workflow templates, and agentic rule sets (attractor beacon, git hygiene,
-docs hygiene, continuous improvement). Synchronize release-pipeline
-invariants and formalize agent git tracking (two-layer commit grammar,
-staged-index discipline, verification gates). Implement
-`src/server/utils/version.ts` — `getAppVersion()` resolving dynamically
-from `package.json` with multi-tier fallback, replacing fragile env reads
-in `admin.ts`, `backupManager.ts` and `server.ts`; prove it with
-`tests/unit/version.test.ts` (semver compliance + package ground-truth
-match).
-
-> Success Criteria: The version presented in the SuperLobster panel, backups
-> and API always equals `package.json`; the resolver survives a missing env
-> var; the memory bank loads a cold agent into full project context; the
-> android/ sub-bank mirrors the companion's spec truth.
-
-- [ ] **Task 32: [Documentation Component] Privacy Policy, Docs Bridge Parity & Chained Mirror Release**
-
-Description: Publish the official privacy policy (`docs/privacy.md` —
-zero-knowledge disclosures compliant with Play Store requirements) with
-store disclosures cross-linked into the VitePress portal and CHANGELOG.
-Publish the ShellGuard-TOTP native companion documentation suite
-(`docs/companion/`: topology, security, sync-and-backups, totp-engine).
-Achieve two-sided bridge parity: every root doc (`ARCHITECTURE.md`,
-`BLUEPRINT.md`, `SECURITY.md`, `README.md`, `ADMIN.md`, `CONTRIBUTING.md`,
-docs portal) reconciled to runtime schema truth. Optimize `release.yml`
-triggers and chain the mirror job (release body re-syncs when the RELEASE
-file changes on main). Move the installation guide to placeholder IPs.
-Molt the RELEASE file to `v0.0.1.8` and cut the release through the
-`--release` commit-flag path.
-
-> Success Criteria: The docs claim nothing the runtime doesn't do — both
-> sides of every bridge verified; the privacy policy renders in the portal
-> and satisfies store disclosures; a RELEASE-file edit on main re-syncs the
-> published release body; the summit tag exists.
-
----
-
-## 🏛️ Historical Archive (Phases 1 through 13)
+## 🏛️ Historical Archive (Phases 1 through 14)
 
 Earlier development phases (`v0.0.0.0` void through `v0.0.1.5` Build 14) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
@@ -515,7 +525,7 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.1.5` Build 14) are per
 | **Phase 2** | `Baseline: v0.0.0.2 (Build 3)` | SQLite Bedrock, Security Kernel & Identity Bridge | Tasks 03 & 04 |
 | **Phase 3** | `Baseline: v0.0.0.3 (Build 4)` | Vault CRUD, Opacity Invariant & Lobster Keys | Tasks 05 & 06 |
 | **Phase 4** | `Baseline: v0.0.0.4 (Build 5)` | Test Oracle, Hardened Rekey & Container Deployment | Tasks 07 & 08 |
-| **Phase 5** | `v0.0.1 (Build 6) — Genesis` | Per-Row Metadata Encryption & Port Molt | Tasks 09 & 10 |
+| **Phase 5** | `Baseline: v0.0.0.5 (Build 6)` | Per-Row Metadata Encryption & Port Molt | Tasks 09 & 10 |
 | **Phase 6** | `Baseline: v0.0.0.5 (Build 7)` | SuperLobster Admin Plane & Failsafe Backups | Tasks 11 & 12 |
 | **Phase 7** | `Baseline: v0.0.0.6 (Build 8)` | Multi-Account Architecture, QuickLogin & Landing Gateway | Tasks 13 & 14 |
 | **Phase 8** | `Baseline: v0.0.0.7 (Build 9)` | Vault UX Renaissance — Pods, Lock Hardening & NavIntent | Tasks 15 & 16 |

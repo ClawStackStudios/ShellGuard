@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 13 (`v0.0.0.0` → `v0.0.1.5`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 14 (`v0.0.0.0` → `v0.0.1.6`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 14, 15, and 16), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 15, 16, and 17), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 

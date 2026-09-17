@@ -65,7 +65,6 @@
 - [Environment Variables](#️-environment-variables)
 - [Key System](#-key-system)
 - [Encryption Model](#-encryption-model)
-- [Encryption Keys & Database Encryption](#️-encryption-keys--database-encryption)
 - [API Reference](#-api-reference)
 - [Project Structure](#-project-structure)
 - [Available Scripts](#️-available-scripts)
@@ -82,49 +81,34 @@
 
 **ShellGuard** is a privacy-first, self-hostable **secrets vault** built for the Human-Agent ecosystem. Passwords, TOTP seeds, secure notes, SSH keys and encrypted attachments live as *pearls* behind a hardened carapace: everything sensitive is encrypted **in your browser** before the server ever sees it. No cloud. No plaintext at rest. Just your grotto. **Three layers of encryption** protect your data at every level — client-side secrets, server-side metadata, and optional whole-database encryption.
 
+### 🔐 Security & Encryption
+
 - 🔐 **Zero-Knowledge ShellCryption©™** — Secrets are sealed client-side with AES-GCM-256 derived from your `hu-` key via HKDF. The server stores only opaque `{v, alg, iv, ct, aad}` blobs and mathematically cannot decrypt them.
 - 🔒 **Per-Row Metadata Encryption©™** — Server-side AES-256-GCM encrypts metadata fields (title, username, URL, category, notes, file name) in-place using `DB_ENCRYPTION_KEY`. Backward-compatible: legacy plaintext passes through; new/updated items encrypt automatically.
-- 🗝️ **ClawKeys©™ Identity** — Passwordless login with a generated `hu-` identity key; short-lived `api-` bearer tokens carry every request.
-- 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
+- 🔒 **Native LAN TLS & WebCrypto Fallback** — Automatic EC P-256 self-signed certificates with SANs (`TLS_ENABLED=true`) for instant browser WebCrypto support on LAN IPs, plus a pure-TypeScript WebCrypto fallback engine (`webCryptoFallback.ts`) for plain HTTP LAN setups.
+- 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
+
+### 🐚 The Grotto (Vault)
+
 - 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 10 MB per file), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
 - 🏷️ **Custom Fields** — Bitwarden-style custom fields (Text, Hidden, Boolean, Linked) across logins, notes, and SSH keys. Hidden custom fields are sealed client-side via AES-GCM-256 with AAD integrity verification.
-- 🔒 **Native LAN TLS & WebCrypto Fallback** — Automatic EC P-256 self-signed certificates with SANs (`TLS_ENABLED=true`) for instant browser WebCrypto support on LAN IPs, plus a pure-TypeScript WebCrypto fallback engine (`webCryptoFallback.ts`) for plain HTTP LAN setups.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
-- 💾 **Data Survival & Resilient Backups** — Born from real-world disaster recovery: painless dual-layer backups (live-consistent Online Backup API SQLite snapshots + comprehensive client-side encrypted vault exports with attachments and keys) designed to ensure you never face a catastrophic lock-out.
 - 📤 **Sovereign Exports & Imports** — Metadata CSV export, re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments, plus native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
 - 📱 **ShellGuard-TOTP Android Companion** — Dedicated native Android 2FA authenticator with biometrics, hardware-backed KeyStore isolation, camera & gallery QR scanning, and 1-way mirror sync with the ShellGuard web vault. Releases: [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases).
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically without flushing offline recovery buffers.
-- 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
-- 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
+
+### 🤖 Agents & Administration
+
+- 🗝️ **ClawKeys©™ Identity** — Passwordless login with a generated `hu-` identity key; short-lived `api-` bearer tokens carry every request.
+- 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
 - 🦞 **SuperLobster Panel** — Token-gated instance admin plane at `/superlobster`: strict-metadata lobster management (cascade delete with type-to-confirm), read-only diagnostics, whitelist-only settings, and failsafe database backups (SQLCipher-consistent Online Backup API snapshots with manifest + rotation). Restores stay offline by design. See [ADMIN.md](./ADMIN.md).
+
+### 🛠️ Ops & Design
+
+- 🐳 **Docker-First** — Single container serving UI + API, `PUID`/`PGID` aware, healthchecked, publishable to GHCR.
+- 💾 **Data Survival & Resilient Backups** — Born from real-world disaster recovery: painless dual-layer backups (live-consistent Online Backup API SQLite snapshots + comprehensive client-side encrypted vault exports with attachments and keys) designed to ensure you never face a catastrophic lock-out.
 - 🌊 **Reef Modernist Design** — "Bioluminescent Defense": deep abyssal surfaces, glowing shells, Sora/Geist/JetBrains Mono typography.
 
-### 🔐 Encryption at a Glance
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  LAYER 1 — ShellCryption©™ (client-side, zero-knowledge, always on)        │
-│                                                                             │
-│    HKDF-SHA-256(hu- key, salt = uuid) → AES-GCM-256                        │
-│    Encrypts: secret, totp_secret, content, key_value, file_data             │
-│    Server stores only {v, alg, iv, ct, aad} blobs                          │
-│    Server CANNOT decrypt. Ever.                                             │
-│                                                                             │
-│  LAYER 2 — Per-Row Metadata Encryption (server-side, DB_ENCRYPTION_KEY)    │
-│                                                                             │
-│    HKDF-SHA-256(DB_ENCRYPTION_KEY) → AES-256-GCM                           │
-│    Encrypts: title, username, url, category, notes, file_name               │
-│    Stored as {v:1, alg:"SG-META", iv, ct} in same TEXT columns             │
-│    Backward-compatible — legacy plaintext passes through                    │
-│    When DB_ENCRYPTION_KEY is not set → no-op (metadata stays plaintext)    │
-│                                                                             │
-│  LAYER 3 — SQLCipher (optional defense-in-depth)                            │
-│                                                                             │
-│    DB_ENCRYPTION_KEY → whole-file AES-256                                   │
-│    Covers entire database file at rest                                      │
-│    Optional — strongly recommended for production                           │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
 
 ---
 
@@ -238,6 +222,9 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 
 ## ⚙️ Environment Variables
 
+<details>
+<summary>Full environment variable reference</summary>
+
 | Variable | Default | Purpose |
 |---|---|---|
 | `NODE_ENV` | `production` | Runtime mode (production or development) |
@@ -259,6 +246,8 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 | `API_RATE_WINDOW` / `API_RATE_LIMIT` | `60000` / `100` | Global API rate-limit window (ms) and request cap |
 | `PUID` / `PGID` | `1000` | Linux UID/GID the container drops privileges to |
 
+</details>
+
 ---
 
 ## 🔑 Key System
@@ -271,24 +260,42 @@ ShellGuard uses a **prefix-based identity token system** — no passwords, no ac
 | `lb-` | **LobsterKey** (Agent Key) | 64 chars (67 total) | For your AI agents and scripts. Granular permissions, optional expiry, per-key rate limits. Generated in Settings; stored hash-only (v0.0.1.9) — the plaintext is shown exactly once at mint. |
 | `api-` | **Session Token** | 32 chars (36 total) | Short-lived REST API bearer. Auto-issued by `POST /api/auth/token`. |
 
-> [!TIP]
-> **Cryptographic Handshake Security**: When an agent authenticates with an `lb-` key, prefer the SHA-256 pre-hashed handshake (`keyHash`) over sending the raw key. The backend validates via constant-time comparison.
-
 > [!CAUTION]
-> Your `hu-` key file is the **only** way into your grotto — and because it seeds your ShellCryption key, losing it means your pearls are unrecoverable ciphertext. Back it up offline.
-
-> [!WARNING]
-> **Your `hu-` key is the single most important piece of data in ShellGuard.**
+> **Your `hu-` key is the single most important piece of data in ShellGuard** — it is your identity AND your encryption seed, and the **only** key that can decrypt your secrets.
 >
-> - Your `hu-` key is your **identity AND your encryption seed**. It is the **ONLY** key that can decrypt your secrets.
-> - **Losing your `hu-` key means ALL encrypted data is permanently unrecoverable.** There is no recovery, no reset, no "forgot my key" flow. This is by design.
-> - **Back up your `hu-` key to at least 2 secure, accessible locations** (e.g., encrypted USB drive, printed paper in a safe, password manager). Treat it like a master password — because it **IS** your master password.
-> - **Never store it in plain text** on your server, in your repo, or in cloud sync folders.
-> - The server only stores a **SHA-256 hash** of your key. Even a full server compromise cannot recover your `hu-` key.
+> - **Losing it means ALL encrypted data is permanently unrecoverable.** No recovery, no reset, no "forgot my key" flow — this is by design.
+> - **Back it up to at least 2 secure, accessible locations** (encrypted USB drive, printed paper in a safe, password manager). It **IS** your master password.
+> - **Never store it in plaintext** on the server, in the repo, or in cloud-sync folders — the server stores only its **SHA-256 hash**, so even a full server compromise cannot recover it.
+> - 🤖 **Agent handshake tip**: authenticate agents with the SHA-256 pre-hashed handshake (`keyHash`) rather than the raw key — the backend validates via constant-time comparison.
 
 ---
 
 ## 🔐 Encryption Model
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1 — ShellCryption©™ (client-side, zero-knowledge, always on)        │
+│                                                                             │
+│    HKDF-SHA-256(hu- key, salt = uuid) → AES-GCM-256                        │
+│    Encrypts: secret, totp_secret, content, key_value, file_data             │
+│    Server stores only {v, alg, iv, ct, aad} blobs                          │
+│    Server CANNOT decrypt. Ever.                                             │
+│                                                                             │
+│  LAYER 2 — Per-Row Metadata Encryption (server-side, DB_ENCRYPTION_KEY)    │
+│                                                                             │
+│    HKDF-SHA-256(DB_ENCRYPTION_KEY) → AES-256-GCM                           │
+│    Encrypts: title, username, url, category, notes, file_name               │
+│    Stored as {v:1, alg:"SG-META", iv, ct} in same TEXT columns             │
+│    Backward-compatible — legacy plaintext passes through                    │
+│    When DB_ENCRYPTION_KEY is not set → no-op (metadata stays plaintext)    │
+│                                                                             │
+│  LAYER 3 — SQLCipher (optional defense-in-depth)                            │
+│                                                                             │
+│    DB_ENCRYPTION_KEY → whole-file AES-256                                   │
+│    Covers entire database file at rest                                      │
+│    Optional — strongly recommended for production                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ShellGuard's triple-layer encryption creates distinct security boundaries. Here is what each actor can access:
 
@@ -312,22 +319,17 @@ Per-row metadata encryption uses the same `DB_ENCRYPTION_KEY` as SQLCipher whole
 
 Existing plaintext metadata is transparently readable. New or updated items are encrypted automatically. No migration step required — the system handles mixed plaintext/ciphertext rows seamlessly.
 
----
 
-## 🗝️ Encryption Keys & Database Encryption
+<details>
+<summary>Enable database encryption (key setup)</summary>
 
-`DB_ENCRYPTION_KEY` now governs **two things**:
-
-1. **SQLCipher whole-DB encryption** — encrypts the entire `db.sqlite` file at rest with AES-256
-2. **Per-row metadata encryption** — encrypts metadata columns (`title`, `username`, `url`, `category`, `notes`, `file_name`) with AES-256-GCM
-
-Both activate together when the key is set. Generate a secure key:
+Generate a secure key:
 
 ```bash
 openssl rand -base64 32
 ```
 
-**Using Docker:** set it in your compose environment:
+**Using Docker** — set it in your compose environment:
 
 ```yaml
 environment:
@@ -344,10 +346,13 @@ npm run start:api
 > [!IMPORTANT]
 > Secret fields (passwords, TOTP seeds, SSH keys, file data) are encrypted **separately** by ShellCryption on the client. `DB_ENCRYPTION_KEY` never touches those fields — it only protects metadata and the database file.
 
+</details>
+
 > [!CAUTION]
 > If you lose `DB_ENCRYPTION_KEY`, the file-level metadata becomes inaccessible. Store it separately from your backups (password manager / secrets vault), never in the same directory as `data/`, and never committed to version control.
 
 ---
+
 
 ## 🔌 API Reference
 
@@ -450,6 +455,9 @@ Token-gated via `ADMIN_TOKEN` (503 when unset). Cookie-session auth (`sg_admin_s
 
 ## 📂 Project Structure
 
+<details>
+<summary>Repository layout</summary>
+
 ```
 ShellGuard/
 ├── server.ts                     # Express entrypoint (twin-port dev, single-port prod)
@@ -477,9 +485,14 @@ ShellGuard/
     └── App.tsx                   # Root view router
 ```
 
+</details>
+
 ---
 
 ## 🛠️ Available Scripts
+
+<details>
+<summary>All npm scripts</summary>
 
 | Script | Description |
 |---|---|
@@ -494,6 +507,8 @@ ShellGuard/
 | `npm run lint` | TypeScript verification (`tsc --noEmit`) |
 | `npm test` | Run the Vitest suites |
 | `npm run test:full` | Full gate: unit + integration + security + build-gates |
+
+</details>
 
 ---
 
@@ -519,6 +534,9 @@ ShellGuard/
 
 ## 🛡️ Self-Hosted Hardening Checklist
 
+<details>
+<summary>Pre-exposure hardening checklist (13 checks)</summary>
+
 Before exposing ShellGuard to anything beyond localhost:
 
 - [ ] Set **`DB_ENCRYPTION_KEY`** (`openssl rand -base64 32`) — activates both SQLCipher and per-row metadata encryption
@@ -534,6 +552,8 @@ Before exposing ShellGuard to anything beyond localhost:
 - [ ] Store your `hu-` identity key offline in a secure vault
 - [ ] **Back up your `hu-` identity key to at least 2 secure locations** — losing it means permanent data loss
 - [ ] **Verify per-row encryption is active** by checking startup logs for `[FieldEncryption] AES-256-GCM metadata encryption active`
+
+</details>
 
 ---
 

@@ -1,4 +1,71 @@
 ---
+Date: 2026-09-17
+TaskRef: "CaraBase Brand Asset Alignment & Web Server Favicon Distinction"
+
+Learnings:
+- Aligned ShellGuard's brand mascot to CaraBase's woodcut vector engraving aesthetic: forward/downward crab orientation, pincers clasping the vault door with 3D 'S' crest, stippled shading, and cream highlights.
+- Created server-distinct favicon (`favicon.svg`) with a notched carapace crest shield and multi-grid Web Globe (orthographic WWW grid with equator, prime meridian, dual vertical meridians, and dual horizontal latitudes).
+- Themed the center Web Globe to ShellGuard's signature purple/pink palette (`#e4048a` Lobster Fuchsia, `#ec4899` Hot Pink, `#c026d3` Royal Purple, `#ffffff` center beacon) for high legibility at 16px and 32px tab scale.
+- Maintained strict 1:1 twin parity between `public/` and `docs/public/assets/`.
+- Enforced hard memory bank isolation: Antigravity strictly uses `.agents/memory-bank/`, while Cline uses `.clinerules/memory-bank/`.
+
+Difficulties:
+- Resolving Google Search thumbnail reCAPTCHA block when searching user-provided URL; resolved by decoding the base64 URL fragment `#sv=...` with Python to extract the image DocID (`-ittcLCWgFOmnM`) and curling `encrypted-tbn0.gstatic.com` directly.
+
+Successes:
+- Rendered high-res 1:1 thumbnail (1024x1024), 16:9 brand logo card (1024x572), and panoramic 1024x500 Web Feature Graphic banner.
+- All 4 quality gates passed 100% green (lint 0 errors, vite build clean, docs:build clean, 210/211 vitest tests).
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Web Server favicon & brand asset twin parity.
+- Hard boundary: Agent memory bank isolation.
+---
+
+---
+Date: 2026-09-16
+TaskRef: "Release v0.0.1.10 (The Auditable Corpus, ClawKey Canon, Bidirectional Audit)"
+
+Learnings:
+- Formalized "docs bow to code" governance ruling: when verified, secure code contradicts documentation claims, docs bow to code. Corrected 8 documentation lies (PRAGMA rekey, limiter counts, identity-file contract, phantom customFields.ts, tlsManager.ts, client crypto exports, fifth canMove mask, `_custom` AAD namespaces).
+- Established the ClawKey Canon across root docs and UI: `ClawKey©™` (sovereign 67-char `hu-` identity key), `ShellCryption©™` (client-side zero-knowledge encryption engine), `LobsterKeys` (`lb-` delegated agent keys). Renamed 14 UI strings.
+- Queued Phase 24 (Cryptographic Audit Hardening & Third-Party Auditability) and embedded Documentation Impact blockquotes across all queued phases.
+- Adopted Decision Log (`decision-log.md`) with 20-entry sliding window.
+
+Difficulties:
+- Uncovering phantom documentation claims where code had no literal grep hits. Resolved by reading test fixtures as the ground-truth behavioral oracle.
+
+Successes:
+- Shipped 34-commit documentation-governance release v0.0.1.10 with 0 runtime defects.
+- 100% passing tests (210 passed, 1 skipped).
+
+Improvements_Identified_For_Consolidation:
+- General pattern: The ClawKey Canon.
+- General pattern: Docs bow to code principle.
+---
+
+---
+Date: 2026-09-13
+TaskRef: "Release v0.0.1.9 (Key Ledger Hardening & Pod Purity)"
+
+Learnings:
+- Implemented Phase 17: Migration `0004_key_ledger.sql` retired plaintext `api_key` column from `agent_keys`, storing SHA-256 `key_hash` and `key_fingerprint` (`lb-***-XXXX`).
+- Constant-time `crypto.timingSafeEqual()` verification prevents timing attack side channels.
+- Plaintext keys returned once at minting time; card rows display masked fingerprints (`maskKey()`).
+- Dropped hardcoded `DEFAULT 'Personal'` from pod categories (uncategorized = `""`).
+- Created `tests/agent-key-hash.test.ts` proving zero plaintext byte leakage in SQLite.
+
+Difficulties:
+- Backfilling existing agent keys in-place without invalidating running agent sessions. Resolved by repointing `api_tokens` from raw keys to agent row IDs.
+
+Successes:
+- Clean database migration and zero-plaintext key storage achieved.
+- All 15 test files (210 tests) green.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Hash-only agent key ledger.
+---
+
+---
 Date: 2026-09-05
 TaskRef: "Root Documentation Alignment & Runtime Version Resolver Parity"
 

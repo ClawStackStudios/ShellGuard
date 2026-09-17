@@ -2,13 +2,13 @@
 
 ## Technologies
 
-- **Runtime**: Node.js v20+ (v22.23.0 in current environment)
+- **Runtime**: Node.js v20+ (v22.23.0 at `/config/Applications/node-v22.23.0-linux-x64/bin`)
 - **Framework**: Express 5 (path-to-regexp v8)
 - **Database**: SQLite via `better-sqlite3-multiple-ciphers` (SQLCipher support)
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
-- **Build**: Vite (strictPort :6464, /api proxy → :6565)
+- **Build**: Vite (strictPort :6464, /api proxy → :6565), VitePress for documentation portal
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + supertest, per-suite DATA_DIR isolation
+- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 15 suites / 210 unit tests, per-suite DATA_DIR isolation
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
 - **License**: AGPL-3.0-only
 - **Mobile Stack (Native Android)**: Kotlin 2.0+, Jetpack Compose, Room (SQLCipher), Android Keystore Biometrics, Retrofit/Ktor, WorkManager
@@ -55,9 +55,12 @@ npm run scuttle:dev-start
 
 ## Tool Usage Patterns
 
-- `npm test` — all suites
+- `npm test` — all suites (15 test files, 210 tests)
 - `npm run test:integration` — auth-flow + vault-crud + settings + metadata-encryption
 - `npm run test:security` — cross-owner isolation + permission bypass
 - `npm run test:build-gates` — Dockerfile/config shape gates
+- `npm run lint` — TypeScript check (`tsc --noEmit`)
+- `npm run build` — Vite production bundle
+- `npm run docs:build` — VitePress documentation portal build
 - `npm run scuttle:dev-reset` — wipe data-dev/
 - `tsx scripts/encrypt-existing-metadata.ts` — batch encrypt legacy plaintext metadata

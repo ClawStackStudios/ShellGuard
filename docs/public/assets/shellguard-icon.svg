@@ -5,15 +5,30 @@
       <stop offset="50%" stop-color="#ec4899" />
       <stop offset="100%" stop-color="#06b6d4" />
     </linearGradient>
-    <filter id="sg-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="1.5" result="glow" />
+    <filter id="sg-glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="1.2" result="glow" />
       <feComposite in="SourceGraphic" in2="glow" operator="over" />
     </filter>
   </defs>
   <rect width="32" height="32" rx="8" fill="#080c14" stroke="#e4048a" stroke-width="1.5" stroke-opacity="0.4"/>
-  <!-- Shield outline -->
-  <path d="M16 5L24 8.5V15C24 20.5 19.5 25.5 16 27C12.5 25.5 8 20.5 8 15V8.5L16 5Z" stroke="url(#sg-grad)" stroke-width="2" stroke-linejoin="round" filter="url(#sg-glow)"/>
-  <!-- Clam pearl center -->
-  <circle cx="16" cy="15" r="3.5" fill="#e4048a" fill-opacity="0.8" />
-  <circle cx="15" cy="14" r="1" fill="#ffffff" />
+  <!-- Notched Carapace Shield Outline -->
+  <path d="M16 4.5L19.5 6.5L24.5 5.5V14.5C24.5 20.8 19.5 26 16 27.5C12.5 26 7.5 20.8 7.5 14.5V5.5L12.5 6.5L16 4.5Z" 
+        stroke="url(#sg-grad)" stroke-width="2" stroke-linejoin="round" filter="url(#sg-glow)"/>
+  
+  <!-- Central Full Web Globe (Multi-Grid WWW Icon in ShellGuard Purple/Pink) -->
+  <!-- Outer Globe Circle -->
+  <circle cx="16" cy="16" r="5.2" stroke="#e4048a" stroke-width="1.15" filter="url(#sg-glow)"/>
+  
+  <!-- Equator (Horizontal Center) -->
+  <line x1="10.8" y1="16" x2="21.2" y2="16" stroke="#ec4899" stroke-width="0.9" stroke-linecap="round"/>
+  
+  <!-- Prime Meridian (Vertical Center) -->
+  <line x1="16" y1="10.8" x2="16" y2="21.2" stroke="#ffffff" stroke-width="0.9" stroke-linecap="round" stroke-opacity="0.95"/>
+  
+  <!-- Vertical Meridians (Left & Right) -->
+  <ellipse cx="16" cy="16" rx="2.7" ry="5.2" stroke="#c026d3" stroke-width="0.85" fill="none"/>
+  
+  <!-- Horizontal Latitudes (North & South) -->
+  <path d="M 12.0 13.0 Q 16 14.3 20.0 13.0" stroke="#f472b6" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+  <path d="M 12.0 19.0 Q 16 17.7 20.0 19.0" stroke="#f472b6" stroke-width="0.8" stroke-linecap="round" fill="none"/>
 </svg>

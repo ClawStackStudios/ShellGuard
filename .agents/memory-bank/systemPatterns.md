@@ -38,19 +38,14 @@ Every mutation follows this gauntlet (no shortcuts):
 
 - **In-place encryption**: Encrypted JSON envelopes stored in same TEXT columns as plaintext. No schema changes.
 - **Backward compatibility**: `isEncryptedField()` check — non-SG-META values pass through unchanged.
+- **WebCrypto Fallback Pattern**: `window.crypto.subtle` is undefined on plain HTTP browser origins. `src/lib/webCryptoFallback.ts` provides pure TypeScript fallback implementations (SHA-256, HMAC-SHA256, HKDF, AES-GCM-256) that transparently replace crypto.subtle methods when unavailable.
+- **Blob download pattern**: Replace `data:` URI links with `Blob` + `URL.createObjectURL(blob)` to avoid Chromium insecure-connection download blocks on HTTP LAN.
+- **UUID entropy fallback**: Multi-tier RFC 4122 v4 UUID generation for environments where `crypto.randomUUID` is unavailable.
 - **Singleton cipher**: `fieldCipher` initialized once at startup, null when `DB_ENCRYPTION_KEY` unset.
 - **Ownership scoping**: Every query filters `owner_uuid`. Missing scope = security bug.
 - **Reference-model attachments**: pearls link files via a JSON ID array in `attachments`; each file lives in its own `vault_secure_attachments` row (ShellCrypted file_data, per-row encrypted metadata). Pearl DELETE cascade-deletes linked attachments with ownership scope.
 - **SuperLobster admin plane**: separate cookie-session auth (`sg_admin_session`, volatile in-memory store) — never the user Bearer restAdapter. Strict-metadata user list, whitelist settings, server-side-only backups. Admin actor sentinel: `SUPERLOBSTER`.
 - **Online Backup API backups**: `db.backup()` from better-sqlite3-multiple-ciphers — WAL-safe, live-consistent; SQLCipher copies stay encrypted with the same key.
-- **User-Driven Pods & Hierarchical Categories**: Pods are 100% user-created paths (e.g. `Work/Finance`), with zero hardcoded defaults. Normalization cleans leading/trailing/multiple slashes. Sub-pod queries match parent prefixes (`targetPod + "/"`). Local color assignments persist in `localStorage`. Mutations use optimistic local React updates, batched async PUTs with `skipScuttle=true`, and single terminal reconciliation via `scuttleVault()`. Deleted pods cascade member items to uncategorized (`""`).
-- **Unified Item Composition (Bitwarden Model)**: Vault items are rich, primary records (logins with embedded usernames, passwords, URIs, rich notes, TOTP seeds, and attached files). Child attachments belong to parent items and do not inflate Pod top-level item counts.
-- **Bitwarden-Style Custom Fields**: JSON array encrypted client-side with AES-256-GCM under item-scoped AAD namespaces (`vault_pearls_custom:{id}`, `vault_secure_notes_custom:{id}`, `vault_ssh_keys_custom:{id}`). Omitted from server `metadataGuard.ts` to prevent double-encryption under `DB_ENCRYPTION_KEY`. Supports `Text`, `Hidden` (masked with reveal), `Checkbox` (boolean), and dynamic `Linked` properties (resolved at render time from core item properties).
-- **Modal Form UX & Internal Element Scrolling**: Dialogs with rich multi-field forms lock the outer backdrop (`overflow-hidden`) while the dialog card takes fixed viewport height (`h-[90vh] md:h-[85vh]` with `max-w-3xl`) with a pinned header (title/icon/close), pinned footer (actions), and internal element scrolling (`flex-1 overflow-y-auto custom-scrollbar`). Secondary action menus near the modal bottom expand upward (`bottom-full mb-2`) with click-outside dismissal backdrops.
-- **Antigravity Customization Architecture & Git Persistence (`.agents/`)**: Rigorous segregation dividing operational behavioral invariants (`rules/`), on-demand procedural capabilities with YAML frontmatter (`skills/`, e.g. `skills/ui-webdev/SKILL.md`), standardized document scaffolds and ASCII art (`templates/`, e.g. `release-template.md`), and interactive slash commands (`workflows/`, e.g. `draft-release.md`, `version-update.md`). Tracked directly in Git as first-class repository artifacts (not ignored in `.gitignore`), preserving memory bank and behavioral context across clones and contributors.
-- **Zero-Waste Release Pipeline & Chained Mirror Synchronization**: GitHub Actions (`.github/workflows/release.yml`) uses server-evaluated job-level `if:` conditions to eliminate billable VM runner allocation on standard commits to `main`. On `--release vX.Y.Z.N` commits or tag pushes, the `release` job runs to publish the GitHub Release, followed sequentially by `mirror` (`needs: [release]`), which syncs the root `RELEASE-vX.Y.Z.N.md` notes into the GitHub Release body via `gh release edit`. Manual `workflow_dispatch` executes release while bypassing mirror.
-- **Cross-Platform Native Android Client Ecosystem**: Pure Kotlin + Jetpack Compose + Room DAO + Biometric Android KeyStore clients interoperate seamlessly with the backend REST API, utilizing the exact same `ShellCryption` HKDF + AES-GCM-256 envelope spec.
-- **Cross-Ecosystem One-Way Mirror Sync (`sgtotp.bak`)**: Web vault is the upstream authority. Native Android companion app mirrors remote TOTP pearls downstream (`GET /api/vault`) into a read-only group, while local codes created on-device are isolated (`isLocalOnly = true`). The Android app exports local codes via `sgtotp.bak` (encrypted via HKDF + AES-GCM-256 with AAD `totp_backup:{ownerUuid}` and SHA-256 checksum). The web client decrypts this format client-side, normalizes Base32 seeds, maps fresh UUIDs and pods, and commits to `vault_pearls` which then mirror downstream.
 - **Audit on mutation**: Every write emits to segregated `audit.sqlite` with extended redaction.
 - **Envelope contract**: All responses use `{success, data}`. RestAdapter unwraps centrally.
 
@@ -59,6 +54,16 @@ Every mutation follows this gauntlet (no shortcuts):
 - `src/server/utils/fieldEncryption.ts` — Core crypto: HKDF + AES-256-GCM, singleton fieldCipher
 - `src/server/utils/metadataGuard.ts` — Column registry + prepareWrite/prepareRead helpers
 - `src/lib/shellCryption.ts` — Client-side HKDF + AES-GCM-256
-- `src/lib/sgtotpBackup.ts` — Android `sgtotp.bak` format sniffer, HKDF/AES-GCM client decryptor, AAD + checksum verification
 - `src/server/middleware/auth.ts` — requireAuth, requirePermission, requireHuman
 - `server.ts` — Express 5 entrypoint, exports `app` for test seam
+
+## Auditability Invariants (Cryptographer's Lens — 2026-09-16)
+
+Established by the bidirectional docs<->code audit (8 lies corrected; docs bow to code). These are standing patterns, verified against code:
+
+- **Three limiters, never conflated**: `authLimiter` 10/15m default (`AUTH_RATE_LIMIT`-tunable, `skipSuccessfulRequests: true`) · `adminAuthLimiter` 5/10m · `apiLimiter` 100/min — in-process (restart resets; multi-instance shares nothing)
+- **Five permission masks** (not four): `canRead/canWrite/canEdit/canMove/canDelete` — enumerate the zod schema (`schemas.ts`), never recall; wizard presets READ/WRITE/EDIT/MOVE/ECOSYSTEM/FULL/CUSTOM
+- **Rekey = `PRAGMA rekey`** (better-sqlite3-multiple-ciphers), NOT SQLCipher's `sqlcipher_export`
+- **Identity file contract**: `shellguard_identity_<username>.json` = `{username, displayName, uuid, token, createdAt}` — per-username filename; never infer shape from redaction lists
+- **Custom-field AAD**: `<table>_custom:{id}` (e.g. `vault_pearls_custom:{id}`) — when a crypto claim has no literal code hit, the TEST fixtures are the oracle
+- **The claim battery**: grep enforcing code first, assert doc second; every documented invariant must trace to code and a witnessing test (Phase 24 makes it executable)

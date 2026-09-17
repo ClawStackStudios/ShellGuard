@@ -38,7 +38,7 @@ The **Technical Reference** section provides ground-truth specifications, data m
 | Invariant | Implementation | Boundary |
 | :--- | :--- | :--- |
 | **Zero-Knowledge Core** | Client-side HKDF-SHA256 + AES-GCM-256 with AAD binding | Plaintext keys and secrets never leave the user's browser or device. |
-| **Three Secrets Model** | `hu-` (Human Key), `lb-` (LobsterKey), `SENSITIVE_KEY` (Server Master) | Strict operational segregation between humans, AI agents, and server storage. |
+| **Three Secrets Model** | `hu-` (ClawKey), `lb-` (LobsterKey), `SENSITIVE_KEY` (Server Master) | Strict operational segregation between humans, AI agents, and server storage. |
 | **Triple-Layer Defense** | Layer 1: Client ShellCryption<br/>Layer 2: Metadata AES-256-GCM<br/>Layer 3: SQLCipher Whole-DB | Defense-in-depth against physical database theft and server-side compromise. |
 | **Forensic Segregation** | Append-only `audit.sqlite` separate from `db.sqlite` | Audit logs cannot be modified, deleted, or wiped by database restores. |
 | **Offline-First Companion**| Hardware KeyStore + StrongBox enclave on Android | Generates 2FA codes 100% offline without network requests or external tracking. |

@@ -56,3 +56,14 @@ Every mutation follows this gauntlet (no shortcuts):
 - `src/lib/shellCryption.ts` — Client-side HKDF + AES-GCM-256
 - `src/server/middleware/auth.ts` — requireAuth, requirePermission, requireHuman
 - `server.ts` — Express 5 entrypoint, exports `app` for test seam
+
+## Auditability Invariants (Cryptographer's Lens — 2026-09-16)
+
+Established by the bidirectional docs<->code audit (8 lies corrected; docs bow to code). These are standing patterns, verified against code:
+
+- **Three limiters, never conflated**: `authLimiter` 10/15m default (`AUTH_RATE_LIMIT`-tunable, `skipSuccessfulRequests: true`) · `adminAuthLimiter` 5/10m · `apiLimiter` 100/min — in-process (restart resets; multi-instance shares nothing)
+- **Five permission masks** (not four): `canRead/canWrite/canEdit/canMove/canDelete` — enumerate the zod schema (`schemas.ts`), never recall; wizard presets READ/WRITE/EDIT/MOVE/ECOSYSTEM/FULL/CUSTOM
+- **Rekey = `PRAGMA rekey`** (better-sqlite3-multiple-ciphers), NOT SQLCipher's `sqlcipher_export`
+- **Identity file contract**: `shellguard_identity_<username>.json` = `{username, displayName, uuid, token, createdAt}` — per-username filename; never infer shape from redaction lists
+- **Custom-field AAD**: `<table>_custom:{id}` (e.g. `vault_pearls_custom:{id}`) — when a crypto claim has no literal code hit, the TEST fixtures are the oracle
+- **The claim battery**: grep enforcing code first, assert doc second; every documented invariant must trace to code and a witnessing test (Phase 24 makes it executable)

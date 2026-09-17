@@ -6,14 +6,14 @@ ShellGuard is strictly passwordless. There are no server-side user passwords, no
 
 ---
 
-## 🗝️ The Human Key (`hu-`)
+## 🗝️ The ClawKey (`hu-`)
 
-Your identity and vault encryption root are unified into a single 67-character cryptographic token known as the **Human Key** (`hu-` + 64 hex characters).
+Your identity and vault encryption root are unified into a single 67-character cryptographic token known as the **ClawKey** (`hu-` + 64 base62 characters; historically aliased the *Human Key*).
 
 ```text
-hu-3b9f4e81c7a20d4e9b6a1234567890abcdef1234567890abcdef1234567890abcdef
+hu-3b9f4e81c7a20d4e9b6anuBIPW3ahovCJQX4bipwDKRY5cjqxELSZ6dkryFMT07e
 └── Prefix (3 chars)
-    └─────────────────── 256-bit Random Hex Entropy (64 chars) ───────────────────┘
+    └─────────────────── 256-bit Random Base62 Entropy (64 chars) ───────────────────┘
 ```
 
 ### The Dual Role of the `hu-` Key:
@@ -25,22 +25,21 @@ hu-3b9f4e81c7a20d4e9b6a1234567890abcdef1234567890abcdef1234567890abcdef
    - The server **NEVER** receives or stores the raw `hu-` key.
 
 2. **Zero-Knowledge Decryption (Client-Side)**:
-   - In your browser, the raw `hu-` key is fed into HKDF-SHA-256 alongside the item's UUID salt to derive an item-specific AES-GCM-256 key.
+   - In your browser, the raw `hu-` key is fed into HKDF-SHA-256 alongside your user UUID (the HKDF salt) to derive your session ShellCryption AES-GCM-256 key.
    - All secret decryption occurs in browser memory. When you close the tab or lock your session, the key is wiped from RAM.
 
 ---
 
-## 📥 The Vault Access File (`shellguard_identity_key.json`)
+## 📥 The Vault Access File (`shellguard_identity_<username>.json`)
 
 When you register a new lobster identity during Setup, ShellGuard prompts you to download your Vault Access File:
 
 ```json
 {
-  "version": "1.0.0",
   "username": "lucas",
   "displayName": "Lucas",
-  "humanKey": "hu-3b9f4e81c7a20d4e9b6a1234567890abcdef...",
   "uuid": "4ff11202-d872-4415-99db-1bbad96776d8",
+  "token": "hu-3b9f4e81c7a20d4e9b6a...",
   "createdAt": "2026-08-28T20:00:00.000Z"
 }
 ```

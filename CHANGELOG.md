@@ -1,5 +1,14 @@
 # Changelog — ShellGuard
 
+## [0.0.1.10] - 2026-09-16
+
+### Changed
+- **The Auditable Corpus** — 34-commit documentation-and-governance arc with zero runtime changes: genome chronology restored (spine `Stage N = Phase N−1`, TOTP decimal-interlude pattern, 26/26 roadmap links), ROADMAP reorganized top-down chronological (frontmatter `current_position`, inline hotfix interlude, Completed Releases 15→16→17), and the docs/ portal truth-synced to migration 0004.
+- **The ClawStack Canon** — ClawKey / ShellCryption / LobsterKeys written into ARCHITECTURE (§ The ClawKey Method) and the UI (14 user-facing strings renamed ShellKey™ → ClawKey™); web and Android now say the same word.
+- **Bidirectional docs↔code audit** — 8 docs-lies corrected against verified code (PRAGMA rekey, limiter counts, identity-file shape, phantom customFields.ts, tlsManager.ts, shipped crypto exports, the fifth `canMove` mask, `_custom` AAD namespaces); privacy policy corrected (`db.sqlite`/`audit.sqlite`, base62 alphabet, user-UUID HKDF salt).
+- **Phase 24 queued** — Cryptographic Audit Hardening & Third-Party Auditability (Tasks 47/48, provisional v0.0.2.6/Build 26): fallback vector parity, constant-time sweep, the claim battery as a CI gate, and the auditor's threat-model addendum. Documentation Impact blockquotes embedded in every queued phase (18–24).
+- **Decision Log adopted** — `.clinerules/memory-bank/decision-log.md` (episodic navigation record, 20-entry window); the lens entered the bank declaratively (Third-party-auditable standard in projectBrief, Auditability Invariants in systemPatterns).
+
 ## [Unreleased]
 
 ### Fixed

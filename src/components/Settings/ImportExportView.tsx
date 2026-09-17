@@ -79,7 +79,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
   const handleVerifyAndExportJSON = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!exportJSONKey.startsWith("hu-") || exportJSONKey.length !== 67) {
-      setExportJSONError("Invalid ShellKey©™ format (must start with hu- and be 67 characters).");
+      setExportJSONError("Invalid ClawKey©™ format (must start with hu- and be 67 characters).");
       return;
     }
     
@@ -118,7 +118,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
       setJsonExportSuccess(true);
       setTimeout(() => setJsonExportSuccess(false), 4000);
     } catch (err: any) {
-      setExportJSONError(err.message || "Identity verification failed. Invalid ShellKey©™.");
+      setExportJSONError(err.message || "Identity verification failed. Invalid ClawKey©™.");
     } finally {
       setIsExportingJSON(false);
     }
@@ -323,7 +323,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
                   </span>
                 </div>
                 <p className="text-xs text-theme-muted mt-0.5 max-w-md leading-relaxed">
-                  Download a full decrypted JSON backup of all vault credentials. Requires confirmation and ShellKey©™ challenge verification.
+                  Download a full decrypted JSON backup of all vault credentials. Requires confirmation and ClawKey©™ challenge verification.
                 </p>
               </div>
             </div>
@@ -516,14 +516,14 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
               <div className="p-3 bg-lobster-red/10 border border-lobster-red/30 rounded-xl text-lobster-red text-xs leading-relaxed mb-4 flex items-start gap-2">
                 <AlertCircle size={16} className="shrink-0 mt-0.5" />
                 <span>
-                  <strong>High-Risk Action:</strong> This will export a JSON backup containing all <strong>{items.length}</strong> passwords, keys, and notes in plain text. Please confirm and enter your ShellKey©™ to authorize.
+                  <strong>High-Risk Action:</strong> This will export a JSON backup containing all <strong>{items.length}</strong> passwords, keys, and notes in plain text. Please confirm and enter your ClawKey©™ to authorize.
                 </span>
               </div>
               
               <form onSubmit={handleVerifyAndExportJSON} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
-                    Your ShellKey©™ Authorization
+                    Your ClawKey©™ Authorization
                   </label>
                   <input
                     type="password"

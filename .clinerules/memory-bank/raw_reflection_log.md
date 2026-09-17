@@ -1,4 +1,90 @@
 ---
+Date: 2026-09-16
+TaskRef: "Bidirectional docs<->code audit — 8 lies corrected, docs bow to code"
+
+Learnings:
+- Lucas ruled the governance: the application works and is secure; docs contradicting shipped behavior are the defect. Docs bow to code — do NOT change security-relevant code to match stale prose.
+- The 8 lies all came from ONE root cause: docs written at earlier phases never re-audited after later code evolution (renamed exports, retuned limiters, re-pointed ledgers). Claim battery pattern: for every documented invariant, grep the enforcing code FIRST, then assert the doc matches.
+- Distinguish neighbor numbers: adminAuthLimiter 5/10min vs authLimiter 10/15min vs apiLimiter 100/min — the docs had conflated admin+auth. Always cite the env-var tunability (AUTH_RATE_LIMIT).
+- Identity-file truth (crypto.ts:63-80): filename shellguard_identity_<username>.json (per-username!), shape {username, displayName, uuid, token, createdAt} — no version, no humanKey field. The auditLogger redacts a humanKey DETAIL key — unrelated to the file schema; do not infer file shape from redaction lists.
+- Custom-field AAD truth (test oracle): <table>_custom:{id} (vault_pearls_custom:{id}) — NOT ${table}:${recordId}:custom_fields. When docs describe a crypto detail with no code hit for its literal pattern, that is a lie alarm: search the TESTS for the actual fixture.
+- canMove is a real fifth capability (schemas.ts:140) + 7 wizard presets — never document a permission model from memory; enumerate the zod schema.
+- gitignored dirs (.crustagent) break `git add a b c` chains — stage tracked files only; legacy copies get fixed on disk as courtesy.
+
+Improvements_Identified_For_Consolidation:
+- The claim battery (L1-L8 + truth scans + dead links + docs:build) should be consolidated into a single repo script (scripts/audit-docs or a skill) for every future release.
+- 3rd-party auditability achieved in structure: root docs -> portal -> code pointers now resolve 1:1.
+
+Gates: portal build 26.0s green; claim battery zero red; 34/34 links. Commits e4c336b/744a43c/a1afcdc.
+---
+
+---
+Date: 2026-09-16
+TaskRef: "docs/ portal truth-sync — schema ground truth, privacy file names, canon, base62"
+
+Learnings:
+- The portal had the SAME defect as BLUEPRINT.md (pre-0004 schema) — when a schema change lands, sweep root docs AND docs/ portal in the same pass; they are separate audiences reading the same truth. Add portal files to the migration-impact checklist.
+- Two NEW factual catches beyond the planned list: portal still taught '64 hex characters' for hu-/lb- key alphabets (v0.0.1.9 corrected hex->base62 in root docs but not the portal) and glossary claimed an 'admin' permission mask that does not exist (runtime: canRead/canWrite/canEdit/canDelete). Always diff claims against runtime, never against other docs.
+- privacy.md said 'cryptographically random salts' — runtime HKDF salt is the user UUID (deterministic). Descriptive-accuracy matters in legal-adjacent pages.
+- Terminal heredocs + long builds are unreliable here: background the build (nohup > log) and poll; do not trust PIPESTATUS through the shell integration.
+- Docs gate for portal edits: npm run docs:build (vitepress, ~27s) + truth-scan regex battery + dead-link check. All green.
+
+Gates: portal build complete 26.68s; truth scan zero red; 34/34 nav links; Human Key only as documented legacy alias (2 occurrences).
+---
+---
+Date: 2026-09-16
+TaskRef: "Root-docs coherence pass — ClawKey canon + v0.0.1.9 truth-sync + UI rename"
+
+Learnings:
+- House canon established and written into ARCHITECTURE.md: ClawKey (hu- identity JSON key), ShellCryption (client-side zero-knowledge engine), LobsterKeys (lb- agent keys). The docs previously said ShellKey(TM) for the hu- key — off-canon; now ClawKey everywhere user-facing, with internals (deriveShellKey, shellKey, ShellKeyFallback) documented as cross-project contracts, NOT renamed (they are pinned by shellcryption-spec.md and the companion crypto-spec).
+- api- session tokens remain RAW in api_tokens by design (server-minted, TTL-bound) — the admin backup-honesty note refers to them; do not confuse with LobsterKeys (hash-only since v0.0.1.9).
+- Count-assert discipline caught a real miss: ImportExportView had 5 ShellKey occurrences, not the 4 in my line dump — fail-closed prevented a partial rename across files.
+- Two commits went out under one message when a staged-index surprise hit (4 files swept into the architecture commit) — amended the message immediately (own unpushed commit); lesson: `git add <specific>` immediately before EACH commit, never rely on prior staging.
+- Probe-with-backticks bug bit twice in verification (checking literal text without the backtick formatting the file actually uses). Copy probes from the file, not from memory.
+
+Improvements_Identified_For_Consolidation:
+- Canon lint is now a standing gate: no ShellKey(TM) in root docs outside receipts/glossary; no api_key column claims anywhere.
+- Remaining candidate: QUICKSTART.md Step-1 flow uses 'Generate Identity Key' button label (code) — canon-consistent enough; revisit only if Lucas wants deeper UI copy pass.
+
+Gates: 15 files / 210 tests passed, vite build clean. UI rename = 14 occurrences across 4 components.
+---
+
+---
+Date: 2026-09-15
+TaskRef: "ROADMAP.md chronology reorg — seven-fix pass (Option C alignment)"
+
+Learnings:
+- Heredocs mangle non-ASCII emoji in swap new_text: a 🏛️ became 2×U+FFFD on disk. Repair with unicode escapes (\U0001F3DB\uFE0F) and verify byte-level (b'\xef\xbf\xbd' count == 0) after any heredoc write containing emoji. The earlier spine inserts were safe because they went through the editor tool.
+- The "seven fixes" list grew by one during execution: the fix LIST is not the fix SET — the archive heading itself repeated the banner's stale span (## 🏛️ Historical Archive (Phases 1 through 13)). Always grep the surrounding context of every claim, not just the line cited in the diagnosis.
+- Checker bugs again (3rd and 4th this session): non-greedy finditer truncation, and section headings containing the word "Phases" crashing a naive re.search. Iterate full lines; make phase-extraction skip section titles.
+- Two fail-closed saves this pass: the `global s` syntax error (no write), and the over-literal probe (no write). Assert-before-write discipline is now 3-for-3 on preventing partial state.
+
+Improvements_Identified_For_Consolidation:
+- Remaining stroke: project/README.md stale-claim sweep (v0.0.1.8 summit refs → v0.0.1.9; "Phases 1–13 archive" → 1–14). Then PR/merge to main.
+- Reusable oracle: the verification battery (doc-order walk + checkbox truth + migration set-consistency + U+FFFD byte scan + spine link audit) should be consolidated as a single genome-audit script.
+
+Handoff_Package_Prepared: false
+---
+
+---
+Date: 2026-09-15
+TaskRef: "Genome chronology reorganization — Option C (original queue restored), spine renumbered"
+
+Learnings:
+- Lucas ruled Option C: Phases 18–21 execute ahead of 22/23. The ROADMAP's "Next Planned Milestone v0.0.2.0 (Phase 18)" was RIGHT and the memory bank was the stale side — docs-vs-bank contradictions can cut either way; audit both sides before "fixing" either.
+- TOTP decimal-interlude pattern (their Stage 12.5) adopted: unphased hotfix = Stage 18.5, restoring the Stage N = Phase N−1 invariant spine-wide with zero anchor breakage for walked stages.
+- GitHub slug archaeology: anchors strip periods (v0.0.1.9 → v0019) and punctuation; em-dash/space runs become "--"; PARTIAL anchors never resolve (Phase 22/23 hrefs were partial) — always generate slugs from the full heading text.
+- Checker regex gotcha: non-greedy finditer (`^## .*?Stage \d`) truncates matches at the first digit — iterate full lines instead of m.group(0).
+- Batch-patch discipline paid off twice: assert-fail-closed prevented a partial write (E4 pattern was missing the ./ prefix), and the corrected re-run was provably safe.
+
+Improvements_Identified_For_Consolidation:
+- The genome link-audit script (GitHub-faithful slugger + file/anchor resolution + stage-order assertion) is reusable for the ROADMAP reorg pass and all future genome edits.
+- Pending: ROADMAP.md reorg pass (frontmatter, hotfix interlude placement, completed order 15→16→17, archive header 1–14, Phase 5 table-row fix, migration renumber sweep 0006/0007) — then project/README.md stale-claim sweep.
+
+Handoff_Package_Prepared: false
+---
+
+---
 Date: 2026-09-13
 TaskRef: "Session handoff — memory bank pointed at Phase 22; handoff package written"
 

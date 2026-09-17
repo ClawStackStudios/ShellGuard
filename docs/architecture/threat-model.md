@@ -15,7 +15,7 @@ ShellGuard's security model addresses modern web vault threats and adversarial s
 | **T3: Admin Abuse** | Malicious holder of `ADMIN_TOKEN` tries to exfiltrate passwords. | The `/superlobster` panel uses a strict metadata response model. Passwords and secret blobs are never returned in admin API routes. |
 | **T4: Backup Exfiltration** | Attacker calls an API to download the database file. | **Zero download endpoints by design.** All backup snapshots are written server-side to `DATA_DIR/backups/`. Restorations are offline-only file swaps. |
 | **T5: In-Memory Leakage** | Long-running browser session leaves keys vulnerable to XSS. | Auto-Lock Inactivity Retractor wipes decrypted state from memory after configurable idle timeout. |
-| **T6: Brute Force Attacks** | Attacker attempts rapid login or admin guessing. | Dedicated rate limiters (5 attempts / 10 min on admin auth, 100 / 15 min on user token exchange). |
+| **T6: Brute Force Attacks** | Attacker attempts rapid login or admin guessing. | Dedicated rate limiters (5 attempts / 10 min on admin auth, 10 attempts / 15 min with skip-successful-requests on user token exchange). |
 
 ---
 

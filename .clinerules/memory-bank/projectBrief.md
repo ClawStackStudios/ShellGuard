@@ -12,6 +12,7 @@ ShellGuard is a privacy-first, self-hostable **secrets vault** built for the Hum
 - **Identity-key based**: No passwords or accounts on a remote server. `hu-` keys are the root of trust.
 - **Self-hostable**: Docker-first, single container, PUID/PGID aware, Unraid template included
 - **AGPL-3.0 licensed**
+- **Third-party auditable**: the corpus (genome → root docs → portal → code → tests) must be traversable by an external cryptologist with zero dangling claims; the claim battery (grep enforcing code first, assert doc second) is a standing gate (Phase 24)
 
 ## Goals
 
@@ -20,6 +21,7 @@ ShellGuard is a privacy-first, self-hostable **secrets vault** built for the Hum
 3. Maintain zero-knowledge invariant — server never sees plaintext secrets
 4. Support per-row metadata encryption for defense-in-depth
 5. Ship with comprehensive test coverage and documentation
+6. Remain third-party auditable: every doc claim traceable to its enforcing code, and the code to its witnessing test (cryptographer's lens, 2026-09-16)
 
 ## Scope
 

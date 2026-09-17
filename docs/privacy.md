@@ -36,7 +36,7 @@ We believe that your credentials, two-factor authentication (TOTP) seeds, SSH ke
 
 Because ShellGuard is a sovereign, self-hosted system:
 
-1. **No Account Data:** You do not create an account with ClawStack Studios. Your authentication identity (the 67-character `hu-` Human Key) is generated locally by you and validated against your own private database instance.
+1. **No Account Data:** You do not create an account with ClawStack Studios. Your authentication identity (the 67-character `hu-` ClawKey - your human identity key) is generated locally by you and validated against your own private database instance.
 2. **No Vault Contents or Metadata:** Passwords, usernames, TOTP secrets, notes, URLs, and attachment files are never visible to ClawStack Studios or the host server in unencrypted form.
 3. **No Telemetry or Usage Analytics:** We do not collect crash reports, device identifiers, session lengths, feature usage metrics, or diagnostic telemetry.
 4. **No Commercial Data Brokerage:** We do not sell, rent, monetize, or disclose any user information to third parties or advertising networks.
@@ -48,13 +48,13 @@ Because ShellGuard is a sovereign, self-hosted system:
 ShellGuard implements a triple-layer defense model designed to maintain zero-knowledge protection even in untrusted environments:
 
 1. **Client-Side ShellCryption©™:**
-   - Decryption keys are derived directly on your client device from your `hu-` Human Key using **HKDF-SHA-256** (RFC 5869) with cryptographically random salts.
+   - Decryption keys are derived directly on your client device from your `hu-` ClawKey using **HKDF-SHA-256** (RFC 5869) with your user UUID as the HKDF salt.
    - All secret payloads are encrypted client-side using **AES-GCM-256** with unique 96-bit initialization vectors (IV) and Authenticated Additional Data (AAD) binding to prevent record tampering.
    - The self-hosted server only ever receives and stores ciphertext blobs.
 2. **Per-Row Metadata Encryption:**
    - Server-side AES-256-GCM protects record labels, categories, and titles at rest in the local SQLite database.
 3. **Whole-Database Encryption (SQLCipher):**
-   - The underlying database file (`vault.sqlite`) is protected via 256-bit AES cipher engines.
+   - The underlying database file (`db.sqlite`) is protected via 256-bit AES cipher engines.
 
 Because encryption and decryption occur strictly on your endpoint device, **ClawStack Studios, network intermediaries, and unauthorized third parties cannot decrypt your secrets.**
 
@@ -122,7 +122,7 @@ ShellGuard provides an administrative mechanism to issue granular API keys (`lb-
 
 - Agents operate under strict role-based scopes (e.g., read-only metadata organization, categorized auditing).
 - Agent keys authenticate via constant-time SHA-256 cryptographic hashing.
-- AI agents do **not** receive your `hu-` Human Master Key and cannot decrypt zero-knowledge pearl secrets unless explicitly granted permission by you within your self-hosted instance.
+- AI agents do **not** receive your `hu-` ClawKey and cannot decrypt zero-knowledge pearl secrets unless explicitly granted permission by you within your self-hosted instance.
 - No interaction between your agents and your vault is monitored, proxied, or recorded by ClawStack Studios.
 
 ---
@@ -139,7 +139,7 @@ ShellGuard provides an administrative mechanism to issue granular API keys (`lb-
 Because you own the infrastructure and device storage:
 
 - **Complete Data Deletion:** Uninstalling the ShellGuard-TOTP companion app from your mobile device immediately purges all locally stored vault items, encryption salts, and cached keys.
-- **Self-Hosted Deletion:** Deleting the container volumes or executing the instance database purge command permanently and irrevocably destroys the database (`vault.sqlite` and `audit.sqlite`). ClawStack Studios retains no backups or secondary copies.
+- **Self-Hosted Deletion:** Deleting the container volumes or executing the instance database purge command permanently and irrevocably destroys the databases (`db.sqlite` and the segregated append-only `audit.sqlite`). ClawStack Studios retains no backups or secondary copies.
 
 ---
 

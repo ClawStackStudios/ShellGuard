@@ -45,6 +45,6 @@ ShellGuard solves this with three non-negotiable architectural anchors:
     Deploy with Docker Compose or run Node.js locally.
   </Card>
   <Card title="Key Molting & Identity" href="/getting-started/key-molting" icon="🗝️">
-    Understand the Human Key (<code>hu-</code>) and zero-knowledge identity model.
+    Understand the ClawKey (<code>hu-</code>) - your human identity key - and the zero-knowledge identity model.
   </Card>
 </CardGrid>

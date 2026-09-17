@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.1.8. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.1.9. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 
@@ -34,7 +34,7 @@
 ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
-├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.1.8)
+├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.1.9)
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
@@ -75,14 +75,17 @@ ShellGuard/
 │   ├── 0002_metadata_encryption.up.sql   # Per-row metadata encryption support
 │   ├── 0002_metadata_encryption.down.sql # Rollback metadata encryption
 │   ├── 0003_custom_fields.up.sql      # Bitwarden-style Custom Fields (TEXT default '[]')
-│   └── 0003_custom_fields.down.sql    # Rollback custom fields
+│   ├── 0003_custom_fields.down.sql    # Rollback custom fields
+│   ├── 0004_key_ledger.up.sql         # Phase 17 (v0.0.1.9): agent key hash ledger columns
+│   │                                  #   + category DEFAULT 'Personal' purge (4 table rebuilds)
+│   └── 0004_key_ledger.down.sql       # Rollback (see keyLedger.ts for the in-code backfill)
 │
 ├── 🔧 scripts/
 │   ├── scuttle-reset.ts               # Scuttles data-dev/ or data/ (--env production|development)
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # 13 Vitest + supertest suites, per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 15 Vitest + supertest suites, per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
@@ -107,8 +110,12 @@ ShellGuard/
     ├── server/                        # ◀ Backend Source (modular, twin of ClawChives layout)
     │   ├── database/
     │   │   ├── connection.ts          #   better-sqlite3-multiple-ciphers, WAL/NORMAL pragmas,
-    │   │   │                          #   umask 077 + 0o600 sidecars, sqlcipher_export fallback
+    │   │   │                          #   umask 077 + 0o600 sidecars, PRAGMA rekey fallback
     │   │   ├── migrationRunner.ts     #   Transactional runner tracking schema_migrations
+│   │   ├── keyLedger.ts           #   Phase 17 in-code ledger backfill (SQLite has no SHA-256):
+│   │   │                          #   1) rewrite agent api_tokens owner refs to agent row id
+│   │   │                          #   2) hash legacy plaintext keys in place → key_hash
+│   │   │                          #   3) retire the plaintext column; order is load-bearing
     │   │   ├── schema.ts              #   audit.sqlite DDL (segregated append-only logs)
     │   │   └── index.ts               #   Runs migrations at load; exports {db, auditDb, audit,
     │   │                              #     purgeExpiredTokens}
@@ -139,13 +146,14 @@ ShellGuard/
     │   │   ├── metadataGuard.ts       #   Column registry, prepareWrite/prepareRead/
     │   │   │                          #   prepareReadAll helpers
     │   │   ├── version.ts             #   Ground-truth application version resolver
-    │   │   └── tls.ts                 #   Native EC P-256 LAN TLS self-signed cert engine
+    │   │   └── tlsManager.ts          #   Native EC P-256 LAN TLS self-signed cert engine
     │   └── validation/schemas.ts      #   AuthSchemas + entity schemas (title ≤255, url ≤2048…)
     │
     ├── lib/                           # ◀ Client crypto & utilities
     │   ├── shellCryption.ts           #   HKDF(hu-, uuid) → AES-GCM-256; {v,alg,iv,ct,aad} blobs
-    │   ├── customFields.ts            #   Bitwarden-style custom fields schema & AAD binders
-    │   ├── crypto.ts                  #   hashToken (SHA-256), rejection-sampling key generation
+    │   ├── (custom-field AAD: `<table>_custom:{id}` namespaces constructed at call sites)
+    │   ├── crypto.ts                  #   generateUUID/generateHumanKey/generateLobsterKey,
+│   │                              #   hashToken (SHA-256), identity-file download
     │   ├── generator.ts               #   Password generator, complexity scoring, TOTP helpers
     │   ├── podUtils.ts                #   Nested pod (folder) tree, colors, counts
     │   ├── clipboardManager.ts        #   Clipboard hygiene for copied secrets
@@ -240,7 +248,7 @@ graph LR
   …same as right column →           Authorization: Bearer api-*
       ↓                                 ↓
   HKDF(hu-, uuid) → AES-GCM-256     HKDF(hu-, uuid) → AES-GCM-256
-  ShellKey mounted in memory            ↓
+  ShellCryption key mounted in memory            ↓
       ↓                             Grotto (authenticated)
   Grotto (authenticated)
 
@@ -341,6 +349,34 @@ See [**compatibility_layer.md**](./compatibility_layer.md) for the complete byte
 
 ## 🔑 Key System Architecture
 
+### The ClawKey Method — ClawStack Canon
+
+These three terms are ClawStack Studios house vocabulary and are used consistently across every app in the ecosystem (web vault, ShellGuard-TOTP companion, and beyond). Use them exactly as defined — a change to what they mean is a deliberate spec violation, not a wording tweak.
+
+| Canon Term | Definition | Key Material |
+|:--|:--|:--|
+| **ClawKey©™** | The `hu-` human identity key — the JSON key users authenticate with (`shellguard_identity_<username>.json`). One artifact is BOTH the login identity AND the ShellCryption seed. Never sent to the server unhashed. | `hu-` + 64 base62 chars |
+| **ShellCryption©™** | The client-side zero-knowledge encryption engine: HKDF-SHA-256(ClawKey, user uuid) → AES-256-GCM. Seals secrets, notes, TOTP seeds, SSH key material, attachment bytes, and custom fields as `{v, alg, iv, ct, aad}` blobs. Distinct from SQLCipher (Layer 3, server-side at-rest encryption). | derived CryptoKey, memory-only |
+| **LobsterKeys©™** | The `lb-` agent keys users create, scope, and revoke in Settings → Agent Keys. Hash-only ledger since v0.0.1.9 — the server never holds the plaintext. | `lb-` + 64 base62 chars |
+
+> **Naming note:** internal identifiers (`deriveShellKey`, the `shellKey` state variable, `ShellKeyFallback`) are cross-project contracts pinned by `project/shellcryption-spec.md §2` and the companion's `crypto-spec.md`. Do not rename them casually — the *house term* for the artifact they handle is ClawKey; the *derived AES key* they produce is "the ShellCryption key."
+
+**How the method works end-to-end:**
+
+```
+1. SETUP     Browser generates the ClawKey (crypto.getRandomValues, 64 base62 chars)
+             → user downloads shellguard_identity_<username>.json
+             { username, displayName, uuid, token: "hu-…", createdAt }
+2. REGISTER  Only SHA-256(hu-) crosses the wire → POST /api/auth/register → lobsters.key_hash (UNIQUE)
+3. DERIVE    HKDF-SHA-256(ikm = hu- key, salt = uuid, info = "clawchives-shellcryption-v1")
+             → AES-256-GCM ShellCryption key, non-extractable, browser memory ONLY
+4. SESSION   POST /api/auth/token (hash only) → short-lived api- bearer (sessionStorage, TTL-bound)
+5. SEAL      Every secret field is ShellCrypted client-side with AAD table:recordId before upload
+6. RETRACT   Lock/logout/tab-close: sessionStorage purged, CryptoKey discarded, nothing persists
+```
+
+The server is a cipher-keeper, never a key-holder: it stores the ClawKey's hash, opaque ShellCryption blobs, and LobsterKey hashes — and can decrypt none of them. The full auth state machine (setup / login / expiry-lock) is diagrammed in [Data Flow & Architecture](#-data-flow--architecture) above; the security posture and threat scenarios live in [SECURITY.md](./SECURITY.md).
+
 ### Key Types & Metadata
 
 ```mermaid
@@ -354,7 +390,8 @@ classDiagram
     class AgentKey {
         +string id
         +string name
-        +string api_key [lb-xxxxxxxx × 64]
+        +string key_hash [SHA-256 hex — NEVER plaintext]
+        +string key_fingerprint [first 12 chars of hash]
         +Permissions permissions
         +string expiration_type
         +number rate_limit [1–10000]
@@ -375,8 +412,8 @@ classDiagram
 
 | Prefix | Type | Length | Usage |
 |---|---|---|---|
-| `hu-` | **Human Key** (ShellKey©™) | 64 chars (67 total) | Personal identity. One-Field Login. Seeds the ShellCryption key via HKDF. |
-| `lb-` | **Lobster/Agent Key** | 64 chars (67 total) | Delegated access for AI agents. Granular permissions, expiry (`never`/`30d`/`90d`/`1y`), rate limits (1–10000 req/min). |
+| `hu-` | **ClawKey** (Human Identity Key) | 64 chars (67 total) | Personal identity, delivered as the `shellguard_identity_<username>.json` file. One-Field Login. Seeds the ShellCryption key via HKDF — identity and crypto seed in one artifact. |
+| `lb-` | **LobsterKey** (Agent Key) | 64 chars (67 total) | Delegated access for AI agents. Granular permissions, expiry (`never`/`30d`/`90d`/`1y`), rate limits (1–10000 req/min). Hash-only ledger since v0.0.1.9: plaintext returned exactly once at mint. |
 | `api-` | **Session Token** | 32 chars (36 total) | Short-lived bearer issued by `/api/auth/token`. TTL from `TOKEN_TTL_DEFAULT` (default 24h). |
 
 ### Entropy & Generation Rules
@@ -389,7 +426,9 @@ classDiagram
 
 ✓ lb- keys MUST use browser crypto.getRandomValues()
   └─ Same entropy profile, generated in Settings → Agent Keys
-  └─ Hashed before storage in agent_keys.api_key
+  └─ HASH-ONLY LEDGER (v0.0.1.9): only SHA-256 key_hash + key_fingerprint
+     persist in agent_keys — the plaintext is returned exactly once at mint
+     and never stored (tests/agent-key-hash.test.ts proves it)
 
 ✓ api- tokens MUST use server crypto.randomInt() (no modulo bias)
   └─ 32 base62 chars, prefixed "api-"
@@ -417,6 +456,8 @@ Agent keys carry a granular permission set. Route guards map HTTP verbs onto it:
 | `DELETE` | `canDelete` |
 
 `requireHuman` additionally walls off configuration surfaces (`/api/settings`, `/api/agent-keys`, `/api/auth/profile`) so a scoped Lobster Key can never mint new keys or rewrite system preferences — regardless of which permissions you granted it.
+
+Capabilities are five flags — `canRead`, `canWrite`, `canEdit`, **`canMove`**, `canDelete` — validated in the zod schema and surfaced in the LobsterKey wizard as presets (READ / WRITE / EDIT / MOVE / ECOSYSTEM / FULL / CUSTOM). A MOVE-level key can organize the vault (move items between pods) without ever deleting; `canMove` is never verb-mapped — it gates pod-move mutations only.
 
 ---
 
@@ -481,6 +522,25 @@ Query Pattern (LOCKED):
   (missing owner_uuid filter = security bug, tests will scuttle it)
 ```
 
+### Pod Purity at the Bedrock (v0.0.1.9 — LOAD-BEARING)
+
+```
+📌 ZERO HARDCODED PODS ALL THE WAY DOWN.
+
+✓ Category columns on vault_pearls, vault_secure_notes, vault_ssh_keys and
+  vault_secure_attachments carry NO DEFAULT 'Personal' — migration 0004
+  rebuilt all four tables to purge it. The default is '' (uncategorized).
+
+✓ normalizePod() client semantics and Bedrock semantics now agree:
+  an unassigned item is '', never a phantom pod name.
+
+⛔ FORBIDDEN:
+  - Re-introducing a hardcoded default category in any route
+    (the old `category || 'Personal'` fallback is PURGED from
+    vault.ts / notes.ts / sshKeys.ts / attachments.ts)
+  - Hardcoding suggested pods, colors or names anywhere server-side
+```
+
 ### Session State Invariants
 
 ```
@@ -510,7 +570,7 @@ Query Pattern (LOCKED):
 ✓ Dual databases: db.sqlite (data) + audit.sqlite (append-only logs)
 ✓ Pragmas: WAL journal · synchronous NORMAL · foreign_keys ON · busy_timeout
 ✓ File mode: umask 077, 0o600 on sidecar files
-✓ sqlcipher_export fallback re-keys transparently when DB_ENCRYPTION_KEY
+✓ PRAGMA rekey fallback re-keys transparently when DB_ENCRYPTION_KEY
   is added or removed
 ✓ Migrations run transactionally at module load; version tracked in
   schema_migrations; startup logs "Applied version N"
@@ -649,6 +709,7 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `auth-flow.test.ts` | Duplicate register 409, token issuance/expiry (TTL `1m` → 401 after 60s), wrong hash 401, revoked key |
 | `security.test.ts` | **Cross-owner isolation (highest-value invariant)**, permission-bypass attempts, `hu-`/`lb-`/`api-` format enforcement, entropy assertions, 6 bad logins → 429 |
 | `vault-crud.test.ts` | Envelope shapes, **opacity invariant** (server stores client blob byte-for-byte, decryptable by nobody server-side), attachment size rejection |
+| `agent-key-hash.test.ts` | Hash-only LobsterKey ledger: minted-once, pre-migration keys keep authenticating, zero plaintext at rest |
 | `settings.test.ts` | Per-user KV read/write, human-only enforcement |
 | `metadata-encryption.test.ts` | Per-row AES-256-GCM: unit crypto, API round-trip, backward-compat passthrough |
 | `admin.test.ts` | SuperLobster Panel auth, session cookie lifecycle, whitelist settings, and backup gates |
@@ -661,7 +722,7 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `unit/webCryptoFallback.test.ts` | Pure TypeScript WebCrypto fallback engine (HKDF, PBKDF2, AES-256-GCM, SHA-256) for non-secure HTTP LAN |
 | `unit/version.test.ts` | Dynamic ground-truth version resolution and semver structure validation |
 
-Run them: `npm test` (all 14 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 15 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 
@@ -689,6 +750,8 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 16 | Pure TypeScript WebCrypto Fallback (`webCryptoFallback.ts` implementing HKDF, PBKDF2, AES-GCM, SHA-256) | Guarantees zero-knowledge vault decryption functions even when accessed over plain HTTP on LAN |
 | 17 | ShellGuard-TOTP Android Companion Import (`sgtotp.bak` backup container decryption, pod tree mapping, multi-account import) | Seamless ecosystem interop with the offline Android companion app |
 | 18 | Zero-Waste Release Automation (`.github/workflows/release.yml` with tag/`--release` filtering, automated mirror of `RELEASE.md` into GitHub releases) | CI/CD cost efficiency and synchronized release notes across repository and GitHub Releases |
+| 19 | Hash-only LobsterKey ledger (`agent_keys.key_hash`/`key_fingerprint`, in-code SHA-256 backfill via `keyLedger.ts`, plaintext column retired, `api_tokens.owner_uuid` re-pointed to agent row id) | Docs-vs-runtime contradiction closed in Phase 17: the server now holds NO agent key material — a stolen `db.sqlite` cannot mint or replay agent sessions |
+| 20 | Pod purity at the Bedrock: `DEFAULT 'Personal'` dropped from all four category columns (table rebuilds); default is `''` (uncategorized) matching `normalizePod()` | The Phase-8 zero-hardcoded-pods invariant finally reaches the schema — no phantom pods on fresh boots |
 
 ---
 

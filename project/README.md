@@ -35,7 +35,7 @@ Agent builds it ── HOW is its discretion; WHAT is fully pinned
 |:---|:---|:---|
 | **1. Orchestration** | `meta-prompt-ai-studio.md` | The *sequencer*. One staged prompt per phase; tells the builder where to look and what to verify. Prevents context degradation by feeding only the slices each stage needs. |
 | **2. Ground Truth Specs** | `architecture.md`, `shellcryption-spec.md`, `routes-and-contracts.md`, `database-schema.md`, `key-hierarchy-spec.md`, `import-export-spec.md`, `admin-suite-spec.md`, `ui-ux-design-system.md` | The *invariants*. Security-critical logic is fully specified so no agent improvises on crypto, tenancy, or the key hierarchy. |
-| **3. Schedule** | `../ROADMAP.md` (active window) + `../.agents/memory-bank/ROADMAP-HISTORY.md` (Phases 1–13 archive) | The *router*. Never contains implementation detail — points at spec sections for each task. Separation of schedule (roadmap) from truth (specs) from sequence (spine). |
+| **3. Schedule** | `../ROADMAP.md` (active window) + `../.agents/memory-bank/ROADMAP-HISTORY.md` (Phases 1–14 archive) | The *router*. Never contains implementation detail — points at spec sections for each task. Separation of schedule (roadmap) from truth (specs) from sequence (spine). |
 
 ## 🏷️ Version Grammar
 
@@ -44,7 +44,7 @@ Follows the Google Play Android schema (`X.Y.Z.N`, `versionCode = Build N`):
 - **`v0.0.0.0`** — the void. Stage 0's first build pulls the app out of it.
 - **`Baseline: v0.0.0.x (Build N)`** — the pre-genesis sprint (2026-08-23 → 2026-08-30).
   Labeled baselines, never forged as releases: these versions never existed as tags.
-- **`v0.0.1 → v0.0.1.8`** — real git tags, bracketing later phases 1:1.
+- **`v0.0.1 → v0.0.1.9`** — real git tags, bracketing later phases 1:1.
   REVISION space (`0.0.1.x`) leaves room for hotfixes between builds.
 
 The roadmap is **the story the git history tells**, transcribed into prompts and specs:
@@ -69,12 +69,12 @@ suite that still runs today.
 
 ## 🚀 How to Rebuild ShellGuard From This Folder Alone
 
-1. Read `../ROADMAP.md` (and `../.agents/memory-bank/ROADMAP-HISTORY.md` for Phases 1–13) for current position and version grammar.
+1. Read `../ROADMAP.md` (and `../.agents/memory-bank/ROADMAP-HISTORY.md` for Phases 1–14) for current position and version grammar.
 2. Open `meta-prompt-ai-studio.md`, find the stage matching your position.
 3. Attach the Required Reference Files listed in that stage's header.
 4. Paste the stage's fenced prompt block.
 5. Run the stage's verify line before moving on.
-6. Advance the ROADMAP checkboxes. Repeat until the summit (v0.0.1.8 parity).
+6. Advance the ROADMAP checkboxes. The summit was reached at v0.0.1.8 parity and Phase 17 shipped as v0.0.1.9 — the walk continues with the queued stages (Stage 18.5 interlude, then Phases 18–23) as each becomes the next molt.
 
 ---
 
@@ -83,7 +83,8 @@ scaffold commit shipped with `patch_*.cjs` scripts, molted out in the same gap).
 The TOTP companion later proved the lesson that produced this folder:
 **build the docs first, and so tightly, the application has no choice but to follow.**
 
-**Status**: ✅ Reverse-build complete — 16 phases, `v0.0.0.0` → `v0.0.1.8`,
-receipt-backed end to end. **Phase 17 [v0.0.1.9] is queued forward** (coherence-audit
-security hotfix; Tasks 33/34 — see `../ROADMAP.md`). The `/project` folder is the
-application's genome, now 10 oracles strong.*
+**Status**: ✅ Reverse-build complete — 17 phases, `v0.0.0.0` → `v0.0.1.9`,
+receipt-backed end to end. **Phase 17 [v0.0.1.9] is SHIPPED** (coherence-audit security
+hotfix; Tasks 33/34), plus the post-summit hotfix receipt `07ccd61` (spine Stage 18.5).
+**Stages 19–24 (Phases 18–23) are QUEUED** — chronology restored, `Stage N = Phase N−1`.
+The `/project` folder is the application's genome, now 10 oracles strong.*

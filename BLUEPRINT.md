@@ -1,6 +1,6 @@
 # 🛡️ ShellGuard©™ Blueprint
 
-> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql`, `0002_metadata_encryption.up.sql`, `0003_custom_fields.up.sql`) — this document is the map, not the territory.
+> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql` through `0004_key_ledger.up.sql`) — this document is the map, not the territory.
 
 ## 🏛️ Construction Map (ASCII)
 
@@ -47,7 +47,7 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 | Column | Type | Notes |
 |---|---|---|
 | `key` | TEXT PK | `api-` token (32 chars) |
-| `owner_uuid` | TEXT | Owning lobster or agent |
+| `owner_uuid` | TEXT | Owning lobster uuid — or, for agent tokens, the agent **row id** (re-pointed from raw `lb-` keys in Phase 17) |
 | `owner_type` | TEXT | `human` \| `agent` |
 | `created_at` / `expires_at` | TEXT | TTL via `TOKEN_TTL_DEFAULT`; expiry compared in JS ISO time |
 
@@ -56,7 +56,8 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 |---|---|---|
 | `id` | TEXT PK | |
 | `name` | TEXT | Display label |
-| `api_key` | TEXT | `lb-` key — UNIQUE, hashed |
+| `key_hash` | TEXT | SHA-256 of the `lb-` key — the UNIQUE lookup target. **No plaintext column exists** (retired in migration 0004 / v0.0.1.9; in-code backfill via `keyLedger.ts`) |
+| `key_fingerprint` | TEXT | First 12 chars of the hash — what key cards display; never key material |
 | `permissions` | TEXT | JSON claw strengths (canRead/canWrite/canEdit/canDelete) |
 | `expiration_type` / `expiration_date` | TEXT | `never` \| `30d` \| `90d` \| `1y` |
 | `rate_limit` | INTEGER | Requests per minute, 1–10000 |
@@ -128,6 +129,7 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 - **`migrations/0001_initial.up.sql`** — Schema v1 baseline (`lobsters`, `api_tokens`, `agent_keys`, `vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`, `vault_secure_attachments`, `settings`, `system_settings`).
 - **`migrations/0002_metadata_encryption.up.sql`** — Migration support for per-row metadata encryption.
 - **`migrations/0003_custom_fields.up.sql`** — Adds `custom_fields TEXT DEFAULT '[]'` column to `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+- **`migrations/0004_key_ledger.{up,down}.sql`** — Phase 17 (v0.0.1.9): adds `agent_keys.key_hash`/`key_fingerprint` (in-code SHA-256 backfill via `keyLedger.ts`, then the plaintext column is retired) and drops the hardcoded `DEFAULT 'Personal'` from all four category columns — the uncategorized default is `''`, matching `normalizePod()`.
 - **`schema_migrations`** *(in `db.sqlite`)* — version tracking for the transactional migration runner.
 - **`audit_logs`** *(in the segregated append-only `audit.sqlite` — NOT schema v1's data bedrock)* — `timestamp, event_type, actor, actor_type, resource, action, outcome, ip_address, user_agent, details`. Redacted per delta #2; pruned daily against `system_settings.audit_retention_days`, capped at 10k rows.
 

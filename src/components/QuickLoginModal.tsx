@@ -95,7 +95,7 @@ export function QuickLoginModal({ config, onClose, onSuccess }: QuickLoginModalP
 
   const processPaste = async () => {
     if (!pasteKey.startsWith("hu-") || pasteKey.length !== 67) {
-      setPasteError("Invalid ShellKey©™ format.");
+      setPasteError("Invalid ClawKey©™ format.");
       return;
     }
 
@@ -110,7 +110,7 @@ export function QuickLoginModal({ config, onClose, onSuccess }: QuickLoginModalP
       });
 
       if (target && pearl.user.uuid !== target.uuid) {
-        throw new Error(`ShellKey belongs to ${pearl.user.username}, expected ${target.username}`);
+        throw new Error(`ClawKey belongs to ${pearl.user.username}, expected ${target.username}`);
       }
 
       const sk = await deriveShellKey(pasteKey, pearl.user.uuid);
@@ -206,7 +206,7 @@ export function QuickLoginModal({ config, onClose, onSuccess }: QuickLoginModalP
                 >
                   <div className="space-y-2">
                     <label className="text-[10px] font-headline font-bold uppercase tracking-widest text-theme-subtle">
-                      ShellKey©™
+                      ClawKey©™
                     </label>
                     <textarea 
                       value={pasteKey}

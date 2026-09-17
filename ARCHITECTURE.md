@@ -110,7 +110,7 @@ ShellGuard/
     ├── server/                        # ◀ Backend Source (modular, twin of ClawChives layout)
     │   ├── database/
     │   │   ├── connection.ts          #   better-sqlite3-multiple-ciphers, WAL/NORMAL pragmas,
-    │   │   │                          #   umask 077 + 0o600 sidecars, sqlcipher_export fallback
+    │   │   │                          #   umask 077 + 0o600 sidecars, PRAGMA rekey fallback
     │   │   ├── migrationRunner.ts     #   Transactional runner tracking schema_migrations
 │   │   ├── keyLedger.ts           #   Phase 17 in-code ledger backfill (SQLite has no SHA-256):
 │   │   │                          #   1) rewrite agent api_tokens owner refs to agent row id
@@ -146,13 +146,14 @@ ShellGuard/
     │   │   ├── metadataGuard.ts       #   Column registry, prepareWrite/prepareRead/
     │   │   │                          #   prepareReadAll helpers
     │   │   ├── version.ts             #   Ground-truth application version resolver
-    │   │   └── tls.ts                 #   Native EC P-256 LAN TLS self-signed cert engine
+    │   │   └── tlsManager.ts          #   Native EC P-256 LAN TLS self-signed cert engine
     │   └── validation/schemas.ts      #   AuthSchemas + entity schemas (title ≤255, url ≤2048…)
     │
     ├── lib/                           # ◀ Client crypto & utilities
     │   ├── shellCryption.ts           #   HKDF(hu-, uuid) → AES-GCM-256; {v,alg,iv,ct,aad} blobs
-    │   ├── customFields.ts            #   Bitwarden-style custom fields schema & AAD binders
-    │   ├── crypto.ts                  #   hashToken (SHA-256), rejection-sampling key generation
+    │   ├── (custom-field AAD: `<table>_custom:{id}` namespaces constructed at call sites)
+    │   ├── crypto.ts                  #   generateUUID/generateHumanKey/generateLobsterKey,
+│   │                              #   hashToken (SHA-256), identity-file download
     │   ├── generator.ts               #   Password generator, complexity scoring, TOTP helpers
     │   ├── podUtils.ts                #   Nested pod (folder) tree, colors, counts
     │   ├── clipboardManager.ts        #   Clipboard hygiene for copied secrets
@@ -354,7 +355,7 @@ These three terms are ClawStack Studios house vocabulary and are used consistent
 
 | Canon Term | Definition | Key Material |
 |:--|:--|:--|
-| **ClawKey©™** | The `hu-` human identity key — the JSON key users authenticate with (`shellguard_identity_key.json`). One artifact is BOTH the login identity AND the ShellCryption seed. Never sent to the server unhashed. | `hu-` + 64 base62 chars |
+| **ClawKey©™** | The `hu-` human identity key — the JSON key users authenticate with (`shellguard_identity_<username>.json`). One artifact is BOTH the login identity AND the ShellCryption seed. Never sent to the server unhashed. | `hu-` + 64 base62 chars |
 | **ShellCryption©™** | The client-side zero-knowledge encryption engine: HKDF-SHA-256(ClawKey, user uuid) → AES-256-GCM. Seals secrets, notes, TOTP seeds, SSH key material, attachment bytes, and custom fields as `{v, alg, iv, ct, aad}` blobs. Distinct from SQLCipher (Layer 3, server-side at-rest encryption). | derived CryptoKey, memory-only |
 | **LobsterKeys©™** | The `lb-` agent keys users create, scope, and revoke in Settings → Agent Keys. Hash-only ledger since v0.0.1.9 — the server never holds the plaintext. | `lb-` + 64 base62 chars |
 
@@ -364,7 +365,8 @@ These three terms are ClawStack Studios house vocabulary and are used consistent
 
 ```
 1. SETUP     Browser generates the ClawKey (crypto.getRandomValues, 64 base62 chars)
-             → user downloads shellguard_identity_key.json { username, uuid, token: "hu-…" }
+             → user downloads shellguard_identity_<username>.json
+             { username, displayName, uuid, token: "hu-…", createdAt }
 2. REGISTER  Only SHA-256(hu-) crosses the wire → POST /api/auth/register → lobsters.key_hash (UNIQUE)
 3. DERIVE    HKDF-SHA-256(ikm = hu- key, salt = uuid, info = "clawchives-shellcryption-v1")
              → AES-256-GCM ShellCryption key, non-extractable, browser memory ONLY
@@ -410,7 +412,7 @@ classDiagram
 
 | Prefix | Type | Length | Usage |
 |---|---|---|---|
-| `hu-` | **ClawKey** (Human Identity Key) | 64 chars (67 total) | Personal identity, delivered as the `shellguard_identity_key.json` file. One-Field Login. Seeds the ShellCryption key via HKDF — identity and crypto seed in one artifact. |
+| `hu-` | **ClawKey** (Human Identity Key) | 64 chars (67 total) | Personal identity, delivered as the `shellguard_identity_<username>.json` file. One-Field Login. Seeds the ShellCryption key via HKDF — identity and crypto seed in one artifact. |
 | `lb-` | **LobsterKey** (Agent Key) | 64 chars (67 total) | Delegated access for AI agents. Granular permissions, expiry (`never`/`30d`/`90d`/`1y`), rate limits (1–10000 req/min). Hash-only ledger since v0.0.1.9: plaintext returned exactly once at mint. |
 | `api-` | **Session Token** | 32 chars (36 total) | Short-lived bearer issued by `/api/auth/token`. TTL from `TOKEN_TTL_DEFAULT` (default 24h). |
 
@@ -454,6 +456,8 @@ Agent keys carry a granular permission set. Route guards map HTTP verbs onto it:
 | `DELETE` | `canDelete` |
 
 `requireHuman` additionally walls off configuration surfaces (`/api/settings`, `/api/agent-keys`, `/api/auth/profile`) so a scoped Lobster Key can never mint new keys or rewrite system preferences — regardless of which permissions you granted it.
+
+Capabilities are five flags — `canRead`, `canWrite`, `canEdit`, **`canMove`**, `canDelete` — validated in the zod schema and surfaced in the LobsterKey wizard as presets (READ / WRITE / EDIT / MOVE / ECOSYSTEM / FULL / CUSTOM). A MOVE-level key can organize the vault (move items between pods) without ever deleting; `canMove` is never verb-mapped — it gates pod-move mutations only.
 
 ---
 
@@ -566,7 +570,7 @@ Query Pattern (LOCKED):
 ✓ Dual databases: db.sqlite (data) + audit.sqlite (append-only logs)
 ✓ Pragmas: WAL journal · synchronous NORMAL · foreign_keys ON · busy_timeout
 ✓ File mode: umask 077, 0o600 on sidecar files
-✓ sqlcipher_export fallback re-keys transparently when DB_ENCRYPTION_KEY
+✓ PRAGMA rekey fallback re-keys transparently when DB_ENCRYPTION_KEY
   is added or removed
 ✓ Migrations run transactionally at module load; version tracked in
   schema_migrations; startup logs "Applied version N"

@@ -1,5 +1,22 @@
 ---
 Date: 2026-09-15
+TaskRef: "ROADMAP.md chronology reorg — seven-fix pass (Option C alignment)"
+
+Learnings:
+- Heredocs mangle non-ASCII emoji in swap new_text: a 🏛️ became 2×U+FFFD on disk. Repair with unicode escapes (\U0001F3DB\uFE0F) and verify byte-level (b'\xef\xbf\xbd' count == 0) after any heredoc write containing emoji. The earlier spine inserts were safe because they went through the editor tool.
+- The "seven fixes" list grew by one during execution: the fix LIST is not the fix SET — the archive heading itself repeated the banner's stale span (## 🏛️ Historical Archive (Phases 1 through 13)). Always grep the surrounding context of every claim, not just the line cited in the diagnosis.
+- Checker bugs again (3rd and 4th this session): non-greedy finditer truncation, and section headings containing the word "Phases" crashing a naive re.search. Iterate full lines; make phase-extraction skip section titles.
+- Two fail-closed saves this pass: the `global s` syntax error (no write), and the over-literal probe (no write). Assert-before-write discipline is now 3-for-3 on preventing partial state.
+
+Improvements_Identified_For_Consolidation:
+- Remaining stroke: project/README.md stale-claim sweep (v0.0.1.8 summit refs → v0.0.1.9; "Phases 1–13 archive" → 1–14). Then PR/merge to main.
+- Reusable oracle: the verification battery (doc-order walk + checkbox truth + migration set-consistency + U+FFFD byte scan + spine link audit) should be consolidated as a single genome-audit script.
+
+Handoff_Package_Prepared: false
+---
+
+---
+Date: 2026-09-15
 TaskRef: "Genome chronology reorganization — Option C (original queue restored), spine renumbered"
 
 Learnings:

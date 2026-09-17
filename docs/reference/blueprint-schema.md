@@ -7,7 +7,7 @@ description: Authoritative SQLite Schema Definitions for ShellGuard & Forensic A
 
 <CopyPage />
 
-The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`.
+The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.1.9 (migrations 0001-0004).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`) because SQLite has no crypto primitive - the migration SQL and the code step together form the 0004 migration.
 
 ShellGuard maintains two separate SQLite database files:
 1. **`DATA_DIR/db.sqlite`**: The primary operational database, encrypted whole-DB with SQLCipher (Layer 3) and per-row metadata encryption (Layer 2).
@@ -33,7 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_lobsters_key_hash ON lobsters(key_hash);
 ```
 
 ### 2. `api_tokens` (Session Bearer Tokens)
-Tracks active bearer sessions issued during user authentication.
+Tracks active bearer sessions issued during user authentication. `owner_uuid` holds the lobster uuid for human sessions - or, for agent sessions, the agent **row id** (re-pointed from raw `lb-` keys in migration 0004).
 
 ```sql
 CREATE TABLE IF NOT EXISTS api_tokens (
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS vault_pearls (
   username      TEXT DEFAULT '',
   url           TEXT DEFAULT '',
   type          TEXT DEFAULT 'password',
-  category      TEXT DEFAULT 'Personal',
+  category      TEXT DEFAULT '',
   notes         TEXT DEFAULT '',
   totp_secret   TEXT DEFAULT '',
   attachments   TEXT DEFAULT '[]',
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS vault_secure_notes (
   owner_uuid    TEXT NOT NULL,
   title         TEXT NOT NULL,
   content       TEXT NOT NULL,
-  category      TEXT DEFAULT 'Personal',
+  category      TEXT DEFAULT '',
   custom_fields TEXT DEFAULT '',
   created_at    TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS vault_ssh_keys (
   title         TEXT NOT NULL,
   key_value     TEXT NOT NULL,
   username      TEXT DEFAULT '',
-  category      TEXT DEFAULT 'Personal',
+  category      TEXT DEFAULT '',
   custom_fields TEXT DEFAULT '',
   created_at    TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS vault_secure_attachments (
   file_data  TEXT NOT NULL,
   file_name  TEXT DEFAULT '',
   mime_type  TEXT DEFAULT '',
-  category   TEXT DEFAULT 'Personal',
+  category   TEXT DEFAULT '',
   created_at TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
@@ -136,7 +136,8 @@ CREATE TABLE IF NOT EXISTS agent_keys (
   id              TEXT PRIMARY KEY,
   name            TEXT NOT NULL,
   description     TEXT,
-  api_key         TEXT NOT NULL UNIQUE,
+  key_hash        TEXT NOT NULL UNIQUE,
+  key_fingerprint TEXT,
   permissions     TEXT NOT NULL,
   expiration_type TEXT NOT NULL,
   expiration_date TEXT,
@@ -150,10 +151,15 @@ CREATE TABLE IF NOT EXISTS agent_keys (
   last_used       TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_agent_keys_api_key ON agent_keys(api_key);
+CREATE INDEX IF NOT EXISTS idx_agent_keys_key_hash ON agent_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_agent_keys_active ON agent_keys(is_active);
 CREATE INDEX IF NOT EXISTS idx_agent_keys_owner ON agent_keys(owner_uuid);
 ```
+
+> [!IMPORTANT]
+> **Hash-only ledger (v0.0.1.9).** The plaintext `lb-` column was **retired** in migration `0004_key_ledger`: legacy keys were SHA-256 hashed in place (live keys keep authenticating), and newly minted LobsterKeys are returned **exactly once** in the mint response - only `key_hash` and `key_fingerprint` (first 12 hash chars, what key cards display) ever touch the database. All lookups are constant-time comparisons against the stored hash (`WHERE key_hash = ?`).
+>
+> **Pod purity.** Migration `0004` also rebuilt the four vault tables to drop the hardcoded `DEFAULT 'Personal'` from every `category` column - the default is `''` (uncategorized), matching the client's `normalizePod()` semantics. Zero hardcoded pods, all the way down.
 
 ### 8. Preferences & System Settings
 Stores non-secret user preferences and instance configuration.

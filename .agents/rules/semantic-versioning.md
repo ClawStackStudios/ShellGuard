@@ -1,6 +1,5 @@
 ---
-trigger: model_decision
-description: When Updating the project/application versioning
+description: Semantic versioning logic for determining and applying project version increments from CHANGELOG.md analysis.
 ---
 
 # Workflow: Intelligent Project Versioning & Documentation
@@ -64,6 +63,10 @@ Once the user confirms, I will proceed with the following precise file modificat
 3.  **Update `README.md` Version Badge:**
     - Find the version badge in `README.md` and update the version number.
     - **✅ Template:** `[![Version](https://img.shields.io/badge/version-NEW.VERSION.HERE-blue.svg)](CHANGELOG.md)`
+
+4.  **Build-number sweep:**
+    - Consuming `Build N` shifts every queued phase's provisional `(Build N+x)` label by +1 in BOTH `ROADMAP.md` and `project/meta-prompt-ai-studio.md` — INCLUDING anchor hrefs that embed build numbers.
+    - Sweep with version-prefixed patterns (disambiguation), assert each replacement count, and re-run the anchor battery afterwards.
 
 ### Step 4: 🧠 Intelligently Update Project Documentation
 

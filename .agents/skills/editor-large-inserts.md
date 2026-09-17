@@ -19,3 +19,9 @@
 
 *Reference incident: ShellGuard 2026-09-13 — agentKeys patched, auth.ts
 silently unpatched; caught by `no such column: api_key` in the test oracle.*
+
+## Environment Hazards (2026-09-15/16 arc)
+1. NEVER open a file with mode 'w' in the same expression as the read that feeds it — `open(p,'w').write(entry + open(p).read())` truncates FIRST (Python evaluates `open` before the read). Read into a variable, then write. Tripwire: a huge deletion count in a "log entry" commit is an alarm.
+2. Emoji/unicode through bash heredocs corrupts silently (a temple glyph became U+FFFD ×2). Pass emoji via Python `\U` escapes or use the editor tool; after any heredoc write, byte-scan for `b'\xef\xbf\xbd'`.
+3. Long commands get swallowed by shell integration (oracle ~130s, vitepress ~27s): run `nohup <cmd> > /tmp/x.log 2>&1 &` and poll the log. Heredoc scripts always redirect — exit codes lie, logs don't.
+4. `git add <files>` immediately before EACH commit; `git diff --cached --stat` is the trust boundary. (A pre-staged 4-file set once rode into the wrong commit message; own unpushed commit, amended, disclosed.)

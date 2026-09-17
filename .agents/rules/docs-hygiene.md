@@ -1,4 +1,6 @@
-# Documentation Hygiene & Anti-Rot Rule
+---
+description: Documentation hygiene and anti-rot rule — ensures architectural, state, and API changes are tied to documentation updates in the same branch and commit.
+---
 
 **Objective:** Prevent documentation rot by ensuring that architectural, state, and API changes are fundamentally tied to their documentation updates within the *same* branch and commit.
 
@@ -7,7 +9,7 @@
 - "I will update the docs later" is treated as an incomplete task.
 
 ## 2. Trigger Conditions
-You MUST proactively update the corresponding `.agents/memory-bank/` files or `docs/` files when:
+You MUST proactively update the corresponding `.clinerules/memory-bank/` files or `docs/` files when:
 - **State Model Changes:** If you alter how data flows, where it is stored, or how contexts (like React Context or Zustand) are structured, you must update `attractorBeacon.md` and/or `systemPatterns.md`.
 - **API/Endpoint Changes:** If a server route's payload or response shape changes, update the API documentation or relevant README.
 - **Component Refactors:** If a large component is split or renamed, update the overarching UI documentation and `activeContext.md`.
@@ -18,12 +20,10 @@ You MUST proactively update the corresponding `.agents/memory-bank/` files or `d
 - Preserve existing comments that explain *why* code exists, unless the *why* has fundamentally changed.
 
 ## 4. The "Same Commit" Mandate
+
+## 5. The Direction of Truth (docs bow to code)
+- When a document contradicts shipped, verified behavior, **the document is the defect**. Never change working or security-relevant code to match stale prose; correct the corpus. (Governance ruling, 2026-09-16.)
+- **Claim battery method**: for every documented invariant, grep the ENFORCING CODE first, then assert the doc matches. When a behavioral claim has no literal code hit, the TEST FIXTURES are the oracle (e.g. custom-field AAD namespaces live in `tests/unit/customFields.test.ts`, not application literals).
+- **Enumerate, never recall**: permission models come from the zod schema; limiter numbers from `rateLimiter.ts` cited with their env vars; schema truth from the migrations. Neighbor configs (auth vs admin limiters) drift independently — never document one from the other's numbers.
+- A phase's **📚 Documentation Impact** line in ROADMAP.md is part of that phase's definition of done.
 Documentation updates should not be isolated to a separate "chore: update docs" commit if they belong to a feature. They should be bundled into the specific `AI:` layer of the commit that introduced the feature/fix, proving that the code and its explanation evolved together.
-
-## 5. Release Documentation & Template Protocol
-When preparing a version increment or release:
-- **Use Official Release Template:** Draft `RELEASE-vX.Y.Z.N.md` in the repository root adhering strictly to `[.agents/templates/release-template.md](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.agents/templates/release-template.md)`.
-- **Single Source of Truth:** The root `RELEASE-vX.Y.Z.N.md` file is the sole ground truth for release notes. No newest-file fallbacks or auto-generated release notes are permitted.
-- **Synchronize Central Anchors:** In the same release preparation commit, synchronize `package.json` (`version`), `README.md` (version badge), and `CHANGELOG.md` (`## [X.Y.Z.N] - YYYY-MM-DD`).
-- **Automated Publication & Chained Mirroring:** Pushing with `--release vX.Y.Z.N` in the commit message or pushing tag `vX.Y.Z.N` executes `[.github/workflows/release.yml](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.github/workflows/release.yml)`. The workflow publishes the release and sequentially triggers the `mirror` job (`gh release edit`) to guarantee the live GitHub Release body matches the root markdown document verbatim.
-

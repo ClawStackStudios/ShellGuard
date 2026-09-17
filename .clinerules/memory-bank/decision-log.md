@@ -5,6 +5,9 @@
 ---
 
 ## 2026-09-16 — the third link class
+Session closed with a full handoff (handoff-packages/2026-09-16-auditable-corpus.md). The arc: chronology restored, canon sealed, 8 docs-lies corrected, v0.0.1.10 shipped, Phase 24 queued, the lens sealed as auditPerspective.md, the long-term bank initialized, and the memory-bank territory split (.clinerules mine; .agents Antigravity's). The next session inherits a corpus that audits itself.
+
+
 The VitePress content cards 404ed on the live site while header/sidebar worked. My docs link battery had crawled config links and markdown-style links — but never raw HTML `href=` attributes inside custom components. The defect lived exactly in the unexamined class: 33 targets, zero dead files, all emitted root-absolute without the `/ShellGuard/` base. Lesson: a link audit that checks N link classes has N blind spots; enumerate the emitter, not the syntax. Long-term bank initialized the same day (4 files) and the memory-bank territory constraint recorded (.clinerules = Cline's; .agents = Antigravity's).
 
 ---

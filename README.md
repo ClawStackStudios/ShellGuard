@@ -11,7 +11,7 @@
 ╚════██║██╔══ ██║██╔══╝   ██║     ██║        ██║  ██║   ██║   ██║  ██╔══██║  ██╔══██╗    ██║   ██║
 ███████║██║   ██║███████╗ ███████╗███████╗   ╚██████╝   ╚██████╝   ██║  ██║  ██║   ██║   ██████╔╝
 ╚══════╝╚═╝   ╚═╝╚══════╝ ╚══════╝╚══════╝    ╚═════╝    ╚═════╝   ╚═╝  ╚═╝  ╚═╝   ╚═╝   ╚═════╝
-                                                  ~ **ClawStack Mobile Studios©™** ~
+                              ~ **ClawStack Mobile Studios©™** ~
 ```
 
 *Exoskeletal Protection for Human + Agent Secrets — a zero-knowledge vault where Humans and AI Lobsters guard their pearls together.*
@@ -135,7 +135,7 @@ graph TD
     subgraph Client ["🌐 Browser"]
         UI[React / Tailwind UI<br/>Reef Modernist]
         SC["ShellCryption©™<br/>HKDF → AES-GCM-256<br/>client-side field encryption"]
-        REST[RestAdapter<br/>unwraps {success, data}]
+        REST["RestAdapter<br/>unwraps {success, data}"]
         Session["sessionStorage<br/>sg_api_token"]
     end
 

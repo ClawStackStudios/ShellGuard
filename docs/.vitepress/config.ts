@@ -1,7 +1,12 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
-  title: 'ShellGuard Docs',
+export default withMermaid(
+  defineConfig({
+    // Mermaid diagrams (architecture, companion flows) — client-side render;
+    // without this plugin fenced mermaid blocks render as plain code.
+    mermaidPlugin: { class: 'mermaid' },
+    title: 'ShellGuard Docs',
   description: 'The Sovereign Zero-Knowledge Secrets Vault for Humans & AI Agents',
   base: process.env.VITEPRESS_BASE || '/ShellGuard/',
   cleanUrls: true,
@@ -193,3 +198,4 @@ export default defineConfig({
     }
   }
 })
+)

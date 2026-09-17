@@ -43,6 +43,7 @@ flowchart TD
     Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ⬜<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
     Stage23["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ⬜<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
     Stage24["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
+    Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ⬜<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
     Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
 
     Step0 --> UploadContext
@@ -70,18 +71,22 @@ flowchart TD
     Phase20 --> Phase21
     Phase21 --> Stage23
     Stage23 --> Stage24
-    Stage24 --> Summit
+    Stage24 --> Phase24
+    Phase24 --> Summit
 ```
 
 > **Transcription state**: **17 phases transcribed** (Stage 0 → 18, `v0.0.0.0`
 > void → `v0.0.1.9` parity) — the walk and the codebase occupy the same commit
 > through the summit tag. **Phase 17 (`v0.0.1.9`) is SHIPPED** — the genome was
 > released and the summit tag pushed. **Stage 18.5** records the post-summit
-> hotfix receipt (`07ccd61`). **Stages 19–24 (Phases 18–23) are QUEUED** in the
+> hotfix receipt (`07ccd61`). **Stages 19–25 (Phases 18–24) are QUEUED** in the
 > active forward queue; each stage prompt is transcribed when its phase becomes
 > the next molt. Execution order is strictly chronological:
-> Phase 18 → 19 → 20 → 21 → 22 → 23 — the `Stage N = Phase N−1` invariant
-> holds across the whole spine, with the unphased hotfix at the decimal slot.
+> Phase 18 → 19 → 20 → 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
+> holds across the whole spine, with the unphased hotfix at the decimal slot. Each
+> queued stage's **Documentation Impact** line is part of that phase's definition
+> of done (docs-hygiene): the executing agent syncs every listed doc before the
+> verify line, or the phase is incomplete.
 
 ---
 
@@ -1024,6 +1029,7 @@ commits are code changes and belong inside the verification gate.
 > for complete specifications on **Task 35** and **Task 36**.
 > **⚠️ Execution state**: QUEUED — executes after the Stage 18.5 interlude;
 > green-light from Lucas still required.
+> 📚 **Documentation Impact**: docs/vault-features (composite model, attachments) · reference/blueprint-schema.md (composite semantics) · ARCHITECTURE.md (count-aggregation contract) · BLUEPRINT.md
 > **📖 Required Context Files for Phase 18**:
 > 1. [`architecture.md`](./architecture.md) — §4 (Threat Model & Invariants).
 > 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1 (The firewall), §6 (Invariants — opaque payloads).
@@ -1081,6 +1087,7 @@ the full test oracle + tsc + build stay clean!
 > for complete specifications on **Task 37** and **Task 38**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 18; green-light from
 > Lucas still required.
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) · SECURITY.md + ARCHITECTURE.md (50MB/quotas) · .env.example + README env table · docs/vault-features/attachments.md
 > **📖 Required Context Files for Phase 19**:
 > 1. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations).
 > 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains, attachments route).
@@ -1135,6 +1142,7 @@ modal, and the full test oracle + tsc + build stay clean!
 > for complete specifications on **Task 39** and **Task 40**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 19; green-light from
 > Lucas still required.
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) · ARCHITECTURE.md (query contract) · docs/agent-integration/api-reference.md · reference/glossary.md · docs/vault-features
 > **📖 Required Context Files for Phase 20**:
 > 1. [`database-schema.md`](./database-schema.md) — §2 (Migrations), §3 (Schema v1).
 > 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).
@@ -1188,6 +1196,7 @@ build stay clean!
 > for complete specifications on **Task 41** and **Task 42**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 20; green-light from
 > Lucas still required.
+> 📚 **Documentation Impact**: ARCHITECTURE.md API routes table · docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract) · docs/vault-features
 > **📖 Required Context Files for Phase 21**:
 > 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).
 > 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1 (Opaque client-ciphertext payloads).
@@ -1237,6 +1246,7 @@ and the full test oracle + tsc + build stay clean!
 > for complete specifications on **Task 43** and **Task 44**.
 > **⚠️ Execution state**: QUEUED — green-light from Lucas still required
 > (the phase may absorb further hands-on items).
+> 📚 **Documentation Impact**: docs/vault-features (single-search surface) · reference/design-system.md (ergonomics) · shellcryption-spec.md section 6 verify-only
 > **📖 Required Context Files for Phase 22**:
 > 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail), §7 (Custom fields render behavior).
 > 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §6 (Invariants: plaintext purge on lock; search never transmitted).
@@ -1296,6 +1306,7 @@ ENTIRE value, and the full test oracle + tsc + build stay clean!
 > for complete specifications on **Task 45** and **Task 46**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 22; green-light from
 > Lucas still required.
+> 📚 **Documentation Impact**: SECURITY.md (form-contract) · ARCHITECTURE.md (attachments route) · reference/blueprint-schema.md (quarantine) · docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md · docs/vault-features
 > **📖 Required Context Files for Phase 23**:
 > 1. [`database-schema.md`](./database-schema.md) — §3 (separated item tables; `vault_secure_attachments` as children).
 > 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (vault domains & verb-permission map).
@@ -1351,6 +1362,60 @@ three primary types with attachments only inside parents, sorting is
 deterministic, and the full test oracle + tsc + build stay clean!
 ```
 
+## 🔬 Stage 25 (Queued): Phase 24 Prompt — Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 25)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-24-cryptographic-audit-hardening--third-party-auditability-work-driven-version--provisional-v0026-build-25)
+> for complete specifications on **Task 47** and **Task 48**.
+> **⚠️ Execution state**: QUEUED — executes after Phase 23; green-light from
+> Lucas still required.
+> 📚 **Documentation Impact**: SECURITY.md + docs/architecture/threat-model.md · project/verification-gates.md · encryption-layers-spec.md §5
+> **📖 Required Context Files for Phase 24**:
+> 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §5 (WebCrypto fallback engine — the parity claim under test).
+> 2. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates — the battery joins them).
+> 3. [`shellcryption-spec.md`](./shellcryption-spec.md) — §6 (Invariants — the constant-time sweep guards them).
+
+Copy and paste this prompt to execute **Phase 24 (Tasks 47 & 48)** once green-lit:
+
+```markdown
+# PHASE 24 EXECUTION: Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 25)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 24 (Task 47: WebCrypto Fallback Vector Parity & Constant-Time Guarantee · Task 48: The Auditor's Battery & Threat-Model Addendum).
+- `encryption-layers-spec.md`: §5 (fallback engine — the parity claim under test).
+- `verification-gates.md`: §2–§3 (suites, gates).
+- `shellcryption-spec.md`: §6 (invariants).
+- `../ROADMAP.md` Phase 24 **Documentation Impact** line — sync every listed doc before the verify line.
+
+Execute Phase 24 adhering to the Security Engine + Verification/Documentation pairing:
+
+### Task 47: [Security Engine] WebCrypto Fallback Vector Parity & Constant-Time Guarantee
+- Unskip `tests/unit/webCryptoFallback.test.ts` and run the pure-TS engine
+  against REAL standards vectors: SHA-256 (FIPS 180-4), HMAC-SHA256 (RFC 2104),
+  HKDF-SHA256 (RFC 5869), AES-256-GCM (SP 800-38D) — byte-identity with Node
+  native output on every vector.
+- Mechanize the constant-time sweep: enumerate every comparison site over key
+  material across `src/` (auth, admin, revoke, sentinel) — zero `===` on
+  secrets, as an executable assertion in CI.
+- Narrate the honest boundary in `encryption-layers-spec.md` §5: pure-TS
+  AES-GCM is FUNCTIONAL parity (LAN-HTTP availability), not side-channel parity.
+
+### Task 48: [Verification/Documentation Component] The Auditor's Battery & Threat-Model Addendum
+- Consolidate the claim battery (grep enforcing code first, assert doc second —
+  the L1–L8 classes) into an executable gate (`scripts/audit-docs.ts` or a
+  vitest suite) wired into build-gates so docs drift fails CI.
+- Auditor's addendum across `SECURITY.md` + `docs/architecture/threat-model.md`:
+  in-process rate limiting (restart resets; multi-instance shares nothing),
+  per-key LRU eviction behavior, redaction-regex coverage, PBKDF2 narration.
+
+Verify the unskipped test is green on every standards vector, the constant-time
+sweep finds zero `===` on secrets, the battery catches a planted docs-lie in CI,
+the threat-model addendum is present in both SECURITY.md and the portal, and the
+full test oracle + tsc + build stay clean!
+```
+
+---
+
 ---
 
 ## 🏔️ The Summit
@@ -1361,7 +1426,7 @@ at Stage 18** with its security-hardening receipts (`7faf51d`, `027506a`,
 merge `9b5ec31`), followed by the post-summit hotfix recorded at **Stage 18.5**
 (`07ccd61`).
 
-The walk does not end at the summit — it molts. **Stages 19–24 (Phases 18–23)
+The walk does not end at the summit — it molts. **Stages 19–25 (Phases 18–24)
 are queued** in the active forward queue of [`../ROADMAP.md`](../ROADMAP.md);
 each stage prompt is transcribed when its phase becomes the next molt. Receipts
 accrue per phase, the sliding window keeps the roadmap honest, and this spine

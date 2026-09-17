@@ -1,7 +1,7 @@
 ---
 roadmap_version: 2.0.0
 last_updated: 2026-09-16
-current_position: "v0.0.1.9 (Build 18) — released & live; next Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (v0.0.2.0, Tasks 35/36) — queue 18 → 19 → 20 → 21 → 22 → 23"
+current_position: "v0.0.1.9 (Build 18) — released & live; next Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (v0.0.2.0 / Build 20, Tasks 35/36) — queue 18 → 19 → 20 → 21 → 22 → 23"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
   features_completed: "████████████████░░░ 74% (17 of 24 formalized phases)"
@@ -20,8 +20,8 @@ statistics:
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.1.9 (Build 18)`
-- **Next Planned Milestone**: `v0.0.2.0 (Build 19)` (Phase 18)
+- **Current Production Release**: `v0.0.1.10 (Build 19)`
+- **Next Planned Milestone**: `v0.0.2.0 (Build 20)` (Phase 18)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
 - **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 18 completes, Phase 15 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
@@ -30,7 +30,7 @@ statistics:
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
 
-### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 19)]
+### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 20)]
 
 > Phase Feature Set Overview:
 > Consolidates vault item architecture into primary, rich composite records adhering
@@ -73,7 +73,7 @@ action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-f
 
 ---
 
-### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 20)]
+### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 21)]
 
 > Phase Feature Set Overview:
 > Migrates binary attachment payloads from base64 text strings into native SQLite BLOB
@@ -109,7 +109,7 @@ freezing the UI thread. Provide inline thumbnail previews for common image/PDF t
 
 ---
 
-### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 21)]
+### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 22)]
 
 > Phase Feature Set Overview:
 > Introduces flexible, multi-dimensional categorization alongside hierarchical Pods.
@@ -142,7 +142,7 @@ state alongside search keywords and pod selection.
 
 ---
 
-### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 22)]
+### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 23)]
 
 > Phase Feature Set Overview:
 > Empowers high-volume vault ingestion and management: transactional bulk import endpoint
@@ -173,7 +173,7 @@ and dedicated Import wizard with preview table and error resolution chips.
 
 ---
 
-### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 23)]
+### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 24)]
 
 > Phase Feature Set Overview:
 > A polish-and-ergonomics bracket in two movements: (1) **one search bar to
@@ -185,7 +185,7 @@ and dedicated Import wizard with preview table and error resolution chips.
 > control moves beside Copy. No schema, no API contract changes; the server
 > NEVER receives a search query. The version digit is decided by the
 > completed work (No Forced Targets); the queue position after Phase 21 makes
-> the provisional label `v0.0.2.4 (Build 23)`. *(Source: Lucas, 2026-09-13 —
+> the provisional label `v0.0.2.4 (Build 24)`. *(Source: Lucas, 2026-09-13 —
 > post-v0.0.1.9 hands-on pass; expanded with the search consolidation.)*
 
 > 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only
@@ -241,7 +241,7 @@ column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
 
 ---
 
-### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 24)]
+### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 25)]
 
 > Phase Feature Set Overview:
 > Aligns ShellGuard's item model fully with the Bitwarden pattern (verified
@@ -259,7 +259,7 @@ column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
 > attachments but CANNOT embed password credentials; SSH keys are their own
 > items. Orphan attachments are QUARANTINED, never deleted. The version digit
 > is decided by the completed work (No Forced Targets); the queue position
-> after Phase 22 makes the provisional label `v0.0.2.5 (Build 24)`.
+> after Phase 22 makes the provisional label `v0.0.2.5 (Build 25)`.
 > *(Source: Lucas, 2026-09-13 — Bitwarden-pattern alignment pass.)*
 
 > 📚 **Documentation Impact**: SECURITY.md (form-contract: notes reject secret payloads) - ARCHITECTURE.md (attachments route table) - reference/blueprint-schema.md (quarantine semantics) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (standalone creation rejected) - docs/vault-features
@@ -315,7 +315,7 @@ ordering Passwords → Secure Notes → SSH Keys (reviewable in the PR).
 
 ---
 
-### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 25)]
+### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 26)]
 
 > Phase Feature Set Overview:
 > Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code

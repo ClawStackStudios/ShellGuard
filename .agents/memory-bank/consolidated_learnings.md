@@ -22,6 +22,18 @@
 - Use distinct `alg` values for different encryption systems (`"AES-GCM-256"` for client, `"SG-META"` for server).
 - *Rationale:* Prevents confusion between encryption layers. Each system can identify its own envelopes.
 
+**Pattern: Hash-Only Agent Key Ledger (`0004_key_ledger`)**
+- Never persist plaintext `api_key` in the database. Store SHA-256 `key_hash` and `key_fingerprint` (`lb-***-XXXX`).
+- Verify incoming keys via constant-time `crypto.timingSafeEqual(incomingHash, storedHash)`.
+- Deliver plaintext once at minting time; card display uses full masking (`maskKey()`) over the fingerprint.
+- *Rationale:* Eliminates database-leak exposure for agent keys; even a raw database dump yields zero actionable API credentials.
+
+**Pattern: The ClawKey Canon**
+- `ClawKey©™`: Sovereign 67-character `hu-` identity key (and downloaded JSON identity file).
+- `ShellCryption©™`: Client-side zero-knowledge encryption engine (HKDF + AES-GCM-256).
+- `LobsterKeys`: Granular, scoped agent API keys (`lb-` prefix) minted for automated AI agents.
+- *Rationale:* Verbatim terminology parity across Web and Android companion eliminates cross-platform user confusion.
+
 ---
 
 ## Testing
@@ -72,6 +84,22 @@
 - Commit memory bank updates (`activeContext.md`, `progress.md`) alongside corresponding feature code and release tasks.
 - *Rationale:* Preserves agent architectural memory, behavioral guardrails, and automated release workflows across resets, workstations, CI runners, and collaborators.
 
+**Pattern: Docs Bow to Code (The Governance Ruling)**
+- When verified, secure runtime code contradicts documentation prose, docs bow to code.
+- Stale prose is the defect; never alter working, secure code to match an out-of-date document claim.
+- Verify against the code first (and its test fixtures); then correct the documentation.
+- *Rationale:* Prevents security degradation from retrofitting code to obsolete or misremembered documentation specs.
+
+**Pattern: Agent Memory Bank Isolation Boundary**
+- Antigravity operates strictly in `.agents/memory-bank/`.
+- Cline operates strictly in `.clinerules/memory-bank/`.
+- Strict isolation: never write, edit, stage, or mirror files to the other agent's memory bank directory.
+- *Rationale:* Each agent has its own distinct cognitive substrate and workflow lifecycle; cross-contamination destroys state consistency.
+
+**Pattern: Brand Asset Twin Parity**
+- Brand assets must maintain strict 1:1 parity between web application root (`public/`) and documentation portal (`docs/public/assets/`).
+- *Rationale:* Eliminates broken links, ensures consistent visual branding between the live web app and the VitePress docs portal.
+
 ---
 
 ## Express / API
@@ -93,8 +121,8 @@
 - Tests: 64641 (auth-flow), 64642 (security), 64643 (vault-crud), 64644 (settings), 64645 (admin), 64648 (metadata-encryption)
 
 **ShellGuard Key System:**
-- `hu-` key: 67 chars (`hu-` + 64 hex). Identity + ShellCryption seed. SHA-256 hash stored server-side only.
-- `lb-` key: 67 chars (`lb-` + 64 hex). Agent access. Granular permissions, expiry, rate limits.
+- `hu-` key: 67 chars (`hu-` + 64 base62). Identity + ShellCryption seed. SHA-256 hash stored server-side only.
+- `lb-` key: 67 chars (`lb-` + 64 base62). Agent access. SHA-256 hash stored server-side in key ledger (`0004_key_ledger.sql`), plaintext never stored.
 - `api-` token: 36 chars (`api-` + 32 hex). Short-lived session bearer.
 
 **ShellGuard DB_ENCRYPTION_KEY Dual Role:**

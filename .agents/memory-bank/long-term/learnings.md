@@ -1,0 +1,60 @@
+# Advanced Learnings — ShellGuard
+
+> Hard-won engineering sensitivities that took multiple cycles and friction points to discover. These are not static facts, but perceptual instincts developed from navigating this codebase.
+
+---
+
+## test-oracles-beat-literal-grep
+**weight**: 3 | **last validated**: 2026-09-17 | **first observed**: 2026-09-16
+
+When investigating a documented architectural or cryptographic claim that returns zero literal regex hits in production code, turn immediately to the test suite fixtures.
+
+**History:**
+- 2026-09-16: Grepping for `${table}:${recordId}:custom_fields` produced zero hits in `src/`, leading to initial suspicion of phantom code.
+- 2026-09-16: Reading `tests/unit/customFields.test.ts` uncovered the true runtime contract: `<table>_custom:{id}`.
+- 2026-09-17: Applied to verify agent key hashing invariants and salt configurations across test mocks.
+
+**Shaped perspective:** Production code is frequently abstracted, composed through helper pipelines, or dynamically synthesized at runtime. Test fixtures, by contrast, must construct explicit inputs and assert explicit outputs. They cannot hide behind abstraction. When code is opaque, the test suite is the single source of empirical truth.
+
+---
+
+## checkers-deserve-same-scrutiny-as-edits
+**weight**: 3 | **last validated**: 2026-09-17 | **first observed**: 2026-09-16
+
+Automated verification scripts, regex parsers, and sanity checkers are software. They carry their own failure modes and must be inspected with the same rigor as production code.
+
+**History:**
+- 2026-09-16: A non-greedy regex `re.finditer(r'^## .*?Stage \d', ...)` truncated match strings at the first digit, erroneously reporting Stage 19 as Stage 1.
+- 2026-09-16: Passing emoji through bash heredocs caused silent U+FFFD unicode corruption.
+- 2026-09-16: Inverted assertion logic in a link validator falsely reported 100% green while skipping broken anchors.
+
+**Shaped perspective:** An untrusted or buggy test oracle is worse than no oracle, because it manufactures false confidence. When an automated checker reports success instantaneously on a complex transition, treat the checker with suspicion. Tap the joint from both sides before believing the green signal.
+
+---
+
+## insecure-origin-lan-hazards
+**weight**: 3 | **last validated**: 2026-09-17 | **first observed**: 2026-08-29
+
+Self-hosted home server environments (Unraid, TrueNAS, local Docker IPs) almost universally operate over non-localhost plain HTTP LAN addresses. Browser security policies silently disable critical modern Web APIs on these origins.
+
+**History:**
+- 2026-08-29: Users accessing ShellGuard via `http://192.168.1.X:6464` suffered complete application crashes because `window.crypto.subtle` and `window.crypto.randomUUID` are undefined in non-secure browser contexts.
+- 2026-08-29: Built `src/lib/webCryptoFallback.ts` (pure TypeScript SHA-256, HMAC, HKDF, AES-GCM) and resilient RFC 4122 v4 UUID generator.
+- 2026-08-30: Direct `data:` URI file downloads triggered Chromium insecure origin blocks; resolved by switching to `Blob` object URLs.
+- 2026-09-04: Added persistent self-signed native LAN TLS (`TLS_ENABLED=true`) providing true HTTPS protection on local subnets.
+
+**Shaped perspective:** Developers working on `localhost` live in a privileged browser bubble where every modern API functions seamlessly. Self-hosted users live on raw LAN IP addresses where browsers aggressively revoke cryptographic capabilities. Building for sovereignty means engineering transparent in-browser fallbacks so zero-knowledge encryption holds even on untrusted origins.
+
+---
+
+## read-into-memory-before-write
+**weight**: 3 | **last validated**: 2026-09-17 | **first observed**: 2026-09-16
+
+Never chain file reading inside an open write stream in Python (e.g. `open(f, 'w').write(data + open(f).read())`). The operating system truncates the file on open before evaluating the inner read, resulting in total data loss.
+
+**History:**
+- 2026-09-16: A one-liner prepending a reflection log entry destroyed ~488 lines of raw reflection history when Python executed `'w'` truncation before `'r'` evaluation.
+- 2026-09-16: Recovered from git history and instituted the mandatory rule: read fully into an in-memory variable first, close the read descriptor, and only then open for writing.
+- 2026-09-17: Maintained 100% data integrity across all multi-file memory bank updates.
+
+**Shaped perspective:** The file descriptor is a destructive tool when misused. Python's expression evaluation order makes nested file handles deceptive. Atomic file operations require separating the acquisition of source state from the mutation of target state. A craftsman does not cut into the board while still measuring its length.

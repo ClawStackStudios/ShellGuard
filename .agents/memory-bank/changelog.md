@@ -1,14 +1,17 @@
 # Changelog — ShellGuard
 
+## [Unreleased]
+
+### Added
+- **CaraBase Woodcut Vector Mascot Alignment (`feat/brand-assets-refresh`)**: Redesigned 1:1 thumbnail (`shellguard-thumbnail.png`) and 16:9 presentation logo card (`shellguard-logo.png`) in CaraBase woodcut vector engraving aesthetic. Mascot crab body turned 180° forward/downward with eyestalks, mouthparts, and front claws clasping the vault safe door with 3D 'S' crest atop stacked server blade nodes.
+- **Web Server Favicon Distinction**: Created a server-distinct favicon (`favicon.svg`) featuring a notched carapace crest shield enclosing a multi-grid Web Globe. Center Web Globe themed to the ShellGuard purple/pink palette (`#e4048a` Lobster Fuchsia, `#ec4899` Hot Pink equator, `#ffffff` high-contrast prime meridian, `#c026d3` Royal Purple meridians, `#f472b6` light pink latitudes).
+- **Web Application Feature Graphic Banner**: Authored high-res 1024x500 panoramic showcase banner (`shellguard-feature-graphic.png`) with glowing Web Globe carapace shield on left and floating dark glassmorphic credential card on right.
+- **Twin Asset Parity**: Synchronized all assets 1:1 across web root (`public/`) and VitePress documentation portal (`docs/public/assets/`).
+
 ## [0.0.1.10] - 2026-09-16
 
 ### Changed
 - **The Auditable Corpus** — the full docs-governance arc: genome chronology restored (spine `Stage N = Phase N−1`, Stage 18.5 interlude, 26/26 links), ROADMAP TOTP-chronology reorg (frontmatter, inline interlude, 15→16→17), root-docs v0.0.1.9 truth-sync + ClawKey canon (ARCHITECTURE § The ClawKey Method, deltas #19/#20), docs/ portal truth-sync, the ClawKey canon in 14 UI strings, the bidirectional docs↔code audit (8 lies corrected — docs bow to code), Phase 24 queued (Tasks 47/48, v0.0.2.6/Build 26) with Documentation Impact crawl, the Decision Log adopted, and the lens in the bank (Third-party-auditable standard + Auditability Invariants).
-
-## [Unreleased] - 2026-09-15
-
-### Changed
-- **Genome chronology restored (Option C)** — original queue order stands: Phases 18–21 ahead of 22/23. Meta-prompt spine renumbered **Stage N = Phase N−1** (hotfix → Stage 18.5 Post-Summit Interlude, TOTP decimal pattern); new queued stages 19–24 authored/transcribed for Phases 18–23; mermaid extended through Summit; Summit section given its receipt-honest closing. Link audit: 26/26 roadmap links resolve — Stage 15's dangling Phase-14 anchor repaired to ROADMAP-HISTORY, partial Phase 22/23 anchors completed to full heading slugs, 13 archive link-texts corrected. Migration knock-on under restored order: Phase 19 owns `0005_attachment_blobs`, Phase 23 integrity renumbers to `0006`, Phase 20 tags to `0007`. ROADMAP.md reorganized to match: YAML frontmatter (current_position), hotfix record moved to a Post-Hoc Interlude after Phase 17, Completed Releases reordered 15->16->17 with [x] checkboxes, archive banner span corrected to Phases 1-14, Phase 5 table row truth-fixed (Baseline: v0.0.0.5), migration numbers swept (0005 title fix, tags 0007). Root-docs coherence pass: ARCHITECTURE.md synced to v0.0.1.9 (ClawKey Method section + canon box, migration 0004/keyLedger.ts in tree, classDiagram key_hash/key_fingerprint, pod-purity constraint, 15-suite table, deltas #19/#20); SECURITY.md gained the v0.0.1.9 Key Ledger Hardening narrative; BLUEPRINT.md schema matches migration 0004 (plaintext api_key column removed); ClawKey/LobsterKey canon in README/QUICKSTART; 14 user-facing UI strings renamed ShellKey(TM) -> ClawKey(TM) (web + Android now say the same word; internals deriveShellKey/shellKey kept as cross-project contracts). Gates: 15 files / 210 tests, vite build clean. docs/ portal truth-sync: reference/blueprint-schema.md synced to migration 0004 (key_hash/key_fingerprint, pod purity, hash-only-ledger note); privacy.md vault.sqlite -> db.sqlite + ClawKey canon + HKDF-salt truth; glossary/key-molting/lobster-keys corrected (base62 alphabet, canRead/canWrite/canEdit/canDelete masks, user-UUID salt, Human Key kept as legacy alias); portal build green (vitepress 26.7s), 34/34 nav links, zero truth-scan hits. Bidirectional docs<->code audit: 8 docs-lies corrected against verified code (PRAGMA rekey not sqlcipher_export; authLimiter 10/15m not 5; identity file shellguard_identity_<username>.json with 5-field shape; phantom customFields.ts; tls.ts -> tlsManager.ts; crypto.ts export names; fifth canMove mask + 7 wizard presets; custom-field AAD = <table>_custom:{id}). Docs bow to shipped secure behavior; portal build green 26.0s; claim battery zero red.
 
 ## [0.0.1.9] - 2026-09-13
 
@@ -20,9 +23,40 @@
 
 ### Fixed
 - **Genome coherence audit** — 50 dangling refs repointed; key-alphabet claims corrected hex→base62 (ARCHITECTURE + key-hierarchy-spec); stale token-storage wording removed; old buggy metadata-encryption category test rewritten to the uncategorized contract.
+- **Vault master-detail header flush** — item-list header and Item Details header pinned to shared 64px (`h-16`) height.
+- **Version resolver test de-hardcoded** — `tests/unit/version.test.ts` de-hardcoded from literal `'0.0.1.8'` to package ground-truth matching `X.Y.Z.N` shape.
 
 ### Security
 - `lb-` agent keys: plaintext storage eliminated; sentinel + rate limiter on stored hashes; partial masking banned (NEVER-list).
+
+## [0.0.1.8] - 2026-09-04
+
+### Added
+- **Full Documentation Bridge Parity & Missing Index Hubs**: Built top-level index pages across canonical portal (`docs/vault-features/index.md`, `docs/deployment/index.md`, `docs/reference/index.md`).
+- **Official Privacy Policy & Compliance Invariants**: Canonical Google Play Store compliant Privacy Policy at `docs/privacy.md` with explicit disclosures for camera QR scanning, biometric isolation, SAF backups, and zero telemetry.
+- **ShellGuard-TOTP Native Companion Documentation**: Portal under `docs/companion/` (`index.md`, `security.md`, `sync-and-backups.md`, `totp-engine.md`) covering One-Way Mirror Sync, TEE hardware enclaves, `BiometricPrompt`, `FLAG_SECURE`, and `.sgtotp.bak` envelope spec.
+
+### Fixed
+- **Database Schema Ground Truth Correction**: Fully reconciled `docs/reference/blueprint-schema.md` with actual migrations and runtime database tables (`lobsters`, `agent_keys`, `custom_fields`, `audit_logs`).
+
+### Changed
+- **Test Engine Sequential Stability**: Configured `fileParallelism: false` in `vitest.config.ts` for zero contention across test suites.
+
+## [0.0.1.7] - 2026-09-03
+
+### Added
+- **`sgtotp.bak` Import Compatibility Layer**: Client-side parsing and decryption of ShellGuard-TOTP Android backups (`shellguard-totp-backup-v1` envelopes, HKDF-SHA256, AES-GCM-256 with AAD verification and SHA-256 checksums).
+- **Base32 Normalization & Pod Mapping**: Sanitizes secret seeds, assigns fresh web UUIDs, and normalizes category pods.
+
+## [0.0.1.6] - 2026-08-30
+
+### Added
+- **Native LAN TLS (self-signed)**: `TLS_ENABLED=true` generates persistent 10-year EC P-256 certificate on first boot with SANs covering localhost + LAN interfaces.
+
+## [0.0.1.5] - 2026-08-29
+
+### Added
+- **Bitwarden-Style Custom Fields**: Client-side ShellCrypted custom fields supporting all 4 standard field types (`Text`, `Hidden`, `Checkbox`, dynamic `Linked`). Encrypted in-memory with separate AAD namespaces (`vault_pearls_custom:{id}`). Server migration `0003_custom_fields.up.sql`.
 
 ## [0.0.1.4] - 2026-08-29
 

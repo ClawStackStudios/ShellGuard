@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { withBase } from 'vitepress'
 
 const props = defineProps<{
   title: string
@@ -9,12 +10,20 @@ const props = defineProps<{
 }>()
 
 const isExternal = computed(() => props.href && /^https?:\/\//.test(props.href))
+
+// Internal links must be base-prefixed (site deploys under VITEPRESS_BASE, e.g. /ShellGuard/).
+// Raw HTML href bindings are NOT auto-rewritten by VitePress — only theme-config and
+// markdown links are. Without this, every Card 404s on the deployed site.
+const normalizedHref = computed(() => {
+  if (!props.href || isExternal.value || props.href.startsWith('#')) return props.href
+  return withBase(props.href)
+})
 </script>
 
 <template>
   <component
     :is="href ? 'a' : 'div'"
-    :href="href"
+    :href="normalizedHref"
     :target="isExternal ? '_blank' : undefined"
     :rel="isExternal ? 'noreferrer noopener' : undefined"
     class="sg-card"

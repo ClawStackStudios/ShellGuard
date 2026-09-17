@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-09-16 — the third link class
+The VitePress content cards 404ed on the live site while header/sidebar worked. My docs link battery had crawled config links and markdown-style links — but never raw HTML `href=` attributes inside custom components. The defect lived exactly in the unexamined class: 33 targets, zero dead files, all emitted root-absolute without the `/ShellGuard/` base. Lesson: a link audit that checks N link classes has N blind spots; enumerate the emitter, not the syntax. Long-term bank initialized the same day (4 files) and the memory-bank territory constraint recorded (.clinerules = Cline's; .agents = Antigravity's).
+
+---
+
 ## 2026-09-16 — first governance release (v0.0.1.10)
 Lucas chose the honest PATCH (v0.0.1.10/Build 19) over consuming Phase 18's reserved v0.0.2.0 milestone for a docs-only release — label-inflation prevention in action; queue Build labels swept +1 (including spine anchor hrefs) so no two releases share a build. 34 commits of documentation-governance work shipped as a release. The version was decided by asking, per the semantic-versioning rule, not by guessing.
 

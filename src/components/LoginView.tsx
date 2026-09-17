@@ -142,7 +142,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
         }
 
         if (!validateKeyFormat(keyToUse)) {
-          throw new Error("Invalid ShellKey©™ format. Sovereign keys start with 'hu-' and are 67 characters long.");
+          throw new Error("Invalid ClawKey©™ format. Sovereign keys start with 'hu-' and are 67 characters long.");
         }
 
         const keyHash = await hashToken(keyToUse);
@@ -222,7 +222,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700/50"
           }`}
         >
-          <FileText className="w-3.5 h-3.5" /> Paste ShellKey©™
+          <FileText className="w-3.5 h-3.5" /> Paste ClawKey©™
         </button>
       </div>
 
@@ -280,7 +280,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
       {mode === "paste" && (
         <div className="mb-6 space-y-4">
           <div>
-            <div className="text-xs font-semibold text-slate-900 dark:text-slate-200 mb-2">ShellKey©™</div>
+            <div className="text-xs font-semibold text-slate-900 dark:text-slate-200 mb-2">ClawKey©™</div>
             <input 
               type="password"
               placeholder="hu-..."
@@ -294,7 +294,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
             />
             {isCurrentKeyValid && (
               <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
-                <CheckCircle className="w-3.5 h-3.5" /> Valid 67-char ShellKey©™ format
+                <CheckCircle className="w-3.5 h-3.5" /> Valid 67-char ClawKey©™ format
               </p>
             )}
           </div>
@@ -306,7 +306,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
             <div>
               <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-200 mb-1">One-Field Login</h3>
               <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-                Your ShellKey©™ is all you need to login. Advanced options are available for troubleshooting.
+                Your ClawKey©™ is all you need to login. Advanced options are available for troubleshooting.
               </p>
             </div>
           </div>
@@ -367,7 +367,7 @@ export function LoginView({ onSuccess, onSwitch, onBack }: LoginViewProps) {
         {isLoggingIn ? (
           <><Loader2 className="w-4 h-4 animate-spin" /> Authenticating...</>
         ) : (
-          mode === "upload" ? "Login with Identity File" : "Login with ShellKey©™"
+          mode === "upload" ? "Login with Identity File" : "Login with ClawKey©™"
         )}
       </button>
 

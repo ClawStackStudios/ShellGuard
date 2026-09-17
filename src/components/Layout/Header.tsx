@@ -401,7 +401,7 @@ export function Header({
                 Are you sure you want to remove <strong className="text-theme-main font-semibold">{removingTarget.displayName || removingTarget.username}</strong> from this browser's account switcher?
                 <br /><br />
                 <span className="text-xs text-slate-500">
-                  This does NOT delete data on the server, but you will need your identity file or ShellKey©™ to sign back in.
+                  This does NOT delete data on the server, but you will need your identity file or ClawKey©™ to sign back in.
                 </span>
               </p>
 

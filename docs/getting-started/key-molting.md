@@ -30,17 +30,16 @@ hu-3b9f4e81c7a20d4e9b6anuBIPW3ahovCJQX4bipwDKRY5cjqxELSZ6dkryFMT07e
 
 ---
 
-## 📥 The Vault Access File (`shellguard_identity_key.json`)
+## 📥 The Vault Access File (`shellguard_identity_<username>.json`)
 
 When you register a new lobster identity during Setup, ShellGuard prompts you to download your Vault Access File:
 
 ```json
 {
-  "version": "1.0.0",
   "username": "lucas",
   "displayName": "Lucas",
-  "humanKey": "hu-3b9f4e81c7a20d4e9b6a1234567890abcdef...",
   "uuid": "4ff11202-d872-4415-99db-1bbad96776d8",
+  "token": "hu-3b9f4e81c7a20d4e9b6a...",
   "createdAt": "2026-08-28T20:00:00.000Z"
 }
 ```

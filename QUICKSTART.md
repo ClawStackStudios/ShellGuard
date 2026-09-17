@@ -62,7 +62,7 @@ If you are developing features, run the twin dev servers concurrently.
 
 ## 🔑 Step 1: Molt Your Identity (`hu-` Key)
 
-ShellGuard is entirely passwordless. Your identity and your decryption key are anchored to one high-entropy **Human Key** (`hu-`, ShellKey©™).
+ShellGuard is entirely passwordless. Your identity and your decryption key are anchored to one high-entropy **ClawKey** (`hu-`) — your identity AND your ShellCryption seed in one artifact.
 
 1. Open [http://localhost:6464](http://localhost:6464).
 2. The **Setup view** launches automatically when no identity exists.

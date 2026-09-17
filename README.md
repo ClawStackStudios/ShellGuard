@@ -248,8 +248,8 @@ ShellGuard uses a **prefix-based identity token system** — no passwords, no ac
 
 | Prefix | Type | Length | Usage |
 |---|---|---|---|
-| `hu-` | **Human Key** (ShellKey©™) | 64 chars (67 total) | Your personal identity. One-Field Login. Doubles as the HKDF seed for ShellCryption — never leaves your browser unhashed. |
-| `lb-` | **Lobster/Agent Key** | 64 chars (67 total) | For your AI agents and scripts. Granular permissions, optional expiry, per-key rate limits. Generated in Settings. |
+| `hu-` | **ClawKey** (Human Identity Key) | 64 chars (67 total) | Your personal identity — the JSON key you authenticate with. One-Field Login. Doubles as the HKDF seed for ShellCryption — never leaves your browser unhashed. |
+| `lb-` | **LobsterKey** (Agent Key) | 64 chars (67 total) | For your AI agents and scripts. Granular permissions, optional expiry, per-key rate limits. Generated in Settings; stored hash-only (v0.0.1.9) — the plaintext is shown exactly once at mint. |
 | `api-` | **Session Token** | 32 chars (36 total) | Short-lived REST API bearer. Auto-issued by `POST /api/auth/token`. |
 
 > [!TIP]

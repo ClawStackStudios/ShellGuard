@@ -83,8 +83,8 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 
 | Prefix | Type | Scope | Storage |
 |---|---|---|---|
-| `hu-` | Human Identity Key (ShellKey©™) | One-Field login lookup; **seeds BOTH authentication AND ShellCryption** — the single most critical piece of data in your vault | Server DB (`key_hash` UNIQUE index, hash only) |
-| `lb-` | Lobster/Agent Key | Scoped automated access | Server DB (`agent_keys`, hashed, revocable) |
+| `hu-` | **ClawKey** (Human Identity Key) | One-Field login lookup; **seeds BOTH authentication AND ShellCryption** — the single most critical piece of data in your vault | Server DB (`key_hash` UNIQUE index, hash only) |
+| `lb-` | **LobsterKey** (Agent Key) | Scoped automated access | Server DB (`agent_keys`, **hash-only ledger** — SHA-256 hash + fingerprint only; plaintext returned exactly once at mint; revocable) |
 | `api-` | REST Session Token | API session access, TTL-bound | Server DB (`api_tokens`), short-lived |
 
 > [!CAUTION]
@@ -98,7 +98,20 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 > Treat it like the master password to your entire digital life — because that's exactly what it is.
 
 > [!TIP]
-> See [ARCHITECTURE.md § Key System Architecture](./ARCHITECTURE.md) for full technical details on generation entropy, hashing and rotation.
+> ### What Changed in v0.0.1.9 — Key Ledger Hardening (the LobsterKey ledger)
+
+Before v0.0.1.9, `lb-` LobsterKeys were stored **in plaintext** in `agent_keys.api_key` while every spec claimed hashes-only — a docs-vs-runtime contradiction closed by Phase 17. What the ledger looks like now, and why each property exists:
+
+- **Hash-only storage.** Migration `0004_key_ledger` adds `agent_keys.key_hash` + `key_fingerprint` (first 12 chars of the hash — what key cards display; never key material). Every legacy plaintext key was SHA-256 hashed in place by an in-code backfill (`src/server/database/keyLedger.ts` — SQLite has no crypto, so the migration cannot do it in SQL), after which the plaintext column was **retired**. A raw dump of `db.sqlite` contains no `lb-` material.
+- **Live keys keep working.** The in-place hash means pre-migration agent keys authenticate without re-minting.
+- **Minted exactly once.** A newly minted LobsterKey's plaintext is returned in the mint response and never persisted — lose it, re-mint.
+- **Constant-time, hash-to-hash.** The auth sentinel compares `timingSafeEqual(stored_hash, presented_hash)`; agent lookup is `WHERE key_hash = ? AND is_active = 1` — a hash lookup. No code path scans for a plaintext key anymore.
+- **Session ledger re-pointed.** `api_tokens.owner_uuid` for agent tokens now holds the agent **row id** (rewritten during migration while the plaintext join still existed) — previously it held the raw `lb-` key itself.
+- **Byte-level retirement.** The ledger rebuild + VACUUM means freed pages do not carry the old plaintext either — the retirement is done at the byte level, not just the schema level.
+
+Session `api-` tokens remain intentionally raw in `api_tokens` (short-lived, server-minted, TTL-bound — see [BLUEPRINT.md](./BLUEPRINT.md) §2); the admin plane's backup-honesty note refers to those, not to LobsterKeys, which no longer exist in plaintext anywhere.
+
+See [ARCHITECTURE.md § Key System Architecture](./ARCHITECTURE.md) for full technical details on generation entropy, hashing and rotation, and [ARCHITECTURE.md § The ClawKey Method](./ARCHITECTURE.md) for the ClawStack naming canon (ClawKey / ShellCryption / LobsterKeys).
 
 ---
 
@@ -125,7 +138,7 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 - **`requirePermission(action)`**: Verb-mapped locks (`GET→canRead`, `POST→canWrite`, `PUT→canEdit`, `DELETE→canDelete`) enforced per agent key.
 - **`requireHuman`**: Walls off `/api/settings`, `/api/agent-keys` and `/api/auth/profile` so agent keys can never mutate configuration or mint new keys.
 - **Ownership scoping**: Every query filters `owner_uuid`. Cross-owner reads return 404 — no existence leak.
-- **Constant-time comparison** for all key-hash checks; no timing side channels.
+- **Constant-time comparison** (`crypto.timingSafeEqual`) for all key-hash checks; agent lookup is a hash lookup (`WHERE key_hash = ?`) — no plaintext key scan exists anywhere (v0.0.1.9 hash-only ledger).
 - **Zod validation** (`validateBody`) on every mutating route before SQL executes.
 - **Helmet** security headers with a vault-appropriate CSP (no reader-mode connect-src).
 - **Parameterized queries only** — `db.prepare(...).run(?, ?)` across every handler. Never string interpolation.

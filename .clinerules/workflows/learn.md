@@ -6,7 +6,6 @@ description: Session learning and knowledge capture workflow — analyzes recent
 
 > **Use When:** The user invokes `/learn` or you want to persist a reusable behavior from a correction, success, or new pattern.
 > **Pair With:** `.clinerules/memory-bank/raw_reflection_log.md`, `.clinerules/memory-bank/consolidated_learnings.md`.
-> **Replaces:** `.agents/rules/continuous-improvement.md`, `.agents/rules/advanced-learning.md`.
 
 ---
 

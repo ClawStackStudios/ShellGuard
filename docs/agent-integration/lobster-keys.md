@@ -9,9 +9,9 @@
 ## 🔑 Key Format Specification
 
 ```text
-lb-a9f8c4e2b0d1e3f5a7c9b1d3e5f7a9c1b3d5e7f9a1c3b5d7e9f1a3c5b7d9e1f3
+lb-a9f8c4e2b0d1e3f5a7c9fqBMX8juFQ1cnyJU5grCNY9kvGR2dozKV6hsDOZalwHS
 └── Prefix (3 chars)
-    └─────────────────── 256-bit Random Hex Entropy (64 chars) ───────────────────┘
+    └─────────────────── 256-bit Random Base62 Entropy (64 chars) ───────────────────┘
 ```
 
 Total Length: **67 characters**.

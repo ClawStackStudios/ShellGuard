@@ -23,11 +23,11 @@ A single password or login credential record stored inside the vault (`vault_pea
 ### 🗂️ Pod
 A user-defined hierarchical category (e.g. `Personal`, `Work/AWS`, `Finance`) grouping related pearls and notes. Pods support dynamic color palettes and automatic sanitization.
 
-### 🗝️ Human Key (`hu-`)
-The 67-character sovereign client secret that serves as both the user's login identity and the root of Zero-Knowledge decryption. The server never stores the `hu-` key; it only verifies a constant-time SHA-256 hash (`key_hash`).
+### 🗝️ ClawKey (`hu-`)
+*Historically aliased the **Human Key**.* The ClawKey is the 67-character sovereign client secret that serves as both the user's login identity and the root of Zero-Knowledge decryption. The server never stores the `hu-` key; it only verifies a constant-time SHA-256 hash (`key_hash`).
 
 ### 🤖 LobsterKey (`lb-`)
-A 67-character granular API key issued to autonomous AI agents (stored in `agent_keys`). Allows scoped, programmatic access to designated vault secrets with configurable expiration dates, rate limits, and permission masks (`read`, `write`, `delete`, `admin`).
+A 67-character granular API key issued to autonomous AI agents (stored in `agent_keys`). Allows scoped, programmatic access to designated vault secrets with configurable expiration dates, rate limits, and permission masks (`canRead`, `canWrite`, `canEdit`, `canDelete`). Since v0.0.1.9 the ledger is hash-only: the plaintext is shown exactly once at mint.
 
 ### 🦞 SuperLobster
 The instance administration control plane available at `/superlobster`. Provides real-time health metrics, WAL-safe SQLite snapshots, user cascade deletions, and automated backup scheduling. Protected by an isolated cookie session using `ADMIN_TOKEN`.

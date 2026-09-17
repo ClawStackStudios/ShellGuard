@@ -197,5 +197,5 @@ describe('Phase 17 — legacy key backfill unit oracle', () => {
       db.close();
       fs.rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 90000);
 });

@@ -1,6 +1,8 @@
-# 🛡️ ShellGuard
-
 <div align="center">
+
+<img src="public/assets/shellguard-thumbnail.png" width="112" height="112" alt="ShellGuard Icon" />
+
+# 🛡️ ShellGuard
 
 ```text
 ███████╗██╗   ██╗███████╗██╗     ██╗              ██████╗   ██╗   ██╗   █████╗    ██████╗     ██████╗ 
@@ -14,9 +16,7 @@
 
 *Exoskeletal Protection for Human + Agent Secrets — a zero-knowledge vault where Humans and AI Lobsters guard their pearls together.*
 
-</div>
-
----
+<br/>
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
 [![Version](https://img.shields.io/badge/Version-v0.0.1.10-blue?style=for-the-badge)](CHANGELOG.md)
@@ -29,6 +29,25 @@
 [![SQLite](https://img.shields.io/badge/SQLite%20%2B%20SQLCipher-07405E?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge)](LICENSE)
 [![ClawStack](https://img.shields.io/badge/ClawStack-Mobile_Studios-FF4500?style=for-the-badge&logo=gitlab&logoColor=white)](#)
+
+<br/><br/>
+
+<img src="public/assets/shellguard-feature-graphic.png" width="100%" alt="ShellGuard Feature Graphic" />
+
+<br/><br/>
+
+<p align="center">
+  <a href="#-about">About</a> •
+  <a href="#️-architecture">Architecture</a> •
+  <a href="#-key-system">Key System</a> •
+  <a href="#-encryption-model">Encryption</a> •
+  <a href="#-getting-started">Quickstart</a> •
+  <a href="#-api-reference">API</a> •
+  <a href="#️-security">Security</a> •
+  <a href="https://clawstackstudios.github.io/ShellGuard/">Documentation Portal</a>
+</p>
+
+</div>
 
 ---
 

@@ -65,12 +65,14 @@ Identity itself is key-based — there are no passwords or accounts on a remote 
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  Identity Key File: shellguard_identity_key.json         │
+│  Identity Key File: shellguard_identity_<username>.json  │
 │                                                          │
 │  {                                                       │
-│    "username": "your-username",                          │
-│    "uuid":     "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",   │
-│    "token":    "hu-[64 random chars]"                    │
+│    "username":    "your-username",                       │
+│    "displayName": "Your Name",                           │
+│    "uuid":        "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", │
+│    "token":       "hu-[64 base62 chars]",                 │
+│    "createdAt":   "2026-09-16T00:00:00.000Z"              │
 │  }                                                       │
 │                                                          │
 │  ⚠️  This file IS your password AND your decryption key. │
@@ -124,7 +126,7 @@ See [ARCHITECTURE.md § Key System Architecture](./ARCHITECTURE.md) for full tec
 - The `api-` token lives in `sessionStorage` under the exported constant `sg_api_token` — it evaporates on tab close, logout, or inactivity lock ("Retract").
 - The derived AES-GCM ShellCryption key is non-extractable and held only in session memory; closing the tab destroys it.
 - Encryption uses per-field random IVs and AAD bound to `table:recordId`, so ciphertexts cannot be transplanted between rows.
-- Custom Fields (`custom_fields`) adhere to the same zero-knowledge invariant: client-side AAD binds fields to `${table}:${recordId}:custom_fields`, ensuring tamper-resistant field integrity.
+- Custom Fields (`custom_fields`) adhere to the same zero-knowledge invariant: client-side AAD binds the custom-fields blob to a `<table>_custom:{recordId}` namespace (e.g. `vault_pearls_custom:{id}`), ensuring tamper-resistant field integrity.
 - ShellGuard-TOTP Android Companion interop adheres to zero-knowledge parity; companion keys leverage hardware-backed Android KeyStore / StrongBox enclaves, and backup exports (`sgtotp.bak`) are encrypted end-to-end with AES-256-GCM.
 - Generator history stays in `sessionStorage`; preferences synced to the server are non-secret only (theme, generator defaults, pods, security timeout).
 - Exports of decrypted vault contents require **re-entering the `hu-` key** even mid-session (Settings → Import/Export).
@@ -211,7 +213,7 @@ When `DB_ENCRYPTION_KEY` is set, ShellGuard additionally encrypts metadata colum
 
 ### Re-keying & Rotation
 
-The connection layer includes a `sqlcipher_export` fallback:
+The connection layer includes a `PRAGMA rekey` fallback (better-sqlite3-multiple-ciphers exposes rekey directly — not SQLCipher's `sqlcipher_export`):
 
 1. Set (or change) `DB_ENCRYPTION_KEY`
 2. Restart the application
@@ -251,7 +253,7 @@ The instance admin plane at `/superlobster` (URL-only entry — no UI links anyw
 | **Cross-Site Request Forgery (CSRF)** | ✅ Mitigated | Bearer-token auth (not cookies) | No auth cookies exist to forge; requests require explicit `Authorization` header |
 | **Authentication Bypass** | ✅ Mitigated | SHA-256 key hashes + constant-time compare | Timing-safe verification; raw keys never stored server-side |
 | **Authorization Bypass** | ✅ Mitigated | `requirePermission()` + `owner_uuid` scoping | Verb-mapped permissions per route; every query owner-filtered; cross-owner reads return 404 |
-| **Rate Limiting** | ✅ Mitigated | Three tiers | Global `apiLimiter` (100 req/min), `authLimiter` (5 attempts/15m, skips successful logins), per-agent LRU limiter honoring each key's configured rate limit (1–10000) |
+| **Rate Limiting** | ✅ Mitigated | Three tiers | Global `apiLimiter` (100 req/min), `authLimiter` (10 attempts/15m default — `AUTH_RATE_LIMIT`-tunable, skips successful logins), per-agent LRU limiter honoring each key's configured rate limit (1–10000) |
 | **Audit Trail** | ✅ Mitigated | Segregated append-only `audit.sqlite` | Every mutation logged with extended redaction; daily retention prune; tamper-resistant isolation from live data |
 
 ### Key Leakage Vectors

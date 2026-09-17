@@ -67,7 +67,7 @@ ShellGuard is entirely passwordless. Your identity and your decryption key are a
 1. Open [http://localhost:6464](http://localhost:6464).
 2. The **Setup view** launches automatically when no identity exists.
 3. Choose a username and click **Generate Identity Key** — a 67-character `hu-` key is created in your browser.
-4. **Download the identity file** (`shellguard_identity_key.json`) and store it in a real vault (password manager, offline storage). Losing it means your pearls are unrecoverable ciphertext — there is no reset link.
+4. **Download the identity file** (`shellguard_identity_<username>.json`) and store it in a real vault (password manager, offline storage). Losing it means your pearls are unrecoverable ciphertext — there is no reset link.
 5. Log back in any time via One-Field Login: paste your `hu-` key. Only its SHA-256 hash ever reaches the server.
 
 ## 🐚 Step 2: Lock Your First Pearls

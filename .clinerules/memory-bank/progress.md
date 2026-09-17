@@ -40,7 +40,7 @@
 
 ## Current Status
 
-**v0.0.1.9 (Build 18) — RELEASED & LIVE** (tag `v0.0.1.9`, GitHub Release mirrors RELEASE-v0.0.1.9.md; main synced). Post-release: unphased hotfix `07ccd61` merged; genome reorganized (2026-09-15, Option C): spine **Stage N = Phase N−1** restored — Stage 18.5 = hotfix interlude, Stages 19–22 = Phases 18–21 (queued), Stages 23/24 = Phases 22/23 (queued); 26/26 roadmap links verified. **NEXT: Phase 18 — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (Tasks 35/36, v0.0.2.0 / Build 19), queued & gated on Lucas's green-light**; Phases 19–21 follow, then Phase 22 (Reef Polish) and Phase 23 (Bitwarden-model integrity).
+**v0.0.1.9 (Build 18) — RELEASED & LIVE** (tag `v0.0.1.9`, GitHub Release mirrors RELEASE-v0.0.1.9.md; main synced). In-flight branch `docs/spine-chronology-reorg` (PR held): genome chronology restored (2026-09-15, Option C — spine **Stage N = Phase N−1**, Stage 18.5 = hotfix interlude, Stages 19–24 = Phases 18–23 queued; 26/26 links verified); ROADMAP reorganized to TOTP chronology (frontmatter, inline interlude, completed 15→16→17, archive 1–14); root docs truth-synced to v0.0.1.9 (ARCHITECTURE: ClawKey Method + canon, 0004/keyLedger.ts, pod purity, deltas #19/#20; SECURITY: Key Ledger Hardening narrative; BLUEPRINT: schema matches 0004); **ClawKey canon landed in UI** (14 strings ShellKey™→ClawKey™, gates green: 15 files/210 tests + build). **NEXT: Phase 18 — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (Tasks 35/36, v0.0.2.0 / Build 19), queued & gated on Lucas's green-light**; Phases 19–21 follow, then Phase 22 (Reef Polish) and Phase 23 (Bitwarden-model integrity).
 
 ## Known Issues
 

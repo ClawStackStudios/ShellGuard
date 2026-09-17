@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-09-15
+last_updated: 2026-09-16
 current_position: "v0.0.1.9 (Build 18) — released & live; next Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (v0.0.2.0, Tasks 35/36) — queue 18 → 19 → 20 → 21 → 22 → 23"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "████████████████░░░ 74% (17 of 23 formalized phases)"
+  features_completed: "████████████████░░░ 74% (17 of 24 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -40,6 +40,8 @@ statistics:
 > folder counts. Introduces native in-browser WebCrypto ED25519/RSA-4096 SSH keypair
 > generation with downloadable public/private keys.
 > *(Source: Attractor Beacon §6, memory-bank/progress.md)*
+
+> 📚 **Documentation Impact**: docs/vault-features (composite model, attachments) - reference/blueprint-schema.md (composite semantics, decoupled tallies) - ARCHITECTURE.md (count-aggregation contract) - BLUEPRINT.md
 
 - [ ] **Task 35: [Functionality] Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine**
 
@@ -79,6 +81,8 @@ action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-f
 > supports larger files up to 50MB, and enforces strict per-user storage quotas.
 > *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
 
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) - SECURITY.md + ARCHITECTURE.md (50MB ceiling, quota 413 behavior, body-limit change) - .env.example + README env table - docs/vault-features/attachments.md
+
 - [ ] **Task 37: [Functionality] Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
 
 Description: Create `migrations/0005_attachment_blobs.up.sql` altering or migrating
@@ -113,6 +117,8 @@ freezing the UI thread. Provide inline thumbnail previews for common image/PDF t
 > tags in the sidebar, and execute scoped searches.
 > *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
 
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) - ARCHITECTURE.md (query contract) - docs/agent-integration/api-reference.md (?tags= param) - reference/glossary.md (Tag entry) - docs/vault-features (chips + filters)
+
 - [ ] **Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search**
 
 Description: Create `migrations/0007_vault_tags.up.sql` adding `tags` (ShellCrypted JSON array
@@ -143,6 +149,8 @@ state alongside search keywords and pod selection.
 > with granular per-record failure reporting, tri-state bulk selection actions, and confirmed
 > batch deletion with cascading cleanup.
 > *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
+
+> 📚 **Documentation Impact**: ARCHITECTURE.md API routes table (new route + 207 contract) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract!) - docs/vault-features (bulk UI)
 
 - [ ] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
 
@@ -179,6 +187,8 @@ and dedicated Import wizard with preview table and error resolution chips.
 > completed work (No Forced Targets); the queue position after Phase 21 makes
 > the provisional label `v0.0.2.4 (Build 23)`. *(Source: Lucas, 2026-09-13 —
 > post-v0.0.1.9 hands-on pass; expanded with the search consolidation.)*
+
+> 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only
 
 - [ ] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
 
@@ -252,6 +262,8 @@ column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
 > after Phase 22 makes the provisional label `v0.0.2.5 (Build 24)`.
 > *(Source: Lucas, 2026-09-13 — Bitwarden-pattern alignment pass.)*
 
+> 📚 **Documentation Impact**: SECURITY.md (form-contract: notes reject secret payloads) - ARCHITECTURE.md (attachments route table) - reference/blueprint-schema.md (quarantine semantics) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (standalone creation rejected) - docs/vault-features
+
 - [ ] **Task 45: [Functionality] Attachment Parent Enforcement, Orphan Quarantine & Form-Contract Rules**
 
 Description: Enforce parent linkage at the Bedrock. (1) `attachments.ts`:
@@ -300,6 +312,69 @@ ordering Passwords → Secure Notes → SSH Keys (reviewable in the PR).
 > contains exactly Passwords/Secure Notes/SSH Keys; attachments appear only
 > within their parent's detail; sorting is deterministic and type-aware;
 > the full test oracle + `tsc` + build stay clean.
+
+---
+
+### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 25)]
+
+> Phase Feature Set Overview:
+> Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code
+> audit (which proved the corpus's only liars were docs — the code was sound) into
+> standing verification. Task A hardens the last open soft spot in the crypto
+> claims: the pure-TS WebCrypto fallback's native parity has never been proven
+> against real standards vectors (its test has been skipped since v0.0.1.2) — Task A
+> runs the fallback against NIST/RFC/SP vectors and mechanizes the constant-time
+> guarantee across every key-material comparison site. Task B turns the claim
+> battery (grep enforcing code first, assert doc second) into an executable gate
+> and writes the auditor's addendum into the threat model: in-process rate limiting
+> (restart resets; multi-instance shares nothing), per-key LRU eviction behavior,
+> redaction-regex coverage, and the PBKDF2 narration. No runtime behavior changes;
+> no migrations; the corpus becomes third-party auditable by construction.
+> *(Source: Lucas, 2026-09-16 — cryptologist-lens pass; docs bow to code.)*
+
+> 📚 **Documentation Impact**: SECURITY.md + docs/architecture/threat-model.md (auditor's addendum) - project/verification-gates.md (the battery becomes an oracle) - encryption-layers-spec.md section 5 (side-channel boundary)
+
+- [ ] **Task 47: [Security Engine] WebCrypto Fallback Vector Parity & Constant-Time Guarantee**
+
+Description: Close the last open soft spot in the crypto claims. (1) Fix the
+skipped `tests/unit/webCryptoFallback.test.ts` (skipped since v0.0.1.2 — a known
+issue guarding our own parity claim): run the pure-TS engine against REAL
+standards vectors — SHA-256 (FIPS 180-4 vectors), HMAC-SHA256 (RFC 2104),
+HKDF-SHA256 (RFC 5869 test vectors), AES-256-GCM (SP 800-38D) — asserting
+byte-identity with Node native output on every vector; unskip. (2) Mechanize the
+constant-time sweep: enumerate every comparison site over key material across
+`src/` (auth, admin, revoke, sentinel) and prove zero `===` on secrets — as an
+executable assertion, not an eyeball pass. (3) Narrate the honest boundary in
+`project/encryption-layers-spec.md` section 5: pure-TS AES-GCM is FUNCTIONAL
+parity (LAN-HTTP availability), not side-channel parity — stated verbatim so no
+future doc inflates it.
+
+> Success Criteria: The skipped test is unskipped and green against real
+> standards vectors; fallback output byte-identical to native on every vector;
+> the constant-time sweep script runs in CI and finds zero `===` comparisons on
+> secret material; the side-channel boundary is documented in the spec; the full
+> test oracle + `tsc` + build stay clean.
+
+- [ ] **Task 48: [Verification/Documentation Component] The Auditor's Battery & Threat-Model Addendum**
+
+Description: Make the corpus self-auditing. (1) Consolidate the claim battery —
+grep enforcing code first, assert doc second (the L1-L8 classes: limiter numbers
+vs rateLimiter.ts, schema claims vs migrations, identity shape vs crypto.ts,
+permission masks vs zod, AAD namespaces vs test fixtures, PRAGMA rekey, file
+names) — into an executable gate (`scripts/audit-docs.ts` or a vitest suite,
+reviewable in the PR) wired into the build-gates suite so docs drift fails CI.
+(2) Write the auditor's addendum across `SECURITY.md` and
+`docs/architecture/threat-model.md`: in-process rate limiting (restart resets
+counters; multi-instance deployments share nothing — say it), per-key LRU
+eviction behavior (evicted keys fall back to DB lookups — safe, but documented),
+redaction-regex coverage enumerated, and PBKDF2 narration where the test tree
+mentions it.
+
+> Success Criteria: The battery fails loudly on any planted docs-lie (mutation
+> test: re-introduce one L-class lie, watch CI catch it); the threat-model
+> addendum names in-process limiter semantics, LRU eviction, and redaction
+> coverage explicitly; SECURITY.md and the portal threat-model agree; the full
+> test oracle + `tsc` + build stay clean.
 
 ---
 

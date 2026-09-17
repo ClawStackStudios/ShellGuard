@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-16 — the cryptographer's lens formalized
+The auditor-confidence conversation (would a 30-year cryptologist be satisfied?) surfaced three gaps — the skipped webCryptoFallback test, the unmechanized constant-time claim, the undocumented limiter/LRU/redaction semantics. Lucas chose to formalize them as Phase 24 (queue tail, provisional v0.0.2.6) instead of leaving them as open observations, and the lens itself entered the bank as declarative truth (projectBrief standard + systemPatterns invariants). The corpus started being built for an audience we could not name. Also: the queue crawl embedded Documentation Impact lines into every queued phase (18-24) — docs-hygiene now rides in the schedule itself.
+
 ## 2026-09-16 — docs bow to code (governance ruling)
 The bidirectional audit (L1–L8) found docs contradicting shipped, verified, secure behavior. Lucas ruled: **docs bow to code** — the application works, so stale prose is the defect, never an excuse to retune a limiter or drop a permission flag. Verify against enforcing code first; only then assert the doc.
 
@@ -22,16 +25,16 @@ authLimiter (10/15m, skip-success), adminAuthLimiter (5/10m), apiLimiter (100/mi
 ## 2026-09-16 — canMove taught me to enumerate, not recall
 Documented the permission model as four masks from memory; `schemas.ts:140` carries a fifth (`canMove`) and the wizard surfaces seven presets. Permission/security models must be **enumerated from the zod schema** every time, never recalled.
 
-## 2026-09-15 — heredoc emoji corruption
+## 2026-09-16 — heredoc emoji corruption
 A 🏛️ passed through a bash heredoc became 2×U+FFFD on disk. Emoji through heredocs are corrupted silently; caught only by a byte-level scan (`b'\xef\xbf\xbd'` count). Rule: emoji content goes through the editor tool; heredocs stay ASCII, and any heredoc write gets a U+FFFD scan after.
 
-## 2026-09-15 — assert-before-write is 5-for-5
+## 2026-09-16 — assert-before-write is 5-for-5
 Every fail-closed assert this arc (missing `./` prefix, 2-element tuple, count mismatch 5-vs-4, wrong padding) prevented a partial multi-file write. The `swap(expected=N)` pattern costs seconds and has never cost a false stop. Keep it for all mechanical sweeps.
 
-## 2026-09-15 — decimal interlude pattern for non-phase work
+## 2026-09-16 — decimal interlude pattern for non-phase work
 Unphased hotfixes broke the spine's `Stage N = Phase N−1` invariant until I adopted the TOTP's decimal pattern (Stage 18.5). Non-phase work slots at decimal positions *between* phases; stage numbering stays a pure phase ladder. (See `activeContext.md` § Recent Changes, chronology entry.)
 
-## 2026-09-15 — the bank can be the stale side
+## 2026-09-16 — the bank can be the stale side
 The ROADMAP said next = Phase 18; the memory bank said Phase 22. I nearly "fixed" the roadmap. Docs-vs-bank contradictions cut either way — audit **both sides against the runtime** before deciding which is stale. (Here the doc was right.)
 
 ## 2026-09-16 — non-greedy finditer truncates matches

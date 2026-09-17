@@ -1,4 +1,22 @@
 ---
+Date: 2026-09-16
+TaskRef: "Root-docs coherence pass — ClawKey canon + v0.0.1.9 truth-sync + UI rename"
+
+Learnings:
+- House canon established and written into ARCHITECTURE.md: ClawKey (hu- identity JSON key), ShellCryption (client-side zero-knowledge engine), LobsterKeys (lb- agent keys). The docs previously said ShellKey(TM) for the hu- key — off-canon; now ClawKey everywhere user-facing, with internals (deriveShellKey, shellKey, ShellKeyFallback) documented as cross-project contracts, NOT renamed (they are pinned by shellcryption-spec.md and the companion crypto-spec).
+- api- session tokens remain RAW in api_tokens by design (server-minted, TTL-bound) — the admin backup-honesty note refers to them; do not confuse with LobsterKeys (hash-only since v0.0.1.9).
+- Count-assert discipline caught a real miss: ImportExportView had 5 ShellKey occurrences, not the 4 in my line dump — fail-closed prevented a partial rename across files.
+- Two commits went out under one message when a staged-index surprise hit (4 files swept into the architecture commit) — amended the message immediately (own unpushed commit); lesson: `git add <specific>` immediately before EACH commit, never rely on prior staging.
+- Probe-with-backticks bug bit twice in verification (checking literal text without the backtick formatting the file actually uses). Copy probes from the file, not from memory.
+
+Improvements_Identified_For_Consolidation:
+- Canon lint is now a standing gate: no ShellKey(TM) in root docs outside receipts/glossary; no api_key column claims anywhere.
+- Remaining candidate: QUICKSTART.md Step-1 flow uses 'Generate Identity Key' button label (code) — canon-consistent enough; revisit only if Lucas wants deeper UI copy pass.
+
+Gates: 15 files / 210 tests passed, vite build clean. UI rename = 14 occurrences across 4 components.
+---
+
+---
 Date: 2026-09-15
 TaskRef: "ROADMAP.md chronology reorg — seven-fix pass (Option C alignment)"
 

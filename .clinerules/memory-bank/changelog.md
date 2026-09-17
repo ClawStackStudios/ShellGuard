@@ -1,5 +1,10 @@
 # Changelog — ShellGuard
 
+## [0.0.1.10] - 2026-09-16
+
+### Changed
+- **The Auditable Corpus** — the full docs-governance arc: genome chronology restored (spine `Stage N = Phase N−1`, Stage 18.5 interlude, 26/26 links), ROADMAP TOTP-chronology reorg (frontmatter, inline interlude, 15→16→17), root-docs v0.0.1.9 truth-sync + ClawKey canon (ARCHITECTURE § The ClawKey Method, deltas #19/#20), docs/ portal truth-sync, the ClawKey canon in 14 UI strings, the bidirectional docs↔code audit (8 lies corrected — docs bow to code), Phase 24 queued (Tasks 47/48, v0.0.2.6/Build 26) with Documentation Impact crawl, the Decision Log adopted, and the lens in the bank (Third-party-auditable standard + Auditability Invariants).
+
 ## [Unreleased] - 2026-09-15
 
 ### Changed

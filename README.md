@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/assets/shellguard-thumbnail.png" width="112" height="112" alt="ShellGuard Icon" />
+<img src="public/favicon.svg" width="112" height="112" alt="ShellGuard Icon" />
 
 # 🛡️ ShellGuard
 

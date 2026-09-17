@@ -1,5 +1,25 @@
 ---
 Date: 2026-09-16
+TaskRef: "Bidirectional docs<->code audit — 8 lies corrected, docs bow to code"
+
+Learnings:
+- Lucas ruled the governance: the application works and is secure; docs contradicting shipped behavior are the defect. Docs bow to code — do NOT change security-relevant code to match stale prose.
+- The 8 lies all came from ONE root cause: docs written at earlier phases never re-audited after later code evolution (renamed exports, retuned limiters, re-pointed ledgers). Claim battery pattern: for every documented invariant, grep the enforcing code FIRST, then assert the doc matches.
+- Distinguish neighbor numbers: adminAuthLimiter 5/10min vs authLimiter 10/15min vs apiLimiter 100/min — the docs had conflated admin+auth. Always cite the env-var tunability (AUTH_RATE_LIMIT).
+- Identity-file truth (crypto.ts:63-80): filename shellguard_identity_<username>.json (per-username!), shape {username, displayName, uuid, token, createdAt} — no version, no humanKey field. The auditLogger redacts a humanKey DETAIL key — unrelated to the file schema; do not infer file shape from redaction lists.
+- Custom-field AAD truth (test oracle): <table>_custom:{id} (vault_pearls_custom:{id}) — NOT ${table}:${recordId}:custom_fields. When docs describe a crypto detail with no code hit for its literal pattern, that is a lie alarm: search the TESTS for the actual fixture.
+- canMove is a real fifth capability (schemas.ts:140) + 7 wizard presets — never document a permission model from memory; enumerate the zod schema.
+- gitignored dirs (.crustagent) break `git add a b c` chains — stage tracked files only; legacy copies get fixed on disk as courtesy.
+
+Improvements_Identified_For_Consolidation:
+- The claim battery (L1-L8 + truth scans + dead links + docs:build) should be consolidated into a single repo script (scripts/audit-docs or a skill) for every future release.
+- 3rd-party auditability achieved in structure: root docs -> portal -> code pointers now resolve 1:1.
+
+Gates: portal build 26.0s green; claim battery zero red; 34/34 links. Commits e4c336b/744a43c/a1afcdc.
+---
+
+---
+Date: 2026-09-16
 TaskRef: "docs/ portal truth-sync — schema ground truth, privacy file names, canon, base62"
 
 Learnings:

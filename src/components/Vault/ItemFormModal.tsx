@@ -7,6 +7,7 @@ import { PendingAttachment, formatBytes, MAX_ATTACHMENT_BYTES } from '../../lib/
 import { generateUUID } from '../../lib/crypto.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
 import { generatePassword, getGlobalGeneratorConfig, GeneratorConfig } from '../../lib/generator.ts';
+import { generateSshKeyPair, keypairGenerationSupported, GeneratedSshKeyPair, SshKeyAlgorithm } from '../../lib/keyGen.ts';
 
 // We inline Favicon and PasswordStrengthIndicator here for simplicity if needed, 
 // or import them if they are exported.
@@ -58,6 +59,13 @@ export function ItemFormModal({
   // Field visibility
   const [showNoteField, setShowNoteField] = useState(false);
   const [showTotpField, setShowTotpField] = useState(false);
+
+  // SSH keypair generator (Phase 18)
+  const [showKeyGen, setShowKeyGen] = useState(false);
+  const [keyGenAlgo, setKeyGenAlgo] = useState<SshKeyAlgorithm>('ed25519');
+  const [generatedKp, setGeneratedKp] = useState<GeneratedSshKeyPair | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [keyGenError, setKeyGenError] = useState<string | null>(null);
   const [showAttachmentField, setShowAttachmentField] = useState(false);
   const [isExtraDropdownOpen, setIsExtraDropdownOpen] = useState(false);
   
@@ -147,6 +155,11 @@ export function ItemFormModal({
         setShowNoteField(false);
         setShowTotpField(false);
         setShowAttachmentField(false);
+        setShowKeyGen(false);
+        setKeyGenAlgo('ed25519');
+        setGeneratedKp(null);
+        setGenerating(false);
+        setKeyGenError(null);
         setLinkedAttachmentIds([]);
         setCustomFieldsState([]);
         setIsAddFieldOpen(false);
@@ -196,6 +209,35 @@ export function ItemFormModal({
     const config = getGlobalGeneratorConfig();
     setPassword(generatePassword(config));
     setShowPassword(true);
+  };
+
+  const handleGenerateKeypair = async () => {
+    setGenerating(true);
+    setKeyGenError(null);
+    try {
+      const kp = await generateSshKeyPair(keyGenAlgo);
+      setGeneratedKp(kp);
+      // Store both halves as one JSON payload — sealed client-side as a single
+      // ShellCryption blob on save (AAD vault_ssh_keys:{id}); legacy raw keys
+      // still display (detail pane sniffs JSON vs raw).
+      setPassword(JSON.stringify({ publicKey: kp.publicKeyOpenSsh, privateKey: kp.privateKeyPkcs8Pem }));
+    } catch (e: any) {
+      setKeyGenError(e?.message || 'Keypair generation failed.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadGeneratedPrivate = () => {
+    if (!generatedKp) return;
+    const name = generatedKp.algorithm === 'ed25519' ? 'id_ed25519_shellguard.pem' : 'id_rsa_shellguard.pem';
+    const blob = new Blob([generatedKp.privateKeyPkcs8Pem], { type: 'application/x-pem-file' });
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
   };
 
   const stageAttachmentFile = (file: File) => {
@@ -371,8 +413,92 @@ export function ItemFormModal({
               </div>
             )}
 
+            {/* SSH Key Specifics (Phase 18 — keypair generation) */}
+            {type === 'key' && (
+              <div className="col-span-1 md:col-span-2 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted">
+                    SSH Private Key <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowKeyGen((v) => !v)}
+                    disabled={!keypairGenerationSupported()}
+                    title={keypairGenerationSupported() ? 'Generate an Ed25519 or RSA-4096 keypair in your browser' : 'Keypair generation requires a secure context (HTTPS or localhost)'}
+                    className="text-xs font-semibold text-claw-cyan hover:text-cyan-600 flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Zap size={14} /> Generate Keypair
+                  </button>
+                </div>
+                {!keypairGenerationSupported() && (
+                  <p className="text-xs text-amber-500">
+                    Keypair generation requires a secure context (HTTPS or localhost). On plain-HTTP LAN
+                    origins, paste or import an existing key instead — everything else works.
+                  </p>
+                )}
+                <textarea
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Paste an OpenSSH / PKCS#8 private key, or generate a new keypair…"
+                  className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main min-h-[130px] font-mono"
+                />
+                {showKeyGen && keypairGenerationSupported() && (
+                  <div className="border border-claw-cyan/40 rounded-xl p-3 bg-claw-cyan/5 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={keyGenAlgo}
+                        onChange={(e) => setKeyGenAlgo(e.target.value as SshKeyAlgorithm)}
+                        className="bg-theme-base border border-theme-subtle rounded-lg px-2 py-1.5 text-xs focus:border-claw-cyan outline-none text-theme-main cursor-pointer"
+                      >
+                        <option value="ed25519">Ed25519 (recommended)</option>
+                        <option value="rsa-4096">RSA-4096</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleGenerateKeypair}
+                        disabled={generating}
+                        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-claw-cyan/10 text-claw-cyan hover:bg-claw-cyan/20 transition-colors disabled:opacity-50"
+                      >
+                        {generating ? 'Generating…' : 'Generate'}
+                      </button>
+                      <span className="text-[11px] text-theme-muted">Generated in your browser — never transmitted raw.</span>
+                    </div>
+                    {keyGenError && <p className="text-xs text-red-500">{keyGenError}</p>}
+                    {generatedKp && (
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-theme-muted">Public key — copy this to authorized_keys</div>
+                        <code className="block text-[11px] break-all bg-theme-base border border-theme-subtle rounded-lg p-2 font-mono text-theme-main select-all">
+                          {generatedKp.publicKeyOpenSsh}
+                        </code>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => navigator.clipboard?.writeText(generatedKp.publicKeyOpenSsh)}
+                            className="text-xs font-semibold text-claw-cyan hover:text-cyan-600"
+                          >
+                            📋 Copy Public Key
+                          </button>
+                          <button
+                            type="button"
+                            onClick={downloadGeneratedPrivate}
+                            className="text-xs font-semibold text-claw-cyan hover:text-cyan-600"
+                          >
+                            ⬇ Download Private (PKCS#8)
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-theme-muted">
+                          The private key is filled below and sealed client-side on save — the server stores only ciphertext.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Extra Fields Section */}
-            {(type === 'password' || type === 'note') && (
+            {(type === 'password' || type === 'note' || type === 'key') && (
               <>
                 {showNoteField && type === 'password' && (
                   <div className="col-span-1 md:col-span-2 relative">

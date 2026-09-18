@@ -5,6 +5,7 @@ import {
   makeNotePayload,
   makeSshKeyPayload,
   makeAttachmentPayload,
+  uploadAttachment,
 } from './helpers/testFactories.js';
 import { createTestUserWithToken } from './helpers/testAuth.js';
 import { loadServer, releaseServer, ServerHandle } from './helpers/testDb.js';
@@ -140,7 +141,10 @@ describe('Lobsters overview — strict metadata', () => {
     await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${userToken}`).send(makePearlPayload());
     await request(srv.app).post('/api/notes').set('Authorization', `Bearer ${userToken}`).send(makeNotePayload());
     await request(srv.app).post('/api/keys').set('Authorization', `Bearer ${userToken}`).send(makeSshKeyPayload());
-    await request(srv.app).post('/api/attachments').set('Authorization', `Bearer ${userToken}`).send(makeAttachmentPayload());
+  const attRes = await uploadAttachment(srv.app, userToken, makeAttachmentPayload());
+  if (attRes.status !== 201) {
+    throw new Error(`attachment setup failed: ${attRes.status} ${JSON.stringify(attRes.body)}`);
+  }
 
     const res = await request(srv.app)
       .get('/api/admin/users')

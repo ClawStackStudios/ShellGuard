@@ -2,6 +2,7 @@ import dbInstance, { createConnection } from './connection.js';
 import { initializeAuditSchema } from './schema.js';
 import { runMigrations } from './migrationRunner.js';
 import { migrateAgentKeyLedger } from './keyLedger.js';
+import { migrateAttachmentBlobs } from './attachmentBlobs.js';
 import { createAuditLogger } from '../utils/auditLogger.js';
 
 // Initialize and migrate on load
@@ -9,6 +10,9 @@ runMigrations(dbInstance);
 
 // Phase 17: hash legacy plaintext agent keys in place (after migrations)
 migrateAgentKeyLedger(dbInstance);
+
+// Phase 19: re-encode legacy TEXT attachment payloads to native BLOBs (after migrations)
+migrateAttachmentBlobs(dbInstance);
 
 // Initialize Audit DB (Segregated)
 const auditDb = createConnection('audit.sqlite', process.env.DB_ENCRYPTION_KEY);

@@ -1,7 +1,7 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-09-16
-current_position: "v0.0.1.9 (Build 18) — released & live; next Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (v0.0.2.0 / Build 20, Tasks 35/36) — queue 18 → 19 → 20 → 21 → 22 → 23 → 24"
+last_updated: 2026-09-17
+current_position: "v0.0.2.0 (Build 20) — released & live; next Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture (v0.0.2.1 / Build 22, Tasks 37/38) — queue 19 → 20 → 21 → 22 → 23 → 24"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
   features_completed: "████████████████░░░ 74% (17 of 24 formalized phases)"
@@ -13,67 +13,24 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 18+) and the 3 most recent completed phases (Phases 15, 16, and 17).*
-> *Historical Phases 1 through 14 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 19+) and the 3 most recent completed phases (Phases 16, 17, and 18).*
+> *Historical Phases 1 through 15 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.1.10 (Build 19)`
-- **Next Planned Milestone**: `v0.0.2.0 (Build 20)` (Phase 18)
+- **Current Production Release**: `v0.0.2.0 (Build 20)`
+- **Next Planned Milestone**: `v0.0.2.1 (Build 22)` (Phase 19)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 18 completes, Phase 15 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 19 completes, Phase 16 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
 
-### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 20)]
-
-> Phase Feature Set Overview:
-> Consolidates vault item architecture into primary, rich composite records adhering
-> to the Bitwarden model. Passwords/logins encapsulate embedded notes, live TOTP seeds,
-> attached files, and custom fields in a single cohesive entity. Decouples child
-> attachments from Pod item metrics so attached files never artificially inflate
-> folder counts. Introduces native in-browser WebCrypto ED25519/RSA-4096 SSH keypair
-> generation with downloadable public/private keys.
-> *(Source: Attractor Beacon §6, memory-bank/progress.md)*
-
-> 📚 **Documentation Impact**: docs/vault-features (composite model, attachments) - reference/blueprint-schema.md (composite semantics, decoupled tallies) - ARCHITECTURE.md (count-aggregation contract) - BLUEPRINT.md
-
-- [ ] **Task 35: [Functionality] Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine**
-
-Description: Refactor item composition contracts across client and server. Ensure
-`vault_pearls` serves as the primary composite entity embedding credentials, URI arrays,
-ShellCrypted rich notes, TOTP seeds, attachments, and custom fields. In `server.ts` and
-`vault.ts`, update count aggregation queries so child records in `vault_secure_attachments`
-are scoped strictly to parent items and excluded from root pod item tallies. Implement
-in-browser WebCrypto cryptographic SSH key generation (`generateKeyPair`) supporting
-Ed25519 and RSA-4096, outputting RFC-4716 public keys and PKCS#8 ShellCrypted private keys.
-Add test coverage in `tests/vault-crud.test.ts` and `tests/unit/keyGen.test.ts`.
-
-> Success Criteria: Creating a login with 3 attachments increases Pod item count by
-> exactly 1; generating an Ed25519 keypair produces valid OpenSSH/RFC formats; child
-> attachments cleanly cascade delete with the parent; 100% test oracle passes.
-
-- [ ] **Task 36: [UI Component] Bitwarden-Style Master Form, Live TOTP Embedding & Pod Item Count Reconciliation**
-
-Description: Redesign `ItemFormModal.tsx` and `ItemDetailPane.tsx` into a unified,
-Bitwarden-style master view: username, password with generation slider/strength gauge,
-URI list with launch buttons, embedded live-rendered TOTP token with 30-second progress ring,
-expandable rich notes, attachment drag-and-drop zone, and custom fields. Update
-`SidebarFolderTree.tsx` to display true primary item counts. Add the "Generate Keypair"
-action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-features/`.
-
-> Success Criteria: Vault view renders rich composite cards with embedded TOTP
-> countdowns and attachment action chips; folder badges accurately reflect primary
-> items; SSH key generator modal copies public keys and stores private keys in one click.
-
----
-
-### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 21)]
+### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)]
 
 > Phase Feature Set Overview:
 > Migrates binary attachment payloads from base64 text strings into native SQLite BLOB
@@ -109,7 +66,7 @@ freezing the UI thread. Provide inline thumbnail previews for common image/PDF t
 
 ---
 
-### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 22)]
+### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 23)]
 
 > Phase Feature Set Overview:
 > Introduces flexible, multi-dimensional categorization alongside hierarchical Pods.
@@ -142,7 +99,7 @@ state alongside search keywords and pod selection.
 
 ---
 
-### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 23)]
+### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 24)]
 
 > Phase Feature Set Overview:
 > Empowers high-volume vault ingestion and management: transactional bulk import endpoint
@@ -173,7 +130,7 @@ and dedicated Import wizard with preview table and error resolution chips.
 
 ---
 
-### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 24)]
+### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 25)]
 
 > Phase Feature Set Overview:
 > A polish-and-ergonomics bracket in two movements: (1) **one search bar to
@@ -185,7 +142,7 @@ and dedicated Import wizard with preview table and error resolution chips.
 > control moves beside Copy. No schema, no API contract changes; the server
 > NEVER receives a search query. The version digit is decided by the
 > completed work (No Forced Targets); the queue position after Phase 21 makes
-> the provisional label `v0.0.2.4 (Build 24)`. *(Source: Lucas, 2026-09-13 —
+> the provisional label `v0.0.2.4 (Build 25)`. *(Source: Lucas, 2026-09-13 —
 > post-v0.0.1.9 hands-on pass; expanded with the search consolidation.)*
 
 > 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only
@@ -241,7 +198,7 @@ column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
 
 ---
 
-### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 25)]
+### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 26)]
 
 > Phase Feature Set Overview:
 > Aligns ShellGuard's item model fully with the Bitwarden pattern (verified
@@ -259,7 +216,7 @@ column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
 > attachments but CANNOT embed password credentials; SSH keys are their own
 > items. Orphan attachments are QUARANTINED, never deleted. The version digit
 > is decided by the completed work (No Forced Targets); the queue position
-> after Phase 22 makes the provisional label `v0.0.2.5 (Build 25)`.
+> after Phase 22 makes the provisional label `v0.0.2.5 (Build 26)`.
 > *(Source: Lucas, 2026-09-13 — Bitwarden-pattern alignment pass.)*
 
 > 📚 **Documentation Impact**: SECURITY.md (form-contract: notes reject secret payloads) - ARCHITECTURE.md (attachments route table) - reference/blueprint-schema.md (quarantine semantics) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (standalone creation rejected) - docs/vault-features
@@ -315,7 +272,7 @@ ordering Passwords → Secure Notes → SSH Keys (reviewable in the PR).
 
 ---
 
-### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 26)]
+### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 27)]
 
 > Phase Feature Set Overview:
 > Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code
@@ -392,65 +349,52 @@ mentions it.
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
-### Phase 15: `sgtotp.bak` Import Compatibility Layer [v0.0.1.7 (Build 16)]
+### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 20)] ✅
 
 > Phase Feature Set Overview:
-> The bridge completes. The web vault learns to open its Android sibling's
-> backups: `sgtotpBackup.ts` parses the `sgtotp.bak` format (encrypted
-> `shellguard-totp-backup-v1` envelopes, plaintext exports, bare item
-> arrays), decrypting client-side via HKDF-SHA256 (salt = `ownerUuid`,
-> AAD `totp_backup:{ownerUuid}`) + AES-GCM-256 through the **pure TS
-> fallback primitives** (LAN-safe), with the enforced SHA-256 checksum over
-> the exact decrypted string. Items map to fresh-UUID vault pearls,
-> `normalizePod()` categories, original timestamps preserved;
-> `ImportExportView` sniffs formats with the PIN/key modal. Companion work:
-> the **strict RELEASE-doc mirror** in `release.yml` (exact-version
-> resolution, hard fail, no auto-notes), the dynamic theme engine with
-> multi-accent support, `AGENTS.md` for the Gemini identity in the Android
-> companion tree, and the landing-header dark-mode brand fix.
-> *(Receipts: `138952b`, `b0fcc47`, `7054595`, `074eab0`, `7b7a90c`,
-> `68da985`, `0b259f7`, `2d7d9a2`, `b125fab`, `fc7e9df`, merge `c6d17d8` —
-> 2026-08-30 → 09-03. Contract source of truth: `compatibility_layer.md`.)*
+> Consolidates vault item architecture into primary, rich composite records adhering
+> to the Bitwarden model. Passwords/logins encapsulate embedded notes, live TOTP seeds,
+> attached files, and custom fields in a single cohesive entity. Decouples child
+> attachments from Pod item metrics so attached files never artificially inflate
+> folder counts. Introduces native in-browser WebCrypto ED25519/RSA-4096 SSH keypair
+> generation with downloadable public/private keys.
+> *(Source: Attractor Beacon §6, memory-bank/progress.md)*
+> *(Receipts: `6f9b00d` — Task 35 keypair engine + pod-decoupling receipts,
+> `61336a1` — Task 36 master-form key section, release prep + tag `v0.0.2.0` — 2026-09-17. Released & live.)*
 
-- [x] **Task 29: [Functionality] `sgtotpBackup.ts` Parser, Client-Side Decryption & Timestamp Preservation**
+> 📚 **Documentation Impact**: docs/vault-features (composite model, attachments) - reference/blueprint-schema.md (composite semantics, decoupled tallies) - ARCHITECTURE.md (count-aggregation contract) - BLUEPRINT.md
 
-Description: Implement the parser/mapper in `src/lib/sgtotpBackup.ts` —
-contract mirrored from the Android `BackupManager.kt` +
-`ShellCryptionEngine.kt`: sniff encrypted `shellguard-totp-backup-v1`,
-plaintext `shellguard-totp-plain-export-v1`, or bare `BackupItemDto[]`;
-decrypt envelopes client-side (HKDF-SHA256: ikm = export key, salt =
-`envelope.ownerUuid`, info = `clawchives-shellcryption-v1` → AES-GCM-256,
-AAD `totp_backup:{ownerUuid}`) using the pure TS fallback primitives; verify
-the SHA-256 checksum over the exact decrypted item-array string (post-decrypt,
-byte-reproducible). Map items to vault pearls with **fresh UUIDs**,
-`normalizePod()` categories, `algorithm`/`digits`/`period` passthrough, and
-**original `localUpdatedAt` preserved** as `created_at`. Prove the full
-crypto round-trip in `tests/unit/sgtotpBackup.test.ts` (encrypted fixture,
-plaintext, bare array, checksum mismatch, AAD tamper). Write
-`compatibility_layer.md` as the cross-project format contract.
+- [x] **Task 35: [Functionality] Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine**
 
-> Success Criteria: All three input formats import correctly on HTTP LAN
-> origins; a checksum mismatch or AAD tamper aborts before persistence;
-> imported seeds re-encrypt under `vault_pearls_totp:{id}`; timestamps
-> survive the journey; Android ids are never reused.
+Description: Refactor item composition contracts across client and server. Ensure
+`vault_pearls` serves as the primary composite entity embedding credentials, URI arrays,
+ShellCrypted rich notes, TOTP seeds, attachments, and custom fields. In `server.ts` and
+`vault.ts`, update count aggregation queries so child records in `vault_secure_attachments`
+are scoped strictly to parent items and excluded from root pod item tallies. Implement
+in-browser WebCrypto cryptographic SSH key generation (`generateKeyPair`) supporting
+Ed25519 and RSA-4096, outputting RFC-4716 public keys and PKCS#8 ShellCrypted private keys.
+Add test coverage in `tests/vault-crud.test.ts` and `tests/unit/keyGen.test.ts`.
 
-- [x] **Task 30: [UI Component] ImportExportView Format Sniffing, Key Modal & Strict Release Mirror**
+> Success Criteria: Creating a login with 3 attachments increases Pod item count by
+> exactly 1; generating an Ed25519 keypair produces valid OpenSSH/RFC formats; child
+> attachments cleanly cascade delete with the parent; 100% test oracle passes.
 
-Description: Extend `ImportExportView.tsx`: detect sgtotp formats on file
-selection, prompt for the export key/PIN via a modal for encrypted
-envelopes, show the imported-count preview, and commit through the parser
-with sanitized errors. In CI: rewrite `release.yml` to the **strict
-RELEASE-doc mirror** — exact-version `RELEASE-<tag>.md` resolution with hard
-failure (no auto-notes, no fallback) so the GitHub Release body is the
-RELEASE file verbatim. Implement the dynamic theme engine (adaptive
-light/dark + multi-accent support) in the client; add `AGENTS.md` for the
-companion's Gemini identity; fix the landing header's dark-mode brand
-divider; molt the RELEASE file and cut `v0.0.1.7`.
+- [x] **Task 36: [UI Component] Bitwarden-Style Master Form, Live TOTP Embedding & Pod Item Count Reconciliation**
 
-> Success Criteria: Encrypted backups import via the key modal with
-> sanitized failure modes; the GitHub Release body matches the RELEASE file
-> byte-for-byte or the pipeline fails loudly; themes switch live across
-> light/dark and all accents; the bridge is usable end-to-end on LAN.
+Description: Redesign `ItemFormModal.tsx` and `ItemDetailPane.tsx` into a unified,
+Bitwarden-style master view: username, password with generation slider/strength gauge,
+URI list with launch buttons, embedded live-rendered TOTP token with 30-second progress ring,
+expandable rich notes, attachment drag-and-drop zone, and custom fields. Update
+`SidebarFolderTree.tsx` to display true primary item counts. Add the "Generate Keypair"
+action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-features/`.
+
+> Success Criteria: Vault view renders rich composite cards with embedded TOTP
+> countdowns and attachment action chips; folder badges accurately reflect primary
+> items; SSH key generator modal copies public keys and stores private keys in one click.
+
+---
+
+
 
 ---
 
@@ -591,7 +535,7 @@ across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
 
 ## 🏛️ Historical Archive (Phases 1 through 14)
 
-Earlier development phases (`v0.0.0.0` void through `v0.0.1.5` Build 14) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.1.7` Build 16) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |

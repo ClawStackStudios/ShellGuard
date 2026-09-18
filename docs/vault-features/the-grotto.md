@@ -17,8 +17,33 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 | :--- | :--- | :--- | :--- |
 | **Vault Pearl (Login)** | 🔑 | `secret` (Password), `totp_secret` (Seed), `attachments` (File IDs), `custom_fields` | `title`, `username`, `url`, `category`, `notes` |
 | **Secure Note** | 📝 | `content` (Markdown body), `custom_fields` | `title`, `category`, `notes` |
-| **SSH Key** | 💻 | `key_value` (Private Key), `custom_fields` | `title`, `username`, `category`, `notes` |
+| **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields` | `title`, `username`, `category`, `notes` |
 | **Encrypted Attachment**| 📎 | `file_data` (Base64 payload up to 10 MB) | `title`, `file_name`, `mime_type`, `category` |
+
+> **Pod tallies count primary items only** — attachments are children of their
+> login/note/key (linked via the parent's `attachments` ID array) and never
+> inflate folder badges, even though they appear in the encrypted corpus.
+
+---
+
+## 🔑 In-Browser SSH Keypair Generation
+
+When adding an **SSH Key**, the form offers **Generate Keypair** — an Ed25519 or
+RSA-4096 keypair generated entirely inside your browser via the WebCrypto API:
+
+- **Public key** (OpenSSH one-line + RFC-4716 block) is shown for one-click copy
+  into a server's `authorized_keys`.
+- **Private key** (PKCS#8 PEM) can be downloaded once at generation, then is
+  **sealed client-side** with ShellCryption before the server ever sees it —
+  exactly like any other secret field.
+- Output is **byte-identical to `ssh-keygen`** (verified against the reference
+  implementation for both algorithms).
+
+> [!NOTE]
+> Keypair generation requires a **secure context** (HTTPS or `localhost`) — the
+> WebCrypto API is unavailable on plain-HTTP LAN origins. There the form shows a
+> clear notice and you can paste or import an existing key instead; every other
+> feature works unchanged. This is a browser-platform constraint, disclosed honestly.
 
 ---
 

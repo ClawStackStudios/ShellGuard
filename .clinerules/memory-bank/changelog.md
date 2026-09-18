@@ -1,5 +1,12 @@
 # Changelog — ShellGuard
 
+## [0.0.2.0] - 2026-09-17 — The Composite Reef (Phase 18, Build 20)
+### Added
+- In-browser SSH keypair engine (Ed25519/RSA-4096, ssh-keygen-verified) + Bitwarden-style SSH key section (Tasks 35/36)
+- Pod-tally decoupling locked by tests; keypair docs (the-grotto, blueprint-schema)
+### Changed
+- ROADMAP sliding window (P15→history, P18→completed); spine Stage 19 shipped; build labels swept +1
+
 ## [0.0.1.10] - 2026-09-16
 
 ### Changed

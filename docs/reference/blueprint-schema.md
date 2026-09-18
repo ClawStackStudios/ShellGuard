@@ -161,6 +161,13 @@ CREATE INDEX IF NOT EXISTS idx_agent_keys_owner ON agent_keys(owner_uuid);
 >
 > **Pod purity.** Migration `0004` also rebuilt the four vault tables to drop the hardcoded `DEFAULT 'Personal'` from every `category` column - the default is `''` (uncategorized), matching the client's `normalizePod()` semantics. Zero hardcoded pods, all the way down.
 
+> **Pod tallies = primary items only.** Pod/folder counts are computed client-side
+> (`buildPodTree`, over the already-decrypted in-memory corpus) and filter to the
+> primary types (`password` / `note` / `key`). Attachment rows — children linked
+> via the parent's `attachments` ID array — never inflate folder badges. The
+> server's `GET /api/health` counts are instance-health totals, not pod tallies.
+> (Receipt: `tests/unit/keyGen.test.ts` pod-decoupling assertions, Phase 18.)
+
 ### 8. Preferences & System Settings
 Stores non-secret user preferences and instance configuration.
 

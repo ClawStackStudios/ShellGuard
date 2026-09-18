@@ -154,6 +154,33 @@ export function ItemDetailPane({
                 </div>
               )}
 
+              {/* Public Key (generated keypairs store a JSON payload) */}
+              {item.type === "key" && (() => {
+                let pub: string | null = null;
+                try {
+                  const parsed = JSON.parse(item.secret);
+                  if (parsed && typeof parsed.publicKey === 'string') pub = parsed.publicKey;
+                } catch { /* legacy raw key */ }
+                if (!pub) return null;
+                return (
+                  <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Globe size={16} className="text-slate-400" />
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Public Key (authorized_keys)</span>
+                        <code className="text-xs font-mono text-theme-main break-all">{pub}</code>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(pub!, "publicKey")}
+                      className={`p-2 rounded-lg transition-colors flex-shrink-0 ${copyFeedback === "publicKey" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"}`}
+                    >
+                      {copyFeedback === "publicKey" ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                );
+              })()}
+
               {/* Password / Secret */}
               <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                 <div className="flex items-center gap-3 min-w-0 flex-1">

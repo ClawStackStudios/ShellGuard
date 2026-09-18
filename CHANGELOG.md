@@ -1,5 +1,16 @@
 # Changelog — ShellGuard
 
+## [0.0.2.0] - 2026-09-17
+### Added
+- In-browser SSH keypair generation (WebCrypto Ed25519 / RSA-4096) with ssh-keygen-verified output, public-key copy + PKCS#8 private download; private keys sealed client-side (Phase 18, Tasks 35/36)
+- SSH private-key input in the item form (previously API/drag-drop only) + public-key display in the detail pane; extra fields extended to SSH keys
+- Pod-tally decoupling locked by tests (attachments never inflate folder badges)
+- Mermaid diagram rendering: VitePress plugin + GitHub-parseable labels; navigation-link integrity suite
+
+### Changed
+- README reorganized to the TOTP discipline (grouped features, merged encryption sections, collapsible references)
+- Roadmap queue chain includes Phase 24; cryptologist's lens sealed into long-term memory
+
 ## [0.0.1.10] - 2026-09-16
 
 ### Changed

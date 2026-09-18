@@ -132,7 +132,7 @@ ShellGuard/
     │   │   ├── vault.ts               #   Pearl logins CRUD (with custom_fields support)
     │   │   ├── notes.ts               #   Secure notes CRUD (with custom_fields support)
     │   │   ├── sshKeys.ts             #   SSH key CRUD (with custom_fields support)
-    │   │   ├── attachments.ts         #   Attachment CRUD (32mb body limit here only)
+    │   │   ├── attachments.ts         #   Attachment multipart streaming CRUD (BLOB, quota, 413)
     │   │   ├── agentKeys.ts           #   LobsterKeys©™ lifecycle (create/revoke/delete)
     │   │   ├── settings.ts            #   Per-user KV preferences
     │   │   └── admin.ts               #   SuperLobster Panel API (ADMIN_TOKEN cookie-session; ADMIN.md)
@@ -195,7 +195,7 @@ graph LR
 
     subgraph MW ["Middleware Chain (ordered)"]
         M1["TRUST_PROXY"] --> M2["httpsRedirect"] --> M3["helmet CSP"]
-        M3 --> M4["cors"] --> M5["json body limit<br/>1mb global · 32mb attachments"]
+        M3 --> M4["cors"] --> M5["json body limit<br/>1mb global"]
         M5 --> M6["cookie-parser + request logger"]
         M6 --> M7["apiLimiter + per-key LRU"]
         M8["requireAuth"] --> M9["requirePermission / requireHuman"]
@@ -631,12 +631,13 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/attachments` | canRead | List attachments |
-| `POST` | `/api/attachments` | canWrite | Upload base64 attachment — dedicated 32mb body limit, 10 MB per-file hard cap (zod: 14M-char blob) |
-| `PUT` | `/api/attachments/:id` | canEdit | Update attachment |
-| `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment |
+| `GET` | `/api/attachments` | canRead | Metadata-only list — the payload BLOB is NEVER included |
+| `GET` | `/api/attachments/:id/file` | canRead | Streamed ciphertext download (1MB `substr` chunks — never loads the whole BLOB into RSS) |
+| `POST` | `/api/attachments` | canWrite | Multipart upload (Busboy) — ciphertext streamed as already-encrypted bytes; 50MB per-file ceiling (`ATTACHMENT_MAX_MB`), 500MB grotto quota per owner (`GROTTO_QUOTA_MB`), `413` mid-stream abort on breach |
+| `PUT` | `/api/attachments/:id` | canEdit | Metadata-only update (title/file_name/mime_type/category) — file replacement re-uploads |
+| `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment (frees grotto quota) |
 
-Passwords reference attachments by ID: `vault_pearls.attachments` holds a JSON array of `vault_secure_attachments` IDs (no sensitive data). Unlimited attachments per login, one file each, 10 MB max per file. Deleting a pearl cascade-deletes its linked attachments (ownership-scoped).
+Passwords reference attachments by ID: `vault_pearls.attachments` holds a JSON array of `vault_secure_attachments` IDs (no sensitive data). Unlimited attachments per login, one file each, 50 MB max per file. Deleting a pearl cascade-deletes its linked attachments (ownership-scoped).
 
 ### Agent Keys (`routes/agentKeys.ts`) — human-only
 

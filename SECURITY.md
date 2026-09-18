@@ -147,6 +147,7 @@ See [ARCHITECTURE.md § Key System Architecture](./ARCHITECTURE.md) for full tec
 - **Segregated append-only audit reef** (`audit.sqlite`) records every mutation with an extended redaction list (delta #2): titles, urls, usernames, secrets, tokens and ciphertext are never logged. Retention prunes daily (90-day default, 10k row cap).
 - SQLite runs WAL journal mode, `synchronous NORMAL`, enforced foreign keys, and `busy_timeout`.
 - `NODE_ENV=production` disables stack traces in error responses.
+- **Attachment streaming limits (Phase 19)**: uploads are multipart with the ciphertext streamed as **already-encrypted bytes** — the server never inspects content, only size and linkage. A **50MB per-file ceiling** (`ATTACHMENT_MAX_MB`) aborts mid-stream (`413`) before buffering past the ceiling; a **500MB grotto quota** per `owner_uuid` (`GROTTO_QUOTA_MB`) rejects uploads that would exceed the total (`413`, nothing stored). List responses carry metadata only — payload BLOBs leave exclusively via the ownership-scoped streamed download route, so a vault listing never leaks bulk ciphertext and downloads never spike Node's RSS.
 
 </details>
 

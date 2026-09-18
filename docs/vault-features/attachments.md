@@ -22,7 +22,9 @@ Instead of bloating login rows with monolithic payloads, ShellGuard stores each 
 
 ### Key Technical Properties:
 
-1. **10 MB Hard Limit Per File**: Enforced with Zod schema validation (`14,000,000` base64 character limit) and a 32 MB Express body parser ceiling scoped to `/api/attachments`.
-2. **Unlimited Attachments Per Pearl**: A pearl can link to as many individual file attachments as needed via its JSON UUID array.
-3. **Atomic Cascade Deletion**: When a vault pearl is deleted, the backend automatically performs a foreign-key-safe cascade deletion of all linked attachment records.
-4. **Client-Side Encryption & Decryption**: File bytes are converted to Base64 and encrypted in your browser before upload. On download, files decrypt in browser memory and trigger a native download prompt.
+1. **50 MB Hard Limit Per File**: Enforced mid-stream by the server's `Busboy` multipart handler (`ATTACHMENT_MAX_MB`, default 50MB) — a breach destroys the request and returns `413`, never buffering past the ceiling.
+2. **500 MB Grotto Quota Per Owner**: Total stored ciphertext is capped per `owner_uuid` (`GROTTO_QUOTA_MB`, default 500MB) via an exact `SUM(size_bytes)` aggregate — over-quota uploads yield `413` and store nothing.
+3. **Unlimited Attachments Per Pearl**: A pearl can link to as many individual file attachments as needed via its JSON UUID array.
+4. **Atomic Cascade Deletion**: When a vault pearl is deleted, the backend automatically performs a foreign-key-safe cascade deletion of all linked attachment records.
+5. **Client-Side Encryption & Decryption**: File bytes are encrypted in your browser before upload; the ShellCryption envelope streams as multipart bytes (no base64 inflation). The list endpoint never carries payloads — downloads stream the BLOB in 1MB chunks from `GET /api/attachments/:id/file` and decrypt in browser memory.
+6. **Inline Previews**: Common image types and PDFs render in an encrypted preview modal — PDFs load from a Blob object URL (never a `data:` URI, honoring the insecure-origin invariant).

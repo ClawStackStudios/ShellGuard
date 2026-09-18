@@ -110,14 +110,15 @@ CREATE INDEX IF NOT EXISTS idx_vault_ssh_keys_owner_created ON vault_ssh_keys(ow
 ```
 
 ### 6. `vault_secure_attachments` (File Attachments)
-Stores binary file attachments under the **Reference Model**. Linked from `vault_pearls.attachments` JSON array.
+Stores binary file attachments under the **Reference Model**. Linked from `vault_pearls.attachments` JSON array. **Phase 19 (v0.0.2.1)**: `file_data` is a native BLOB holding raw ShellCryption envelope bytes (legacy TEXT rows re-encoded in code by `attachmentBlobs.ts`), with `size_bytes` powering the 500MB grotto quota.
 
 ```sql
 CREATE TABLE IF NOT EXISTS vault_secure_attachments (
   id         TEXT PRIMARY KEY,
   owner_uuid TEXT NOT NULL,
   title      TEXT NOT NULL,
-  file_data  TEXT NOT NULL,
+  file_data  BLOB NOT NULL,
+  size_bytes INTEGER NOT NULL DEFAULT 0,
   file_name  TEXT DEFAULT '',
   mime_type  TEXT DEFAULT '',
   category   TEXT DEFAULT '',
@@ -127,6 +128,8 @@ CREATE TABLE IF NOT EXISTS vault_secure_attachments (
 
 CREATE INDEX IF NOT EXISTS idx_vault_secure_attachments_owner_created ON vault_secure_attachments(owner_uuid, created_at DESC);
 ```
+
+> **Phase 19 wire contract**: multipart streaming uploads (Busboy, 50MB per-file ceiling `ATTACHMENT_MAX_MB`), metadata-only list responses, chunked 1MB BLOB downloads via `GET /api/attachments/:id/file`, `413` on quota breach.
 
 ### 7. `agent_keys` (LobsterKeys / AI Agent Delegation)
 Issued API keys (`lb-` prefix) allowing scoped, programmatic access to autonomous agents.

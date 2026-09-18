@@ -244,6 +244,7 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 | `HTTPS_PORT` | `4647` | Port checked when `ENFORCE_HTTPS=true` |
 | `AUTH_RATE_WINDOW` / `AUTH_RATE_LIMIT` | `900000` / `5` | Brute-force protection window (ms) and attempt cap on auth endpoints |
 | `API_RATE_WINDOW` / `API_RATE_LIMIT` | `60000` / `100` | Global API rate-limit window (ms) and request cap |
+| `ATTACHMENT_MAX_MB` / `GROTTO_QUOTA_MB` | `50` / `500` | Per-file attachment ceiling and per-owner grotto quota (MB) — breaches yield `413` |
 | `PUID` / `PGID` | `1000` | Linux UID/GID the container drops privileges to |
 
 </details>

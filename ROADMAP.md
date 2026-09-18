@@ -1,7 +1,7 @@
 ---
 roadmap_version: 2.0.0
 last_updated: 2026-09-16
-current_position: "v0.0.1.9 (Build 18) — released & live; next Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (v0.0.2.0 / Build 20, Tasks 35/36) — queue 18 → 19 → 20 → 21 → 22 → 23"
+current_position: "v0.0.1.9 (Build 18) — released & live; next Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation (v0.0.2.0 / Build 20, Tasks 35/36) — queue 18 → 19 → 20 → 21 → 22 → 23 → 24"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
   features_completed: "████████████████░░░ 74% (17 of 24 formalized phases)"

@@ -75,14 +75,14 @@ flowchart TD
     Phase24 --> Summit
 ```
 
-> **Transcription state**: **18 phases transcribed** (Stage 0 → 19, `v0.0.0.0`
+> **Transcription state**: **19 phases transcribed** (Stage 0 → 20, `v0.0.0.0`
 > void → `v0.0.2.0` parity) — the walk and the codebase occupy the same commit
 > through the summit tag. **Phase 17 (`v0.0.1.9`) and Phase 18 (`v0.0.2.0`) are SHIPPED.**
 > **Stage 18.5** records the post-summit hotfix receipt (`07ccd61`).
-> **Stages 20–25 (Phases 19–24) are QUEUED** in the
+> **Stages 21–25 (Phases 20–24) are QUEUED** in the
 > active forward queue; each stage prompt is transcribed when its phase becomes
 > the next molt. Execution order is strictly chronological:
-> Phase 19 → 20 → 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
+> Phase 20 → 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
 > holds across the whole spine, with the unphased hotfix at the decimal slot. Each
 > queued stage's **Documentation Impact** line is part of that phase's definition
 > of done (docs-hygiene): the executing agent syncs every listed doc before the
@@ -1081,12 +1081,13 @@ the full test oracle + tsc + build stay clean!
 
 ---
 
-## 📦 Stage 20 (Queued): Phase 19 Prompt — Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)]
+## 📦 Stage 20: Phase 19 Prompt — Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)]
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-19-attachment-sqlite-blob-migration--streaming-architecture-v0021-build-22)
 > for complete specifications on **Task 37** and **Task 38**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 19; green-light from
-> Lucas still required.
+> **✅ SHIPPED 2026-09-18** — receipts `f4f6073` (Task 37: BLOB storage +
+> streaming + quota), `27df54b` (Task 38: streaming UI + previews + Eye-beside-Copy
+> fold-in), `dee897f` (documentation impact sync).
 > 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) · SECURITY.md + ARCHITECTURE.md (50MB/quotas) · .env.example + README env table · docs/vault-features/attachments.md
 > **📖 Required Context Files for Phase 19**:
 > 1. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations).
@@ -1146,9 +1147,9 @@ and the full test oracle + tsc + build stay clean!
 
 ---
 
-## 🏷️ Stage 21 (Queued): Phase 20 Prompt — Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 23)]
+## 🏷️ Stage 21 (Queued): Phase 20 Prompt — Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-20-vault-tagging-system--granular-filter-bar-v0022-build-23)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-20-vault-tagging-system--granular-filter-bar-v0022-build-24)
 > for complete specifications on **Task 39** and **Task 40**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 20; green-light from
 > Lucas still required.
@@ -1163,7 +1164,7 @@ and the full test oracle + tsc + build stay clean!
 Copy and paste this prompt to execute **Phase 20 (Tasks 39 & 40)** once green-lit:
 
 ```markdown
-# PHASE 20 EXECUTION: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 23)]
+# PHASE 20 EXECUTION: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
@@ -1200,9 +1201,9 @@ build stay clean!
 
 ---
 
-## 📥 Stage 22 (Queued): Phase 21 Prompt — Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 24)]
+## 📥 Stage 22 (Queued): Phase 21 Prompt — Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-21-bulk-import-endpoint--batch-operations-v0023-build-24)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-21-bulk-import-endpoint--batch-operations-v0023-build-25)
 > for complete specifications on **Task 41** and **Task 42**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 21; green-light from
 > Lucas still required.
@@ -1216,7 +1217,7 @@ build stay clean!
 Copy and paste this prompt to execute **Phase 21 (Tasks 41 & 42)** once green-lit:
 
 ```markdown
-# PHASE 21 EXECUTION: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 24)]
+# PHASE 21 EXECUTION: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
@@ -1250,9 +1251,9 @@ and the full test oracle + tsc + build stay clean!
 
 ---
 
-## 🎨 Stage 23 (Queued): Phase 22 Prompt — Reef Polish Pass, Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 25)]
+## 🎨 Stage 23 (Queued): Phase 22 Prompt — Reef Polish Pass, Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 26)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-22-reef-polish-pass--unified-search--control-ergonomics-work-driven-version--provisional-v0024-build-25)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-22-reef-polish-pass--unified-search--control-ergonomics-work-driven-version--provisional-v0024-build-26)
 > for complete specifications on **Task 43** and **Task 44**.
 > **⚠️ Execution state**: QUEUED — green-light from Lucas still required
 > (the phase may absorb further hands-on items).
@@ -1265,7 +1266,7 @@ and the full test oracle + tsc + build stay clean!
 Copy and paste this prompt to execute **Phase 22 (Tasks 43 & 44)** once green-lit:
 
 ```markdown
-# PHASE 22 EXECUTION: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 25)]
+# PHASE 22 EXECUTION: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven — provisional v0.0.2.4 (Build 26)]
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
@@ -1309,9 +1310,9 @@ field row, and the full test oracle + tsc + build stay clean!
 ```
 
 
-## 🧩 Stage 24 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 26)]
+## 🧩 Stage 24 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 27)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-23-bitwarden-model-item-integrity--attachment-parent-enforcement--dashboard-type-truth-work-driven-version--provisional-v0025-build-26)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-23-bitwarden-model-item-integrity--attachment-parent-enforcement--dashboard-type-truth-work-driven-version--provisional-v0025-build-27)
 > for complete specifications on **Task 45** and **Task 46**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 23; green-light from
 > Lucas still required.
@@ -1325,7 +1326,7 @@ field row, and the full test oracle + tsc + build stay clean!
 Copy and paste this prompt to execute **Phase 23 (Tasks 45 & 46)** once green-lit:
 
 ```markdown
-# PHASE 23 EXECUTION: Bitwarden-Model Item Integrity [work-driven — provisional v0.0.2.5 (Build 26)]
+# PHASE 23 EXECUTION: Bitwarden-Model Item Integrity [work-driven — provisional v0.0.2.5 (Build 27)]
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
@@ -1371,9 +1372,9 @@ three primary types with attachments only inside parents, sorting is
 deterministic, and the full test oracle + tsc + build stay clean!
 ```
 
-## 🔬 Stage 25 (Queued): Phase 24 Prompt — Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 27)]
+## 🔬 Stage 25 (Queued): Phase 24 Prompt — Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 28)]
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-24-cryptographic-audit-hardening--third-party-auditability-work-driven-version--provisional-v0026-build-27)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-24-cryptographic-audit-hardening--third-party-auditability-work-driven-version--provisional-v0026-build-28)
 > for complete specifications on **Task 47** and **Task 48**.
 > **⚠️ Execution state**: QUEUED — executes after Phase 24; green-light from
 > Lucas still required.
@@ -1386,7 +1387,7 @@ deterministic, and the full test oracle + tsc + build stay clean!
 Copy and paste this prompt to execute **Phase 24 (Tasks 47 & 48)** once green-lit:
 
 ```markdown
-# PHASE 24 EXECUTION: Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 27)]
+# PHASE 24 EXECUTION: Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 28)]
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
@@ -1435,7 +1436,7 @@ at Stage 18** with its security-hardening receipts (`7faf51d`, `027506a`,
 merge `9b5ec31`), followed by the post-summit hotfix recorded at **Stage 18.5**
 (`07ccd61`).
 
-The walk does not end at the summit — it molts. **Stages 19–25 (Phases 18–24)
+The walk does not end at the summit — it molts. **Stages 21–25 (Phases 20–24)
 are queued** in the active forward queue of [`../ROADMAP.md`](../ROADMAP.md);
 each stage prompt is transcribed when its phase becomes the next molt. Receipts
 accrue per phase, the sliding window keeps the roadmap honest, and this spine

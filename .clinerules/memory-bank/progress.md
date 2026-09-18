@@ -7,7 +7,7 @@
 - [x] **Domain API parity** — hardened CRUD for pearls/notes/SSH keys/attachments with ownership scoping
 - [x] **LobsterKeys lifecycle** — create/revoke/delete with granular permissions, expiry, rate limits
 - [x] **Per-row metadata encryption** — AES-256-GCM on title/username/url/category/notes/file_name
-- [x] **Password attachments (reference model)** — file upload UI (10MB hard limit/file, unlimited files), ShellCrypted file_data, pearl stores JSON ID array, cascade delete on pearl DELETE, download buttons
+- [x] **Password attachments (reference model, Phase 19)** — native BLOB storage (migration 0005), multipart streamed uploads (50MB/file, 500MB/owner quota, 413), metadata-only list, chunked downloads via GET /:id/file, progress+cancel UI, encrypted image/PDF previews, Eye-beside-Copy ergonomics
 - [x] **SuperLobster Panel (admin plane v0.3.0 & CaraBase Alignment)** — ADMIN_TOKEN gate, strict-metadata lobster list + cascade delete, read-only status, whitelist settings, Online-Backup-API failsafe backups (manifest + rotation), audit viewer, hash-routed React panel, full CaraBase card-grid and dashboard visual alignment; no HTTP restore (offline scuttle:restore validator)
 - [x] **Multi-user architecture** — Bitwarden-style locked dashboard, QuickLoginModal overlay, background account locking, robust routing
 - [x] **Triple-layer encryption** — ShellCryption + Per-Row + SQLCipher, all documented
@@ -30,7 +30,6 @@
 
 ## What's Left to Build
 
-- [ ] **Attachment BLOB migration** — move base64 payloads into proper SQLite BLOB columns
 - [ ] **Tagging system** — tag field on item schema, sidebar filter by tag
 - [ ] **Bulk operations** — multi-select with confirmed bulk delete
 - [ ] **Per-user metadata visibility** — different agents seeing different metadata subsets
@@ -40,12 +39,4 @@
 
 ## Current Status
 
-**v0.0.2.0 (Build 20) — "The Composite Reef" RELEASED & LIVE** (2026-09-18; tag `v0.0.2.0` → merge `5fd459e`; GitHub Release mirrors `RELEASE-v0.0.2.0.md`). Phase 18 shipped: **Task 35** — in-browser SSH keypair engine (`src/lib/keyGen.ts`, WebCrypto Ed25519/RSA-4096, OpenSSH + RFC-4716 public, PKCS#8 private; **ssh-keygen cross-verified byte-identical** for both algorithms; ssh mpint keeps the DER leading zero; honest secure-context detection — LAN-HTTP degrades with a notice, the pure-TS fallback deliberately does NOT grow a keypair surface); **Task 36** — SSH keys gained their first form input ever (private-key textarea + Generate Keypair panel, public-key row in the detail pane, generated keys stored as JSON `{publicKey, privateKey}` sealed under `vault_ssh_keys:{id}`); pod-decoupling locked by tests (premise correction: `buildPodTree` already filtered — `podUtils.ts:193`; the roadmap's server-side count-aggregation premise was wrong, counts are client-side); phantom `SshKeyVaultView.tsx` premise corrected. Release protocol: P15 → ROADMAP-HISTORY, P18 → Completed Releases (receipts `6f9b00d`/`61336a1`), build labels swept +1 (P19–P24 → Builds 22–27 incl. anchors). **NEXT: Phase 19 — Attachment SQLite BLOB Migration & Streaming Architecture (Tasks 37/38, v0.0.2.1 / Build 22)** — now including the **Eye-beside-Copy ergonomics fold-in** (from P22/T44, Lucas 2026-09-18): Unmask immediately LEFT of Copy on every masked field row; Phases 20–23 follow, then Phase 24 closes the loop with the auditor's battery. (Earlier arc: v0.0.1.9/v0.0.1.10 released; chronology restored, canon sealed, 8 docs-lies corrected, docs bow to code, Phase 24 queued, the lens permanent in the long-term bank.)
-
-## Known Issues
-
-- `crypto.webcrypto.subtle` **hangs** on Linux 6.12.24-Unraid / Node v22.23.0 (server-side) and is **undefined** on HTTP browser origins (client-side) — native `crypto` module used server-side, `src/lib/webCryptoFallback.ts` polyfills client-side
-- **1 test failing** in `tests/unit/webCryptoFallback.test.ts` — likely a `window.crypto.subtle` stub issue in the vitest environment
-- Legacy plaintext metadata rows pass through unchanged until next update or batch encrypt script run
-- `npm`/`node` at `/config/Applications/node-v22.23.0-linux-x64/bin` must be in `PATH` for build commands (not in default PATH)
-- `tsc --noEmit` has one pre-existing error in `fieldEncryption.ts` (hkdfSync ArrayBuffer vs Buffer) on main — not a regression gate; `vite build` is the actual gate
+**v0.0.2.1 (Build 22) — "The Deep Storage Molt" RELEASED (2026-09-18)**. Phase 19 shipped: **Task 37** (`f4f6073`) — migration 0005 (BLOB + size_bytes, verbatim legacy copy), in-code idempotent backfill (`attachmentBlobs.ts`, transactional + VACUUM), attachments.ts rewritten to the Phase 19 wire contract (Busboy multipart POST with mid-stream 413 abort, metadata-only list, chunked substr downloads, metadata-only PUT), 50MB/500MB env-tunable limits, 6-test `tests/attachments-blob.test.ts`, existing suites re-witnessed to multipart; **Task 38** (`27df54b`) — streamed XHR uploads with progress/cancel, on-demand decryption (`handleFetchAttachment`), encrypted image/PDF preview modal, Eye-beside-Copy fold-in (P22/T44 pulled forward, verify-only there), 10MB→50MB labels; **docs** (`dee897f` + `c60874e`) — BLUEPRINT/ARCHITECTURE/SECURITY/README/.env.example/vault-features/blueprint-schema/design-system + the agent contracts (skills/shellguard/SKILL.md, docs/agent-integration/api-reference.md) and genome (routes-and-contracts, database-schema). Honest boundary: better-sqlite3 has no openBlob() — write path peaks at ciphertext size (hard-capped mid-stream), read path fully chunked. **NEXT: Phase 20 — Vault Tagging System (Tasks 39/40, v0.0.2.2 / Build 24)**.

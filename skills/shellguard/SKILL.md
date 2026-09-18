@@ -320,24 +320,31 @@ SSH private/public key material at `/api/keys`.
 
 ## Attachments API
 
-Binary attachments at `/api/attachments`. Files are stored **base64-encoded and already client-encrypted** in SQLite.
+Binary attachments at `/api/attachments`. Ciphertext is stored as a **native SQLite BLOB containing the already-client-encrypted ShellCryption envelope** (Phase 19, v0.0.2.1) — the server enforces storage and linkage, never content.
 
-**Fields:**
+**POST (multipart/form-data — streamed):**
 ```typescript
+// multipart fields:
 {
   id: string               // client-generated UUID (required)
   title: string            // 1-255 characters (required)
-  fileData: EncryptedBlob  // REQUIRED — ShellCryption blob wrapping base64 payload
   fileName?: string        // original filename label
   mimeType?: string        // e.g. "application/pdf"
-  category?: string        // ≤64 characters (default "Personal")
+  category?: string        // ≤64 characters
 }
+// multipart file part:
+//   file_data — the ShellCryption envelope encoded as raw utf8 bytes
+//   (encrypt client-side FIRST; the server stores the bytes verbatim)
 ```
 
-**Size Limits (strict):**
-- Global request body limit is **1 MB** — enough for every other endpoint
-- `/api/attachments` alone accepts up to a **32 MB** body, i.e. roughly a **28 MB base64 payload cap**
-- Oversized payloads are rejected with `413 Payload Too Large` / `400 Bad Request`
+**GET / (list)** returns **metadata only** — the payload BLOB is never included. Payloads stream from **`GET /:id/file`** (`application/octet-stream`, 1MB chunked reads); decrypt the envelope locally.
+
+**PUT /:id** is **metadata-only** (title/fileName/mimeType/category) — file replacement means re-upload. **DELETE /:id** frees the owner's quota.
+
+**Size Limits (strict, fail-closed):**
+- **50 MB per-file ceiling** (`ATTACHMENT_MAX_MB`) — breached mid-stream, `413`, request destroyed
+- **500 MB grotto quota per owner** (`GROTTO_QUOTA_MB`) — over-quota uploads yield `413` and store nothing
+- JSON (non-multipart) POSTs are rejected with `415 Unsupported Media Type`
 
 **Endpoints:** `GET /`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id` — same permission mapping (`canRead`/`canWrite`/`canEdit`/`canDelete`).
 
@@ -451,7 +458,7 @@ Issued `api-` tokens expire. The default lifetime is controlled by the server's 
 | `403 Forbidden` | Valid token but lacks required permission or role | `canWrite` missing on POST; agent token hitting `/api/settings/*` |
 | `404 Not Found` | Resource does not exist **or is owned by someone else** | Cross-owner probing is indistinguishable from absence |
 | `409 Conflict` | Unique constraint violation | Duplicate username on register, duplicate record ID |
-| `413 Payload Too Large` | Body exceeds route limit | >32 MB attachment upload |
+| `413 Payload Too Large` | Body/route limit exceeded | >50 MB attachment upload, grotto quota breach |
 | `429 Too Many Requests` | Rate limit exceeded | See table below; includes `Retry-After` header |
 | `500 Internal Server Error` | Server fault | Database failure, unexpected exception |
 

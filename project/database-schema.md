@@ -41,6 +41,13 @@ $DATA_DIR/
 > (`secret`, `content`, `key_value`, `file_data`, `totp_secret`, `attachments`)
 > hold opaque client-side ShellCryption™ ciphertext. The server stores these
 > byte-for-byte and never inspects them.
+>
+> **Migration 0005 (Phase 19, v0.0.2.1)** supersedes the v1 shape of
+> `vault_secure_attachments`: `file_data` is now a native **BLOB** column
+> holding the raw ShellCryption envelope bytes (legacy TEXT rows re-encoded
+> in code by `attachmentBlobs.ts`), with `size_bytes INTEGER` powering the
+> 500MB per-owner grotto quota. The zero-knowledge invariant is unchanged —
+> the bytes remain opaque.
 
 ```sql
 CREATE TABLE IF NOT EXISTS lobsters (

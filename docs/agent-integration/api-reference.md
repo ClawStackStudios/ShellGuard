@@ -39,12 +39,14 @@ All ShellGuard endpoints return standard `{ success: boolean, data?: any, error?
 
 ---
 
-### 4. Attachments (Reference Model)
+### 4. Attachments (Reference Model — Phase 19 BLOB contract)
 | Method | Path | Required Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/attachments` | `canRead` | List all attachments metadata |
-| `POST` | `/api/attachments` | `canWrite` | Upload an encrypted file (10 MB cap) |
-| `DELETE` | `/api/attachments/:id`| `canDelete` | Delete an attachment record |
+| `GET` | `/api/attachments` | `canRead` | List attachment metadata only (payload BLOB never included) |
+| `GET` | `/api/attachments/:id/file` | `canRead` | Stream the ciphertext BLOB (`application/octet-stream`, 1MB chunks) |
+| `POST` | `/api/attachments` | `canWrite` | Multipart upload of the client-encrypted ShellCryption envelope (50 MB/file ceiling, 500 MB grotto quota per owner — `413` on breach) |
+| `PUT` | `/api/attachments/:id` | `canEdit` | Metadata-only update (file replacement re-uploads) |
+| `DELETE` | `/api/attachments/:id`| `canDelete` | Delete an attachment record (frees grotto quota) |
 
 ---
 

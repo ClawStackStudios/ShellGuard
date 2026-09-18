@@ -1,4 +1,11 @@
-# Changelog — ShellGuard
+# Changelog
+
+## [0.0.2.1] - 2026-09-18
+### Added
+- Attachment native BLOB storage (migration 0005 + idempotent backfill), streamed multipart wire contract, 50MB/file + 500MB/owner quota (413), progress/cancel uploads, encrypted previews, Eye-beside-Copy ergonomics (Phase 19, Tasks 37/38)
+### Changed
+- Attachment PUT metadata-only; 32mb scoped JSON parser retired; agent contracts (SKILL.md, api-reference) re-synced to the BLOB contract
+ — ShellGuard
 
 ## [0.0.2.0] - 2026-09-17 — The Composite Reef (Phase 18, Build 20)
 ### Added

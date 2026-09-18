@@ -66,7 +66,7 @@ import {
   encryptField, 
   decryptField 
 } from "./lib/shellCryption.ts";
-import { PendingAttachment } from "./lib/attachmentUtils.ts";
+import { PendingAttachment, uploadAttachmentMultipart, fetchAttachmentEnvelope } from "./lib/attachmentUtils.ts";
 import { VaultItem, Agent, Lobster, VaultItemType } from "./types.ts";
 import { GeneratorConfig, getGlobalGeneratorConfig, setGlobalGeneratorConfig } from "./lib/generator.ts";
 import { GeneratorOptions } from "./components/Generator/GeneratorOptions.tsx";
@@ -124,6 +124,9 @@ export default function App() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const headerAddMenuRef = useRef<HTMLDivElement>(null);
+  // Phase 19: streaming upload progress + cancel handle for in-flight attachments.
+  const [uploadProgress, setUploadProgress] = useState<{ name: string; percent: number } | null>(null);
+  const activeUploadRef = useRef<{ abort: () => void } | null>(null);
 
   const handleOpenAdd = (type: VaultItemType) => {
     setActiveTypeFilter(type);
@@ -331,12 +334,9 @@ export default function App() {
       }));
 
       const decryptedAttachments = await Promise.all(reefAttachments.map(async (p: any) => {
-        try {
-          const fd = await decryptField(p.file_data, key, "vault_secure_attachments", p.id);
-          return { ...p, secret: fd, type: "attachment", category: p.category || "" };
-        } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "attachment", category: p.category || "" };
-        }
+        // Phase 19: the list endpoint is metadata-only — payload BLOBs stream
+        // on demand from /api/attachments/:id/file (handleFetchAttachment).
+        return { ...p, secret: "", type: "attachment", category: p.category || "" };
       }));
 
       setVaultItems([...decryptedLoginsWithCustom, ...decryptedNotesWithCustom, ...decryptedKeysWithCustom, ...decryptedAttachments]);
@@ -508,20 +508,41 @@ export default function App() {
   }, []);
 
   /**
-   * ShellCrypt + upload a staged attachment file to /api/attachments.
+   * ShellCrypt + stream a staged attachment file to /api/attachments
+   * (Phase 19 multipart contract — envelope bytes streamed, no base64 inflation).
    */
   const uploadAttachmentRecord = async (key: CryptoKey, att: PendingAttachment): Promise<string> => {
     const encryptedFile = await encryptField(att.dataUrl, key, "vault_secure_attachments", att.id);
-    await restAdapter.POST("/api/attachments", {
+    const ciphertext = new TextEncoder().encode(encryptedFile);
+    setUploadProgress({ name: att.file_name, percent: 0 });
+    const handle = uploadAttachmentMultipart({
       id: att.id,
       title: att.file_name,
-      file_data: encryptedFile,
       file_name: att.file_name,
       mime_type: att.mime_type,
       category: "Attachment",
-    });
+    }, ciphertext, (percent) => setUploadProgress({ name: att.file_name, percent }));
+    activeUploadRef.current = handle;
+    try {
+      await handle.promise;
+    } finally {
+      activeUploadRef.current = null;
+      setUploadProgress(null);
+    }
     return att.id;
   };
+
+  /**
+   * Phase 19 on-demand attachment fetch: streams the ciphertext BLOB from
+   * GET /api/attachments/:id/file and decrypts the envelope locally with the
+   * active shellKey. Returns the plaintext data: URL. The server never sees
+   * plaintext (zero-knowledge).
+   */
+  const handleFetchAttachment = useCallback(async (attId: string): Promise<string> => {
+    if (!shellKey) throw new Error("Vault is locked.");
+    const envelope = await fetchAttachmentEnvelope(attId);
+    return decryptField(envelope, shellKey, "vault_secure_attachments", attId);
+  }, [shellKey]);
 
   const lockTheClaw = async (item: {
     title: string;
@@ -615,8 +636,8 @@ export default function App() {
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
         await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
-        const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
-        await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
+        // Phase 19: PUT is metadata-only — file replacement means re-upload.
+        await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_name: item.username, mime_type: "", category: item.category });
       } else {
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
@@ -982,6 +1003,36 @@ export default function App() {
                 </motion.div>
               )}
 
+              {/* Phase 19: streamed attachment upload progress + cancel */}
+              {uploadProgress && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mb-8 p-4 bg-theme-surface border border-theme-subtle rounded-xl"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-theme-main truncate">
+                        Uploading {uploadProgress.name} — {uploadProgress.percent}%
+                      </p>
+                      <div className="mt-2 h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-200"
+                          style={{ width: `${uploadProgress.percent}%`, background: 'linear-gradient(90deg, #e4048a, #ec4899, #06b6d4)' }}
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => activeUploadRef.current?.abort()}
+                      className="p-2 text-xs font-semibold text-lobster-red hover:bg-lobster-red/10 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
               {view === "vault" && (
                 <motion.div key="vault" className="w-full h-[calc(100vh-140px)]">
                   <VaultShell
@@ -989,6 +1040,7 @@ export default function App() {
                     selectedFolder={selectedFolder}
                     activeTypeFilter={activeTypeFilter}
                     isLocked={isLocked}
+                    onFetchAttachment={handleFetchAttachment}
                     onAdd={handleOpenAdd}
                     onEdit={(item) => setEditingVaultItem(item)}
                     onDelete={async (item) => {

@@ -38,7 +38,7 @@ npm run scuttle:dev-start
 - `crypto.hkdfSync` for key derivation, `crypto.createCipheriv`/`createDecipheriv` for AES-256-GCM
 - Express 5 rejects `app.get("*")` — use regex literal for SPA catch-all
 - SQLite CURRENT_TIMESTAMP and JS ISO strings do NOT compare correctly — use JS ISO comparison
-- Body limits: 1mb global, 32mb scoped to `/api/attachments`; attachment hard cap is 10 MB per file (zod: 14M-char file_data blob)
+- Body limit: 1mb global. Attachment POSTs are multipart (Busboy, streamed ciphertext BLOB); 50MB/file ceiling (ATTACHMENT_MAX_MB) + 500MB/owner grotto quota (GROTTO_QUOTA_MB), 413 on breach (Phase 19)
 - Admin plane: `ADMIN_TOKEN` env gates the SuperLobster Panel (503 when unset); cookie `sg_admin_session` (httpOnly/SameSite=Strict/20-min sliding); admin auth rate limit 5/10min; backups in `DATA_DIR/backups/`
 
 ## Dependencies (Key)

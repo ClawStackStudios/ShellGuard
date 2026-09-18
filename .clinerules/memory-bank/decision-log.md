@@ -4,6 +4,10 @@
 
 ---
 
+## 2026-09-18 — the openBlob() gap and the contract the docs forgot
+better-sqlite3 exposes no incremental BLOB I/O, so "streaming uploads" is honest only if stated precisely: the write path peaks at the ciphertext size (hard-capped mid-stream by Busboy), the read path is the memory-critical one and is fully chunked (substr). Documented verbatim rather than inflated. Separately, the full-corpus sweep Lucas requested caught skills/shellguard/SKILL.md — the agent-facing API contract — still teaching the dead base64/JSON wire. A doc pass that only touches the files listed in the phase's Documentation Impact line has a blind spot exactly the size of the files it did not list; sweep by claim, not by checklist.
+
+
 ## 2026-09-18 — ergonomics pulled forward
 The Eye-beside-Copy control-ergonomics item (P22/T44) was folded into Phase 19 Task 38 by Lucas — ship the UX the eye already wants at the next molt instead of waiting two phases; P22 becomes verify-only. Also learned: the attachment-removal tightening is P23, not next — confirm which phase owns a behavior before folding new work into it.
 

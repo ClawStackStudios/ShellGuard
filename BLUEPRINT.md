@@ -106,9 +106,13 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 |---|---|---|
 | `id` | TEXT PK | |
 | `owner_uuid` | TEXT FK | |
-| `title` / `file_data` | TEXT | `file_data` = base64 ShellCryption blob (10 MB per-file hard cap; dedicated 32mb body limit on `/api/attachments`) |
+| `title` | TEXT | Per-row encrypted metadata |
+| `file_data` | **BLOB** | Raw ShellCryption envelope bytes (Phase 19 — migration 0005; legacy TEXT rows re-encoded in code by `attachmentBlobs.ts`) |
+| `size_bytes` | INTEGER | Exact ciphertext length — powers the grotto quota (`SUM(size_bytes)` per `owner_uuid`) |
 | `file_name` / `mime_type` / `category` | TEXT | Plaintext metadata |
 | `created_at` | TEXT | |
+
+> **Phase 19 limits**: 50MB per-file ceiling (`ATTACHMENT_MAX_MB`), 500MB grotto quota per owner (`GROTTO_QUOTA_MB`), `413` on breach. Uploads are multipart (`Busboy`); the list endpoint is metadata-only — payload BLOBs stream from `GET /api/attachments/:id/file` in 1MB chunks.
 
 ### 8. `settings` (Per-Lobster Preferences)
 | Column | Type | Notes |
@@ -130,6 +134,7 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 - **`migrations/0002_metadata_encryption.up.sql`** — Migration support for per-row metadata encryption.
 - **`migrations/0003_custom_fields.up.sql`** — Adds `custom_fields TEXT DEFAULT '[]'` column to `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
 - **`migrations/0004_key_ledger.{up,down}.sql`** — Phase 17 (v0.0.1.9): adds `agent_keys.key_hash`/`key_fingerprint` (in-code SHA-256 backfill via `keyLedger.ts`, then the plaintext column is retired) and drops the hardcoded `DEFAULT 'Personal'` from all four category columns — the uncategorized default is `''`, matching `normalizePod()`.
+- **`migrations/0005_attachment_blobs.{up,down}.sql`** — Phase 19 (v0.0.2.1): rebuilds `vault_secure_attachments` with `file_data BLOB` + `size_bytes INTEGER` (in-code backfill re-encodes legacy TEXT rows to raw envelope bytes via `attachmentBlobs.ts`; down is best-effort — documented data risk for rows written as raw binary).
 - **`schema_migrations`** *(in `db.sqlite`)* — version tracking for the transactional migration runner.
 - **`audit_logs`** *(in the segregated append-only `audit.sqlite` — NOT schema v1's data bedrock)* — `timestamp, event_type, actor, actor_type, resource, action, outcome, ip_address, user_agent, details`. Redacted per delta #2; pruned daily against `system_settings.audit_retention_days`, capped at 10k rows.
 

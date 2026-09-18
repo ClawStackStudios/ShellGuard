@@ -76,7 +76,7 @@ Four vault domains, one uniform CRUD contract each. Routers live in
 | Passwords | `vault.ts` (`/api/vault`) | `secret`, `totp_secret`, `attachments` |
 | Secure Notes | `notes.ts` (`/api/notes`) | `content` |
 | SSH Keys | `sshKeys.ts` (`/api/ssh`) | `key_value` |
-| Attachments | `attachments.ts` (`/api/attachments`) | `file_data` |
+| Attachments | `attachments.ts` (`/api/attachments`) | `file_data` (native BLOB since migration 0005 — streamed multipart in, chunked 1MB reads out) |
 
 **Verb → Permission mapping (inviolable, all four domains):**
 

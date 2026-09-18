@@ -8,6 +8,7 @@ import {
   makeNotePayload,
   makeSshKeyPayload,
   makeAttachmentPayload,
+  uploadAttachment,
   PERMISSION_PRESETS,
 } from './helpers/testFactories.js';
 import { createTestUserWithToken, createTestUserWithAgent, revokeLobsterKey } from './helpers/testAuth.js';
@@ -87,7 +88,10 @@ describe('Cross-owner isolation', () => {
     await createEntity(srv.app, aliceToken, '/api/vault', alice.pearl);
     await createEntity(srv.app, aliceToken, '/api/notes', alice.note);
     await createEntity(srv.app, aliceToken, '/api/keys', alice.sshKey);
-    await createEntity(srv.app, aliceToken, '/api/attachments', alice.attachment);
+    const attRes = await uploadAttachment(srv.app, aliceToken, alice.attachment);
+    if (attRes.status !== 201) {
+      throw new Error(`attachment setup failed: ${attRes.status} ${JSON.stringify(attRes.body)}`);
+    }
   });
 
   describe('bob cannot see or mutate any of alice’s records', () => {
@@ -153,7 +157,7 @@ describe('Cross-owner isolation', () => {
       const put = await request(srv.app)
         .put(`/api/attachments/${alice.attachment.id}`)
         .set('Authorization', `Bearer ${bobToken}`)
-        .send({ title: 'Stolen', file_data: alice.attachment.file_data });
+        .send({ title: 'Stolen' });
       expect(put.status).toBe(404);
 
       const del = await request(srv.app)

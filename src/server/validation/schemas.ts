@@ -91,20 +91,12 @@ export const SshKeySchemas = {
 };
 
 export const AttachmentSchemas = {
-  // file_data = base64 payload wrapped in a ShellCryption envelope.
-  // Hard limit: 10MB raw file → ~13.3MB base64 + envelope overhead ≈ 14M chars.
-  // Capped well under the scoped 32mb body limit.
-  create: z.object({
-    id: itemId,
-    title: itemTitle,
-    file_data: z.string().min(1).max(14000000), // opaque
-    file_name: z.string().max(512).optional(),
-    mime_type: z.string().max(255).optional(),
-    category: itemCategory,
-  }),
+  // Phase 19: POST is multipart (Busboy) — ciphertext fields are validated
+  // fail-closed in the route by length/type ONLY (zero-knowledge invariant).
+  // PUT is METADATA-ONLY: title/file_name/mime_type/category. The file payload
+  // is never accepted on PUT — replacement means re-upload.
   update: z.object({
     title: itemTitle,
-    file_data: z.string().min(1).max(14000000), // opaque
     file_name: z.string().max(512).optional(),
     mime_type: z.string().max(255).optional(),
     category: itemCategory,

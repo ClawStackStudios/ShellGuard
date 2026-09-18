@@ -7,21 +7,25 @@ import {
   makeNotePayload,
   makeSshKeyPayload,
   makeAttachmentPayload,
-  oversizedBase64,
+  oversizedBytes,
+  uploadAttachment,
 } from './helpers/testFactories.js';
 import { createTestUserWithToken } from './helpers/testAuth.js';
 import { isEncryptedField } from '../src/server/utils/fieldEncryption.js';
 
 /**
- * Vault CRUD ×4 entity types (pearls / secure notes / SSH keys / attachments).
+ * Vault CRUD ×3 primary entity types (pearls / secure notes / SSH keys) plus
+ * the Phase 19 attachment BLOB contract (multipart POST, metadata-only list,
+ * streamed GET /:id/file, 50MB ceiling, grotto quota).
  *
  * Asserts:
  *   - the EXACT {success,data} envelope on every response
  *   - THE OPACITY INVARIANT: whatever opaque ShellCryption blob the client
- *     posts is stored and returned byte-for-byte. The server never transforms,
- *     decrypts or re-serialises payload fields — it cannot, it has no key.
+ *     posts is stored byte-for-byte. The server never transforms, decrypts
+ *     or re-serialises payload fields — it cannot, it has no key.
  *   - metadata (category etc.) round-trips untouched
- *   - the ~10MB base64 attachment cap rejects oversize payloads
+ *   - attachments: ciphertext BLOB round-trips via streamed download;
+ *     the list endpoint NEVER carries file_data
  */
 
 // ─── Isolation preamble ──────────────────────────────────────────────────────
@@ -100,14 +104,11 @@ const ENTITIES: EntitySpec[] = [
     makePayload: () => makeSshKeyPayload(),
     storage: { table: SG_TABLES.sshKeys.table, blobColumn: SG_TABLES.sshKeys.blobColumn },
   },
-  {
-    label: 'secure attachments',
-    basePath: '/api/attachments',
-    blobField: 'file_data',
-    makePayload: () => makeAttachmentPayload(),
-    storage: { table: SG_TABLES.attachments.table, blobColumn: SG_TABLES.attachments.blobColumn },
-  },
 ];
+
+// Phase 19: attachments left the generic CRUD matrix — their POST is multipart,
+// their list response is metadata-only (file_data never leaves via GET /), and
+// payloads stream from GET /:id/file. Dedicated suite below.
 
 interface CreatedRecord {
   id: string;
@@ -253,50 +254,126 @@ describe.each(ENTITIES)('$label — CRUD × envelope × opacity', (spec) => {
   });
 });
 
-describe('Attachment size cap', () => {
-  it(
-    'rejects an attachment whose file_data exceeds the ~10MB base64 cap',
-    async () => {
-      // ≈11MB raw → ≈15.4MB of base64 chars: past the 14M-char cap (10MB raw
-      // + envelope overhead), still under the dedicated 32mb body limit so
-      // the app-level validator fires (not express).
-      const payload = makeAttachmentPayload({
-        file_data: oversizedBase64(11 * 1024 * 1024),
-        title: 'Too Big For The Shell',
-      });
+describe('Attachment BLOB contract (Phase 19)', () => {
+  it('POST multipart creates an attachment and echoes the {success,data} envelope', async () => {
+    const payload = makeAttachmentPayload();
+    const res = await uploadAttachment(srv.app, token, payload);
 
-      const res = await request(srv.app)
-        .post('/api/attachments')
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+    expect(res.status).toBe(201);
+    expectSuccessEnvelope(res.body);
+    expect((res.body.data as Record<string, unknown>).id).toBe(payload.id);
+  });
 
-      // 400 = zod/file_data cap; 413 = framework body guard. Both are honest rejections.
-      expect([400, 413]).toContain(res.status);
-      expectErrorEnvelope(res.body);
-    },
-    30_000
-  );
+  it('LIST is metadata-only: file_data never leaves via GET /', async () => {
+    const payload = makeAttachmentPayload();
+    await uploadAttachment(srv.app, token, payload);
 
-  it('stores arbitrary opaque strings verbatim (server must NOT validate blob contents)', async () => {
-    const spec = ENTITIES[3];
+    const records = await listRecords('/api/attachments');
+    const stored = findRecord(records, payload.id);
+    expect(stored).toBeDefined();
+    expect('file_data' in stored).toBe(false);
+    expect(stored.size_bytes).toBe((payload.file_data as Buffer).length);
+  });
+
+  it('OPACITY INVARIANT: storage layer holds the posted ciphertext bytes verbatim (direct-SQL half)', async () => {
+    const payload = makeAttachmentPayload();
+    await uploadAttachment(srv.app, token, payload);
+
+    if (!srv.db) {
+      throw new Error('server module does not export `db` — cannot verify storage-layer opacity');
+    }
+    const row = srv.db
+      .prepare(`SELECT ${SG_TABLES.attachments.blobColumn} AS blob FROM ${SG_TABLES.attachments.table} WHERE id = ?`)
+      .get(payload.id) as { blob: Buffer } | undefined;
+
+    expect(row, `row ${payload.id} not found in ${SG_TABLES.attachments.table}`).toBeDefined();
+    expect(Buffer.isBuffer(row!.blob)).toBe(true);
+    expect(row!.blob).toStrictEqual(payload.file_data);
+  });
+
+  it('GET /:id/file streams the exact ciphertext bytes back', async () => {
+    const payload = makeAttachmentPayload();
+    await uploadAttachment(srv.app, token, payload);
 
     const res = await request(srv.app)
-      .post(spec.basePath)
+      .get(`/api/attachments/${payload.id}/file`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/octet-stream');
+    expect(Buffer.compare(res.body as Buffer, payload.file_data as Buffer)).toBe(0);
+  });
+
+  it('PUT updates metadata only — the ciphertext blob survives untransformed', async () => {
+    const payload = makeAttachmentPayload();
+    await uploadAttachment(srv.app, token, payload);
+    const newTitle = 'attachment — renamed';
+
+    const res = await request(srv.app)
+      .put(`/api/attachments/${payload.id}`)
       .set('Authorization', `Bearer ${token}`)
-      .send(makeAttachmentPayload({ file_data: 'definitely-not-base64 !!!' }));
+      .send({ title: newTitle, file_name: payload.file_name, mime_type: payload.mime_type, category: payload.category });
+
+    expect(res.status).toBe(200);
+    expectSuccessEnvelope(res.body);
+
+    if (!srv.db) {
+      throw new Error('server module does not export `db` — cannot verify storage-layer opacity');
+    }
+    const row = srv.db
+      .prepare(`SELECT ${SG_TABLES.attachments.blobColumn} AS blob FROM ${SG_TABLES.attachments.table} WHERE id = ?`)
+      .get(payload.id) as { blob: Buffer };
+    expect(row.blob).toStrictEqual(payload.file_data);
+
+    const records = await listRecords('/api/attachments');
+    expect(findRecord(records, payload.id).title).toBe(newTitle);
+  });
+
+  it('rejects a JSON (non-multipart) POST with 415', async () => {
+    const payload = makeAttachmentPayload();
+    const res = await request(srv.app)
+      .post('/api/attachments')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ...payload, file_data: 'x' });
+
+    expect(res.status).toBe(415);
+    expectErrorEnvelope(res.body);
+  });
+
+  it(
+    'rejects an upload past the 50MB per-file ceiling with 413',
+    async () => {
+      const payload = makeAttachmentPayload({ file_data: oversizedBytes(50 * 1024 * 1024 + 1024) });
+      const res = await uploadAttachment(srv.app, token, payload);
+
+      expect(res.status).toBe(413);
+      expectErrorEnvelope(res.body);
+    },
+    60_000
+  );
+
+  it('stores arbitrary opaque bytes verbatim (server must NOT validate blob contents)', async () => {
+    const payload = makeAttachmentPayload({ file_data: Buffer.from('definitely-not-a-real-envelope !!!', 'utf8') });
+    const res = await uploadAttachment(srv.app, token, payload);
     expect(res.status).toBe(201);
 
-    const records = await listRecords(spec.basePath);
-    const junk = records.filter((r) => r.file_data === 'definitely-not-base64 !!!');
-    expect(junk.length).toBeGreaterThan(0);
+    if (!srv.db) {
+      throw new Error('server module does not export `db` — cannot verify storage-layer opacity');
+    }
+    const row = srv.db
+      .prepare(`SELECT ${SG_TABLES.attachments.blobColumn} AS blob FROM ${SG_TABLES.attachments.table} WHERE id = ?`)
+      .get(payload.id) as { blob: Buffer };
+    expect(row.blob.toString('utf8')).toBe('definitely-not-a-real-envelope !!!');
   });
 });
 
 describe('Pearl → attachment cascade delete', () => {
   it('deleting a pearl removes every attachment it references', async () => {
     // Two attachments owned by the caller…
-    const att1 = await createRecord(ENTITIES[3]);
-    const att2 = await createRecord(ENTITIES[3]);
+    const att1 = makeAttachmentPayload();
+    const att2 = makeAttachmentPayload();
+    expect((await uploadAttachment(srv.app, token, att1)).status).toBe(201);
+    expect((await uploadAttachment(srv.app, token, att2)).status).toBe(201);
 
     // …linked from a pearl via the attachments JSON column (IDs only).
     const pearlPayload = makePearlPayload({
@@ -336,7 +413,8 @@ describe('Pearl → attachment cascade delete', () => {
 
   it('cascade never crosses owner scope', async () => {
     // Attachments owned by the caller…
-    const att = await createRecord(ENTITIES[3]);
+    const att = makeAttachmentPayload();
+    expect((await uploadAttachment(srv.app, token, att)).status).toBe(201);
 
     // …but the pearl belongs to another owner referencing them.
     const other = await createTestUserWithToken(srv.app);

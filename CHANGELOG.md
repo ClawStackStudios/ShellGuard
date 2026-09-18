@@ -1,5 +1,16 @@
 # Changelog — ShellGuard
 
+## [0.0.2.1] - 2026-09-18
+### Added
+- **Attachment BLOB storage** — native SQLite BLOB column for encrypted file payloads (migration 0005, in-code idempotent backfill of legacy TEXT rows); base64 storage inflation eliminated (Phase 19, Tasks 37/38)
+- **Streaming wire contract** — multipart (Busboy) uploads of already-encrypted bytes; metadata-only list responses; chunked 1MB BLOB downloads via `GET /api/attachments/:id/file`
+- **Storage limits, fail-closed** — 50MB per-file ceiling (`ATTACHMENT_MAX_MB`) and 500MB grotto quota per owner (`GROTTO_QUOTA_MB`), both yielding `413` and storing nothing on breach
+- **Streaming attachment UI** — real-time upload progress bars with cancel, on-demand streamed decryption (client-side; the server never sees plaintext), and encrypted inline previews for images and PDFs (Blob object URLs)
+- **Eye-beside-Copy ergonomics** — Unmask toggle immediately LEFT of Copy on every masked field row (folded forward from Phase 22 Task 44; full-value mask invariant intact)
+
+### Changed
+- Attachment PUT is metadata-only — file replacement re-uploads; the scoped 32mb JSON body parser is retired with the base64 wire contract it served
+
 ## [0.0.2.0] - 2026-09-17
 ### Added
 - In-browser SSH keypair generation (WebCrypto Ed25519 / RSA-4096) with ssh-keygen-verified output, public-key copy + PKCS#8 private download; private keys sealed client-side (Phase 18, Tasks 35/36)

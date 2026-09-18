@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-09-17
-current_position: "v0.0.2.0 (Build 20) — released & live; next Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture (v0.0.2.1 / Build 22, Tasks 37/38) — queue 19 → 20 → 21 → 22 → 23 → 24"
+last_updated: 2026-09-18
+current_position: "v0.0.2.1 (Build 22) — released & live; next Phase 20: Vault Tagging System & Granular Filter Bar (v0.0.2.2 / Build 24, Tasks 39/40) — queue 20 → 21 → 22 → 23 → 24"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "████████████████░░░ 74% (17 of 24 formalized phases)"
+  features_completed: "██████████████████░░ 75% (18 of 24 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,70 +13,24 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 19+) and the 3 most recent completed phases (Phases 16, 17, and 18).*
-> *Historical Phases 1 through 15 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 20+) and the 3 most recent completed phases (Phases 17, 18, and 19).*
+> *Historical Phases 1 through 16 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.0 (Build 20)`
-- **Next Planned Milestone**: `v0.0.2.1 (Build 22)` (Phase 19)
+- **Current Production Release**: `v0.0.2.1 (Build 22)`
+- **Next Planned Milestone**: `v0.0.2.2 (Build 24)` (Phase 20)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 19 completes, Phase 16 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 20 completes, Phase 17 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
 
-### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)]
-
-> Phase Feature Set Overview:
-> Migrates binary attachment payloads from base64 text strings into native SQLite BLOB
-> storage with chunked streaming reads and writes. Eliminates base64 33% memory inflation,
-> supports larger files up to 50MB, and enforces strict per-user storage quotas.
-> *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
-
-> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) - SECURITY.md + ARCHITECTURE.md (50MB ceiling, quota 413 behavior, body-limit change) - .env.example + README env table - docs/vault-features/attachments.md - reference/design-system.md (eye+copy ergonomics fold-in)
-
-- [ ] **Task 37: [Functionality] Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
-
-Description: Create `migrations/0005_attachment_blobs.up.sql` altering or migrating
-`vault_secure_attachments` to store binary ciphertext in a `BLOB` column instead of `TEXT`.
-Update `src/server/routes/attachments.ts` with streaming Busboy/multer upload handlers
-piping direct encrypted streams into SQLite via incremental BLOB I/O (`openBlob()`).
-Enforce a 50MB per-file ceiling and 500MB total grotto quota per `owner_uuid`. Add
-integration tests in `tests/attachments-blob.test.ts`.
-
-> Success Criteria: Binary payloads round-trip cleanly without base64 encoding overhead;
-> attempting to upload over quota yields a 413 Payload Too Large; incremental BLOB reads
-> avoid spiking Node.js RSS memory; migrations pass backward-compatibility checks.
-
-- [ ] **Task 38: [UI Component] Streamed Progress Uploads, Chunked Decryption & File Previewers**
-
-Description: Update `attachmentUtils.ts` and file upload dropzones in `ItemFormModal.tsx`
-with real-time upload progress bars and cancel buttons. Implement client-side Web Streams
-API (`ReadableStream`/`WritableStream`) for AES-GCM decryption of large attachments without
-freezing the UI thread. Provide inline thumbnail previews for common image/PDF types.
-**Control-ergonomics fold-in (from Phase 22, Lucas 2026-09-18):** in `ItemDetailPane.tsx`,
-relocate the Unmask (Eye/EyeOff) toggle from inline-with-value into the right-hand action
-cluster, **immediately LEFT of Copy** — on every masked field row (password, SSH private
-key, hidden custom fields), matching the eye-cluster the eye is already drawn to; masked
-value stays in the value column; `revealedHiddenFields` semantics unchanged; full-value
-mask invariant (every character → `•`, no partial masks — NEVER-list).
-
-> Success Criteria: Uploading a 20MB file displays a smooth percentage progress bar;
-> downloading decrypts via streams with zero browser tab freezing; PDF/image previews
-> display within an encrypted object URL modal; the Unmask (Eye) toggle sits
-> immediately LEFT of Copy in the right-hand action cluster on every masked field
-> (password, SSH private key, hidden custom fields) with the full-value mask
-> invariant intact (every character → `•`); the full test oracle + `tsc` + build
-> stay clean.
-
----
-
-### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 23)]
+### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]
 
 > Phase Feature Set Overview:
 > Introduces flexible, multi-dimensional categorization alongside hierarchical Pods.
@@ -109,7 +63,7 @@ state alongside search keywords and pod selection.
 
 ---
 
-### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 24)]
+### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]
 
 > Phase Feature Set Overview:
 > Empowers high-volume vault ingestion and management: transactional bulk import endpoint
@@ -140,7 +94,7 @@ and dedicated Import wizard with preview table and error resolution chips.
 
 ---
 
-### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 25)]
+### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 26)]
 
 > Phase Feature Set Overview:
 > A polish-and-ergonomics bracket in two movements: (1) **one search bar to
@@ -153,7 +107,7 @@ and dedicated Import wizard with preview table and error resolution chips.
 > re-verifies it after the search consolidation. No schema, no API contract changes; the server
 > NEVER receives a search query. The version digit is decided by the
 > completed work (No Forced Targets); the queue position after Phase 21 makes
-> the provisional label `v0.0.2.4 (Build 25)`. *(Source: Lucas, 2026-09-13 —
+> the provisional label `v0.0.2.4 (Build 26)`. *(Source: Lucas, 2026-09-13 —
 > post-v0.0.1.9 hands-on pass; expanded with the search consolidation.)*
 
 > 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only
@@ -206,7 +160,7 @@ consolidation.
 
 ---
 
-### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 26)]
+### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 27)]
 
 > Phase Feature Set Overview:
 > Aligns ShellGuard's item model fully with the Bitwarden pattern (verified
@@ -224,7 +178,7 @@ consolidation.
 > attachments but CANNOT embed password credentials; SSH keys are their own
 > items. Orphan attachments are QUARANTINED, never deleted. The version digit
 > is decided by the completed work (No Forced Targets); the queue position
-> after Phase 22 makes the provisional label `v0.0.2.5 (Build 26)`.
+> after Phase 22 makes the provisional label `v0.0.2.5 (Build 27)`.
 > *(Source: Lucas, 2026-09-13 — Bitwarden-pattern alignment pass.)*
 
 > 📚 **Documentation Impact**: SECURITY.md (form-contract: notes reject secret payloads) - ARCHITECTURE.md (attachments route table) - reference/blueprint-schema.md (quarantine semantics) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (standalone creation rejected) - docs/vault-features
@@ -280,7 +234,7 @@ ordering Passwords → Secure Notes → SSH Keys (reviewable in the PR).
 
 ---
 
-### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 27)]
+### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 28)]
 
 > Phase Feature Set Overview:
 > Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code
@@ -357,6 +311,58 @@ mentions it.
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
+### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)] ✅
+
+> Phase Feature Set Overview:
+> Migrates binary attachment payloads from base64 text strings into native SQLite BLOB
+> storage with a streamed wire contract: multipart (Busboy) uploads of already-encrypted
+> bytes, metadata-only list responses, and chunked 1MB BLOB downloads via
+> `GET /api/attachments/:id/file`. Enforces a 50MB per-file ceiling and a 500MB per-owner
+> grotto quota (both `413` fail-closed). The vault UI gains real-time upload progress with
+> cancel, on-demand streamed decryption, encrypted inline previews for images/PDFs, and the
+> Eye-beside-Copy ergonomics folded forward from Phase 22.
+> *(Receipts: `f4f6073` — Task 37 BLOB storage + streaming + quota,
+> `27df54b` — Task 38 streaming UI + previews + ergonomics fold-in,
+> `dee897f` — documentation impact sync, 2026-09-18. Released & live.)*
+
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) - SECURITY.md + ARCHITECTURE.md (50MB ceiling, quota 413 behavior, body-limit change) - .env.example + README env table - docs/vault-features/attachments.md - reference/design-system.md (eye+copy ergonomics fold-in) — ✅ synced in `dee897f`.
+
+- [x] **Task 37: [Functionality] Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
+
+Description: Delivered `migrations/0005_attachment_blobs.{up,down}.sql` (table rebuild:
+`file_data BLOB` + `size_bytes INTEGER`, verbatim legacy copy) with the in-code idempotent
+backfill (`attachmentBlobs.ts` — TEXT rows re-encoded to raw envelope bytes, transactional,
+VACUUM'd). Rewrote `src/server/routes/attachments.ts` to the Phase 19 wire contract:
+Busboy multipart streaming POST with mid-stream 413 abort, metadata-only list, chunked
+`substr` streaming download, metadata-only PUT; 50MB/file ceiling and 500MB/`owner_uuid`
+grotto quota (env-tunable). Honest engineering note: better-sqlite3 exposes no `openBlob()`
+— the write path peaks at the ciphertext size (hard-capped mid-stream); the read path is
+fully chunked. Proven in `tests/attachments-blob.test.ts` (6 tests).
+
+> Success Criteria: Binary payloads round-trip cleanly without base64 encoding overhead ✅;
+> over-quota uploads yield 413 and store nothing ✅; chunked BLOB reads avoid RSS spikes ✅;
+> backward-compatible migration verified (legacy TEXT → BLOB, idempotent) ✅.
+
+- [x] **Task 38: [UI Component] Streamed Progress Uploads, Chunked Decryption & File Previewers**
+
+Description: `attachmentUtils.ts` gained `uploadAttachmentMultipart` (XHR `onprogress` +
+abort), `fetchAttachmentEnvelope` (streamed ciphertext fetch) and `dataUrlToBlob`;
+`App.tsx` streams uploads with a progress overlay + cancel button, maps the metadata-only
+list (payloads never touched server-side), and exposes `handleFetchAttachment`
+(client-side decryption only) through `VaultShell` to `ItemDetailPane` — on-demand
+download/decrypt plus encrypted preview modal for images (decrypted payload) and PDFs
+(Blob object URL). **Eye-beside-Copy fold-in delivered**: Unmask immediately LEFT of Copy
+on hidden custom-field rows (the password/SSH secret row already shipped the cluster);
+masked value stays in the value column; full-value mask invariant intact.
+
+> Success Criteria: Uploads display smooth percentage progress with cancel ✅; downloads
+> decrypt on demand with the server never seeing plaintext ✅; image/PDF previews render
+> in the encrypted object-URL modal ✅; the Eye-beside-Copy cluster holds on every masked
+> field row ✅; the full test oracle (230 tests) + `tsc` + `vite build` + `docs:build`
+> stay clean ✅.
+
+---
+
 ### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 20)] ✅
 
 > Phase Feature Set Overview:
@@ -406,71 +412,6 @@ action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-f
 
 ---
 
-
-### Phase 16: Docs Bridge Parity, Agentic Infrastructure & Version Resolver [v0.0.1.8 (Build 17) — Summit]
-
-> Phase Feature Set Overview:
-> The walk ends where the application stands today — and the documentation
-> system becomes a first-class citizen. The project scaffolds its agentic
-> knowledge infrastructure: a comprehensive memory bank (including a
-> dedicated `android/` sub-bank mirroring the companion's crypto, Room
-> schema, TOTP engine and UI models), workflow templates, and formalized
-> agentic rule sets — then synchronizes release-pipeline invariants and
-> formalizes agent git tracking. The **dynamic version resolver**
-> (`src/server/utils/version.ts`) replaces fragile env reads with
-> `package.json` ground truth (multi-tier fallback, unit-tested). The
-> official privacy policy and TOTP store disclosures land; the VitePress
-> companion suite publishes; two-sided bridge parity is achieved across
-> root documentation; the release pipeline gains optimized triggers and a
-> chained mirror job; the installation guide moves to placeholder IPs; and
-> the rolling RELEASE file molts to `v0.0.1.8`.
-> *(Receipts: `ddc35f5`, `124e4ab`, `80babe5`, `acab2ab`, `700c18c`,
-> `1244c5f`, `e61675b`, `bbcc2f5`, `a68008f`, `70d7d46`, `ec4e136`,
-> `0b6ad1f`, `82616f2`, merge `66d9ca4` — 2026-09-04/05. The walk and the
-> codebase now occupy the same commit.)*
-
-- [x] **Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver**
-
-Description: Initialize the project scaffolding for agent collaboration: a
-comprehensive memory bank under `.agents/memory-bank/` — core files plus a
-dedicated `android/` sub-bank (api-client, crypto-spec, room-schema,
-totp-engine, ui-compose-models) mirroring the companion's internals —
-workflow templates, and agentic rule sets (attractor beacon, git hygiene,
-docs hygiene, continuous improvement). Synchronize release-pipeline
-invariants and formalize agent git tracking (two-layer commit grammar,
-staged-index discipline, verification gates). Implement
-`src/server/utils/version.ts` — `getAppVersion()` resolving dynamically
-from `package.json` with multi-tier fallback, replacing fragile env reads
-in `admin.ts`, `backupManager.ts` and `server.ts`; prove it with
-`tests/unit/version.test.ts` (semver compliance + package ground-truth
-match).
-
-> Success Criteria: The version presented in the SuperLobster panel, backups
-> and API always equals `package.json`; the resolver survives a missing env
-> var; the memory bank loads a cold agent into full project context; the
-> android/ sub-bank mirrors the companion's spec truth.
-
-- [x] **Task 32: [Documentation Component] Privacy Policy, Docs Bridge Parity & Chained Mirror Release**
-
-Description: Publish the official privacy policy (`docs/privacy.md` —
-zero-knowledge disclosures compliant with Play Store requirements) with
-store disclosures cross-linked into the VitePress portal and CHANGELOG.
-Publish the ShellGuard-TOTP native companion documentation suite
-(`docs/companion/`: topology, security, sync-and-backups, totp-engine).
-Achieve two-sided bridge parity: every root doc (`ARCHITECTURE.md`,
-`BLUEPRINT.md`, `SECURITY.md`, `README.md`, `ADMIN.md`, `CONTRIBUTING.md`,
-docs portal) reconciled to runtime schema truth. Optimize `release.yml`
-triggers and chain the mirror job (release body re-syncs when the RELEASE
-file changes on main). Move the installation guide to placeholder IPs.
-Molt the RELEASE file to `v0.0.1.8` and cut the release through the
-`--release` commit-flag path.
-
-> Success Criteria: The docs claim nothing the runtime doesn't do — both
-> sides of every bridge verified; the privacy policy renders in the portal
-> and satisfies store disclosures; a RELEASE-file edit on main re-syncs the
-> published release body; the summit tag exists.
-
----
 
 ### Phase 17: Key Ledger Hardening & Pod Purity [v0.0.1.9 (Build 18) — Security Hotfix] ✅
 
@@ -541,9 +482,9 @@ across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
 
 ---
 
-## 🏛️ Historical Archive (Phases 1 through 14)
+## 🏛️ Historical Archive (Phases 1 through 16)
 
-Earlier development phases (`v0.0.0.0` void through `v0.0.1.7` Build 16) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.1.8` Build 17) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -562,5 +503,7 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.1.7` Build 16) are per
 | **Phase 12** | `v0.0.1.4 (Build 13)` | Pure-TS WebCrypto Fallback Engine & Release Gating | Tasks 23 & 24 |
 | **Phase 13** | `v0.0.1.5 (Build 14)` | Bitwarden-Style Custom Fields & Dynamic Linked Properties | Tasks 25 & 26 |
 | **Phase 14** | `v0.0.1.6 (Build 15)` | Native LAN TLS, TOFU & --release Publishing | Tasks 27 & 28 |
+| **Phase 15** | `v0.0.1.7 (Build 16)` | `sgtotp.bak` Import Compatibility Layer & Strict Release Mirror | Tasks 29 & 30 |
+| **Phase 16** | `v0.0.1.8 (Build 17)` | Docs Bridge Parity, Agentic Infrastructure & Version Resolver — Summit | Tasks 31 & 32 |
 
 ---

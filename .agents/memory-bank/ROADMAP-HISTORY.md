@@ -812,3 +812,66 @@ divider; molt the RELEASE file and cut `v0.0.1.7`.
 > sanitized failure modes; the GitHub Release body matches the RELEASE file
 > byte-for-byte or the pipeline fails loudly; themes switch live across
 > light/dark and all accents; the bridge is usable end-to-end on LAN.
+
+## Phase 16: Docs Bridge Parity, Agentic Infrastructure & Version Resolver [v0.0.1.8 (Build 17) — Summit]
+
+> Phase Feature Set Overview:
+> The walk ends where the application stands today — and the documentation
+> system becomes a first-class citizen. The project scaffolds its agentic
+> knowledge infrastructure: a comprehensive memory bank (including a
+> dedicated `android/` sub-bank mirroring the companion's crypto, Room
+> schema, TOTP engine and UI models), workflow templates, and formalized
+> agentic rule sets — then synchronizes release-pipeline invariants and
+> formalizes agent git tracking. The **dynamic version resolver**
+> (`src/server/utils/version.ts`) replaces fragile env reads with
+> `package.json` ground truth (multi-tier fallback, unit-tested). The
+> official privacy policy and TOTP store disclosures land; the VitePress
+> companion suite publishes; two-sided bridge parity is achieved across
+> root documentation; the release pipeline gains optimized triggers and a
+> chained mirror job; the installation guide moves to placeholder IPs; and
+> the rolling RELEASE file molts to `v0.0.1.8`.
+> *(Receipts: `ddc35f5`, `124e4ab`, `80babe5`, `acab2ab`, `700c18c`,
+> `1244c5f`, `e61675b`, `bbcc2f5`, `a68008f`, `70d7d46`, `ec4e136`,
+> `0b6ad1f`, `82616f2`, merge `66d9ca4` — 2026-09-04/05. The walk and the
+> codebase now occupy the same commit.)*
+
+- [x] **Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver**
+
+Description: Initialize the project scaffolding for agent collaboration: a
+comprehensive memory bank under `.agents/memory-bank/` — core files plus a
+dedicated `android/` sub-bank (api-client, crypto-spec, room-schema,
+totp-engine, ui-compose-models) mirroring the companion's internals —
+workflow templates, and agentic rule sets (attractor beacon, git hygiene,
+docs hygiene, continuous improvement). Synchronize release-pipeline
+invariants and formalize agent git tracking (two-layer commit grammar,
+staged-index discipline, verification gates). Implement
+`src/server/utils/version.ts` — `getAppVersion()` resolving dynamically
+from `package.json` with multi-tier fallback, replacing fragile env reads
+in `admin.ts`, `backupManager.ts` and `server.ts`; prove it with
+`tests/unit/version.test.ts` (semver compliance + package ground-truth
+match).
+
+> Success Criteria: The version presented in the SuperLobster panel, backups
+> and API always equals `package.json`; the resolver survives a missing env
+> var; the memory bank loads a cold agent into full project context; the
+> android/ sub-bank mirrors the companion's spec truth.
+
+- [x] **Task 32: [Documentation Component] Privacy Policy, Docs Bridge Parity & Chained Mirror Release**
+
+Description: Publish the official privacy policy (`docs/privacy.md` —
+zero-knowledge disclosures compliant with Play Store requirements) with
+store disclosures cross-linked into the VitePress portal and CHANGELOG.
+Publish the ShellGuard-TOTP native companion documentation suite
+(`docs/companion/`: topology, security, sync-and-backups, totp-engine).
+Achieve two-sided bridge parity: every root doc (`ARCHITECTURE.md`,
+`BLUEPRINT.md`, `SECURITY.md`, `README.md`, `ADMIN.md`, `CONTRIBUTING.md`,
+docs portal) reconciled to runtime schema truth. Optimize `release.yml`
+triggers and chain the mirror job (release body re-syncs when the RELEASE
+file changes on main). Move the installation guide to placeholder IPs.
+Molt the RELEASE file to `v0.0.1.8` and cut the release through the
+`--release` commit-flag path.
+
+> Success Criteria: The docs claim nothing the runtime doesn't do — both
+> sides of every bridge verified; the privacy policy renders in the portal
+> and satisfies store disclosures; a RELEASE-file edit on main re-syncs the
+> published release body; the summit tag exists.

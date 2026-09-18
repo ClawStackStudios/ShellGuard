@@ -149,10 +149,11 @@ app.use(helmet({
 
 app.use(cors(getCorsConfig()));
 
-// Delta #4: 1mb global body ceiling; dedicated 32mb ceiling for encrypted
-// attachment uploads only (base64 ciphertext needs headroom, nothing else does).
-// The scoped parser runs first; the global one no-ops on already-parsed bodies.
-app.use('/api/attachments', express.json({ limit: '32mb' }));
+// Delta #4 (Phase 19 revision): 1mb global body ceiling. Attachment POSTs are
+// multipart/form-data (Busboy streams them directly in the route — the JSON
+// parser no-ops on non-JSON content types); attachment PUTs are metadata-only
+// and fit the global ceiling. The old scoped 32mb JSON parser is retired with
+// the base64 wire contract it served.
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use('/api', apiLimiter);

@@ -136,7 +136,7 @@ export function makeSshKeyPayload(overrides: Partial<SshKeyPayload> = {}): SshKe
 export interface AttachmentPayload {
   id: string;
   title: string;
-  file_data: string; // base64 ShellCryption blob
+  file_data: string; // raw ciphertext bytes (Buffer) — Phase 19 BLOB contract
   file_name: string;
   mime_type: string;
   category: string;
@@ -147,7 +147,7 @@ export function makeAttachmentPayload(overrides: Partial<AttachmentPayload> = {}
   return {
     id,
     title: `Attachment ${randomHex(3)}`,
-    file_data: Buffer.from(shellCryptionBlob('vault_secure_attachments', id), 'utf8').toString('base64'),
+    file_data: Buffer.from(shellCryptionBlob('vault_secure_attachments', id), 'utf8'),
     file_name: 'recovery-codes.enc',
     mime_type: 'application/octet-stream',
     category: 'Documents',
@@ -156,11 +156,32 @@ export function makeAttachmentPayload(overrides: Partial<AttachmentPayload> = {}
 }
 
 /**
- * Base64 payload of approximately `megabytes` of raw bytes (~4/3 in chars).
- * Used to probe the ~10MB attachment cap without touching the 32mb body limit.
+ * Phase 19 multipart upload: POSTs an attachment through the streamed
+ * multipart contract (Busboy). The ciphertext Buffer is opaque — the server
+ * stores it verbatim (opacity invariant).
  */
-export function oversizedBase64(rawBytes: number): string {
-  return Buffer.alloc(rawBytes).toString('base64');
+export async function uploadAttachment(
+  app: Express,
+  token: string,
+  payload: AttachmentPayload
+): Promise<request.Response> {
+  return request(app)
+    .post('/api/attachments')
+    .set('Authorization', `Bearer ${token}`)
+    .field('id', payload.id)
+    .field('title', payload.title)
+    .field('file_name', payload.file_name)
+    .field('mime_type', payload.mime_type)
+    .field('category', payload.category)
+    .attach('file_data', payload.file_data, { filename: payload.file_name, contentType: 'application/octet-stream' });
+}
+
+/**
+ * Raw byte payload of approximately `megabytes` of ciphertext — probes the
+ * 50MB per-file ceiling / grotto quota without base64 inflation.
+ */
+export function oversizedBytes(rawBytes: number): Buffer {
+  return Buffer.alloc(rawBytes);
 }
 
 // ─── Lobster Keys (agent keys) ───────────────────────────────────────────────

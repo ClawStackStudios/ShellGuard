@@ -38,7 +38,7 @@ statistics:
 > supports larger files up to 50MB, and enforces strict per-user storage quotas.
 > *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
 
-> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) - SECURITY.md + ARCHITECTURE.md (50MB ceiling, quota 413 behavior, body-limit change) - .env.example + README env table - docs/vault-features/attachments.md
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) - SECURITY.md + ARCHITECTURE.md (50MB ceiling, quota 413 behavior, body-limit change) - .env.example + README env table - docs/vault-features/attachments.md - reference/design-system.md (eye+copy ergonomics fold-in)
 
 - [ ] **Task 37: [Functionality] Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
 
@@ -59,10 +59,20 @@ Description: Update `attachmentUtils.ts` and file upload dropzones in `ItemFormM
 with real-time upload progress bars and cancel buttons. Implement client-side Web Streams
 API (`ReadableStream`/`WritableStream`) for AES-GCM decryption of large attachments without
 freezing the UI thread. Provide inline thumbnail previews for common image/PDF types.
+**Control-ergonomics fold-in (from Phase 22, Lucas 2026-09-18):** in `ItemDetailPane.tsx`,
+relocate the Unmask (Eye/EyeOff) toggle from inline-with-value into the right-hand action
+cluster, **immediately LEFT of Copy** — on every masked field row (password, SSH private
+key, hidden custom fields), matching the eye-cluster the eye is already drawn to; masked
+value stays in the value column; `revealedHiddenFields` semantics unchanged; full-value
+mask invariant (every character → `•`, no partial masks — NEVER-list).
 
 > Success Criteria: Uploading a 20MB file displays a smooth percentage progress bar;
 > downloading decrypts via streams with zero browser tab freezing; PDF/image previews
-> display within an encrypted object URL modal.
+> display within an encrypted object URL modal; the Unmask (Eye) toggle sits
+> immediately LEFT of Copy in the right-hand action cluster on every masked field
+> (password, SSH private key, hidden custom fields) with the full-value mask
+> invariant intact (every character → `•`); the full test oracle + `tsc` + build
+> stay clean.
 
 ---
 
@@ -138,8 +148,9 @@ and dedicated Import wizard with preview table and error resolution chips.
 > removed, the search above the password list becomes the single search
 > surface, and the engine behind it becomes robust (titles, keywords,
 > attachment file names, note contents — all client-side, zero-knowledge
-> preserved); (2) **control ergonomics** — the custom-field Unmask (Eye)
-> control moves beside Copy. No schema, no API contract changes; the server
+> preserved); (2) **control ergonomics verify-only** — the Eye-beside-Copy
+> relocation was FOLDED INTO Phase 19 Task 38 (2026-09-18); this phase only
+> re-verifies it after the search consolidation. No schema, no API contract changes; the server
 > NEVER receives a search query. The version digit is decided by the
 > completed work (No Forced Targets); the queue position after Phase 21 makes
 > the provisional label `v0.0.2.4 (Build 25)`. *(Source: Lucas, 2026-09-13 —
@@ -182,19 +193,16 @@ props and their consumers in `App.tsx` — lines ~160–170). (2) Remove the
 (`podSearch` state, `~lines 49, 62–65, 264`) — the pod tree renders
 unfiltered (pod-name filtering folds into future backlog if wanted). (3)
 `ItemListPane`'s search becomes the single surface, wired to the unified
-engine. (4) **Control ergonomics (fold-in from the original Task 43):** in
-`ItemDetailPane.tsx` Custom Fields, relocate the hidden-field Unmask
-(Eye/EyeOff) toggle from inline-with-value (~269–279) into the right-hand
-action cluster, **immediately left of Copy** (~286–293), matching the main
-password field's eye+copy pairing; masked-value cell stays in the value
-column; `revealedHiddenFields` semantics unchanged; full-value mask invariant
-(every character → `•`, no partial masks — NEVER-list).
+engine. (4) **Control ergonomics — FOLDED INTO PHASE 19 Task 38** (Lucas,
+2026-09-18): the Eye-beside-Copy relocation ships earlier with the BLOB/preview
+pass, extended to every masked field row (password, SSH private key, hidden
+custom fields); this task verifies it still holds after the search
+consolidation.
 
 > Success Criteria: Exactly one search input renders in the vault UI (above
-> the list); sidebar and header contain no search controls; hidden custom
-> fields show Eye immediately left of Copy in the right-hand cluster; the
-> mask covers the ENTIRE value; reveal toggles per-field; the full test
-> oracle + `tsc` + build stay clean.
+> the list); sidebar and header contain no search controls; the Eye-beside-Copy
+> ergonomics delivered by Phase 19 still holds on every masked field row; the
+> full test oracle + `tsc` + build stay clean.
 
 ---
 

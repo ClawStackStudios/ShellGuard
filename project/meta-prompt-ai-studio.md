@@ -1126,12 +1126,22 @@ Execute Phase 19 adhering to the Functionality + UI Component pairing:
   decryption of large attachments without freezing the UI thread.
 - Inline thumbnail previews for common image/PDF types inside an encrypted
   object-URL modal.
+- **Control-ergonomics fold-in (from Phase 22, Lucas 2026-09-18):** in
+  `ItemDetailPane.tsx`, relocate the Unmask (Eye/EyeOff) toggle from
+  inline-with-value into the right-hand action cluster, **immediately LEFT of
+  Copy** — on every masked field row (password, SSH private key, hidden custom
+  fields), matching the eye-cluster the eye is already drawn to; masked value
+  stays in the value column; `revealedHiddenFields` semantics unchanged;
+  full-value mask invariant (every character → `•`, no partial masks —
+  NEVER-list).
 
 Verify binary payloads round-trip cleanly without base64 overhead, attempting
 to upload over quota yields 413, incremental BLOB reads avoid spiking Node.js
 RSS memory, a 20MB upload shows a smooth percentage progress bar, streamed
 decryption never freezes the browser tab, previews render in the object-URL
-modal, and the full test oracle + tsc + build stay clean!
+modal, the Unmask (Eye) toggle sits immediately LEFT of Copy on every masked
+field row with the full-value mask invariant intact (every character → `•`),
+and the full test oracle + tsc + build stay clean!
 ```
 
 ---
@@ -1286,17 +1296,16 @@ Execute Phase 22 adhering to the Functionality + UI Component pairing:
   (podSearch state; pod tree renders unfiltered).
 - ItemListPane's search becomes the single search surface, wired to the
   unified engine.
-- Control ergonomics: ItemDetailPane Custom Fields — hidden-field Eye toggle
-  moves from inline-with-value into the right-hand action cluster,
-  immediately LEFT of Copy (matching the password field pairing); masked
-  value stays in the value column; revealedHiddenFields semantics unchanged;
-  full-value mask invariant (every character → •).
+- Control ergonomics — FOLDED INTO PHASE 19 Task 38 (Lucas, 2026-09-18): the
+  Eye-beside-Copy relocation ships earlier with the BLOB/preview pass, extended
+  to every masked field row (password, SSH private key, hidden custom fields);
+  this task verifies it still holds after the search consolidation.
 
 Verify one search input renders in the vault UI, sidebar and header have no
 search controls, matches surface by title/keyword/attachment name/note
-content, zero search requests hit the network, lock purges the query, Eye
-sits immediately left of Copy on hidden custom fields, the mask covers the
-ENTIRE value, and the full test oracle + tsc + build stay clean!
+content, zero search requests hit the network, lock purges the query, the
+Eye-beside-Copy ergonomics delivered by Phase 19 still holds on every masked
+field row, and the full test oracle + tsc + build stay clean!
 ```
 
 

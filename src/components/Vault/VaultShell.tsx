@@ -9,6 +9,8 @@ interface VaultShellProps {
   selectedFolder: string;
   activeTypeFilter: VaultItemType | "all";
   isLocked: boolean;
+  /** Phase 19: streams + decrypts an attachment payload on demand. */
+  onFetchAttachment?: (id: string) => Promise<string>;
   onAdd: (type?: VaultItemType) => void;
   onEdit: (item: VaultItem) => void;
   onDelete: (item: VaultItem) => void;
@@ -19,6 +21,7 @@ export function VaultShell({
   selectedFolder,
   activeTypeFilter,
   isLocked,
+  onFetchAttachment,
   onAdd,
   onEdit,
   onDelete
@@ -91,6 +94,7 @@ export function VaultShell({
           onDelete={onDelete}
           isLocked={isLocked}
           attachmentItemsById={attachmentItemsById}
+          onFetchAttachment={onFetchAttachment}
         />
       </div>
     </div>

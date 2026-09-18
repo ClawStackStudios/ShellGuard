@@ -242,7 +242,7 @@ export function ItemFormModal({
 
   const stageAttachmentFile = (file: File) => {
     if (file.size > MAX_ATTACHMENT_BYTES) {
-      setAttachmentError(`File ${file.name} exceeds 10MB limit.`);
+      setAttachmentError(`File ${file.name} exceeds the ${Math.round(MAX_ATTACHMENT_BYTES / (1024 * 1024))}MB limit.`);
       return;
     }
     setAttachmentError(null);
@@ -516,7 +516,7 @@ export function ItemFormModal({
                 )}
                 {showAttachmentField && (
                   <div className="col-span-1 md:col-span-2 relative">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachments (max 10MB)</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachments (max 50MB)</label>
                     <button type="button" onClick={() => setShowAttachmentField(false)} className="absolute -top-1 right-0 text-slate-400 hover:text-red-500"><X size={16}/></button>
                     <div onClick={openAttachmentPicker} className="w-full border-2 border-dashed border-claw-cyan/50 rounded-xl p-6 flex flex-col items-center justify-center bg-claw-cyan/5 hover:bg-claw-cyan/10 transition-colors cursor-pointer text-center">
                       <Upload size={28} className="text-claw-cyan/60 mb-2" />

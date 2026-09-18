@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary } from 'lucide-react';
+import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Loader2 } from 'lucide-react';
 import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
 import { getPodColor } from '../../lib/podUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
-import { downloadAttachment } from '../../lib/attachmentUtils.ts';
+import { downloadAttachment, dataUrlToBlob } from '../../lib/attachmentUtils.ts';
 
 interface ItemDetailPaneProps {
   item: VaultItem | null;
@@ -15,6 +15,8 @@ interface ItemDetailPaneProps {
   onDelete: (item: VaultItem) => void;
   isLocked: boolean;
   attachmentItemsById: Map<string, VaultItem>;
+  /** Phase 19: streams + decrypts an attachment payload on demand. */
+  onFetchAttachment?: (id: string) => Promise<string>;
 }
 
 export function ItemDetailPane({
@@ -23,11 +25,17 @@ export function ItemDetailPane({
   onEdit,
   onDelete,
   isLocked,
-  attachmentItemsById
+  attachmentItemsById,
+  onFetchAttachment
 }: ItemDetailPaneProps) {
   const [revealed, setRevealed] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [revealedHiddenFields, setRevealedHiddenFields] = useState<Set<string>>(new Set());
+  // Phase 19: on-demand attachment fetch + encrypted object-URL preview modal.
+  const [previewState, setPreviewState] = useState<
+    { loading: boolean; name: string; mime: string; dataUrl?: string; error?: string } | null
+  >(null);
+  const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
 
   // Reset state when item changes
   useEffect(() => {
@@ -35,6 +43,49 @@ export function ItemDetailPane({
     setCopyFeedback(null);
     setRevealedHiddenFields(new Set());
   }, [item?.id]);
+
+  // Revoke the preview object URL when the modal closes or unmounts.
+  useEffect(() => {
+    return () => {
+      if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    };
+  }, [previewObjectUrl]);
+
+  const closePreview = () => {
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    setPreviewObjectUrl(null);
+    setPreviewState(null);
+  };
+
+  const openPreview = async (att: VaultItem) => {
+    if (!onFetchAttachment) return;
+    setPreviewState({ loading: true, name: att.title || 'attachment', mime: att.mime_type || '' });
+    setPreviewObjectUrl(null);
+    try {
+      const dataUrl = await onFetchAttachment(att.id);
+      const mime = att.mime_type || '';
+      if (mime === 'application/pdf') {
+        const blob = dataUrlToBlob(dataUrl);
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          setPreviewObjectUrl(url);
+        }
+      }
+      setPreviewState({ loading: false, name: att.title || 'attachment', mime, dataUrl });
+    } catch (e: any) {
+      setPreviewState({ loading: false, name: att.title || 'attachment', mime: att.mime_type || '', error: e?.message || 'Preview failed.' });
+    }
+  };
+
+  const downloadWithFetch = async (att: VaultItem) => {
+    if (!onFetchAttachment) return;
+    try {
+      const dataUrl = await onFetchAttachment(att.id);
+      downloadAttachment(dataUrl, att.title || 'attachment');
+    } catch {
+      // fetch/decrypt failures surface through the preview path; downloads stay silent here
+    }
+  };
 
   if (isLocked) {
     return (
@@ -289,27 +340,42 @@ export function ItemDetailPane({
                           ) : cf.type === "linked" ? (
                             <span className="text-sm font-mono mt-0.5 text-theme-main truncate">{resolveLinkedValue(cf) || "—"}</span>
                           ) : cf.type === "hidden" ? (
-                            <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex items-center mt-0.5">
                               <span className="text-sm font-mono text-theme-main truncate">
-                                {revealedHiddenFields.has(cf.id) ? cf.value : "••••••••••••"}
+                                {revealedHiddenFields.has(cf.id) ? cf.value : "••••••••••••••••"}
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => setRevealedHiddenFields(prev => {
-                                  const next = new Set(prev);
-                                  if (next.has(cf.id)) next.delete(cf.id); else next.add(cf.id);
-                                  return next;
-                                })}
-                                className="p-1 text-slate-400 hover:text-claw-cyan transition-colors cursor-pointer"
-                              >
-                                {revealedHiddenFields.has(cf.id) ? <EyeOff size={14} /> : <Eye size={14} />}
-                              </button>
                             </div>
                           ) : (
                             <span className="text-sm font-mono mt-0.5 text-theme-main truncate">{cf.value || "—"}</span>
                           )}
                         </div>
-                        {(cf.type === "text" || cf.type === "hidden") && cf.value && (
+                        {/* Phase 19 fold-in: Unmask (Eye) sits immediately LEFT of Copy
+                            in the right-hand action cluster on every masked row. */}
+                        {cf.type === "hidden" && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setRevealedHiddenFields(prev => {
+                                const next = new Set(prev);
+                                if (next.has(cf.id)) next.delete(cf.id); else next.add(cf.id);
+                                return next;
+                              })}
+                              className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                            >
+                              {revealedHiddenFields.has(cf.id) ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                            {cf.value && (
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(cf.value, `custom_${cf.id}`)}
+                                className={`p-2 rounded-lg transition-colors cursor-pointer ${copyFeedback === `custom_${cf.id}` ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10"}`}
+                              >
+                                {copyFeedback === `custom_${cf.id}` ? <Check size={14} /> : <Copy size={14} />}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {cf.type === "text" && cf.value && (
                           <button
                             type="button"
                             onClick={() => handleCopy(cf.value, `custom_${cf.id}`)}
@@ -355,16 +421,40 @@ export function ItemDetailPane({
                             <FileText size={16} className="text-slate-400 flex-shrink-0" />
                             <div className="flex flex-col min-w-0">
                               <span className="text-sm font-semibold truncate text-theme-main">{att.title}</span>
-                              <span className="text-[10px] text-theme-muted uppercase tracking-wider">{(att.secret.length / 1024).toFixed(1)} KB</span>
+                              <span className="text-[10px] text-theme-muted uppercase tracking-wider">
+                                {typeof (att as any).size_bytes === 'number'
+                                  ? `${((att as any).size_bytes / 1024).toFixed(1)} KB`
+                                  : `${(att.mime_type || '').toUpperCase()}`}
+                              </span>
                             </div>
                           </div>
-                          <button
-                            onClick={() => downloadAttachment(att.secret, att.title || "attachment")}
-                            className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                            title="Download"
-                          >
-                            <Download size={16} />
-                          </button>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {onFetchAttachment && /^image\//.test(att.mime_type || '') && (
+                              <button
+                                onClick={() => openPreview(att)}
+                                className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                                title="Preview"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            )}
+                            {onFetchAttachment && att.mime_type === 'application/pdf' && (
+                              <button
+                                onClick={() => openPreview(att)}
+                                className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                                title="Preview"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => downloadWithFetch(att)}
+                              className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                              title="Download"
+                            >
+                              <Download size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -411,6 +501,56 @@ export function ItemDetailPane({
               </div>
               <div className="flex-1 min-h-0">
                 {content}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Phase 19: encrypted object-URL preview modal (images + PDFs).
+          The payload is decrypted client-side only; PDFs render from a Blob
+          object URL (never a data: URI — insecure-origin invariant). */}
+      <AnimatePresence>
+        {previewState && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closePreview}
+              className="fixed inset-0 bg-black/60 z-[60]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-x-4 inset-y-10 md:inset-x-16 lg:inset-x-32 z-[70] bg-theme-base border border-theme-subtle rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-theme-subtle bg-theme-surface flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText size={16} className="text-slate-400 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-theme-main truncate">{previewState.name}</span>
+                  {previewState.loading && <Loader2 size={16} className="animate-spin text-claw-cyan" />}
+                </div>
+                <button
+                  onClick={closePreview}
+                  className="p-2 text-slate-400 hover:text-theme-main hover:bg-theme-surface rounded-lg transition-colors cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar bg-slate-950/5 dark:bg-black/20 flex items-center justify-center">
+                {previewState.loading ? (
+                  <p className="text-sm text-theme-muted">Decrypting…</p>
+                ) : previewState.error ? (
+                  <p className="text-sm text-lobster-red">{previewState.error}</p>
+                ) : previewState.dataUrl && previewState.mime === 'application/pdf' && previewObjectUrl ? (
+                  <iframe src={previewObjectUrl} title={previewState.name} className="w-full h-full border-0" />
+                ) : previewState.dataUrl && /^image\//.test(previewState.mime) ? (
+                  <img src={previewState.dataUrl} alt={previewState.name} className="max-w-full max-h-full object-contain" />
+                ) : (
+                  <p className="text-sm text-theme-muted">No inline preview available for this type.</p>
+                )}
               </div>
             </motion.div>
           </>

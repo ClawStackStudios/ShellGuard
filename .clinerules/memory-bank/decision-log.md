@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-18 — ergonomics pulled forward
+The Eye-beside-Copy control-ergonomics item (P22/T44) was folded into Phase 19 Task 38 by Lucas — ship the UX the eye already wants at the next molt instead of waiting two phases; P22 becomes verify-only. Also learned: the attachment-removal tightening is P23, not next — confirm which phase owns a behavior before folding new work into it.
+
 ## 2026-09-16 — the third link class
 Session closed with a full handoff (handoff-packages/2026-09-16-auditable-corpus.md). The arc: chronology restored, canon sealed, 8 docs-lies corrected, v0.0.1.10 shipped, Phase 24 queued, the lens sealed as auditPerspective.md, the long-term bank initialized, and the memory-bank territory split (.clinerules mine; .agents Antigravity's). The next session inherits a corpus that audits itself.
 

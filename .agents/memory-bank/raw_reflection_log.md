@@ -1,4 +1,75 @@
 ---
+Date: 2026-09-19
+TaskRef: "Release Draft v0.0.2.2 (Build 24) — The Bioluminescent Reef"
+
+Learnings:
+- Synchronized package versioning across package.json, package-lock.json, README.md, CHANGELOG.md, and ARCHITECTURE.md to 0.0.2.2.
+- Verified dynamic package version resolver in tests/unit/version.test.ts reads directly from package.json, keeping the test oracle 100% green without assertions needing manual edits.
+- Rolled over the ROADMAP.md 3-version completed milestones sliding window: Phase 18, Phase 19, and Phase 20 are now the active completed trio; Phase 17 was safely migrated to .agents/memory-bank/ROADMAP-HISTORY.md.
+- Drafted comprehensive release document RELEASE-v0.0.2.2.md highlighting the 4 core themes: Tag Taxonomy & Granular Filters, 500MB Attachment Ceiling, SSH Keypair Dual-Key Presentation & Terminal Ergonomics, and 100% Green Verification Suite.
+- Purged previous draft RELEASE-v0.0.2.1.md cleanly so the repo maintains exactly one active release file.
+
+Difficulties:
+- None; sliding window migration and document synchronization completed deterministically.
+
+Successes:
+- Full verification passed: all 20 test suites (248 tests passed, 1 skipped), tsc --noEmit, vite build, and npm run docs:build pass 100% green.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: 3-version sliding window roadmap rotation for completed milestones with historical archival.
+---
+
+---
+Date: 2026-09-19
+TaskRef: "SSH Key Dual-Key Architecture, Clean PEM Delimiters & Terminal Ergonomics"
+
+Learnings:
+- In-browser SSH keypair generation previously serialized `{ publicKey, privateKey }` directly into `key_value`, causing an unmasked private key in the UI to display raw JSON.
+- Built a dual-key serialization layer in `src/lib/keyGen.ts` (`parseSshKeySecret`, `serializeSshKeySecret`, `formatAuthorizedKeysCommand`) ensuring zero-knowledge client-side storage while transparently handling legacy raw PEM strings.
+- Strictly preserved RFC 7468 PKCS#8 PEM framing (`-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`) for private keys; unmasking renders a monospace `<pre>` block that does not leak JSON syntax.
+- Form modal (`ItemFormModal.tsx`) provides dedicated, decoupled inputs for Private Key PEM (textarea) and Public Key (OpenSSH string), preventing JSON leaking during item edits.
+- Detail pane (`ItemDetailPane.tsx`) delivers high-velocity terminal ergonomics: dedicated Public Key card with algorithm badge, **Copy Public Key**, **Copy `authorized_keys` Command** (`echo "..." >> ~/.ssh/authorized_keys`), and direct in-browser **Download .pem** file action.
+- Added 5 unit tests in `tests/unit/keyGen.test.ts` bringing total test oracle to 20 suites / 248 passing tests.
+
+Difficulties:
+- Ensuring 100% backward compatibility with existing raw PEM keys already stored in user vaults without requiring schema migrations or forced key regeneration. Handled gracefully in `parseSshKeySecret` with JSON parse error catch falling back to raw string.
+
+Successes:
+- All 20 test suites (248 passed, 1 skipped) pass 100% green.
+- `tsc --noEmit`, `vite build`, and `npm run docs:build` succeed with 0 errors.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Decoupled UI presentation for dual-key / compound cryptographic credentials stored under a single opaque ciphertext column.
+- General pattern: Terminal one-liner copy ergonomics (`authorized_keys`) for infrastructure secrets.
+---
+
+---
+Date: 2026-09-19
+TaskRef: "Phase 20: Vault Tagging System & Granular Filter Bar + 500MB Storage Ceiling (Tasks 39 & 40)"
+
+Learnings:
+- Implemented migration 0006_vault_tags.{up,down}.sql adding `tags TEXT DEFAULT '[]'` column and owner index across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+- Registered `tags` in `metadataGuard.ts` for Layer 2 per-row metadata encryption (AES-GCM-256 encrypted on disk, decrypted on read).
+- Updated route handlers (`vault.ts`, `notes.ts`, `sshKeys.ts`) to support `?tags=a,b` intersection filtering and capture tag mutation events in the forensic audit trail (`audit_logs`).
+- Elevated attachment storage ceiling from 50MB to 500MB (`ATTACHMENT_MAX_MB`) and grotto quota from 500MB to 1000MB (`GROTTO_QUOTA_MB`) across server routes, Busboy streaming, client helpers, and documentation.
+- Built `TagSelectorInput` with autocomplete suggestions, removable chips, and inline color palette selection (`POD_COLOR_PALETTE`).
+- Unified Pod and Tag color mechanics in `src/lib/podUtils.ts` with deterministic string hashing (`hashStringToColor`) and explicit user overrides.
+- Implemented collapsible tag cloud in `SidebarFolderTree.tsx`, granular filter bar with `AND`/`OR` logic in `ItemListPane.tsx`, and tag pill badges in `ItemDetailPane.tsx`.
+
+Difficulties:
+- Node headless test environments lack `window.localStorage`, leading to ReferenceErrors when running unit tests against `podUtils.ts`. Resolved by adding defensive `typeof localStorage === "undefined"` guards with memory fallbacks.
+- In `tests/vault-crud.test.ts`, tests assert that a 50MB payload exceeds the attachment limit without allocating 500MB of RAM. Resolved by setting `process.env.ATTACHMENT_MAX_MB = '50'` in its test preamble.
+
+Successes:
+- All 20 test files (243 tests passed, 1 skipped) pass 100% green.
+- `tsc --noEmit`, `vite build`, and `vitepress build docs` compile cleanly with 0 errors.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Unified deterministic color engine for categorization systems.
+- General pattern: Headless safety for shared client utility libraries.
+---
+
+---
 Date: 2026-09-17
 TaskRef: "CaraBase Brand Asset Alignment & Web Server Favicon Distinction"
 

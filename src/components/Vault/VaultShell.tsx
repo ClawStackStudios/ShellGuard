@@ -3,12 +3,16 @@ import { VaultItem, VaultItemType } from '../../types.ts';
 import { ItemListPane } from './ItemListPane.tsx';
 import { ItemDetailPane } from './ItemDetailPane.tsx';
 import { isItemInPod } from '../../lib/podUtils.ts';
+import { filterItemsByTags } from '../../lib/tagUtils.ts';
 
 interface VaultShellProps {
   items: VaultItem[];
   selectedFolder: string;
   activeTypeFilter: VaultItemType | "all";
   isLocked: boolean;
+  selectedTags?: string[];
+  onToggleTag?: (tagName: string) => void;
+  onClearTags?: () => void;
   /** Phase 19: streams + decrypts an attachment payload on demand. */
   onFetchAttachment?: (id: string) => Promise<string>;
   onAdd: (type?: VaultItemType) => void;
@@ -21,6 +25,9 @@ export function VaultShell({
   selectedFolder,
   activeTypeFilter,
   isLocked,
+  selectedTags = [],
+  onToggleTag,
+  onClearTags,
   onFetchAttachment,
   onAdd,
   onEdit,
@@ -28,6 +35,7 @@ export function VaultShell({
 }: VaultShellProps) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tagFilterMode, setTagFilterMode] = useState<'AND' | 'OR'>('AND');
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -42,6 +50,11 @@ export function VaultShell({
       return true;
     });
 
+    // Filter by tags
+    if (selectedTags.length > 0) {
+      result = filterItemsByTags(result, selectedTags, tagFilterMode);
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(i => 
@@ -55,7 +68,7 @@ export function VaultShell({
     result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
     return result;
-  }, [items, activeTypeFilter, selectedFolder, searchQuery]);
+  }, [items, activeTypeFilter, selectedFolder, selectedTags, tagFilterMode, searchQuery]);
 
   const selectedItem = useMemo(() => {
     return items.find(i => i.id === selectedItemId) || null;
@@ -82,6 +95,11 @@ export function VaultShell({
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           activeTypeFilter={activeTypeFilter}
+          selectedTags={selectedTags}
+          tagFilterMode={tagFilterMode}
+          onToggleTag={onToggleTag}
+          onClearTags={onClearTags}
+          onToggleFilterMode={() => setTagFilterMode(m => m === 'AND' ? 'OR' : 'AND')}
         />
       </div>
 

@@ -57,6 +57,17 @@ flowchart LR
 
 ---
 
+## 🏷️ Unified Pod & Tag Bioluminescent Color Engine
+
+Both hierarchical Pods and multi-dimensional Tags share the unified bioluminescent color engine located in `src/client/utils/podUtils.ts`:
+
+- **16-Color Curated Abyssal Palette (`POD_COLOR_PALETTE`)**: High-contrast, vibrant oceanic tones including Cyan (`#06b6d4`), Emerald (`#10b981`), Lobster Pink (`#e4048a`), Violet (`#8b5cf6`), Amber (`#f59e0b`), Rose (`#f43f5e`), Electric Blue (`#3b82f6`), and Mint (`#14b8a6`).
+- **Deterministic Hash Function (`hashStringToColor`)**: Automatically maps any pod path (e.g. `"Infra/Bastion"`) or tag label (e.g. `"production"`) to a consistent palette color via string char-code hashing, ensuring immediate visual recognition without manual assignment.
+- **Client-Side Color Overrides**: Users can assign custom color choices stored in `localStorage` (`sg_pod_colors` and `sg_tag_colors`), overriding the deterministic hash.
+- **Bioluminescent Pill Badges**: Rendered with glowing 20% opacity backgrounds (`${color}20`), 60% opacity borders (`${color}60`), and full-chroma text, providing unmistakable visual contrast on abyssal surfaces.
+
+---
+
 ## 🔤 Typography & Metrics
 
 - **Display & Headings**: `Sora`, `Switzer`, or `Inter` (geometric, clean, authoritative).

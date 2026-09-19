@@ -46,8 +46,12 @@ $DATA_DIR/
 > `vault_secure_attachments`: `file_data` is now a native **BLOB** column
 > holding the raw ShellCryption envelope bytes (legacy TEXT rows re-encoded
 > in code by `attachmentBlobs.ts`), with `size_bytes INTEGER` powering the
-> 500MB per-owner grotto quota. The zero-knowledge invariant is unchanged —
+> 1000MB (1GB) per-owner grotto quota and 500MB per-file ceiling. The zero-knowledge invariant is unchanged —
 > the bytes remain opaque.
+>
+> **Migration 0006 (Phase 20, v0.0.2.2)** adds a `tags TEXT DEFAULT '[]'` column
+> across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`, backed by
+> `idx_*_owner_tags` indexes and Layer 2 metadata encryption (`metadataGuard.ts`).
 
 ```sql
 CREATE TABLE IF NOT EXISTS lobsters (

@@ -5,6 +5,7 @@ import { validateBody } from '../middleware/validate.js';
 import { NoteSchemas } from '../validation/schemas.js';
 import { fieldCipher } from '../utils/fieldEncryption.js';
 import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
+import { normalizeTagsForDb, filterByTags } from '../utils/tagUtils.js';
 
 const router = Router();
 
@@ -16,7 +17,8 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
       .prepare('SELECT * FROM vault_secure_notes WHERE owner_uuid = ? ORDER BY created_at DESC')
       .all(req.userUuid) as Record<string, unknown>[];
     const decrypted = await prepareReadAll('vault_secure_notes', items, fieldCipher);
-    res.json({ success: true, data: decrypted });
+    const filtered = filterByTags(decrypted, typeof req.query.tags === 'string' ? req.query.tags : undefined);
+    res.json({ success: true, data: filtered });
   } catch (err: any) {
     console.error('Notes GET error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure retrieving notes.' });
@@ -24,26 +26,28 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
 });
 
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, content, category, custom_fields } = req.body;
+  const { id, title, content, category, tags, custom_fields } = req.body;
   try {
+    const normalizedTags = normalizeTagsForDb(tags);
     const toStore = await prepareWrite('vault_secure_notes', {
       title: title.trim(),
       category: category || '',
+      tags: normalizedTags,
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, custom_fields, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, req.userUuid, toStore.title, content, toStore.category, custom_fields || '', new Date().toISOString());
+      INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, tags, custom_fields, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, req.userUuid, toStore.title, content, toStore.category, toStore.tags, custom_fields || '', new Date().toISOString());
 
     audit.log('NOTE_CREATED', {
       action: 'note_created',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || '' },
+      details: { itemId: id, category: category || '', tags: normalizedTags },
     });
 
-    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || '' } });
+    res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || '', tags: normalizedTags } });
   } catch (err: any) {
     console.error('Notes POST error:', err);
     if (err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' || err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -55,29 +59,32 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
 
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, content, category, custom_fields } = req.body;
+  const { title, content, category, tags, custom_fields } = req.body;
   try {
-    const existing = db.prepare('SELECT id FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid);
+    const existing = db.prepare('SELECT id, tags FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as { id: string; tags?: string } | undefined;
     if (!existing) {
       return res.status(404).json({ success: false, error: 'Note not found.' });
     }
 
+    const normalizedTags = tags !== undefined ? normalizeTagsForDb(tags) : (existing.tags || '[]');
+
     const toStore = await prepareWrite('vault_secure_notes', {
       title: title.trim(),
       category: category || '',
+      tags: normalizedTags,
     }, fieldCipher);
 
-    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, custom_fields = ? WHERE id = ? AND owner_uuid = ?')
-      .run(toStore.title, content, toStore.category, custom_fields || '', id, req.userUuid);
+    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, tags = ?, custom_fields = ? WHERE id = ? AND owner_uuid = ?')
+      .run(toStore.title, content, toStore.category, toStore.tags, custom_fields || '', id, req.userUuid);
 
     audit.log('NOTE_UPDATED', {
       action: 'note_updated',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemId: id, category: category || '' },
+      details: { itemId: id, category: category || '', tags: normalizedTags },
     });
 
-    res.json({ success: true, data: { id, title: title.trim(), category: category || '' } });
+    res.json({ success: true, data: { id, title: title.trim(), category: category || '', tags: normalizedTags } });
   } catch (err: any) {
     console.error('Notes PUT error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure updating note.' });

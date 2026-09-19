@@ -7,7 +7,7 @@ description: Authoritative SQLite Schema Definitions for ShellGuard & Forensic A
 
 <CopyPage />
 
-The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.1 (migrations 0001-0005).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`) and migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`).
+The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.2 (migrations 0001-0006).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`), migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`), and migration `0006_vault_tags` adds `tags` JSON columns and owner indices across vault pearls, secure notes, and SSH keys.
 
 ShellGuard maintains two separate SQLite database files:
 1. **`DATA_DIR/db.sqlite`**: The primary operational database, encrypted whole-DB with SQLCipher (Layer 3) and per-row metadata encryption (Layer 2).
@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS vault_pearls (
   totp_secret   TEXT DEFAULT '',
   attachments   TEXT DEFAULT '[]',
   custom_fields TEXT DEFAULT '',
+  tags          TEXT DEFAULT '[]',
   created_at    TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
@@ -83,6 +84,7 @@ CREATE TABLE IF NOT EXISTS vault_secure_notes (
   content       TEXT NOT NULL,
   category      TEXT DEFAULT '',
   custom_fields TEXT DEFAULT '',
+  tags          TEXT DEFAULT '[]',
   created_at    TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
@@ -102,6 +104,7 @@ CREATE TABLE IF NOT EXISTS vault_ssh_keys (
   username      TEXT DEFAULT '',
   category      TEXT DEFAULT '',
   custom_fields TEXT DEFAULT '',
+  tags          TEXT DEFAULT '[]',
   created_at    TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
@@ -110,7 +113,7 @@ CREATE INDEX IF NOT EXISTS idx_vault_ssh_keys_owner_created ON vault_ssh_keys(ow
 ```
 
 ### 6. `vault_secure_attachments` (File Attachments)
-Stores binary file attachments under the **Reference Model**. Linked from `vault_pearls.attachments` JSON array. **Phase 19 (v0.0.2.1)**: `file_data` is a native BLOB holding raw ShellCryption envelope bytes (legacy TEXT rows re-encoded in code by `attachmentBlobs.ts`), with `size_bytes` powering the 500MB grotto quota.
+Stores binary file attachments under the **Reference Model**. Linked from `vault_pearls.attachments` JSON array. **Phase 19 (v0.0.2.1) & Phase 20**: `file_data` is a native BLOB holding raw ShellCryption envelope bytes (legacy TEXT rows re-encoded in code by `attachmentBlobs.ts`), with `size_bytes` powering the 1000MB (1GB) grotto quota (500MB per-file limit).
 
 ```sql
 CREATE TABLE IF NOT EXISTS vault_secure_attachments (
@@ -129,7 +132,7 @@ CREATE TABLE IF NOT EXISTS vault_secure_attachments (
 CREATE INDEX IF NOT EXISTS idx_vault_secure_attachments_owner_created ON vault_secure_attachments(owner_uuid, created_at DESC);
 ```
 
-> **Phase 19 wire contract**: multipart streaming uploads (Busboy, 50MB per-file ceiling `ATTACHMENT_MAX_MB`), metadata-only list responses, chunked 1MB BLOB downloads via `GET /api/attachments/:id/file`, `413` on quota breach.
+> **Phase 19 & 20 wire contract**: multipart streaming uploads (Busboy, 500MB per-file ceiling `ATTACHMENT_MAX_MB`), metadata-only list responses, chunked 1MB BLOB downloads via `GET /api/attachments/:id/file`, `413` on 1000MB (`GROTTO_QUOTA_MB`) quota breach.
 
 ### 7. `agent_keys` (LobsterKeys / AI Agent Delegation)
 Issued API keys (`lb-` prefix) allowing scoped, programmatic access to autonomous agents.

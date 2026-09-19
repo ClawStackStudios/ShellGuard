@@ -38,8 +38,8 @@ flowchart TD
     Phase17["🔐 Stage 18: Phase 17 — Key Ledger Hardening & Pod Purity<br/>(Task 33: Agent Key Hash Ledger & Pod Default Purge · Task 34: Key Fingerprint Display & Pod Purity UI) 🏷️"]
     Interlude185["🩹 Stage 18.5: Post-Summit Interlude — Vault Header Flush & Version-Test Integrity<br/>(receipt 07ccd61 · unphased · outside the 2-Task Pairing Law)"]
     Phase18["🎨 Stage 19: Phase 18 — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation ✅<br/>(Task 35: Composite Items, Decoupling & Keypair Engine · Task 36: Master Form, Live TOTP & Count Reconciliation)"]
-    Phase19["📦 Stage 20: Phase 19 — Attachment SQLite BLOB Migration & Streaming Architecture ⬜<br/>(Task 37: BLOB Storage, Streaming Handlers & Quotas · Task 38: Progress Uploads & File Previewers)"]
-    Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ⬜<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Multi-Filter State · Sub-task: 500MB Attachment Limit)"]
+    Phase19["📦 Stage 20: Phase 19 — Attachment SQLite BLOB Migration & Streaming Architecture ✅<br/>(Task 37: BLOB Storage, Streaming Handlers & Quotas · Task 38: Progress Uploads & File Previewers)"]
+    Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ✅<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Filter State · Sub-tasks: 500MB Ceiling & SSH Key Ergonomics)"]
     Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ⬜<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
     Stage23["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ⬜<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
     Stage24["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
@@ -75,14 +75,14 @@ flowchart TD
     Phase24 --> Summit
 ```
 
-> **Transcription state**: **19 phases transcribed** (Stage 0 → 20, `v0.0.0.0`
-> void → `v0.0.2.0` parity) — the walk and the codebase occupy the same commit
-> through the summit tag. **Phase 17 (`v0.0.1.9`) and Phase 18 (`v0.0.2.0`) are SHIPPED.**
+> **Transcription state**: **21 phases transcribed** (Stage 0 → 21, `v0.0.0.0`
+> void → `v0.0.2.2` parity) — the walk and the codebase occupy the same commit
+> through the summit tag. **Phases 17–20 (`v0.0.1.9` → `v0.0.2.2`) are SHIPPED.**
 > **Stage 18.5** records the post-summit hotfix receipt (`07ccd61`).
-> **Stages 21–25 (Phases 20–24) are QUEUED** in the
+> **Stages 22–25 (Phases 21–24) are QUEUED** in the
 > active forward queue; each stage prompt is transcribed when its phase becomes
 > the next molt. Execution order is strictly chronological:
-> Phase 20 → 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
+> Phase 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
 > holds across the whole spine, with the unphased hotfix at the decimal slot. Each
 > queued stage's **Documentation Impact** line is part of that phase's definition
 > of done (docs-hygiene): the executing agent syncs every listed doc before the
@@ -1147,12 +1147,11 @@ and the full test oracle + tsc + build stay clean!
 
 ---
 
-## 🏷️ Stage 21 (Queued): Phase 20 Prompt — Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]
+## 🏷️ Stage 21: Phase 20 Prompt — Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)] ✅
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-20-vault-tagging-system--granular-filter-bar-v0022-build-24)
 > for complete specifications on **Task 39** and **Task 40** (and sub-tasks).
-> **⚠️ Execution state**: QUEUED — executes after Phase 20; green-light from
-> Lucas still required.
+> **⚠️ Execution state**: EXECUTED & VERIFIED — delivered in Phase 20.
 > 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) · ARCHITECTURE.md (query contract, storage limits) · docs/agent-integration/api-reference.md · reference/glossary.md · docs/vault-features
 > **📖 Required Context Files for Phase 20**:
 > 1. [`database-schema.md`](./database-schema.md) — §2 (Migrations), §3 (Schema v1).
@@ -1177,7 +1176,7 @@ Before writing code, inspect:
 Execute Phase 20 adhering to the Functionality + UI Component pairing:
 
 ### Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search
-- `migrations/0007_vault_tags.{up,down}.sql`: add `tags` (ShellCrypted JSON
+- `migrations/0006_vault_tags.{up,down}.sql`: add `tags` (ShellCrypted JSON
   array) across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
 - Update route handlers in `vault.ts`, `notes.ts`, and `sshKeys.ts` to
   support querying by tag intersection (`?tags=finance,infra`).
@@ -1195,12 +1194,19 @@ Execute Phase 20 adhering to the Functionality + UI Component pairing:
   tags with item counts.
 - Thread active tag selection into the main vault filter state alongside
   search keywords and pod selection.
+- **Sub-task: [SSH Key Ergonomics] Dual-Key Management & Terminal Ergonomics**:
+  Implement dual-key serialization (`{ publicKey, privateKey }`) under Layer 1
+  ShellCryption with backward compatibility (`parseSshKeySecret`), strict RFC 7468
+  PKCS#8 PEM formatting (`-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`),
+  decoupled form inputs, direct `.pem` file download, and one-click copy of OpenSSH
+  public keys and `authorized_keys` shell one-liners.
 
 Verify items support multiple tags, tag filtering composes with pod and type
 filters under ownership scoping, tag mutations emit audit events, chips
 add/remove via keyboard, sidebar tag clicks instantly filter the vault grid,
 multi-tag filters combine with AND/OR logic, attachment streaming accepts files
-up to 500MB with end-to-end quota integrity, and the full test oracle + tsc +
+up to 500MB with end-to-end quota integrity, SSH keys unmask clean PEM blocks
+with authorized_keys copy and .pem download, and the full test oracle + tsc +
 build stay clean!
 ```
 

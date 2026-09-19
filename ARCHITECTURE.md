@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.1. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.2. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 
@@ -34,7 +34,7 @@
 ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
-├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.1)
+├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.2)
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
@@ -80,20 +80,23 @@ ShellGuard/
 │   │                                  #   + category DEFAULT 'Personal' purge (4 table rebuilds)
 │   ├── 0004_key_ledger.down.sql       # Rollback (see keyLedger.ts for the in-code backfill)
 │   ├── 0005_attachment_blobs.up.sql   # Phase 19 (v0.0.2.1): migration to native SQLite BLOB storage
-│   └── 0005_attachment_blobs.down.sql # Rollback attachment BLOB migration
+│   ├── 0005_attachment_blobs.down.sql # Rollback attachment BLOB migration
+│   ├── 0006_vault_tags.up.sql         # Phase 20 (v0.0.2.2): vault item tags column and indexing
+│   └── 0006_vault_tags.down.sql       # Rollback vault tags column
 │
 ├── 🔧 scripts/
 │   ├── scuttle-reset.ts               # Scuttles data-dev/ or data/ (--env production|development)
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # 19 Vitest + supertest suites, per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 20 Vitest + supertest suites, per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
 │   ├── vault-crud.test.ts             # Envelope shapes + opacity invariant
 │   ├── agent-key-hash.test.ts         # Hash-only LobsterKey ledger invariant
-│   ├── attachments-blob.test.ts       # Phase 19 BLOB streaming, 50MB ceiling, 500MB quota
+│   ├── attachments-blob.test.ts       # Phase 19 BLOB streaming, 500MB ceiling, 1000MB quota
+│   ├── vault-tags.test.ts             # Phase 20 tag filtering, metadata encryption & API CRUD
 │   ├── settings.test.ts               # Per-user KV read/write & human-only enforcement
 │   ├── metadata-encryption.test.ts    # Per-row AES-256-GCM unit crypto & API round-trip
 │   ├── admin.test.ts                  # SuperLobster Panel auth, session & backup gates
@@ -132,7 +135,7 @@ ShellGuard/
     │   │   ├── auth.ts                #   detectKeyType, HUMAN_PERMISSIONS, requireAuth,
     │   │   │                          #   requirePermission, requireHuman
     │   │   ├── requireAdmin.ts        #   SuperLobster session-cookie authentication gate
-    │   │   ├── attachmentUpload.ts    #   Busboy multipart streaming limiter (50MB ceiling)
+    │   │   ├── attachmentUpload.ts    #   Busboy multipart streaming limiter (500MB ceiling)
     │   │   ├── rateLimiter.ts         #   authLimiter (10/15m), adminAuthLimiter (5/10m), apiLimiter (100/min),
     │   │   │                          #   per-key LRU limiter honoring agent rate_limit
     │   │   ├── errorHandler.ts        #   zod parse→400, UNIQUE→409, FK→400, prod-safe 500
@@ -140,14 +143,14 @@ ShellGuard/
     │   │   └── httpsRedirect.ts       #   ENFORCE_HTTPS redirect behind TRUST_PROXY awareness
     │   ├── routes/
     │   │   ├── auth.ts                #   register/token/validate (+ SG-only me/profile)
-    │   │   ├── vault.ts               #   Pearl logins CRUD (with custom_fields support)
-    │   │   ├── notes.ts               #   Secure notes CRUD (with custom_fields support)
-    │   │   ├── sshKeys.ts             #   SSH key CRUD (with custom_fields support)
+    │   │   ├── vault.ts               #   Pearl logins CRUD (with custom_fields, tags, and ?tags= query)
+    │   │   ├── notes.ts               #   Secure notes CRUD (with custom_fields, tags, and ?tags= query)
+    │   │   ├── sshKeys.ts             #   SSH key CRUD (with custom_fields, tags, and ?tags= query)
     │   │   ├── attachments.ts         #   Attachment multipart streaming CRUD (BLOB, quota, 413)
     │   │   ├── agentKeys.ts           #   LobsterKeys©™ lifecycle (create/revoke/delete)
     │   │   ├── settings.ts            #   Per-user KV preferences
     │   │   └── admin.ts               #   SuperLobster Panel API (ADMIN_TOKEN cookie-session; ADMIN.md)
-    │   ├── utils/
+    │   └── utils/
     │   │   ├── auditLogger.ts         #   audit.log() with extended redaction list (delta #2)
     │   │   ├── crypto.ts              #   generateString/generateId/constantTimeCompare
     │   │   ├── tokenExpiry.ts         #   TTL parser: 30m/12h/24h/7d/never/ISO/bare-minutes
@@ -156,6 +159,7 @@ ShellGuard/
     │   │   │                          #   HKDF key derivation, singleton fieldCipher
     │   │   ├── metadataGuard.ts       #   Column registry, prepareWrite/prepareRead/
     │   │   │                          #   prepareReadAll helpers
+    │   │   ├── tagUtils.ts            #   Tag parser, normalization, and deduplication utility
     │   │   ├── version.ts             #   Ground-truth application version resolver
     │   │   ├── backupManager.ts       #   SQLCipher Online Backup API atomic snapshots & manifest
     │   │   └── tlsManager.ts          #   Native EC P-256 LAN TLS self-signed cert engine
@@ -618,7 +622,7 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/vault` | canRead | List pearl logins (newest first, owner-scoped) |
+| `GET` | `/api/vault` | canRead | List pearl logins (newest first, owner-scoped; supports `?tags=a,b`) |
 | `POST` | `/api/vault` | canWrite | Create login — title ≤255, url ≤2048, notes ≤10000, optional TOTP seed |
 | `PUT` | `/api/vault/:id` | canEdit | Update login |
 | `DELETE` | `/api/vault/:id` | canDelete | Delete login |
@@ -627,7 +631,7 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/notes` | canRead | List secure notes |
+| `GET` | `/api/notes` | canRead | List secure notes (supports `?tags=a,b`) |
 | `POST` | `/api/notes` | canWrite | Create note (content encrypted client-side) |
 | `PUT` | `/api/notes/:id` | canEdit | Update note |
 | `DELETE` | `/api/notes/:id` | canDelete | Delete note |
@@ -636,7 +640,7 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/keys` | canRead | List SSH keys |
+| `GET` | `/api/keys` | canRead | List SSH keys (supports `?tags=a,b`) |
 | `POST` | `/api/keys` | canWrite | Store SSH key material (encrypted client-side) |
 | `PUT` | `/api/keys/:id` | canEdit | Update SSH key |
 | `DELETE` | `/api/keys/:id` | canDelete | Delete SSH key |
@@ -647,11 +651,11 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 |---|---|---|---|
 | `GET` | `/api/attachments` | canRead | Metadata-only list — the payload BLOB is NEVER included |
 | `GET` | `/api/attachments/:id/file` | canRead | Streamed ciphertext download (1MB `substr` chunks — never loads the whole BLOB into RSS) |
-| `POST` | `/api/attachments` | canWrite | Multipart upload (Busboy) — ciphertext streamed as already-encrypted bytes; 50MB per-file ceiling (`ATTACHMENT_MAX_MB`), 500MB grotto quota per owner (`GROTTO_QUOTA_MB`), `413` mid-stream abort on breach |
+| `POST` | `/api/attachments` | canWrite | Multipart upload (Busboy) — ciphertext streamed as already-encrypted bytes; 500MB per-file ceiling (`ATTACHMENT_MAX_MB`), 1000MB grotto quota per owner (`GROTTO_QUOTA_MB`), `413` mid-stream abort on breach |
 | `PUT` | `/api/attachments/:id` | canEdit | Metadata-only update (title/file_name/mime_type/category) — file replacement re-uploads |
 | `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment (frees grotto quota) |
 
-Passwords reference attachments by ID: `vault_pearls.attachments` holds a JSON array of `vault_secure_attachments` IDs (no sensitive data). Unlimited attachments per login, one file each, 50 MB max per file. Deleting a pearl cascade-deletes its linked attachments (ownership-scoped).
+Passwords reference attachments by ID: `vault_pearls.attachments` holds a JSON array of `vault_secure_attachments` IDs (no sensitive data). Unlimited attachments per login, one file each, 500 MB max per file, 1000 MB grotto quota. Deleting a pearl cascade-deletes its linked attachments (ownership-scoped).
 
 ### Agent Keys (`routes/agentKeys.ts`) — human-only
 
@@ -725,7 +729,8 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `security.test.ts` | **Cross-owner isolation (highest-value invariant)**, permission-bypass attempts, `hu-`/`lb-`/`api-` format enforcement, entropy assertions, 6 bad logins → 429 |
 | `vault-crud.test.ts` | Envelope shapes, **opacity invariant** (server stores client blob byte-for-byte, decryptable by nobody server-side), attachment size rejection |
 | `agent-key-hash.test.ts` | Hash-only LobsterKey ledger: minted-once, pre-migration keys keep authenticating, zero plaintext at rest |
-| `attachments-blob.test.ts` | Phase 19 BLOB streaming: multipart uploads, 50MB per-file ceiling, 500MB grotto quota, chunked downloads |
+| `attachments-blob.test.ts` | Phase 19 BLOB streaming: multipart uploads, 500MB per-file ceiling, 1000MB grotto quota, chunked downloads |
+| `vault-tags.test.ts` | Phase 20 tag filtering (`?tags=a,b` intersection), metadata encryption round-trip, tag updates, and audit logs |
 | `settings.test.ts` | Per-user KV read/write, human-only enforcement |
 | `metadata-encryption.test.ts` | Per-row AES-256-GCM: unit crypto, API round-trip, backward-compat passthrough |
 | `admin.test.ts` | SuperLobster Panel auth, session cookie lifecycle, whitelist settings, and backup gates |
@@ -733,7 +738,7 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `build-gates.test.ts` | Dockerfile/config shape gates before CI publishes |
 | `unit/middleware/errorHandler.test.ts` | Parse→400, UNIQUE→409, FK→400, prod-safe 500 |
 | `unit/customFields.test.ts` | 4 custom field types (text, hidden, boolean, linked), validation, and AAD binding |
-| `unit/keyGen.test.ts` | In-browser Ed25519 & RSA-4096 SSH keypair generation, OpenSSH and RFC-4716 format conversion |
+| `unit/keyGen.test.ts` | In-browser Ed25519 & RSA-4096 SSH keypair generation, dual-key serialization/parsing, OpenSSH/RFC-4716 format conversion, and `authorized_keys` command formatting |
 | `unit/docsLinks.test.ts` | Automated crawl verifying zero broken links or missing anchors across VitePress docs |
 | `unit/mermaidDiagrams.test.ts` | Automated parser verifying all Mermaid code blocks render syntax-clean |
 | `unit/sessionManager.test.ts` | Multi-account session management, key switching, and page reload navigation persistence |
@@ -741,7 +746,7 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `unit/webCryptoFallback.test.ts` | Pure TypeScript WebCrypto fallback engine (HKDF, PBKDF2, AES-256-GCM, SHA-256) for non-secure HTTP LAN |
 | `unit/version.test.ts` | Dynamic ground-truth version resolution and semver structure validation |
 
-Run them: `npm test` (all 19 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 20 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 
@@ -772,7 +777,8 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 19 | Hash-only LobsterKey ledger (`agent_keys.key_hash`/`key_fingerprint`, in-code SHA-256 backfill via `keyLedger.ts`, plaintext column retired, `api_tokens.owner_uuid` re-pointed to agent row id) | Docs-vs-runtime contradiction closed in Phase 17: the server now holds NO agent key material — a stolen `db.sqlite` cannot mint or replay agent sessions |
 | 20 | Pod purity at the Bedrock: `DEFAULT 'Personal'` dropped from all four category columns (table rebuilds); default is `''` (uncategorized) matching `normalizePod()` | The Phase-8 zero-hardcoded-pods invariant finally reaches the schema — no phantom pods on fresh boots |
 | 21 | Composite Items & In-Browser Keypair Generation (`custom_fields` decoupled form layout, live TOTP tickers in login view, in-browser Ed25519 & RSA-4096 keypair generator via WebCrypto API) | Bitwarden-parity master item composition (Phase 18, v0.0.2.0) allowing arbitrary secret payloads and instant SSH keypair generation without external CLI tools |
-| 22 | Attachment SQLite BLOB Migration & Streaming Architecture (Busboy multipart streaming, 50MB per-file ceiling, 500MB grotto quota, chunked BLOB downloads via `GET /api/attachments/:id/file`, migration 0005) | Replaced legacy 10MB base64 JSON payload model with high-throughput native SQLite BLOB storage (Phase 19, v0.0.2.1), preventing RSS memory exhaustion and enforcing strict per-owner storage quotas |
+| 22 | Attachment SQLite BLOB Migration & Streaming Architecture (Busboy multipart streaming, 500MB per-file ceiling, 1000MB grotto quota, chunked BLOB downloads via `GET /api/attachments/:id/file`, migration 0005) | Replaced legacy 10MB base64 JSON payload model with high-throughput native SQLite BLOB storage (Phase 19, v0.0.2.1), preventing RSS memory exhaustion and enforcing strict per-owner storage quotas |
+| 23 | Vault Tagging System & Granular Filter Bar + SSH Key Dual-Key Management (multi-dimensional `tags` column, metadata encryption in `metadataGuard.ts`, `?tags=a,b` intersection queries across pearls/notes/keys, `TagSelectorInput` chip autocomplete, unified pod/tag bioluminescent color engine in `podUtils.ts`, migration 0006, dual-key `{ publicKey, privateKey }` serialization in `keyGen.ts` with clean PKCS#8 PEM display, `.pem` download, and `authorized_keys` command generation) | Rich multi-dimensional categorization and instant filtering across vault items (Phase 20, v0.0.2.2), decoupling discovery from hierarchical pods while maintaining Layer 2 AES-256-GCM encryption, paired with terminal-ergonomic SSH key management |
 
 ---
 

@@ -14,14 +14,14 @@ The ShellGuard vault is an offline-capable, sovereign secrets engine engineered 
 ## 🏗️ Core Vault Capabilities
 
 <CardGrid cols="2">
-  <Card title="The Grotto & Pods" href="/vault-features/the-grotto" icon="🐚" tag="Organization">
-    Organize passwords, secure notes, and SSH keys into user-defined hierarchical Pods with color-coded tags.
+  <Card title="The Grotto, Pods & Tags" href="/vault-features/the-grotto" icon="🐚" tag="Organization">
+    Organize passwords, secure notes, and SSH keys into user-defined hierarchical Pods and multi-dimensional bioluminescent Tags.
   </Card>
   <Card title="Bitwarden-Style Custom Fields" href="/vault-features/the-grotto#custom-fields" icon="🧩" tag="Flexibility">
     Extend credentials with Text, Hidden, Checkbox, and dynamic Linked fields, protected by dedicated AAD namespaces.
   </Card>
   <Card title="Password Attachments" href="/vault-features/attachments" icon="📎" tag="Files">
-    Store license files, keypairs, and documents up to 50 MB per file using our isolated Reference Model architecture.
+    Store license files, keypairs, and documents up to 500 MB per file using our isolated Reference Model architecture.
   </Card>
   <Card title="Pearl Password Generator" href="/vault-features/pearl-generator" icon="🎲" tag="Security">
     Generate cryptographically strong passwords using browser CSPRNG with real-time entropy scoring and session history.

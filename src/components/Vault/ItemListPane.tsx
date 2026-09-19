@@ -1,8 +1,9 @@
 import React from 'react';
 import { VaultItem, VaultItemType } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
-import { Key, FileText, Binary, Search, ArrowUpDown } from 'lucide-react';
-import { getPodColor } from '../../lib/podUtils.ts';
+import { Key, FileText, Binary, Search, ArrowUpDown, X, Tag as TagIcon } from 'lucide-react';
+import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
+import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
 
 interface ItemListPaneProps {
@@ -12,6 +13,11 @@ interface ItemListPaneProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   activeTypeFilter: VaultItemType | "all";
+  selectedTags?: string[];
+  tagFilterMode?: 'AND' | 'OR';
+  onToggleTag?: (tagName: string) => void;
+  onClearTags?: () => void;
+  onToggleFilterMode?: () => void;
 }
 
 export function ItemListPane({
@@ -20,7 +26,12 @@ export function ItemListPane({
   onSelectItem,
   searchQuery,
   onSearchChange,
-  activeTypeFilter
+  activeTypeFilter,
+  selectedTags = [],
+  tagFilterMode = 'AND',
+  onToggleTag,
+  onClearTags,
+  onToggleFilterMode
 }: ItemListPaneProps) {
   
   const getTypeIcon = (type?: VaultItemType) => {
@@ -52,6 +63,70 @@ export function ItemListPane({
           <ArrowUpDown size={16} />
         </button>
       </div>
+
+      {/* Granular Tag Filter Bar */}
+      {selectedTags.length > 0 && (
+        <div className="px-3 py-2 border-b border-theme-subtle bg-slate-50/70 dark:bg-slate-900/50 flex flex-col gap-1.5 shrink-0 animate-in fade-in duration-150">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <TagIcon size={12} className="text-claw-cyan" />
+              <span className="text-[11px] font-medium text-theme-muted">
+                Filter ({items.length} {items.length === 1 ? 'result' : 'results'})
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {onToggleFilterMode && selectedTags.length > 1 && (
+                <button
+                  type="button"
+                  onClick={onToggleFilterMode}
+                  className="px-2 py-0.5 text-[10px] font-bold font-mono uppercase tracking-wider rounded-md bg-theme-subtle/50 hover:bg-theme-subtle text-theme-main transition-colors"
+                  title={`Switch to ${tagFilterMode === 'AND' ? 'OR' : 'AND'} mode`}
+                >
+                  {tagFilterMode}
+                </button>
+              )}
+              {onClearTags && (
+                <button
+                  type="button"
+                  onClick={onClearTags}
+                  className="text-[11px] font-semibold text-claw-cyan hover:text-cyan-400 transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1">
+            {selectedTags.map((tagName) => {
+              const tagColor = getTagColor(tagName);
+              return (
+                <span
+                  key={tagName}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-md border shadow-xs"
+                  style={{
+                    backgroundColor: `${tagColor}15`,
+                    borderColor: `${tagColor}35`,
+                    color: tagColor,
+                  }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: tagColor }} />
+                  <span className="truncate max-w-[100px]">{tagName}</span>
+                  {onToggleTag && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleTag(tagName)}
+                      className="hover:opacity-75 ml-0.5"
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* List Stream */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
@@ -103,6 +178,22 @@ export function ItemListPane({
                     <div className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getPodColor(item.category) }} />
                       <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold truncate max-w-[60px]">{item.category.split('/').pop()}</span>
+                    </div>
+                  )}
+                  {/* Tag Indicator Dots */}
+                  {parseTags(item.tags).length > 0 && (
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      {parseTags(item.tags).slice(0, 3).map((t, idx) => (
+                        <span
+                          key={`${t.name}-${idx}`}
+                          className="w-1.5 h-1.5 rounded-full shadow-xs"
+                          style={{ backgroundColor: t.color || getTagColor(t.name) }}
+                          title={t.name}
+                        />
+                      ))}
+                      {parseTags(item.tags).length > 3 && (
+                        <span className="text-[8px] text-slate-400 font-mono">+{parseTags(item.tags).length - 3}</span>
+                      )}
                     </div>
                   )}
                 </div>

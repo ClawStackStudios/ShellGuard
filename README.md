@@ -19,7 +19,7 @@
 <br/>
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/Version-v0.0.2.1-blue?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.0.2.2-blue?style=for-the-badge)](CHANGELOG.md)
 [![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -90,7 +90,7 @@
 
 ### 🐚 The Grotto (Vault)
 
-- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 50 MB per file, 500 MB quota), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
+- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 500 MB per file, 1000 MB quota), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods** and multi-dimensional **tags**.
 - 🏷️ **Custom Fields** — Bitwarden-style custom fields (Text, Hidden, Boolean, Linked) across logins, notes, and SSH keys. Hidden custom fields are sealed client-side via AES-GCM-256 with AAD integrity verification.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
 - 📤 **Sovereign Exports & Imports** — Metadata CSV export, re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments, plus native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
@@ -242,9 +242,9 @@ Full walkthrough (identity registration, enabling database encryption, health ch
 | `ADMIN_TOKEN` | `""` | Secret passkey for the SuperLobster Admin Panel (`/admin`). When set, enables secure system management and backups |
 | `ENFORCE_HTTPS` | `false` | Redirect HTTP→HTTPS when terminating TLS in-process |
 | `HTTPS_PORT` | `4647` | Port checked when `ENFORCE_HTTPS=true` |
-| `AUTH_RATE_WINDOW` / `AUTH_RATE_LIMIT` | `900000` / `5` | Brute-force protection window (ms) and attempt cap on auth endpoints |
+| `AUTH_RATE_WINDOW` / `AUTH_RATE_LIMIT` | `900000` / `10` | Brute-force protection window (ms) and attempt cap on auth endpoints |
 | `API_RATE_WINDOW` / `API_RATE_LIMIT` | `60000` / `100` | Global API rate-limit window (ms) and request cap |
-| `ATTACHMENT_MAX_MB` / `GROTTO_QUOTA_MB` | `50` / `500` | Per-file attachment ceiling and per-owner grotto quota (MB) — breaches yield `413` |
+| `ATTACHMENT_MAX_MB` / `GROTTO_QUOTA_MB` | `500` / `1000` | Per-file attachment ceiling and per-owner grotto quota (MB) — breaches yield `413` |
 | `PUID` / `PGID` | `1000` | Linux UID/GID the container drops privileges to |
 
 </details>
@@ -285,7 +285,7 @@ ShellGuard uses a **prefix-based identity token system** — no passwords, no ac
 │  LAYER 2 — Per-Row Metadata Encryption (server-side, DB_ENCRYPTION_KEY)    │
 │                                                                             │
 │    HKDF-SHA-256(DB_ENCRYPTION_KEY) → AES-256-GCM                           │
-│    Encrypts: title, username, url, category, notes, file_name               │
+│    Encrypts: title, username, url, category, tags, notes, file_name        │
 │    Stored as {v:1, alg:"SG-META", iv, ct} in same TEXT columns             │
 │    Backward-compatible — legacy plaintext passes through                    │
 │    When DB_ENCRYPTION_KEY is not set → no-op (metadata stays plaintext)    │
@@ -300,7 +300,7 @@ ShellGuard uses a **prefix-based identity token system** — no passwords, no ac
 
 ShellGuard's triple-layer encryption creates distinct security boundaries. Here is what each actor can access:
 
-| Actor | Metadata (title, url, category) | Secrets (password, TOTP, SSH key) | File Data |
+| Actor | Metadata (title, url, category, tags) | Secrets (password, TOTP, SSH key) | File Data |
 |---|---|---|---|
 | Human (browser, authenticated) | ✅ Yes (server decrypts per-row) | ✅ Yes (client ShellCryption decrypts) | ✅ Yes (client ShellCryption decrypts) |
 | Agent (`lb-` key, authenticated) | ✅ Yes (server decrypts per-row) | ❌ No (opaque ShellCryption blobs) | ❌ No (opaque ShellCryption blobs) |
@@ -378,7 +378,7 @@ npm run start:api
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/vault` | canRead | List all pearl logins (owner-scoped) |
+| `GET` | `/api/vault` | canRead | List all pearl logins (owner-scoped; supports `?tags=a,b`) |
 | `POST` | `/api/vault` | canWrite | Create a login (title, secret, username, url, TOTP seed…) |
 | `PUT` | `/api/vault/:id` | canEdit | Update a login |
 | `DELETE` | `/api/vault/:id` | canDelete | Delete a login |
@@ -387,7 +387,7 @@ npm run start:api
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/notes` | canRead | List secure notes |
+| `GET` | `/api/notes` | canRead | List secure notes (supports `?tags=a,b`) |
 | `POST` | `/api/notes` | canWrite | Create a secure note |
 | `PUT` | `/api/notes/:id` | canEdit | Update a secure note |
 | `DELETE` | `/api/notes/:id` | canDelete | Delete a secure note |
@@ -396,7 +396,7 @@ npm run start:api
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/keys` | canRead | List SSH keys |
+| `GET` | `/api/keys` | canRead | List SSH keys (supports `?tags=a,b`) |
 | `POST` | `/api/keys` | canWrite | Store an SSH key |
 | `PUT` | `/api/keys/:id` | canEdit | Update an SSH key |
 | `DELETE` | `/api/keys/:id` | canDelete | Delete an SSH key |
@@ -407,11 +407,11 @@ npm run start:api
 |---|---|---|---|
 | `GET` | `/api/attachments` | canRead | List encrypted attachments metadata |
 | `GET` | `/api/attachments/:id/file` | canRead | Stream / download encrypted attachment BLOB |
-| `POST` | `/api/attachments` | canWrite | Upload attachment (multipart/form-data streaming, 50 MB per-file ceiling, 500 MB quota) |
+| `POST` | `/api/attachments` | canWrite | Upload attachment (multipart/form-data streaming, 500 MB per-file ceiling, 1000 MB quota) |
 | `PUT` | `/api/attachments/:id` | canEdit | Update attachment metadata |
 | `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment and release quota |
 
-Password entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the login's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 50 MB max per file, 500 MB grotto quota). Deleting a login cascade-deletes its linked attachments.
+Password entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the login's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 500 MB max per file, 1000 MB grotto quota). Deleting a login cascade-deletes its linked attachments.
 
 ### Agent Keys (LobsterKeys©™)
 

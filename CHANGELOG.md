@@ -1,5 +1,27 @@
 # Changelog — ShellGuard
 
+## [0.0.2.2] - 2026-09-19
+
+### Added
+- **Vault Tagging System & Granular Filter Bar** — Multi-dimensional categorization alongside hierarchical pods (Phase 20, Tasks 39/40):
+  - Migration `0006_vault_tags` adds `tags TEXT DEFAULT '[]'` column and owner indices across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+  - Layer 2 metadata encryption via `MetadataGuard` for all tag payloads stored on disk.
+  - API list routes support `?tags=a,b` intersection filtering with forensic audit logging.
+  - `TagSelectorInput` with autocomplete chip suggestions, keyboard creation, and inline color palette selection.
+  - Unified bioluminescent color engine (`podUtils.ts`) sharing palette between pods and tags with deterministic string hashing and headless-safe storage.
+  - Collapsible sidebar tag cloud with active counts and granular multi-tag filter bar with `AND` / `OR` intersection logic.
+- **Attachment Storage Ceiling Elevation** — Per-file upload ceiling raised from 50MB to 500MB (`ATTACHMENT_MAX_MB`) and grotto quota from 500MB to 1000MB (`GROTTO_QUOTA_MB`) with Busboy streaming validation and client dropzone alignment (Phase 20 Sub-task).
+- **SSH Key Dual-Key Management & Terminal Ergonomics**:
+  - Dual-key serialization architecture `{ publicKey, privateKey }` sealed under Layer 1 ShellCryption, with transparent backward compatibility for raw legacy PEM keys (`parseSshKeySecret`).
+  - Strict RFC 7468 PKCS#8 private key framing (`-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`) preserving clean multiline formatting for OpenSSH and GUI clients.
+  - Dedicated private key code block with unmask toggle immediately left of Copy, plus direct in-browser **Download .pem** file action.
+  - OpenSSH public key card featuring algorithm badge, one-click **Copy Public Key**, and instant **Copy `authorized_keys` Command** (`echo "<pub>" >> ~/.ssh/authorized_keys`) for remote terminal paste.
+  - Decoupled form modal fields providing independent inputs for private key PEM and public key string, preventing JSON serialization leaks.
+
+### Fixed
+- **Vault master-detail header flush:** the item-list (search) header and the Item Details header are pinned to a shared 64px height (`h-16`), so their bottom borders form one continuous line across the dashboard T-junction instead of stepping (left bar rendered ~59px vs right ~64px).
+- **Version resolver test de-hardcoded:** `tests/unit/version.test.ts` asserted a literal `'0.0.1.8'`, which silently failed after every version bump (latent failure shipped in v0.0.1.9). The invariant is now package.json ground truth + `X.Y.Z.N` shape only.
+
 ## [0.0.2.1] - 2026-09-18
 ### Added
 - **Attachment BLOB storage** — native SQLite BLOB column for encrypted file payloads (migration 0005, in-code idempotent backfill of legacy TEXT rows); base64 storage inflation eliminated (Phase 19, Tasks 37/38)
@@ -30,12 +52,6 @@
 - **Bidirectional docs↔code audit** — 8 docs-lies corrected against verified code (PRAGMA rekey, limiter counts, identity-file shape, phantom customFields.ts, tlsManager.ts, shipped crypto exports, the fifth `canMove` mask, `_custom` AAD namespaces); privacy policy corrected (`db.sqlite`/`audit.sqlite`, base62 alphabet, user-UUID HKDF salt).
 - **Phase 24 queued** — Cryptographic Audit Hardening & Third-Party Auditability (Tasks 47/48, provisional v0.0.2.6/Build 26): fallback vector parity, constant-time sweep, the claim battery as a CI gate, and the auditor's threat-model addendum. Documentation Impact blockquotes embedded in every queued phase (18–24).
 - **Decision Log adopted** — `.clinerules/memory-bank/decision-log.md` (episodic navigation record, 20-entry window); the lens entered the bank declaratively (Third-party-auditable standard in projectBrief, Auditability Invariants in systemPatterns).
-
-## [Unreleased]
-
-### Fixed
-- **Vault master-detail header flush:** the item-list (search) header and the Item Details header are pinned to a shared 64px height (`h-16`), so their bottom borders form one continuous line across the dashboard T-junction instead of stepping (left bar rendered ~59px vs right ~64px).
-- **Version resolver test de-hardcoded:** `tests/unit/version.test.ts` asserted a literal `'0.0.1.8'`, which silently failed after every version bump (latent failure shipped in v0.0.1.9). The invariant is now package.json ground truth + `X.Y.Z.N` shape only.
 
 ## [0.0.1.9] - 2026-09-13
 

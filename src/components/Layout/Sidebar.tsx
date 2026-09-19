@@ -39,6 +39,9 @@ interface SidebarProps {
   scuttleAgents: () => void;
   activeTypeFilter: VaultItemType | "all";
   setActiveTypeFilter: (type: VaultItemType | "all") => void;
+  selectedTags?: string[];
+  onToggleTag?: (tagName: string) => void;
+  onClearTags?: () => void;
 }
 
 export function Sidebar({
@@ -53,6 +56,9 @@ export function Sidebar({
   vaultItems,
   selectedFolder,
   setSelectedFolder,
+  selectedTags,
+  onToggleTag,
+  onClearTags,
   handleRenamePod,
   handleDeletePod,
   scuttleVault,
@@ -373,6 +379,9 @@ export function Sidebar({
                 }}
                 onRenameFolder={handleRenamePod}
                 onDeleteFolder={handleDeletePod}
+                selectedTags={selectedTags}
+                onToggleTag={onToggleTag}
+                onClearTags={onClearTags}
                 isCollapsed={isCollapsed}
                 isLocked={isLocked}
               />

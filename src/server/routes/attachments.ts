@@ -22,13 +22,13 @@ const router = Router();
 //     replacement re-uploads. The router sits behind the global 1mb JSON
 //     body parser — metadata-only bodies fit trivially.
 
-/** Hard per-file ceiling: 50MB of ciphertext (env: ATTACHMENT_MAX_MB). */
+/** Hard per-file ceiling: 500MB of ciphertext (env: ATTACHMENT_MAX_MB). */
 export const MAX_ATTACHMENT_BYTES =
-  (parseInt(process.env.ATTACHMENT_MAX_MB ?? '50', 10) || 50) * 1024 * 1024;
+  (parseInt(process.env.ATTACHMENT_MAX_MB ?? '500', 10) || 500) * 1024 * 1024;
 
-/** Per-owner grotto quota: 500MB total stored ciphertext (env: GROTTO_QUOTA_MB). */
+/** Per-owner grotto quota: 1000MB total stored ciphertext (env: GROTTO_QUOTA_MB). */
 export const GROTTO_QUOTA_BYTES =
-  (parseInt(process.env.GROTTO_QUOTA_MB ?? '500', 10) || 500) * 1024 * 1024;
+  (parseInt(process.env.GROTTO_QUOTA_MB ?? '1000', 10) || 1000) * 1024 * 1024;
 
 /** Read/download chunk size for incremental BLOB streaming (1MB). */
 const BLOB_CHUNK_BYTES = 1024 * 1024;
@@ -99,7 +99,7 @@ router.get('/:id/file', requireAuth, requirePermission('canRead'), async (req: A
 
 // ─── POST / — multipart streaming upload (Busboy → bounded buffer → BLOB) ───
 // better-sqlite3 exposes no incremental BLOB I/O (openBlob), so the write
-// path peaks at the ciphertext size (≤50MB, hard-capped MID-STREAM by
+// path peaks at the ciphertext size (≤500MB, hard-capped MID-STREAM by
 // Busboy's fileSize limit — a breach destroys the request, never buffers
 // past the ceiling). The read path is the memory-critical one and is fully
 // chunked (GET /:id/file + metadata-only list).
@@ -185,7 +185,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), (req: AuthRequest, 
 
         // Grotto quota (per owner_uuid).
         if (grottoUsage(req.userUuid) + ciphertext.length > GROTTO_QUOTA_BYTES) {
-          return finish(413, { success: false, error: 'Grotto storage quota exceeded (500MB per owner).' });
+          return finish(413, { success: false, error: `Grotto storage quota exceeded (${Math.round(GROTTO_QUOTA_BYTES / (1024 * 1024))}MB per owner).` });
         }
 
         const toStore = await prepareWrite('vault_secure_attachments', { title, file_name, category }, fieldCipher);

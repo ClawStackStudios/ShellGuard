@@ -161,3 +161,55 @@ export async function generateSshKeyPair(
 
   return { algorithm, publicKeyOpenSsh, publicKeyRfc4716, privateKeyPkcs8Pem };
 }
+
+export interface SshKeyPayload {
+  publicKey?: string;
+  privateKey: string;
+}
+
+/**
+ * Parses raw SSH key secret material stored in the vault.
+ * Handles both structured JSON payloads ({ publicKey, privateKey }) and raw PEM strings.
+ */
+export function parseSshKeySecret(rawSecret: string): SshKeyPayload {
+  if (!rawSecret) return { privateKey: '' };
+  try {
+    const parsed = JSON.parse(rawSecret);
+    if (parsed && typeof parsed === 'object') {
+      if (typeof parsed.privateKey === 'string' || typeof parsed.publicKey === 'string') {
+        return {
+          publicKey: typeof parsed.publicKey === 'string' ? parsed.publicKey.trim() : undefined,
+          privateKey: typeof parsed.privateKey === 'string' ? parsed.privateKey.trim() : '',
+        };
+      }
+    }
+  } catch {
+    // Plain PEM or non-JSON raw key
+  }
+  return { privateKey: rawSecret.trim() };
+}
+
+/**
+ * Serializes SSH key material for client-side ShellCryption sealing.
+ * If a public key is present, preserves both in a sealed JSON payload.
+ */
+export function serializeSshKeySecret(privateKey: string, publicKey?: string): string {
+  const cleanPriv = privateKey.trim();
+  const cleanPub = publicKey?.trim();
+  if (cleanPub) {
+    return JSON.stringify({
+      publicKey: cleanPub,
+      privateKey: cleanPriv,
+    });
+  }
+  return cleanPriv;
+}
+
+/**
+ * Formats a ready-to-run shell one-liner to append an SSH public key to ~/.ssh/authorized_keys.
+ */
+export function formatAuthorizedKeysCommand(publicKey: string): string {
+  const clean = publicKey.trim().replace(/"/g, '\\"');
+  return `echo "${clean}" >> ~/.ssh/authorized_keys`;
+}
+

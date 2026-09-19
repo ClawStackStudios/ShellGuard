@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Lock, Eye, EyeOff, Globe, Sparkles, Paperclip, Upload, Plus, AlertTriangle, RefreshCw, Check, Zap } from 'lucide-react';
-import { VaultItem, VaultItemType, CustomField, CustomFieldType, CustomFieldLinkedProperty } from '../../types.ts';
+import { X, Lock, Eye, EyeOff, Globe, Sparkles, Paperclip, Upload, Plus, AlertTriangle, RefreshCw, Check, Zap, Terminal } from 'lucide-react';
+import { VaultItem, VaultItemType, CustomField, CustomFieldType, CustomFieldLinkedProperty, Tag } from '../../types.ts';
 import { FolderInputGroup } from './FolderInputGroup.tsx';
+import { TagSelectorInput } from './TagSelectorInput.tsx';
+import { parseTags, extractAllTags } from '../../lib/tagUtils.ts';
 import { PendingAttachment, formatBytes, MAX_ATTACHMENT_BYTES } from '../../lib/attachmentUtils.ts';
 import { generateUUID } from '../../lib/crypto.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
 import { generatePassword, getGlobalGeneratorConfig, GeneratorConfig } from '../../lib/generator.ts';
-import { generateSshKeyPair, keypairGenerationSupported, GeneratedSshKeyPair, SshKeyAlgorithm } from '../../lib/keyGen.ts';
+import { generateSshKeyPair, keypairGenerationSupported, GeneratedSshKeyPair, SshKeyAlgorithm, parseSshKeySecret, serializeSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 
 // We inline Favicon and PasswordStrengthIndicator here for simplicity if needed, 
 // or import them if they are exported.
@@ -27,6 +29,7 @@ interface ItemFormModalProps {
     url: string;
     category: string;
     type: VaultItemType;
+    tags?: string;
     notes?: string;
     totp_secret?: string;
     attachments?: string;
@@ -51,6 +54,7 @@ export function ItemFormModal({
   const [password, setPassword] = useState("");
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("all");
+  const [tags, setTags] = useState<Tag[]>([]);
   
   // Extra fields
   const [notes, setNotes] = useState("");
@@ -83,6 +87,9 @@ export function ItemFormModal({
   const [newFieldLinkedProperty, setNewFieldLinkedProperty] = useState<CustomFieldLinkedProperty>("username");
   const [newFieldValue, setNewFieldValue] = useState("");
 
+  // SSH Key Public Key state
+  const [sshPublicKey, setSshPublicKey] = useState("");
+
   // UI State
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -94,7 +101,14 @@ export function ItemFormModal({
         setType(initialItem.type || 'password');
         setTitle(initialItem.title || "");
         setUsername(initialItem.username || "");
-        setPassword(initialItem.secret || "");
+        if (initialItem.type === 'key') {
+          const parsedSsh = parseSshKeySecret(initialItem.secret || "");
+          setPassword(parsedSsh.privateKey);
+          setSshPublicKey(parsedSsh.publicKey || "");
+        } else {
+          setPassword(initialItem.secret || "");
+          setSshPublicKey("");
+        }
         setUrl(initialItem.url || "");
         setCategory(initialItem.category || "all");
         
@@ -133,6 +147,9 @@ export function ItemFormModal({
           setShowAttachmentField(false);
         }
 
+        // Parse tags from existing item
+        setTags(parseTags(initialItem.tags));
+
         // Parse custom fields from existing item
         if (initialItem.custom_fields) {
           try {
@@ -148,8 +165,10 @@ export function ItemFormModal({
         setTitle("");
         setUsername("");
         setPassword("");
+        setSshPublicKey("");
         setUrl("");
         setCategory("all");
+        setTags([]);
         setNotes("");
         setTotpSecret("");
         setShowNoteField(false);
@@ -177,19 +196,23 @@ export function ItemFormModal({
     }
   }, [isOpen, initialItem, initialType]);
 
+  const availableVaultTags = React.useMemo(() => extractAllTags(items), [items]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !password) return;
 
     setIsSaving(true);
     try {
+      const finalSecret = type === 'key' ? serializeSshKeySecret(password, sshPublicKey) : password;
       await onSave({
         title,
-        secret: password,
+        secret: finalSecret,
         username,
         url,
         category,
         type,
+        tags: JSON.stringify(tags),
         notes: showNoteField ? notes : "",
         totp_secret: showTotpField ? totpSecret : "",
         attachments: JSON.stringify(linkedAttachmentIds),
@@ -217,10 +240,9 @@ export function ItemFormModal({
     try {
       const kp = await generateSshKeyPair(keyGenAlgo);
       setGeneratedKp(kp);
-      // Store both halves as one JSON payload — sealed client-side as a single
-      // ShellCryption blob on save (AAD vault_ssh_keys:{id}); legacy raw keys
-      // still display (detail pane sniffs JSON vs raw).
-      setPassword(JSON.stringify({ publicKey: kp.publicKeyOpenSsh, privateKey: kp.privateKeyPkcs8Pem }));
+      // Populate clean PEM into private key textarea and OpenSSH public key into public key field
+      setPassword(kp.privateKeyPkcs8Pem);
+      setSshPublicKey(kp.publicKeyOpenSsh);
     } catch (e: any) {
       setKeyGenError(e?.message || 'Keypair generation failed.');
     } finally {
@@ -342,6 +364,18 @@ export function ItemFormModal({
               />
             </div>
 
+            {/* Tags */}
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">
+                Tags
+              </label>
+              <TagSelectorInput
+                value={tags}
+                onChange={setTags}
+                availableTags={availableVaultTags}
+              />
+            </div>
+
             {/* Password/Login specifics */}
             {type === 'password' && (
               <>
@@ -413,21 +447,21 @@ export function ItemFormModal({
               </div>
             )}
 
-            {/* SSH Key Specifics (Phase 18 — keypair generation) */}
+            {/* SSH Key Specifics (Phase 18 — keypair generation & dual-key management) */}
             {type === 'key' && (
               <div className="col-span-1 md:col-span-2 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted">
-                    SSH Private Key <span className="text-red-500">*</span>
+                    SSH Private Key (PKCS#8 / OpenSSH) <span className="text-red-500">*</span>
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowKeyGen((v) => !v)}
                     disabled={!keypairGenerationSupported()}
                     title={keypairGenerationSupported() ? 'Generate an Ed25519 or RSA-4096 keypair in your browser' : 'Keypair generation requires a secure context (HTTPS or localhost)'}
-                    className="text-xs font-semibold text-claw-cyan hover:text-cyan-600 flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="text-xs font-semibold text-claw-cyan hover:text-cyan-600 flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    <Zap size={14} /> Generate Keypair
+                    <Zap size={14} /> {showKeyGen ? 'Hide Generator' : 'Generate Keypair'}
                   </button>
                 </div>
                 {!keypairGenerationSupported() && (
@@ -440,11 +474,35 @@ export function ItemFormModal({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Paste an OpenSSH / PKCS#8 private key, or generate a new keypair…"
-                  className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main min-h-[130px] font-mono"
+                  placeholder="-----BEGIN PRIVATE KEY-----&#10;Paste an OpenSSH / PKCS#8 private key, or generate a new keypair above…"
+                  className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-xs focus:border-claw-cyan outline-none transition-all text-theme-main min-h-[130px] font-mono leading-relaxed"
                 />
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted">
+                      SSH Public Key (OpenSSH format)
+                    </label>
+                    {sshPublicKey && (
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard?.writeText(sshPublicKey)}
+                        className="text-xs font-semibold text-claw-cyan hover:text-cyan-600 cursor-pointer"
+                      >
+                        Copy Public Key
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    value={sshPublicKey}
+                    onChange={(e) => setSshPublicKey(e.target.value)}
+                    placeholder="ssh-ed25519 AAAAC3... (auto-filled on generation, or paste corresponding public key)"
+                    className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-2.5 text-xs focus:border-claw-cyan outline-none transition-all text-theme-main min-h-[60px] font-mono leading-relaxed"
+                  />
+                </div>
+
                 {showKeyGen && keypairGenerationSupported() && (
-                  <div className="border border-claw-cyan/40 rounded-xl p-3 bg-claw-cyan/5 space-y-2">
+                  <div className="border border-claw-cyan/40 rounded-xl p-3 bg-claw-cyan/5 space-y-2.5">
                     <div className="flex items-center gap-2">
                       <select
                         value={keyGenAlgo}
@@ -458,38 +516,43 @@ export function ItemFormModal({
                         type="button"
                         onClick={handleGenerateKeypair}
                         disabled={generating}
-                        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-claw-cyan/10 text-claw-cyan hover:bg-claw-cyan/20 transition-colors disabled:opacity-50"
+                        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-claw-cyan/10 text-claw-cyan hover:bg-claw-cyan/20 transition-colors disabled:opacity-50 cursor-pointer"
                       >
                         {generating ? 'Generating…' : 'Generate'}
                       </button>
-                      <span className="text-[11px] text-theme-muted">Generated in your browser — never transmitted raw.</span>
+                      <span className="text-[11px] text-theme-muted">Generated in your browser — private key never leaves unencrypted.</span>
                     </div>
                     {keyGenError && <p className="text-xs text-red-500">{keyGenError}</p>}
                     {generatedKp && (
-                      <div className="space-y-1.5">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-theme-muted">Public key — copy this to authorized_keys</div>
+                      <div className="space-y-2 pt-1 border-t border-claw-cyan/20">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-theme-muted">Generated Public Key</div>
                         <code className="block text-[11px] break-all bg-theme-base border border-theme-subtle rounded-lg p-2 font-mono text-theme-main select-all">
                           {generatedKp.publicKeyOpenSsh}
                         </code>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 pt-1">
                           <button
                             type="button"
                             onClick={() => navigator.clipboard?.writeText(generatedKp.publicKeyOpenSsh)}
-                            className="text-xs font-semibold text-claw-cyan hover:text-cyan-600"
+                            className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-theme-base border border-theme-subtle text-claw-cyan hover:bg-claw-cyan/10 flex items-center gap-1 cursor-pointer"
                           >
                             📋 Copy Public Key
                           </button>
                           <button
                             type="button"
-                            onClick={downloadGeneratedPrivate}
-                            className="text-xs font-semibold text-claw-cyan hover:text-cyan-600"
+                            onClick={() => navigator.clipboard?.writeText(formatAuthorizedKeysCommand(generatedKp.publicKeyOpenSsh))}
+                            title="Copy command to append this key to ~/.ssh/authorized_keys"
+                            className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-theme-base border border-theme-subtle text-slate-300 hover:text-claw-cyan hover:bg-claw-cyan/10 flex items-center gap-1 cursor-pointer"
                           >
-                            ⬇ Download Private (PKCS#8)
+                            <Terminal size={12} /> Copy authorized_keys Command
+                          </button>
+                          <button
+                            type="button"
+                            onClick={downloadGeneratedPrivate}
+                            className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-theme-base border border-theme-subtle text-slate-300 hover:text-claw-cyan hover:bg-claw-cyan/10 flex items-center gap-1 cursor-pointer"
+                          >
+                            ⬇ Download .pem
                           </button>
                         </div>
-                        <p className="text-[11px] text-theme-muted">
-                          The private key is filled below and sealed client-side on save — the server stores only ciphertext.
-                        </p>
                       </div>
                     )}
                   </div>
@@ -516,7 +579,7 @@ export function ItemFormModal({
                 )}
                 {showAttachmentField && (
                   <div className="col-span-1 md:col-span-2 relative">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachments (max 50MB)</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachments (max 500MB)</label>
                     <button type="button" onClick={() => setShowAttachmentField(false)} className="absolute -top-1 right-0 text-slate-400 hover:text-red-500"><X size={16}/></button>
                     <div onClick={openAttachmentPicker} className="w-full border-2 border-dashed border-claw-cyan/50 rounded-xl p-6 flex flex-col items-center justify-center bg-claw-cyan/5 hover:bg-claw-cyan/10 transition-colors cursor-pointer text-center">
                       <Upload size={28} className="text-claw-cyan/60 mb-2" />

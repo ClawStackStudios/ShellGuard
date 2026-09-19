@@ -33,13 +33,29 @@ export const DEFAULT_SUGGESTED_PODS: string[] = [];
 export const DEFAULT_SUGGESTED_FOLDERS = DEFAULT_SUGGESTED_PODS;
 
 const POD_COLOR_STORAGE_KEY = "shellguard_pod_colors";
+const TAG_COLOR_STORAGE_KEY = "shellguard_tag_colors";
 
 const INITIAL_DEFAULT_COLORS: Record<string, string> = {};
+
+/**
+ * Deterministic color assignment based on high-entropy string hash.
+ * Unifies color hashing across Pods and Tags.
+ */
+export function hashStringToColor(str?: string, palette: readonly string[] = POD_COLOR_PALETTE): string {
+  if (!str) return palette[0];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % palette.length;
+  return palette[index];
+}
 
 /**
  * Retrieves all stored pod colors
  */
 export function getStoredPodColors(): Record<string, string> {
+  if (typeof localStorage === "undefined") return {};
   try {
     const raw = localStorage.getItem(POD_COLOR_STORAGE_KEY);
     if (raw) {
@@ -52,9 +68,10 @@ export function getStoredPodColors(): Record<string, string> {
 }
 
 /**
- * Gets the color for a specific Pod
+ * Gets the color for a specific Pod, supporting optional explicit color override.
  */
-export function getPodColor(podName?: string): string {
+export function getPodColor(podName?: string, explicitColor?: string): string {
+  if (explicitColor && explicitColor.trim()) return explicitColor.trim();
   if (!podName) return POD_COLOR_PALETTE[0];
   const norm = normalizePod(podName);
   if (!norm) return POD_COLOR_PALETTE[0];
@@ -67,19 +84,14 @@ export function getPodColor(podName?: string): string {
     return colors[parts[0]];
   }
 
-  // Deterministic color assignment based on name hash
-  let hash = 0;
-  for (let i = 0; i < norm.length; i++) {
-    hash = norm.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % POD_COLOR_PALETTE.length;
-  return POD_COLOR_PALETTE[index];
+  return hashStringToColor(norm, POD_COLOR_PALETTE);
 }
 
 /**
  * Saves color for a Pod
  */
 export function setPodColor(podName: string, color: string): void {
+  if (typeof localStorage === "undefined") return;
   const norm = normalizePod(podName);
   if (!norm) return;
   const colors = getStoredPodColors();
@@ -95,6 +107,7 @@ export function setPodColor(podName: string, color: string): void {
  * Deletes color for a Pod
  */
 export function deletePodColor(podName: string): void {
+  if (typeof localStorage === "undefined") return;
   const norm = normalizePod(podName);
   if (!norm) return;
   const colors = getStoredPodColors();
@@ -103,6 +116,70 @@ export function deletePodColor(podName: string): void {
     localStorage.setItem(POD_COLOR_STORAGE_KEY, JSON.stringify(colors));
   } catch (e) {
     console.error("Error removing pod color:", e);
+  }
+}
+
+/**
+ * Retrieves all stored tag colors from localStorage registry
+ */
+export function getStoredTagColors(): Record<string, string> {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(TAG_COLOR_STORAGE_KEY);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error("Error reading tag colors:", e);
+  }
+  return {};
+}
+
+/**
+ * Resolves color for a Tag:
+ * 1. explicitColor override if provided
+ * 2. Stored custom color in localStorage registry
+ * 3. Deterministic hashStringToColor fallback
+ */
+export function getTagColor(tagName?: string, explicitColor?: string): string {
+  if (explicitColor && explicitColor.trim()) return explicitColor.trim();
+  if (!tagName) return POD_COLOR_PALETTE[0];
+  const norm = tagName.trim().toLowerCase();
+  if (!norm) return POD_COLOR_PALETTE[0];
+  const colors = getStoredTagColors();
+  if (colors[norm]) return colors[norm];
+  return hashStringToColor(norm, POD_COLOR_PALETTE);
+}
+
+/**
+ * Saves color for a Tag
+ */
+export function setTagColor(tagName: string, color: string): void {
+  if (typeof localStorage === "undefined") return;
+  const norm = tagName.trim().toLowerCase();
+  if (!norm) return;
+  const colors = getStoredTagColors();
+  colors[norm] = color;
+  try {
+    localStorage.setItem(TAG_COLOR_STORAGE_KEY, JSON.stringify(colors));
+  } catch (e) {
+    console.error("Error saving tag color:", e);
+  }
+}
+
+/**
+ * Deletes color for a Tag
+ */
+export function deleteTagColor(tagName: string): void {
+  if (typeof localStorage === "undefined") return;
+  const norm = tagName.trim().toLowerCase();
+  if (!norm) return;
+  const colors = getStoredTagColors();
+  delete colors[norm];
+  try {
+    localStorage.setItem(TAG_COLOR_STORAGE_KEY, JSON.stringify(colors));
+  } catch (e) {
+    console.error("Error removing tag color:", e);
   }
 }
 

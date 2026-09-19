@@ -27,7 +27,7 @@ ShellGuard is architected as a lightweight, single-binary container deployment t
 │  ├─ Helmet & CORS Policy                                                    │
 │  ├─ Cookie Parser (sg_admin_session)                                        │
 │  ├─ Rate Limiters (5/10m Admin, 10/15m Auth, Per-Agent Burst Controls)      │
-│  ├─ Zod & Busboy Streaming (50 MB attachment ceiling, 500 MB quota)         │
+│  ├─ Zod & Busboy Streaming (500 MB attachment ceiling, 1000 MB quota)        │
 │  ├─ Per-Row Metadata Encryption Filter (prepareReadAll / prepareWrite)      │
 │  └─ Error Handler (Production masking, SQLITE_BUSY retry)                   │
 └──────────────────────────────────────┬──────────────────────────────────────┘
@@ -48,7 +48,7 @@ ShellGuard is architected as a lightweight, single-binary container deployment t
 
 1. **Authentication Gate**: Requests carry either a short-lived `api-` Bearer token (session) or an `sg_admin_session` cookie (for `/superlobster`).
 2. **Schema Invariant Check**: Zod validates all inputs before controllers execute.
-3. **Metadata Encryption**: On `POST`/`PUT`, metadata fields (title, URL, username, notes, category) are encrypted with server-side AES-256-GCM before writing to SQLite.
+3. **Metadata Encryption**: On `POST`/`PUT`, metadata fields (title, URL, username, notes, category, tags) are encrypted with server-side AES-256-GCM before writing to SQLite.
 4. **Forensic Auditing**: Every mutation (create, edit, delete, backup, login) emits an asynchronous, redacted event to `audit.sqlite`.
 
 ---

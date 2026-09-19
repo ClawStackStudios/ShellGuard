@@ -109,6 +109,21 @@ export default function App() {
   const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export">("landing");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const handleToggleTag = (tagName: string) => {
+    setSelectedTags(prev => {
+      const lower = tagName.toLowerCase();
+      const exists = prev.some(t => t.toLowerCase() === lower);
+      if (exists) {
+        return prev.filter(t => t.toLowerCase() !== lower);
+      } else {
+        return [...prev, tagName];
+      }
+    });
+  };
+
+  const handleClearTags = () => setSelectedTags([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -551,6 +566,7 @@ export default function App() {
     url: string;
     category: string;
     type: VaultItemType;
+    tags?: string;
     notes?: string;
     totp_secret?: string;
     attachments?: string;
@@ -564,11 +580,11 @@ export default function App() {
       if (item.type === 'note') {
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
-        await restAdapter.POST("/api/notes", { id, title: item.title, content: encryptedContent, category: item.category, custom_fields: encryptedCustomFields });
+        await restAdapter.POST("/api/notes", { id, title: item.title, content: encryptedContent, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
-        await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, custom_fields: encryptedCustomFields });
+        await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
         const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
         await restAdapter.POST("/api/attachments", { id, title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
@@ -594,6 +610,7 @@ export default function App() {
           username: item.username,
           url: item.url,
           category: item.category,
+          tags: item.tags,
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
@@ -616,6 +633,7 @@ export default function App() {
       url: string;
       category: string;
       type: VaultItemType;
+      tags?: string;
       notes?: string;
       totp_secret?: string;
       attachments?: string;
@@ -630,11 +648,11 @@ export default function App() {
       if (item.type === 'note') {
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
-        await restAdapter.PUT(`/api/notes/${id}`, { title: item.title, content: encryptedContent, category: item.category, custom_fields: encryptedCustomFields });
+        await restAdapter.PUT(`/api/notes/${id}`, { title: item.title, content: encryptedContent, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
-        await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, custom_fields: encryptedCustomFields });
+        await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
         // Phase 19: PUT is metadata-only — file replacement means re-upload.
         await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_name: item.username, mime_type: "", category: item.category });
@@ -661,6 +679,7 @@ export default function App() {
           username: item.username,
           url: item.url,
           category: item.category,
+          tags: item.tags,
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
@@ -939,6 +958,9 @@ export default function App() {
           vaultItems={vaultItems}
           selectedFolder={selectedFolder}
           setSelectedFolder={setSelectedFolder}
+          selectedTags={selectedTags}
+          onToggleTag={handleToggleTag}
+          onClearTags={handleClearTags}
           handleRenamePod={handleRenamePod}
           handleDeletePod={handleDeletePod}
           scuttleVault={() => shellKey && scuttleVault(shellKey)}
@@ -1039,6 +1061,9 @@ export default function App() {
                     items={vaultItems}
                     selectedFolder={selectedFolder}
                     activeTypeFilter={activeTypeFilter}
+                    selectedTags={selectedTags}
+                    onToggleTag={handleToggleTag}
+                    onClearTags={handleClearTags}
                     isLocked={isLocked}
                     onFetchAttachment={handleFetchAttachment}
                     onAdd={handleOpenAdd}

@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Loader2 } from 'lucide-react';
+import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Loader2, Terminal } from 'lucide-react';
 import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
-import { getPodColor } from '../../lib/podUtils.ts';
+import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
+import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
 import { downloadAttachment, dataUrlToBlob } from '../../lib/attachmentUtils.ts';
+import { parseSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 
 interface ItemDetailPaneProps {
   item: VaultItem | null;
@@ -86,6 +88,23 @@ export function ItemDetailPane({
       // fetch/decrypt failures surface through the preview path; downloads stay silent here
     }
   };
+
+  const handleDownloadPrivateKey = (keyPem: string, itemTitle: string) => {
+    const cleanTitle = (itemTitle || 'id_shellguard').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filename = `${cleanTitle}.pem`;
+    const blob = new Blob([keyPem], { type: 'application/x-pem-file' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const sshPayload = useMemo(() => {
+    if (!item || item.type !== 'key') return null;
+    return parseSshKeySecret(item.secret);
+  }, [item?.type, item?.secret]);
 
   if (isLocked) {
     return (
@@ -180,6 +199,29 @@ export function ItemDetailPane({
                     <span className="capitalize font-semibold">{item.type || "login"}</span>
                   </div>
                 </div>
+
+                {/* Tag Badges */}
+                {parseTags(item.tags).length > 0 && (
+                  <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                    {parseTags(item.tags).map((tag, idx) => {
+                      const color = tag.color || getTagColor(tag.name);
+                      return (
+                        <span
+                          key={`${tag.name}-${idx}`}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold rounded-lg border shadow-xs"
+                          style={{
+                            backgroundColor: `${color}18`,
+                            borderColor: `${color}40`,
+                            color: color,
+                          }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                          {tag.name}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -205,63 +247,148 @@ export function ItemDetailPane({
                 </div>
               )}
 
-              {/* Public Key (generated keypairs store a JSON payload) */}
-              {item.type === "key" && (() => {
-                let pub: string | null = null;
-                try {
-                  const parsed = JSON.parse(item.secret);
-                  if (parsed && typeof parsed.publicKey === 'string') pub = parsed.publicKey;
-                } catch { /* legacy raw key */ }
-                if (!pub) return null;
-                return (
-                  <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <Globe size={16} className="text-slate-400" />
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Public Key (authorized_keys)</span>
-                        <code className="text-xs font-mono text-theme-main break-all">{pub}</code>
+              {/* SSH Key or Password / Secret */}
+              {item.type === "key" ? (
+                <div className="space-y-3 pt-1">
+                  {/* Public Key Card (if present) */}
+                  {sshPayload?.publicKey && (
+                    <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Globe size={15} className="text-claw-cyan flex-shrink-0" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Public Key (OpenSSH)
+                          </span>
+                          {sshPayload.publicKey.startsWith('ssh-ed25519') ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Ed25519</span>
+                          ) : sshPayload.publicKey.startsWith('ssh-rsa') ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20">RSA-4096</span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <code className="block text-xs font-mono text-theme-main break-all bg-theme-base/60 border border-theme-subtle rounded-lg p-2.5 select-all">
+                        {sshPayload.publicKey}
+                      </code>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <button
+                          onClick={() => handleCopy(sshPayload.publicKey!, "publicKey")}
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                            copyFeedback === "publicKey"
+                              ? "text-green-400 bg-green-500/10 border border-green-500/30"
+                              : "text-slate-300 hover:text-claw-cyan bg-theme-base hover:bg-claw-cyan/10 border border-theme-subtle"
+                          }`}
+                        >
+                          {copyFeedback === "publicKey" ? <Check size={13} /> : <Copy size={13} />}
+                          {copyFeedback === "publicKey" ? "Copied Public Key" : "Copy Public Key"}
+                        </button>
+
+                        <button
+                          onClick={() => handleCopy(formatAuthorizedKeysCommand(sshPayload.publicKey!), "authKeysCmd")}
+                          title="Copy one-line command to append this key to remote ~/.ssh/authorized_keys"
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                            copyFeedback === "authKeysCmd"
+                              ? "text-green-400 bg-green-500/10 border border-green-500/30"
+                              : "text-slate-300 hover:text-claw-cyan bg-theme-base hover:bg-claw-cyan/10 border border-theme-subtle"
+                          }`}
+                        >
+                          {copyFeedback === "authKeysCmd" ? <Check size={13} /> : <Terminal size={13} />}
+                          {copyFeedback === "authKeysCmd" ? "Command Copied!" : "Copy authorized_keys Command"}
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleCopy(pub!, "publicKey")}
-                      className={`p-2 rounded-lg transition-colors flex-shrink-0 ${copyFeedback === "publicKey" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"}`}
-                    >
-                      {copyFeedback === "publicKey" ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                );
-              })()}
+                  )}
 
-              {/* Password / Secret */}
-              <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <Lock size={16} className="text-slate-400" />
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      {item.type === "note" ? "Secure Content" : (item.type === "key" ? "Private Key" : "Password")}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-mono text-theme-main truncate max-w-full">
-                        {revealed ? item.secret : "••••••••••••••••"}
+                  {/* Private Key Card */}
+                  <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Lock size={15} className="text-amber-400 flex-shrink-0" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          SSH Private Key (Sealed)
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">PKCS#8</span>
+                      </div>
+
+                      {/* The Eye-beside-Copy action cluster rule */}
+                      <div className="flex items-center gap-1">
+                        {sshPayload?.privateKey && (
+                          <button
+                            onClick={() => handleDownloadPrivateKey(sshPayload.privateKey, item.title)}
+                            title="Download private key as .pem file"
+                            className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Download size={15} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setRevealed(!revealed)}
+                          title={revealed ? "Mask private key" : "Reveal private key"}
+                          className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                        >
+                          {revealed ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                        <button
+                          onClick={() => handleCopy(sshPayload?.privateKey || item.secret, "privateKey")}
+                          title="Copy private key PEM"
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            copyFeedback === "privateKey"
+                              ? "text-green-400 bg-green-500/10"
+                              : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10"
+                          }`}
+                        >
+                          {copyFeedback === "privateKey" ? <Check size={15} /> : <Copy size={15} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {revealed ? (
+                      <pre className="font-mono text-xs text-theme-main whitespace-pre overflow-x-auto p-3 bg-theme-base/80 border border-theme-subtle rounded-lg select-all max-h-56 overflow-y-auto leading-relaxed">
+                        {sshPayload?.privateKey || item.secret}
+                      </pre>
+                    ) : (
+                      <div className="flex items-center justify-between p-2.5 bg-theme-base/40 border border-theme-subtle rounded-lg">
+                        <span className="text-xs font-mono text-slate-500 tracking-widest">
+                          ••••••••••••••••••••••••••••••••••••••••
+                        </span>
+                        <span className="text-[10px] text-theme-muted font-medium">Click eye to reveal PEM</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* Standard Password / Secure Note Row */
+                <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Lock size={16} className="text-slate-400" />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {item.type === "note" ? "Secure Content" : "Password"}
                       </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-theme-main truncate max-w-full">
+                          {revealed ? item.secret : "••••••••••••••••"}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => setRevealed(!revealed)}
+                      className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                    >
+                      {revealed ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button
+                      onClick={() => handleCopy(item.secret, "password")}
+                      className={`p-2 rounded-lg transition-colors ${copyFeedback === "password" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"}`}
+                    >
+                      {copyFeedback === "password" ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => setRevealed(!revealed)}
-                    className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                  >
-                    {revealed ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                  <button
-                    onClick={() => handleCopy(item.secret, "password")}
-                    className={`p-2 rounded-lg transition-colors ${copyFeedback === "password" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"}`}
-                  >
-                    {copyFeedback === "password" ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
-                </div>
-              </div>
+              )}
 
               {/* URL */}
               {item.url && (

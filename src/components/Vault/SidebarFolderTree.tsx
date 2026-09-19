@@ -7,7 +7,9 @@ import {
   Layers,
   Key,
   FileText,
-  Binary
+  Binary,
+  Tag as TagIcon,
+  ChevronDown
 } from "lucide-react";
 import { 
   PodNode, 
@@ -18,6 +20,7 @@ import {
   setPodColor, 
   deletePodColor
 } from "../../lib/podUtils.ts";
+import { extractAllTags } from "../../lib/tagUtils.ts";
 import { VaultItem, VaultItemType } from "../../types.ts";
 import { PodModal } from "./PodModal.tsx";
 
@@ -25,6 +28,9 @@ interface SidebarFolderTreeProps {
   items: VaultItem[];
   selectedFolder: string;
   onSelectFolder: (podPath: string) => void;
+  selectedTags?: string[];
+  onToggleTag?: (tagName: string) => void;
+  onClearTags?: () => void;
   activeTypeFilter?: VaultItemType | "all";
   onActiveTypeFilterChange?: (type: VaultItemType | "all") => void;
   onAddNewFolder?: (podPath: string) => void;
@@ -38,6 +44,9 @@ export function SidebarFolderTree({
   items,
   selectedFolder,
   onSelectFolder,
+  selectedTags = [],
+  onToggleTag,
+  onClearTags,
   onAddNewFolder,
   onRenameFolder,
   onDeleteFolder,
@@ -47,6 +56,7 @@ export function SidebarFolderTree({
   isLocked = false
 }: SidebarFolderTreeProps) {
   const [podSearch, setPodSearch] = useState("");
+  const [isTagsExpanded, setIsTagsExpanded] = useState(true);
   
   // Modal state for New / Edit Pod (Full-screen page overlay portal)
   const [isPodModalOpen, setIsPodModalOpen] = useState(false);
@@ -68,6 +78,7 @@ export function SidebarFolderTree({
   const notesCount = useMemo(() => items.filter(i => i.type === "note").length, [items]);
   const keysCount = useMemo(() => items.filter(i => i.type === "key").length, [items]);
   const totalPrimaryCount = passwordsCount + notesCount + keysCount;
+  const allTags = useMemo(() => extractAllTags(items), [items]);
 
   const handleOpenCreateModal = () => {
     if (isLocked) return;
@@ -344,6 +355,75 @@ export function SidebarFolderTree({
           </div>
         )}
       </div>
+
+      {/* ── Tags Cloud / Filter Section ── */}
+      {allTags.length > 0 && !isCollapsed && (
+        <div className="mt-2 pt-2.5 border-t border-theme-subtle px-1 shrink-0">
+          <div className="flex items-center justify-between px-2 mb-1.5">
+            <button
+              type="button"
+              onClick={() => setIsTagsExpanded(!isTagsExpanded)}
+              className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-theme-main transition-colors"
+            >
+              <TagIcon size={12} className="text-claw-cyan" />
+              <span>Tags</span>
+              <span className="text-[10px] font-mono text-slate-500 font-normal">({allTags.length})</span>
+              <ChevronDown size={12} className={`transition-transform duration-200 ${isTagsExpanded ? '' : '-rotate-90'}`} />
+            </button>
+
+            {selectedTags && selectedTags.length > 0 && onClearTags && (
+              <button
+                type="button"
+                onClick={onClearTags}
+                className="text-[10px] font-semibold text-claw-cyan hover:text-cyan-400 transition-colors"
+              >
+                Clear ({selectedTags.length})
+              </button>
+            )}
+          </div>
+
+          {isTagsExpanded && (
+            <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+              {allTags.map((tag) => {
+                const isSelected = selectedTags?.some(t => t.toLowerCase() === tag.name.toLowerCase());
+                const tagColor = tag.color;
+
+                return (
+                  <div
+                    key={tag.name}
+                    onClick={() => onToggleTag?.(tag.name)}
+                    className={`group flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-150 ${
+                      isSelected
+                        ? "bg-slate-800/90 dark:bg-[#15233b] text-white shadow-sm border"
+                        : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                    }`}
+                    style={isSelected ? { borderColor: `${tagColor}60` } : {}}
+                    title={`${tag.name} (${tag.count} items)`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: tagColor }}
+                      />
+                      <span className="truncate text-xs font-medium">{tag.name}</span>
+                    </div>
+
+                    <span
+                      className={`px-1.5 py-0.5 text-[10px] font-bold font-mono rounded-full ${
+                        isSelected
+                          ? "bg-slate-700/80 text-white"
+                          : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                      }`}
+                    >
+                      {tag.count}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Page-Level Full Screen Portal Pod Modal ── */}
       <PodModal

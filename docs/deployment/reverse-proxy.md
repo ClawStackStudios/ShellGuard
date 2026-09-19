@@ -54,8 +54,8 @@ server {
     ssl_certificate /etc/letsencrypt/live/vault.yourdomain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/vault.yourdomain.com/privkey.pem;
 
-    # Scoped headroom for encrypted password attachments (50MB limit + multipart streaming overhead)
-    client_max_body_size 60M;
+    # Scoped headroom for encrypted password attachments (500MB limit + multipart streaming overhead)
+    client_max_body_size 550M;
 
     location / {
         proxy_pass http://127.0.0.1:6464;

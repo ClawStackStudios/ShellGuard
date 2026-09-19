@@ -16,6 +16,11 @@ export interface CustomField {
   linkedProperty?: CustomFieldLinkedProperty;
 }
 
+export interface Tag {
+  name: string;
+  color?: string;
+}
+
 export interface VaultItem {
   id: string;
   type: VaultItemType;
@@ -24,6 +29,7 @@ export interface VaultItem {
   username?: string;
   url?: string;
   category?: string;
+  tags?: string; // JSON string of tags (string[] or Tag[])
   notes?: string;
   totp_secret?: string; // encrypted
   attachments?: string; // JSON string of attachments
@@ -39,6 +45,7 @@ export interface SecureNote {
   title: string;
   content: string; // encrypted
   category?: string;
+  tags?: string; // JSON string of tags
   custom_fields?: string; // ShellCrypted CustomField[] JSON (server) / decrypted JSON string (client)
   created_at: string;
 }
@@ -49,6 +56,7 @@ export interface SshKey {
   key_value: string; // encrypted
   username?: string;
   category?: string;
+  tags?: string; // JSON string of tags
   custom_fields?: string; // ShellCrypted CustomField[] JSON (server) / decrypted JSON string (client)
   created_at: string;
 }

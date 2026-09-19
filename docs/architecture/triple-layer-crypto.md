@@ -16,7 +16,7 @@ ShellGuard provides **defense-in-depth** by enforcing three separate, mathematic
   - `totp_secret` (TOTP seed)
   - `content` (Secure note Markdown)
   - `key_value` (SSH Private/Public Key)
-  - Attachment file payload (Encrypted binary BLOB up to 50 MB)
+  - Attachment file payload (Encrypted binary BLOB up to 500 MB)
 - **Zero-Knowledge Guarantee**: The server stores only `{ v, alg, iv, ct, aad }` blobs and CANNOT decrypt them under any circumstance.
 
 ---
@@ -25,7 +25,7 @@ ShellGuard provides **defense-in-depth** by enforcing three separate, mathematic
 
 - **Execution**: Runs in Node.js within Express middleware before SQL execution.
 - **Key Derivation**: `HKDF-SHA-256(ikm: DB_ENCRYPTION_KEY, salt: itemUuid, info: "shellguard-metadata-v1")` &rarr; 256-bit AES-256-GCM key.
-- **Encrypted Fields**: `title`, `username`, `url`, `category`, `notes`, `file_name`.
+- **Encrypted Fields**: `title`, `username`, `url`, `category`, `tags`, `notes`, `file_name`.
 - **Payload Format**: `SG-META:v1:<iv_b64>:<tag_b64>:<ct_b64>`
 - **Why this exists**: In a secrets vault, metadata like `"My Bank"` or `"root@bastion.internal"` is security intelligence. Layer 2 shields this metadata on disk while allowing authorized API responses to echo plaintext metadata to clients and AI agents.
 
@@ -45,5 +45,5 @@ ShellGuard provides **defense-in-depth** by enforcing three separate, mathematic
 |---|---|---|---|
 | **Location** | Browser (Client) | Express API (Server) | SQLite Engine (Disk) |
 | **Key Source** | User's `hu-` Key | `DB_ENCRYPTION_KEY` | `DB_ENCRYPTION_KEY` |
-| **Scope** | Passwords, TOTP, Files, Notes | Titles, Usernames, URLs | All `.sqlite` database pages |
+| **Scope** | Passwords, TOTP, Files, Notes | Titles, Usernames, URLs, Tags | All `.sqlite` database pages |
 | **Server Trust** | **Zero trust** (Server never sees keys) | Server decrypts in RAM for authorized sessions | Transparent disk I/O |

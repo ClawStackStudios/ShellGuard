@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-09-18
-current_position: "v0.0.2.1 (Build 22) — released & live; next Phase 20: Vault Tagging System & Granular Filter Bar (v0.0.2.2 / Build 24, Tasks 39/40) — queue 20 → 21 → 22 → 23 → 24"
+last_updated: 2026-09-19
+current_position: "v0.0.2.2 (Build 24) — released & live; next Phase 21: Bulk Import Endpoint & Batch Operations (v0.0.2.3 / Build 25, Tasks 41/42) — queue 21 → 22 → 23 → 24"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "██████████████████░░ 75% (18 of 24 formalized phases)"
+  features_completed: "███████████████████░ 79% (19 of 24 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,58 +13,22 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 20+) and the 3 most recent completed phases (Phases 17, 18, and 19).*
-> *Historical Phases 1 through 16 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 21+) and the 3 most recent completed phases (Phases 18, 19, and 20).*
+> *Historical Phases 1 through 17 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.1 (Build 22)`
-- **Next Planned Milestone**: `v0.0.2.2 (Build 24)` (Phase 20)
+- **Current Production Release**: `v0.0.2.2 (Build 24)`
+- **Next Planned Milestone**: `v0.0.2.3 (Build 25)` (Phase 21)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 20 completes, Phase 17 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 21 completes, Phase 18 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
-
-### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]
-
-> Phase Feature Set Overview:
-> Introduces flexible, multi-dimensional categorization alongside hierarchical Pods.
-> Users can assign arbitrary colored tags to any vault item, filter across intersecting
-> tags in the sidebar, and execute scoped searches.
-> *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
-
-> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) - ARCHITECTURE.md (query contract) - docs/agent-integration/api-reference.md (?tags= param) - reference/glossary.md (Tag entry) - docs/vault-features (chips + filters)
-
-- [ ] **Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search**
-
-Description: Create `migrations/0007_vault_tags.up.sql` adding `tags` (ShellCrypted JSON array
-or junction table) across pearls, notes, and SSH keys. Update route handlers in `vault.ts`,
-`notes.ts`, and `sshKeys.ts` to support querying by tag intersection (`?tags=finance,infra`).
-Update audit logging to capture tag assignment events. Ensure tags respect client-side
-ShellCryption and per-row metadata encryption.
-
-  - [ ] **Sub-task: [Storage Ceiling] Elevate Per-File Attachment Limit (50MB → 500MB)**  
-    Description: Update the attachment streaming upload pipeline and validation (`ATTACHMENT_MAX_MB` default, busboy limits, client dropzone limits, and quota enforcement) to raise the per-file attachment ceiling from 50MB to 500MB. Align error messaging, environment configuration documentation, and test suites.
-
-> Success Criteria: Items support multiple tags; searching by tag filters accurately in
-> SQL with ownership scoping; tag mutations emit audit trail events; attachment upload ceiling safely allows files up to 500MB with end-to-end streaming validation; 100% test pass.
-
-- [ ] **Task 40: [UI Component] Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State**
-
-Description: Add tag input autocomplete chips in item edit modals with auto-suggested
-existing tags and color pickers. Add a collapsible "Tags" section in `SidebarFolderTree.tsx`
-displaying active tags with item counts. Thread active tag selection into the main vault filter
-state alongside search keywords and pod selection.
-
-> Success Criteria: Users can add/remove tags via keyboard chips; clicking a tag in the
-> sidebar instantly filters the vault grid; multi-tag filters combine with AND/OR logic.
-
----
 
 ### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]
 
@@ -314,6 +278,48 @@ mentions it.
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
+### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)] ✅
+
+> Phase Feature Set Overview:
+> Introduces flexible, multi-dimensional categorization alongside hierarchical Pods.
+> Users can assign arbitrary colored tags to any vault item, filter across intersecting
+> tags in the sidebar, and execute scoped searches with AND/OR logic. Elevates the
+> attachment storage ceiling from 50MB to 500MB (1000MB grotto quota), and introduces
+> a purpose-built dual-key SSH architecture with clean PKCS#8 PEM display, .pem download,
+> and instant authorized_keys command copying.
+> *(Receipts: Phase 20 Tasks 39/40 + Storage Ceiling & SSH Ergonomics sub-tasks, 2026-09-19. Released & live.)*
+
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) - ARCHITECTURE.md (query contract, storage limits, Delta 23) - docs/agent-integration/api-reference.md (?tags= param) - reference/glossary.md (Tag entry) - docs/vault-features (chips + filters, the-grotto SSH dual-key) — ✅ synced.
+
+- [x] **Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search**
+
+Description: Create `migrations/0006_vault_tags.up.sql` adding `tags` (ShellCrypted JSON array
+or junction table) across pearls, notes, and SSH keys. Update route handlers in `vault.ts`,
+`notes.ts`, and `sshKeys.ts` to support querying by tag intersection (`?tags=finance,infra`).
+Update audit logging to capture tag assignment events. Ensure tags respect client-side
+ShellCryption and per-row metadata encryption.
+
+  - [x] **Sub-task: [Storage Ceiling] Elevate Per-File Attachment Limit (50MB → 500MB)**  
+    Description: Update the attachment streaming upload pipeline and validation (`ATTACHMENT_MAX_MB` default, busboy limits, client dropzone limits, and quota enforcement) to raise the per-file attachment ceiling from 50MB to 500MB. Align error messaging, environment configuration documentation, and test suites.
+
+> Success Criteria: Items support multiple tags; searching by tag filters accurately in
+> SQL with ownership scoping; tag mutations emit audit trail events; attachment upload ceiling safely allows files up to 500MB with end-to-end streaming validation; 100% test pass.
+
+- [x] **Task 40: [UI Component] Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State**
+
+Description: Add tag input autocomplete chips in item edit modals with auto-suggested
+existing tags and color pickers. Add a collapsible "Tags" section in `SidebarFolderTree.tsx`
+displaying active tags with item counts. Thread active tag selection into the main vault filter
+state alongside search keywords and pod selection.
+
+  - [x] **Sub-task: [SSH Key Ergonomics] Dual-Key Management & Terminal Ergonomics**  
+    Description: Resolve JSON serialization leaks on SSH key unmasking by implementing dual-key serialization (`{ publicKey, privateKey }`) under Layer 1 ShellCryption with backward compatibility (`parseSshKeySecret`), strict RFC 7468 PKCS#8 PEM formatting (`-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`), decoupled form modal fields, direct `.pem` file download, and one-click copy of OpenSSH public keys and `authorized_keys` shell one-liners.
+
+> Success Criteria: Users can add/remove tags via keyboard chips; clicking a tag in the
+> sidebar instantly filters the vault grid; multi-tag filters combine with AND/OR logic; SSH keys present clean PEM formatting without JSON leaks, and support direct .pem downloads and authorized_keys command copying.
+
+---
+
 ### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)] ✅
 
 > Phase Feature Set Overview:
@@ -416,78 +422,9 @@ action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-f
 ---
 
 
-### Phase 17: Key Ledger Hardening & Pod Purity [v0.0.1.9 (Build 18) — Security Hotfix] ✅
+## 🏛️ Historical Archive (Phases 1 through 17)
 
-> Phase Feature Set Overview:
-> Closes the two docs-vs-runtime contradictions surfaced by the documentation
-> coherence audit. The `agent_keys` ledger currently stores `lb-` keys in
-> plaintext while every spec claims hashes-only — the ledger is brought to
-> spec: migration 0004 adds `key_hash`, hashes existing keys in place (live
-> keys keep authenticating), and the plaintext column is retired; minted keys
-> are returned exactly once and never persisted raw. The server-side hardcoded
-> pod is purged: `DEFAULT 'Personal'` is dropped from all four category columns
-> and the `category || 'Personal'` fallback is removed from every vault route —
-> the UI's zero-hardcoded-pods invariant (Phase 8) finally reaches the Bedrock.
-> *(Receipts: `7faf51d` — Tasks 33 & 34, `027506a` — release prep + tag `v0.0.1.9`, merge `9b5ec31` — 2026-09-13. Released & live.)*
-
-- [x] **Task 33: [Functionality] Agent Key Hash Ledger & Pod Default Purge**
-
-Description: Add `agent_keys.key_hash` via `migrations/0004_key_ledger.{up,down}.sql`
-— at migration time, every existing plaintext `api_key` is SHA-256 hashed in
-place so live keys keep authenticating; the plaintext column is then retired.
-Update `requireAuth` (agent path), the `/api/auth/token` sentinel search, and
-`agentKeys.ts` mint/list to store and compare **hashes only** via
-`constantTimeCompare`; minted plaintext is returned exactly once. Purge the
-hardcoded pod: drop `DEFAULT 'Personal'` from the `category` columns of
-`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys` and
-`vault_secure_attachments`, and remove the `category || 'Personal'` fallback
-from `vault.ts`, `notes.ts`, `sshKeys.ts` and `attachments.ts` — the default
-becomes `""` (uncategorized), matching the client's `normalizePod()`
-semantics. Zod schemas pass `category` through unmodified. Prove it in
-`tests/agent-key-hash.test.ts` (hash-only storage, pre-migration key still
-authenticates, plaintext returned once, revoke/expiry unchanged) and extend
-`tests/vault-crud.test.ts` with uncategorized-default assertions.
-
-> Success Criteria: A raw DB dump contains no plaintext `lb-` keys; a
-> pre-migration key still authenticates after migration; a minted key's
-> plaintext is returned exactly once and never stored; a fresh vault renders
-> zero pods and `""` categories stay `""` (no "Personal" resurrection);
-> the full test oracle passes.
-
-- [x] **Task 34: [UI Component] Key Fingerprint Display & Pod Purity Confirmation**
-
-Description: Update `LobsterKeysTab.tsx` to render a SHA-256 fingerprint
-(first 8 hex chars + `…`) on every key card instead of any key material, with
-a one-time "keys secured" notice after the ledger migration. Confirm pod
-purity end-to-end: `SidebarFolderTree.tsx` and `ItemFormModal.tsx` render zero
-phantom pods on a fresh boot, unassigned items show the uncategorized chip,
-and no code path re-introduces a default category. Sync the ledger change
-across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
-
-> Success Criteria: Key cards show fingerprints, never key material; a fresh
-> vault stays at zero pods through create → delete → reload; the docs match
-> the runtime (docs = app); the full test oracle passes.
-
----
-
-
-> 🕸️ **Post-Hoc Interlude — Post-v0.0.1.9 Hotfix Record (2026-09-13)** — unphased, outside the 2-Task Pairing Law
-> Single-commit hotfixes shipped after the v0.0.1.9 tag, before Phase 18 begins; documented here so the genome stays receipt-honest about post-release work.
->
-> - [x] **Vault Master-Detail Header Flush & Version-Test Integrity** — receipt `07ccd61` (2026-09-13).
->   The item-list search header (`ItemListPane`) and the Item Details header (`ItemDetailPane`)
->   rendered stepping border lines at the dashboard T-junction (left bar ~59px vs right ~64px);
->   both are pinned to a shared `h-16` so the `border-b` rules form one continuous line.
->   Companion integrity fix: `tests/unit/version.test.ts` had hardcoded `'0.0.1.8'` — a latent
->   failure shipped inside v0.0.1.9 (the bump commit landed after the last full oracle run);
->   the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
->   can never silently break it again.
-
----
-
-## 🏛️ Historical Archive (Phases 1 through 16)
-
-Earlier development phases (`v0.0.0.0` void through `v0.0.1.8` Build 17) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.1.9` Build 20) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -508,5 +445,6 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.1.8` Build 17) are per
 | **Phase 14** | `v0.0.1.6 (Build 15)` | Native LAN TLS, TOFU & --release Publishing | Tasks 27 & 28 |
 | **Phase 15** | `v0.0.1.7 (Build 16)` | `sgtotp.bak` Import Compatibility Layer & Strict Release Mirror | Tasks 29 & 30 |
 | **Phase 16** | `v0.0.1.8 (Build 17)` | Docs Bridge Parity, Agentic Infrastructure & Version Resolver — Summit | Tasks 31 & 32 |
+| **Phase 17** | `v0.0.1.9 (Build 20)` | Key Ledger Hardening & Pod Purity — Security Hotfix | Tasks 33 & 34 |
 
 ---

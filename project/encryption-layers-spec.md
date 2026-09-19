@@ -25,7 +25,7 @@ flowchart TD
 | Layer | Governs | Key | Sees plaintext? |
 |:---|:---|:---|:---|
 | 1. ShellCryption | Secrets (`secret`, `content`, `key_value`, `file_data`, `totp_secret`) | Client-derived from `hu-` | Only the client |
-| 2. Field encryption | Metadata (`title`, `username`, `url`, `category`, `notes`, `file_name`) | HKDF from `DB_ENCRYPTION_KEY` | Server, in memory, transiently |
+| 2. Field encryption | Metadata (`title`, `username`, `url`, `category`, `tags`, `notes`, `file_name`) | HKDF from `DB_ENCRYPTION_KEY` | Server, in memory, transiently |
 | 3. SQLCipher | Everything on disk | `DB_ENCRYPTION_KEY` | Nobody |
 
 ---
@@ -47,9 +47,9 @@ flowchart TD
 
 | Table | Guarded metadata columns |
 |:---|:---|
-| `vault_pearls` | `title`, `username`, `url`, `category`, `notes` |
-| `vault_secure_notes` | `title`, `category` |
-| `vault_ssh_keys` | `title`, `username`, `category` |
+| `vault_pearls` | `title`, `username`, `url`, `category`, `tags`, `notes` |
+| `vault_secure_notes` | `title`, `category`, `tags` |
+| `vault_ssh_keys` | `title`, `username`, `category`, `tags` |
 | `vault_secure_attachments` | `title`, `file_name`, `category` |
 
 **⛔ THE FIREWALL (inviolable):** client-ShellCryption columns — `secret`,
@@ -74,6 +74,9 @@ and empty strings pass through unchanged. Unknown tables are passthrough.
   `custom_fields` TEXT column to `vault_pearls`, `vault_secure_notes`,
   `vault_ssh_keys`. The column holds **client-ShellCrypted `CustomField[]`
   JSON** and stays **off the metadataGuard registry**.
+- `migrations/0006_vault_tags.{up,down}.sql` (Phase 20) — adds a `tags` TEXT column
+  to `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`. The column holds
+  serialized tag arrays and **is registered in metadataGuard** for Layer 2 AES-256-GCM encryption.
 
 ### A. Custom Fields Data Model (Phase 13)
 

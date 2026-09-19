@@ -23,6 +23,9 @@ A single password or login credential record stored inside the vault (`vault_pea
 ### 🗂️ Pod
 A user-defined hierarchical category (e.g. `Personal`, `Work/AWS`, `Finance`) grouping related pearls and notes. Pods support dynamic color palettes and automatic sanitization.
 
+### 🏷️ Tag
+A multi-dimensional categorization label assigned to pearls, secure notes, or SSH keys (stored in `tags` JSON array). Tags feature bioluminescent color badging, autocomplete chips, and granular multi-tag filtering with AND/OR logic in the Grotto.
+
 ### 🗝️ ClawKey (`hu-`)
 *Historically aliased the **Human Key**.* The ClawKey is the 67-character sovereign client secret that serves as both the user's login identity and the root of Zero-Knowledge decryption. The server never stores the `hu-` key; it only verifies a constant-time SHA-256 hash (`key_hash`).
 

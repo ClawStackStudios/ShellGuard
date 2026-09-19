@@ -27,6 +27,16 @@ export const AuthSchemas = {
 const itemId = z.string().min(1).max(64);
 const itemCategory = z.string().max(64).optional();
 const itemTitle = z.string().min(1).max(255);
+const itemTags = z.union([
+  z.string().max(100000),
+  z.array(z.union([
+    z.string().max(64),
+    z.object({
+      name: z.string().max(64),
+      color: z.string().max(32).optional(),
+    }),
+  ])).max(100),
+]).optional();
 
 export const VaultSchemas = {
   create: z.object({
@@ -37,6 +47,7 @@ export const VaultSchemas = {
     url: z.string().max(2048).optional(),
     type: z.string().max(32).optional(),
     category: itemCategory,
+    tags: itemTags,
     notes: z.string().max(10000).optional(),
     totp_secret: z.string().max(5000).optional(), // opaque
     attachments: z.string().max(2000000).optional(), // opaque JSON string
@@ -49,6 +60,7 @@ export const VaultSchemas = {
     url: z.string().max(2048).optional(),
     type: z.string().max(32).optional(),
     category: itemCategory,
+    tags: itemTags,
     notes: z.string().max(10000).optional(),
     totp_secret: z.string().max(5000).optional(), // opaque
     attachments: z.string().max(2000000).optional(), // opaque JSON string
@@ -62,12 +74,14 @@ export const NoteSchemas = {
     title: itemTitle,
     content: z.string().min(1).max(10000), // opaque
     category: itemCategory,
+    tags: itemTags,
     custom_fields: z.string().max(500000).optional(), // opaque
   }),
   update: z.object({
     title: itemTitle,
     content: z.string().min(1).max(10000), // opaque
     category: itemCategory,
+    tags: itemTags,
     custom_fields: z.string().max(500000).optional(), // opaque
   }),
 };
@@ -79,6 +93,7 @@ export const SshKeySchemas = {
     key_value: z.string().min(1).max(20000), // opaque
     username: z.string().max(255).optional(),
     category: itemCategory,
+    tags: itemTags,
     custom_fields: z.string().max(500000).optional(), // opaque
   }),
   update: z.object({
@@ -86,6 +101,7 @@ export const SshKeySchemas = {
     key_value: z.string().min(1).max(20000), // opaque
     username: z.string().max(255).optional(),
     category: itemCategory,
+    tags: itemTags,
     custom_fields: z.string().max(500000).optional(), // opaque
   }),
 };

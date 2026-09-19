@@ -89,6 +89,8 @@ ShellGuard is distributed as a single unified container image on GitHub Containe
 | **`TLS_ENABLED`** | No | `false` | When `true`, enables Native LAN TLS with automatic 10-year EC P-256 self-signed certificate generation. |
 | **`CORS_ORIGIN`** | No | *(Empty)* | Restricts cross-origin resource sharing to designated domain origins. |
 | **`TOKEN_TTL_DEFAULT`**| No | `24h` | Default expiration lifetime for user session tokens (`1h`, `24h`, `7d`). |
+| **`ATTACHMENT_MAX_MB`** | No | `500` | Per-file attachment upload ceiling in MB (breaches abort with `413`). |
+| **`GROTTO_QUOTA_MB`** | No | `1000` | Total per-owner grotto storage quota in MB (breaches reject with `413`). |
 
 ---
 

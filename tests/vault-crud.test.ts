@@ -43,6 +43,7 @@ vi.hoisted(() => {
   process.env.API_RATE_LIMIT = '1000000';
   process.env.API_RATE_WINDOW = '600m';
   process.env.ENFORCE_HTTPS = 'false';
+  process.env.ATTACHMENT_MAX_MB = '50';
 });
 
 let srv!: ServerHandle;

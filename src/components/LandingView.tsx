@@ -470,7 +470,7 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
                       <span className="absolute -bottom-1.5 -right-1.5 text-xs bg-theme-surface border border-theme-subtle rounded-md px-1 py-0.5 shadow-sm">📎</span>
                     </div>
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-                      50MB REFERENCE MODEL
+                      500MB REFERENCE MODEL
                     </span>
                   </div>
 
@@ -478,7 +478,7 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
                     Password Attachments
                   </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Attach recovery keys, license documents, and SSH certs (<strong className="text-theme-main">50 MB limit</strong>) directly to pearls with <strong className="text-emerald-400">atomic cascade deletion</strong>.
+                    Attach recovery keys, license documents, and SSH certs (<strong className="text-theme-main">500 MB limit</strong>) directly to pearls with <strong className="text-emerald-400">atomic cascade deletion</strong>.
                   </p>
                 </div>
 
@@ -588,7 +588,7 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
                 ['🛡️', 'Triple-Layer Defense', 'Client ShellCryption (AES-GCM-256), Server Per-Row AES, and SQLCipher whole-DB encryption.'],
                 ['🔍', 'Audit Trail Ledger', 'Every secret access, export, and mutation logged with actor, IP, outcome, and timestamp.'],
                 ['🚦', 'Rate Limiting & Armor', 'Auth endpoints protected against brute-force; Lobster agent queries throttled per key.'],
-                ['🧬', 'Cascade Invariants', 'Atomic cascade deletion of all 50MB password attachments and pearls upon vault purge.'],
+                ['🧬', 'Cascade Invariants', 'Atomic cascade deletion of all 500MB password attachments and pearls upon vault purge.'],
               ].map(([icon, title, desc]) => (
                 <div key={title} className="bg-theme-surface rounded-2xl p-6 border border-theme-subtle shadow-sm hover:border-[#e4048a]/40 transition-all">
                   <div className="text-2xl mb-3">{icon}</div>

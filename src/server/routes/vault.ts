@@ -5,6 +5,7 @@ import { validateBody } from '../middleware/validate.js';
 import { VaultSchemas } from '../validation/schemas.js';
 import { fieldCipher } from '../utils/fieldEncryption.js';
 import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
+import { normalizeTagsForDb, filterByTags } from '../utils/tagUtils.js';
 
 const router = Router();
 
@@ -12,6 +13,7 @@ const router = Router();
 
 /**
  * 🐚 GET /api/vault — list the caller's pearls.
+ * Supports ?tags=finance,infra for tag intersection filtering.
  * Metadata is decrypted server-side before response (when DB_ENCRYPTION_KEY is set).
  */
 router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthRequest, res) => {
@@ -20,7 +22,8 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
       .prepare('SELECT * FROM vault_pearls WHERE owner_uuid = ? ORDER BY created_at DESC')
       .all(req.userUuid) as Record<string, unknown>[];
     const decrypted = await prepareReadAll('vault_pearls', items, fieldCipher);
-    res.json({ success: true, data: decrypted });
+    const filtered = filterByTags(decrypted, typeof req.query.tags === 'string' ? req.query.tags : undefined);
+    res.json({ success: true, data: filtered });
   } catch (err: any) {
     console.error('Vault GET error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure retrieving vault passwords.' });
@@ -32,7 +35,8 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
  * Payloads are stored byte-for-byte; only their length is validated.
  */
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, secret, username, url, type, category, notes, totp_secret, attachments, custom_fields } = req.body;
+  const { id, title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields } = req.body;
+  const normalizedTags = normalizeTagsForDb(tags);
 
   try {
     const toStore = await prepareWrite('vault_pearls', {
@@ -40,12 +44,13 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       username: username ? username.trim() : '',
       url: url ? url.trim() : '',
       category: category || '',
+      tags: normalizedTags,
       notes: notes || '',
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, notes, totp_secret, attachments, custom_fields, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       req.userUuid,
@@ -55,6 +60,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       toStore.url,
       type || 'password',
       toStore.category,
+      toStore.tags,
       toStore.notes,
       totp_secret || '',
       attachments || '[]',
@@ -66,12 +72,12 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       action: 'vault_item_created',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemType: type || 'password', itemId: id, category: category || '' },
+      details: { itemType: type || 'password', itemId: id, category: category || '', tags: normalizedTags },
     });
 
     res.status(201).json({
       success: true,
-      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || '' },
+      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || '', tags: normalizedTags },
     });
   } catch (err: any) {
     console.error('Vault POST error:', err);
@@ -87,26 +93,29 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
  */
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, secret, username, url, type, category, notes, totp_secret, attachments, custom_fields } = req.body;
+  const { title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields } = req.body;
 
   try {
     // Ownership check first so foreign IDs yield 404, not a silent no-op write.
-    const existing = db.prepare('SELECT id FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid);
+    const existing = db.prepare('SELECT id, tags FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as { id: string; tags?: string } | undefined;
     if (!existing) {
       return res.status(404).json({ success: false, error: 'Password entry not found in your vault.' });
     }
+
+    const normalizedTags = tags !== undefined ? normalizeTagsForDb(tags) : (existing.tags || '[]');
 
     const toStore = await prepareWrite('vault_pearls', {
       title: title.trim(),
       username: username ? username.trim() : '',
       url: url ? url.trim() : '',
       category: category || '',
+      tags: normalizedTags,
       notes: notes || '',
     }, fieldCipher);
 
     db.prepare(`
       UPDATE vault_pearls
-      SET title = ?, secret = ?, username = ?, url = ?, type = ?, category = ?, notes = ?, totp_secret = ?, attachments = ?, custom_fields = ?
+      SET title = ?, secret = ?, username = ?, url = ?, type = ?, category = ?, tags = ?, notes = ?, totp_secret = ?, attachments = ?, custom_fields = ?
       WHERE id = ? AND owner_uuid = ?
     `).run(
       toStore.title,
@@ -115,6 +124,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       toStore.url,
       type || 'password',
       toStore.category,
+      toStore.tags,
       toStore.notes,
       totp_secret || '',
       attachments || '[]',
@@ -127,12 +137,12 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       action: 'vault_item_updated',
       outcome: 'success',
       actor: req.userUuid,
-      details: { itemType: type || 'password', itemId: id, category: category || '' },
+      details: { itemType: type || 'password', itemId: id, category: category || '', tags: normalizedTags },
     });
 
     res.json({
       success: true,
-      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || '', notes: notes || '' },
+      data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || '', tags: normalizedTags, notes: notes || '' },
     });
   } catch (err: any) {
     console.error('Vault PUT error:', err);

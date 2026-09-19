@@ -15,10 +15,10 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 
 | Item Type | Icon | Encrypted Payload Fields | Metadata Fields (Layer 2 Encrypted) |
 | :--- | :--- | :--- | :--- |
-| **Vault Pearl (Login)** | 🔑 | `secret` (Password), `totp_secret` (Seed), `attachments` (File IDs), `custom_fields` | `title`, `username`, `url`, `category`, `notes` |
-| **Secure Note** | 📝 | `content` (Markdown body), `custom_fields` | `title`, `category`, `notes` |
-| **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields` | `title`, `username`, `category`, `notes` |
-| **Encrypted Attachment**| 📎 | Encrypted file BLOB (AES-GCM up to 50 MB streaming, 500 MB quota) | `title`, `file_name`, `mime_type`, `category` |
+| **Vault Pearl (Login)** | 🔑 | `secret` (Password), `totp_secret` (Seed), `attachments` (File IDs), `custom_fields` | `title`, `username`, `url`, `category`, `notes`, `tags` |
+| **Secure Note** | 📝 | `content` (Markdown body), `custom_fields` | `title`, `category`, `notes`, `tags` |
+| **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields` | `title`, `username`, `category`, `notes`, `tags` |
+| **Encrypted Attachment**| 📎 | Encrypted file BLOB (AES-GCM up to 500 MB streaming, 1000 MB quota) | `title`, `file_name`, `mime_type`, `category` |
 
 > **Pod tallies count primary items only** — attachments are children of their
 > login/note/key (linked via the parent's `attachments` ID array) and never
@@ -26,24 +26,37 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 
 ---
 
-## 🔑 In-Browser SSH Keypair Generation
+## 🔑 In-Browser SSH Keypair Generation & Dual-Key Management
 
-When adding an **SSH Key**, the form offers **Generate Keypair** — an Ed25519 or
-RSA-4096 keypair generated entirely inside your browser via the WebCrypto API:
+When adding or managing an **SSH Key**, ShellGuard provides an integrated, zero-knowledge keypair lifecycle engineered for terminal ergonomics and OpenSSH compliance:
 
-- **Public key** (OpenSSH one-line + RFC-4716 block) is shown for one-click copy
-  into a server's `authorized_keys`.
-- **Private key** (PKCS#8 PEM) can be downloaded once at generation, then is
-  **sealed client-side** with ShellCryption before the server ever sees it —
-  exactly like any other secret field.
-- Output is **byte-identical to `ssh-keygen`** (verified against the reference
-  implementation for both algorithms).
+### 1. In-Browser Keypair Generation
+- **Supported Algorithms**: Ed25519 (high-security Edwards-curve signature algorithm, 256-bit) and RSA-4096 (legacy compatibility).
+- **Zero-Knowledge Generation**: Keys are derived entirely inside browser RAM via the WebCrypto API (`crypto.subtle`). Private keys never touch the network in plaintext.
+- **`ssh-keygen` Parity**: Public and private key outputs are byte-identical to standard OpenSSH `ssh-keygen -t ed25519` and `ssh-keygen -t rsa -b 4096` implementations.
+
+### 2. Dual-Key Architecture & Serialization
+- **Dual-Key Storage**: Generated keypairs serialize into a structured JSON envelope `{ "publicKey": "...", "privateKey": "..." }` sealed client-side inside the `key_value` column under Layer 1 ShellCryption.
+- **Transparent Backward Compatibility**: ShellGuard's parser (`parseSshKeySecret`) automatically detects whether `key_value` contains a dual-key JSON object or a legacy raw PEM string. Legacy keys continue to unmask and copy flawlessly without database migrations.
+- **Decoupled Form Inputs**: The item edit modal provides dedicated, decoupled input fields for the **Private Key (PEM)** and the **OpenSSH Public Key**, preventing JSON serialization strings from ever leaking into user-facing textareas.
+
+### 3. Clean PKCS#8 PEM Presentation & Formatting Invariants
+- **Strict RFC 7468 Framing**: Private keys strictly preserve their canonical `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` delimiters. Without these exact boundaries, tools like `ssh -i`, `ssh-add`, and Git clients fail with *"invalid format"* errors.
+- **Multi-Line Styled Code Block**: Unmasking the private key renders a formatted, monospace `<pre>` block that clearly displays indentation and line wraps.
+- **Eye-Beside-Copy Ergonomics**: The unmask (Eye/EyeOff) toggle sits immediately to the left of the Copy action, preserving full-value mask invariants (`••••••••`) until deliberately revealed.
+
+### 4. Terminal Ergonomics & Deployment Actions
+The Item Detail Pane equips engineers with zero-friction deployment actions:
+- **Copy Public Key**: Copies the standard single-line OpenSSH public string (e.g. `ssh-ed25519 AAAAC3... shellguard-generated`).
+- **Copy `authorized_keys` Command**: Copies a ready-to-run shell one-liner:
+  ```bash
+  echo "ssh-ed25519 AAAAC3... user@host" >> ~/.ssh/authorized_keys
+  ```
+  Paste directly into an SSH session or cloud-init configuration to grant immediate server access.
+- **Download `.pem`**: Generates and downloads `<sanitized-title>.pem` directly in the browser with standard `0600`-compatible line breaks for immediate use with `ssh -i <key>.pem user@host`.
 
 > [!NOTE]
-> Keypair generation requires a **secure context** (HTTPS or `localhost`) — the
-> WebCrypto API is unavailable on plain-HTTP LAN origins. There the form shows a
-> clear notice and you can paste or import an existing key instead; every other
-> feature works unchanged. This is a browser-platform constraint, disclosed honestly.
+> Keypair generation requires a **secure context** (HTTPS or `localhost`) — the WebCrypto API is unavailable on plain-HTTP LAN origins. On insecure origins, ShellGuard displays a helpful notice while continuing to allow pasting, editing, and downloading existing keys. This browser platform constraint is handled with graceful fallbacks.
 
 ---
 
@@ -76,6 +89,16 @@ ShellGuard provides 100% user-driven pod categorization with zero hardcoded phan
 - **Accent Palettes**: Pods can be color-coded with curated bioluminescent hues (Emerald `#10b981`, Cyan `#06b6d4`, Gold `#f59e0b`, Purple `#8b5cf6`, Rose `#e4048a`).
 - **Category Normalization**: Input categories are sanitized via `normalizePod()` to ensure whitespace trimming, forward slash consistency, and safe grouping.
 - **Cascade to Uncategorized**: Deleting a pod safely shifts its child items to uncategorized (`""`), preventing accidental credential loss.
+
+---
+
+## 🏷️ Vault Tagging System & Granular Filter Bar
+
+ShellGuard supports multi-dimensional tagging alongside hierarchical pods:
+- **Tag Selector Input**: Add and remove tags as keyboard chips with autocomplete suggestions and inline color palette selection.
+- **Unified Color Engine**: Tags and pods share a bioluminescent palette engine with deterministic string hashing (`hashStringToColor`) and explicit user overrides.
+- **Sidebar Tag Cloud**: A collapsible "TAGS" section in the navigation tree reflects all assigned tags with item counts.
+- **Granular Filter Bar**: Combine multiple tag filters with dynamic `AND` / `OR` intersection logic, clearing filters with a single click.
 
 ---
 

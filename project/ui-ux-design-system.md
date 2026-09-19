@@ -105,4 +105,20 @@ decrypted parent item.
 
 ---
 
+## §8. Vault Tagging System & Granular Filter Bar (Phase 20)
+
+`TagSelectorInput` powers tag entry across `ItemFormModal`:
+- Interactive chips with remove buttons (`x`), autocomplete dropdown suggestions dynamically harvested from all existing vault items, keyboard navigation (Enter/Comma to commit, Backspace to delete previous chip), and bioluminescent color assignment via `podUtils.ts`.
+
+`SidebarFolderTree` & `ItemListPane` power multi-dimensional discovery:
+- Collapsible **Tags Reef** in the left sidebar displaying all active tags with item counts and bioluminescent accent indicators.
+- **Granular Filter Bar** above the item list with:
+  - Multi-select active tag chips with one-click removal.
+  - AND / OR logic toggle button (matching items containing all tags or any tag).
+  - Clear All button and live matching item counts.
+- `ItemDetailPane` and item list rows render bioluminescent tag pill badges using `podUtils.ts`'s 16-color deterministic palette and custom user color overrides.
+
+---
+
+
 

@@ -192,6 +192,8 @@ Password vault entries ("pearls") live at `/api/vault`. The `secret` (and option
 
 ### GET /api/vault — List Vault Items
 
+Supports optional `?tags=a,b` query parameter to filter items matching all specified tags (case-insensitive intersection).
+
 **Request:**
 ```http
 GET /api/vault
@@ -209,7 +211,8 @@ Authorization: Bearer api-aBcDeFgHiJkLmNoPqRsTuVwXyZ123456
       "username": "lucas@example.com",
       "url": "https://cloud.example.com",
       "type": "password",
-      "category": "Personal",
+      "category": "",
+      "tags": ["work", "infra"],
       "secret": { "v": 1, "alg": "AES-GCM-256", "iv": "...", "ct": "...", "aad": "vault_pearls:vp-uuid-1" },
       "totpSecret": null,
       "attachments": [],
@@ -243,7 +246,8 @@ Retrieve one pearl by ID. Returns `404 Not Found` if it does not exist **or belo
   username?: string        // optional account identifier
   url?: string             // ≤2048 characters
   type?: string            // "password" | "note" | "card" | ... (default "password")
-  category?: string        // ≤64 characters (default "Personal")
+  category?: string        // ≤64 characters (default "")
+  tags?: string[] | string // array of tag strings or JSON array (default [])
   notes?: string           // ≤10000 characters, encrypted client-side
   totpSecret?: string      // encrypted client-side
   attachments?: string[]   // linked attachment IDs
@@ -284,12 +288,13 @@ Encrypted free-text notes at `/api/notes`.
   id: string               // client-generated UUID (required)
   title: string            // 1-255 characters (required)
   content: EncryptedBlob   // REQUIRED — ShellCryption blob, never plaintext
-  category?: string        // ≤64 characters (default "Personal")
+  category?: string        // ≤64 characters (default "")
+  tags?: string[] | string // array of tag strings or JSON array (default [])
 }
 ```
 
 **Endpoints:**
-- `GET /api/notes` — list (`canRead`)
+- `GET /api/notes` — list (`canRead`; supports `?tags=a,b`)
 - `GET /api/notes/:id` — fetch one (`canRead`, `404` if absent/not owned)
 - `POST /api/notes` — create, `201 Created` (`canWrite`)
 - `PUT /api/notes/:id` — replace (`canEdit`)
@@ -310,11 +315,12 @@ SSH private/public key material at `/api/keys`.
   title: string            // 1-255 characters (required)
   keyValue: EncryptedBlob  // REQUIRED — ShellCryption blob of the key material
   username?: string        // optional login/user context
-  category?: string        // ≤64 characters (default "Personal")
+  category?: string        // ≤64 characters (default "")
+  tags?: string[] | string // array of tag strings or JSON array (default [])
 }
 ```
 
-**Endpoints:** identical shape to Secure Notes — `GET /`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id` with the same `canRead`/`canWrite`/`canEdit`/`canDelete` mapping.
+**Endpoints:** identical shape to Secure Notes — `GET /` (supports `?tags=a,b`), `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id` with the same `canRead`/`canWrite`/`canEdit`/`canDelete` mapping.
 
 ---
 
@@ -342,8 +348,8 @@ Binary attachments at `/api/attachments`. Ciphertext is stored as a **native SQL
 **PUT /:id** is **metadata-only** (title/fileName/mimeType/category) — file replacement means re-upload. **DELETE /:id** frees the owner's quota.
 
 **Size Limits (strict, fail-closed):**
-- **50 MB per-file ceiling** (`ATTACHMENT_MAX_MB`) — breached mid-stream, `413`, request destroyed
-- **500 MB grotto quota per owner** (`GROTTO_QUOTA_MB`) — over-quota uploads yield `413` and store nothing
+- **500 MB per-file ceiling** (`ATTACHMENT_MAX_MB`) — breached mid-stream, `413`, request destroyed
+- **1000 MB (1 GB) grotto quota per owner** (`GROTTO_QUOTA_MB`) — over-quota uploads yield `413` and store nothing
 - JSON (non-multipart) POSTs are rejected with `415 Unsupported Media Type`
 
 **Endpoints:** `GET /`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id` — same permission mapping (`canRead`/`canWrite`/`canEdit`/`canDelete`).
@@ -458,7 +464,7 @@ Issued `api-` tokens expire. The default lifetime is controlled by the server's 
 | `403 Forbidden` | Valid token but lacks required permission or role | `canWrite` missing on POST; agent token hitting `/api/settings/*` |
 | `404 Not Found` | Resource does not exist **or is owned by someone else** | Cross-owner probing is indistinguishable from absence |
 | `409 Conflict` | Unique constraint violation | Duplicate username on register, duplicate record ID |
-| `413 Payload Too Large` | Body/route limit exceeded | >50 MB attachment upload, grotto quota breach |
+| `413 Payload Too Large` | Body/route limit exceeded | >500 MB attachment upload, grotto quota breach |
 | `429 Too Many Requests` | Rate limit exceeded | See table below; includes `Retry-After` header |
 | `500 Internal Server Error` | Server fault | Database failure, unexpected exception |
 

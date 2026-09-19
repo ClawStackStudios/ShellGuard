@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-09-19 — Phase 20 release drafting & 3-version roadmap sliding window
+Rolled over ROADMAP.md to release v0.0.2.2 (Build 24 — The Bioluminescent Reef) holding completed Phases 18, 19, and 20. Retired Phase 17 into ROADMAP-HISTORY.md preserving the 3-completed-milestones ceiling. Verified dynamic package version resolver ensures 0.0.2.2 passes tests cleanly with zero assertion drift.
+
+## 2026-09-19 — SSH key JSON leak remediation & terminal ergonomics
+Generating in-browser SSH keypairs and unmasking them revealed a stringified `{publicKey, privateKey}` JSON payload instead of pure PKCS#8 PEM. Resolved via a dual-key serialization layer (`parseSshKeySecret`/`serializeSshKeySecret`) with backward compatibility for legacy raw PEMs, clean multi-line monospace code block display, standard RFC 7468 delimiters, direct `.pem` download, and one-click `authorized_keys` shell command copy.
+
+## 2026-09-19 — Phase 20: PodUtils color unification & Node test env safety
+Unified Pod and Tag color mechanics into a shared deterministic color engine in `src/lib/podUtils.ts` (string hashing + explicit user overrides). Discovered Node test environments crash on unguarded `localStorage` accesses; added defensive `typeof localStorage === "undefined"` checks so client color utilities remain completely headless-safe.
+
 ## 2026-09-19 — docs bow to code: Phase 19 ripple alignment & Phase 20 500MB sub-task
 Walked the complete codebase and documentation surface to audit production readiness. Found and resolved 12 contradictions: purged 8 obsolete "10 MB" base64 references in favor of the active 50MB Busboy streaming BLOB reality, unfroze ARCHITECTURE.md to v0.0.2.1 (added migration 0005, middleware/utils, 19 test suites, Deltas #21 & #22), fixed conflated auth limiter numbers in architecture docs, and added the 500MB attachment ceiling sub-task to Phase 20 in ROADMAP.md and meta-prompt-ai-studio.md.
 
@@ -55,12 +64,4 @@ Every fail-closed assert this arc (missing `./` prefix, 2-element tuple, count m
 ## 2026-09-16 — decimal interlude pattern for non-phase work
 Unphased hotfixes broke the spine's `Stage N = Phase N−1` invariant until I adopted the TOTP's decimal pattern (Stage 18.5). Non-phase work slots at decimal positions *between* phases; stage numbering stays a pure phase ladder. (See `activeContext.md` § Recent Changes, chronology entry.)
 
-## 2026-09-16 — the bank can be the stale side
-The ROADMAP said next = Phase 18; the memory bank said Phase 22. I nearly "fixed" the roadmap. Docs-vs-bank contradictions cut either way — audit **both sides against the runtime** before deciding which is stale. (Here the doc was right.)
-
-## 2026-09-16 — non-greedy finditer truncates matches
-`re.finditer(r'^## .*?Stage \d', ...)` truncates each match at the first digit, so `m.group(0)` reads `"...Stage 1"` for Stage 19. Checker regexes must iterate full lines, not match objects. Third checker bug of the arc — checkers deserve the same scrutiny as edits.
-
-## 2026-09-16 — shell integration swallows output; background long builds
-Long-running commands (vitepress build ~26s, full oracle ~130s) intermittently swallow stdout or hang the completion heuristic. Pattern that works: `nohup npm run docs:build > /tmp/x.log 2>&1 &` then poll the log; heredoc scripts always `> /tmp/x.log 2>&1; cat /tmp/x.log`.
 

@@ -15,11 +15,11 @@
 import { getApiBaseUrl } from '../config/apiConfig.ts';
 import { SESSION_KEYS } from '../services/api/restAdapter.ts';
 
-/** Hard per-file limit: 50MB raw (Phase 19 — matches server ATTACHMENT_MAX_MB default). */
-export const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
+/** Hard per-file limit: 500MB raw (Phase 20 — matches server ATTACHMENT_MAX_MB default). */
+export const MAX_ATTACHMENT_BYTES = 500 * 1024 * 1024;
 
 /** Per-owner grotto quota mirror for client-side hints (server is authoritative). */
-export const GROTTO_QUOTA_BYTES = 500 * 1024 * 1024;
+export const GROTTO_QUOTA_BYTES = 1000 * 1024 * 1024;
 
 /** A file picked in the UI, staged locally until the form is submitted. */
 export interface PendingAttachment {

@@ -71,14 +71,15 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 |---|---|---|
 | `id` | TEXT PK | |
 | `owner_uuid` | TEXT FK | Isolation scope — every query filters this |
-| `title` | TEXT | ShellCryption blob |
-| `secret` | TEXT | ShellCryption blob (password) |
-| `totp_secret` | TEXT | ShellCryption blob (TOTP seed) |
-| `username` / `url` / `notes` | TEXT | ShellCryption blobs |
+| `title` | TEXT | Per-row encrypted metadata (Layer 2) |
+| `secret` | TEXT | ShellCryption blob (Layer 1 zero-knowledge password) |
+| `totp_secret` | TEXT | ShellCryption blob (Layer 1 zero-knowledge TOTP seed) |
+| `username` / `url` / `notes` | TEXT | Per-row encrypted metadata (Layer 2) |
 | `type` | TEXT | `password` \| `note` \| `totp` \| `key` \| `attachment` |
-| `category` | TEXT | Pod assignment (plaintext metadata) |
+| `category` | TEXT | Pod assignment (Layer 2 per-row encrypted metadata) |
+| `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
 | `attachments` | TEXT | JSON reference array |
-| `custom_fields` | TEXT | JSON array of 4 typed custom fields (default `'[]'`) |
+| `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
 | `created_at` | TEXT | |
 
 ### 5. `vault_secure_notes`
@@ -86,9 +87,11 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 |---|---|---|
 | `id` | TEXT PK | |
 | `owner_uuid` | TEXT FK | |
-| `title` / `content` | TEXT | ShellCryption blobs |
-| `category` | TEXT | Plaintext metadata |
-| `custom_fields` | TEXT | JSON array of 4 typed custom fields (default `'[]'`) |
+| `title` | TEXT | Per-row encrypted metadata (Layer 2) |
+| `content` | TEXT | ShellCryption blob (Layer 1 zero-knowledge note payload) |
+| `category` | TEXT | Layer 2 per-row encrypted metadata |
+| `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
+| `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
 | `created_at` | TEXT | |
 
 ### 6. `vault_ssh_keys`
@@ -96,9 +99,11 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 |---|---|---|
 | `id` | TEXT PK | |
 | `owner_uuid` | TEXT FK | |
-| `title` / `key_value` | TEXT | ShellCryption blobs (key material sealed client-side) |
-| `username` / `category` | TEXT | Metadata |
-| `custom_fields` | TEXT | JSON array of 4 typed custom fields (default `'[]'`) |
+| `title` | TEXT | Per-row encrypted metadata (Layer 2) |
+| `key_value` | TEXT | ShellCryption blob (Layer 1 zero-knowledge key material) |
+| `username` / `category` | TEXT | Layer 2 per-row encrypted metadata |
+| `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
+| `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
 | `created_at` | TEXT | |
 
 ### 7. `vault_secure_attachments`
@@ -106,22 +111,14 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 |---|---|---|
 | `id` | TEXT PK | |
 | `owner_uuid` | TEXT FK | |
-| `title` | TEXT | Per-row encrypted metadata |
-| `file_data` | **BLOB** | Raw ShellCryption envelope bytes (Phase 19 — migration 0005; legacy TEXT rows re-encoded in code by `attachmentBlobs.ts`) |
-| `size_bytes` | INTEGER | Exact ciphertext length — powers the grotto quota (`SUM(size_bytes)` per `owner_uuid`) |
-| `file_name` / `mime_type` / `category` | TEXT | Plaintext metadata |
+| `title` | TEXT | Per-row encrypted metadata (Layer 2) |
+| `file_data` | **BLOB** | Raw ShellCryption envelope bytes (Phase 19 — migration 0005; up to 500MB streaming, 1000MB owner quota) |
+| `file_name` / `mime_type` | TEXT | Per-row encrypted metadata (Layer 2) |
+| `category` | TEXT | Layer 2 per-row encrypted metadata |
+| `size_bytes` | INTEGER | Exact unencrypted size for quota tracking |
 | `created_at` | TEXT | |
 
-> **Phase 19 limits**: 50MB per-file ceiling (`ATTACHMENT_MAX_MB`), 500MB grotto quota per owner (`GROTTO_QUOTA_MB`), `413` on breach. Uploads are multipart (`Busboy`); the list endpoint is metadata-only — payload BLOBs stream from `GET /api/attachments/:id/file` in 1MB chunks.
-
-### 8. `settings` (Per-Lobster Preferences)
-| Column | Type | Notes |
-|---|---|---|
-| `owner_uuid` + `key` | TEXT | Composite PRIMARY KEY `(owner_uuid, key)` |
-| `value` | TEXT | JSON ≤ 256KB (`appearance/theme`, `generator`, `pods`, `security`) |
-| `updated_at` | TEXT | ISO timestamp |
-
-### 9. `system_settings` (Server-Wide)
+### 8. `settings` & `system_settings`
 | Column | Type | Notes |
 |---|---|---|
 | `key` | TEXT PK | e.g. `audit_retention_days` (default `90`) |
@@ -135,6 +132,7 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 - **`migrations/0003_custom_fields.up.sql`** — Adds `custom_fields TEXT DEFAULT '[]'` column to `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
 - **`migrations/0004_key_ledger.{up,down}.sql`** — Phase 17 (v0.0.1.9): adds `agent_keys.key_hash`/`key_fingerprint` (in-code SHA-256 backfill via `keyLedger.ts`, then the plaintext column is retired) and drops the hardcoded `DEFAULT 'Personal'` from all four category columns — the uncategorized default is `''`, matching `normalizePod()`.
 - **`migrations/0005_attachment_blobs.{up,down}.sql`** — Phase 19 (v0.0.2.1): rebuilds `vault_secure_attachments` with `file_data BLOB` + `size_bytes INTEGER` (in-code backfill re-encodes legacy TEXT rows to raw envelope bytes via `attachmentBlobs.ts`; down is best-effort — documented data risk for rows written as raw binary).
+- **`migrations/0006_vault_tags.{up,down}.sql`** — Phase 20 (v0.0.2.2): adds `tags TEXT DEFAULT '[]'` column and `owner_uuid` index across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
 - **`schema_migrations`** *(in `db.sqlite`)* — version tracking for the transactional migration runner.
 - **`audit_logs`** *(in the segregated append-only `audit.sqlite` — NOT schema v1's data bedrock)* — `timestamp, event_type, actor, actor_type, resource, action, outcome, ip_address, user_agent, details`. Redacted per delta #2; pruned daily against `system_settings.audit_retention_days`, capped at 10k rows.
 

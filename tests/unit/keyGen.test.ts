@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateSshKeyPair, keypairGenerationSupported } from '../../src/lib/keyGen'
+import { generateSshKeyPair, keypairGenerationSupported, parseSshKeySecret, serializeSshKeySecret, formatAuthorizedKeysCommand } from '../../src/lib/keyGen'
 import { buildPodTree } from '../../src/lib/podUtils'
 import type { VaultItem } from '../../src/types'
 
@@ -125,3 +125,41 @@ describe('pod-count decoupling (attachments never inflate pod tallies)', () => {
     expect(work?.totalCount).toBe(2)
   })
 })
+
+describe('SSH key material parsing, serialization & authorized_keys command formatting', () => {
+  const samplePub = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE58qoWUozwISBzkLzaMxtPDPhCNoGg3MlBhaZwzItpE shellguard-generated'
+  const samplePriv = '-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIN9iKiNsLv/LsOYuVVEG7ltaun2ZwJreaaPVKNgxTSeU\n-----END PRIVATE KEY-----'
+
+  it('parses JSON payload containing publicKey and privateKey', () => {
+    const rawJson = JSON.stringify({ publicKey: samplePub, privateKey: samplePriv })
+    const parsed = parseSshKeySecret(rawJson)
+    expect(parsed.publicKey).toBe(samplePub)
+    expect(parsed.privateKey).toBe(samplePriv)
+  })
+
+  it('parses raw legacy PEM without throwing, treating it as privateKey', () => {
+    const parsed = parseSshKeySecret(samplePriv)
+    expect(parsed.publicKey).toBeUndefined()
+    expect(parsed.privateKey).toBe(samplePriv)
+  })
+
+  it('serializes both keys as JSON when public key is provided', () => {
+    const serialized = serializeSshKeySecret(samplePriv, samplePub)
+    expect(JSON.parse(serialized)).toEqual({
+      publicKey: samplePub,
+      privateKey: samplePriv,
+    })
+  })
+
+  it('serializes only raw private key when public key is omitted or empty', () => {
+    expect(serializeSshKeySecret(samplePriv)).toBe(samplePriv)
+    expect(serializeSshKeySecret(samplePriv, '')).toBe(samplePriv)
+    expect(serializeSshKeySecret(samplePriv, '   ')).toBe(samplePriv)
+  })
+
+  it('formats a terminal-ready authorized_keys one-liner', () => {
+    const cmd = formatAuthorizedKeysCommand(samplePub)
+    expect(cmd).toBe(`echo "${samplePub}" >> ~/.ssh/authorized_keys`)
+  })
+})
+

@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 14 (`v0.0.0.0` → `v0.0.1.6`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 17 (`v0.0.0.0` → `v0.0.1.9`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 15, 16, and 17), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 18, 19, and 20), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -875,3 +875,74 @@ Molt the RELEASE file to `v0.0.1.8` and cut the release through the
 > sides of every bridge verified; the privacy policy renders in the portal
 > and satisfies store disclosures; a RELEASE-file edit on main re-syncs the
 > published release body; the summit tag exists.
+
+---
+
+## Phase 17: Key Ledger Hardening & Pod Purity [v0.0.1.9 (Build 20)] ✅
+
+> Phase Feature Set Overview:
+> Two-sided security and architecture hardening. Task A closes the last
+> docs-vs-runtime contradiction from the audit: `lb-` agent keys are now stored
+> as SHA-256 hashes only (`agent_keys.key_hash` + `key_fingerprint`) — the
+> plaintext `api_key` column is retired via migration 0004 + in-place backfill
+> (legacy keys keep authenticating; live agent tokens re-pointed from raw-key
+> owner_uuid to agent row id; ledger VACUUMed so no plaintext ghost pages
+> remain). Mint returns plaintext exactly once; every list response carries only
+> the fingerprint; the key card shows the `HASHED` fingerprint. Task B purges the
+> hardcoded `DEFAULT 'Personal'` from all four category columns: uncategorized
+> items persist as `""` (the empty string) across DB and API — zero phantom pods
+> on fresh boots.
+> *(Receipts: `7faf51d` — Task 33 key ledger migration + pod default purge,
+> `027506a` — Task 34 CaraBase 1:1 key row masking + pod purity UI,
+> merge `9b5ec31`, 2026-09-13. Released & live.)*
+
+> 📚 **Documentation Impact**: ARCHITECTURE.md + SECURITY.md (hash-only storage, constant-time verification) - key-hierarchy-spec.md §5 - routes-and-contracts.md (mint-once wire contract) - reference/blueprint-schema.md + BLUEPRINT.md (migration 0004 schema) — ✅ synced in `7faf51d`.
+
+- [x] **Task 33: [Security Engine] Agent Key Hash Ledger & Pod Default Purge**
+
+Description: Migration `0004_key_ledger.up.sql` + in-place backfill: retire
+`agent_keys.api_key`, replace with `key_hash TEXT NOT NULL` (SHA-256) and
+`key_fingerprint TEXT NOT NULL` (`lb-***-XXXX`). In-code backfill hashes existing
+keys in place; `api_tokens.owner_uuid` re-pointed from raw key string to agent row
+id; ledger table VACUUMed. Minting returns the plaintext key exactly once. Auth
+verification becomes constant-time `crypto.timingSafeEqual()`. Purge hardcoded
+`DEFAULT 'Personal'` from `vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`,
+and `vault_secure_attachments` (table rebuilds); default is `''` (the empty string).
+Zod schemas pass `category` through unmodified. Prove it in
+`tests/agent-key-hash.test.ts` (hash-only storage, pre-migration key still
+authenticates, plaintext returned once, revoke/expiry unchanged) and extend
+`tests/vault-crud.test.ts` with uncategorized-default assertions.
+
+> Success Criteria: A raw DB dump contains no plaintext `lb-` keys; a
+> pre-migration key still authenticates after migration; a minted key's
+> plaintext is returned exactly once and never stored; a fresh vault renders
+> zero pods and `""` categories stay `""` (no "Personal" resurrection);
+> the full test oracle passes.
+
+- [x] **Task 34: [UI Component] Key Fingerprint Display & Pod Purity Confirmation**
+
+Description: Update `LobsterKeysTab.tsx` to render a SHA-256 fingerprint
+(first 8 hex chars + `…`) on every key card instead of any key material, with
+a one-time "keys secured" notice after the ledger migration. Confirm pod
+purity end-to-end: `SidebarFolderTree.tsx` and `ItemFormModal.tsx` render zero
+phantom pods on a fresh boot, unassigned items show the uncategorized chip,
+and no code path re-introduces a default category. Sync the ledger change
+across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
+
+> Success Criteria: Key cards show fingerprints, never key material; a fresh
+> vault stays at zero pods through create → delete → reload; the docs match
+> the runtime (docs = app); the full test oracle passes.
+
+---
+
+> 🕸️ **Post-Hoc Interlude — Post-v0.0.1.9 Hotfix Record (2026-09-13)** — unphased, outside the 2-Task Pairing Law
+> Single-commit hotfixes shipped after the v0.0.1.9 tag, before Phase 18 begins; documented here so the genome stays receipt-honest about post-release work.
+>
+> - [x] **Vault Master-Detail Header Flush & Version-Test Integrity** — receipt `07ccd61` (2026-09-13).
+>   The item-list search header (`ItemListPane`) and the Item Details header (`ItemDetailPane`)
+>   rendered stepping border lines at the dashboard T-junction (left bar ~59px vs right ~64px);
+>   both are pinned to a shared `h-16` so the `border-b` rules form one continuous line.
+>   Companion integrity fix: `tests/unit/version.test.ts` had hardcoded `'0.0.1.8'` — a latent
+>   failure shipped inside v0.0.1.9 (the bump commit landed after the last full oracle run);
+>   the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
+>   can never silently break it again.

@@ -7,6 +7,25 @@
 - **Web Server Favicon Distinction**: Created a server-distinct favicon (`favicon.svg`) featuring a notched carapace crest shield enclosing a multi-grid Web Globe. Center Web Globe themed to the ShellGuard purple/pink palette (`#e4048a` Lobster Fuchsia, `#ec4899` Hot Pink equator, `#ffffff` high-contrast prime meridian, `#c026d3` Royal Purple meridians, `#f472b6` light pink latitudes).
 - **Web Application Feature Graphic Banner**: Authored high-res 1024x500 panoramic showcase banner (`shellguard-feature-graphic.png`) with glowing Web Globe carapace shield on left and floating dark glassmorphic credential card on right.
 - **Twin Asset Parity**: Synchronized all assets 1:1 across web root (`public/`) and VitePress documentation portal (`docs/public/assets/`).
+## [0.0.2.1] - 2026-09-18
+
+### Added
+- **Attachment BLOB Storage**: Native SQLite BLOB column for encrypted file payloads (migration 0005 + in-code idempotent backfill `attachmentBlobs.ts`), eliminating base64 storage inflation (Phase 19, Tasks 37/38).
+- **Streaming Wire Contract**: Multipart (Busboy) uploads of already-encrypted bytes; metadata-only list responses; chunked 1MB BLOB downloads via `GET /api/attachments/:id/file`.
+- **Storage Limits (Fail-Closed)**: 50MB per-file ceiling (`ATTACHMENT_MAX_MB`) and 500MB grotto quota per owner (`GROTTO_QUOTA_MB`), both yielding `413` and storing nothing on breach.
+- **Streaming Attachment UI**: Real-time upload progress bars with cancel, on-demand streamed client-side decryption, and encrypted inline previews for images and PDFs (Blob object URLs).
+- **Eye-beside-Copy Ergonomics**: Unmask toggle immediately LEFT of Copy on every masked field row (folded forward from Phase 22 Task 44; full-value mask invariant intact).
+
+### Changed
+- Attachment PUT is metadata-only — file replacement re-uploads; the scoped 32mb JSON body parser is retired with the base64 wire contract it served.
+
+## [0.0.2.0] - 2026-09-17
+
+### Added
+- **In-Browser SSH Keypair Generation**: WebCrypto Ed25519 and RSA-4096 keypair engine (`src/lib/keyGen.ts`) with ssh-keygen-verified output, public-key copy + PKCS#8 private download; private keys sealed client-side (Phase 18, Tasks 35/36).
+- **Bitwarden-Style Rich Composite Items**: Passwords embed rich notes, live TOTP token with 30s countdown ring, attachments, and custom fields.
+- **Child Attachment Pod Decoupling**: Pod-tally queries exclude child attachments so files never inflate folder badges.
+- **Mermaid Diagram & Navigation Link Integrity**: VitePress plugin + GitHub-parseable labels; navigation-link integrity suite.
 
 ## [0.0.1.10] - 2026-09-16
 

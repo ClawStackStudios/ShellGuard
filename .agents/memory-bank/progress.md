@@ -31,26 +31,24 @@
 - [x] **Post-v0.0.1.9 Hotfix & Version Test Integrity** — Vault master-detail headers flushed to shared 64px (`h-16`) across dashboard T-junction; `tests/unit/version.test.ts` de-hardcoded from literal `'0.0.1.8'` to dynamic package ground-truth matching `X.Y.Z.N` shape.
 - [x] **The ClawKey Canon (v0.0.1.10)** — ClawKey / ShellCryption / LobsterKeys written into ARCHITECTURE (§ The ClawKey Method) and the UI (14 user-facing strings renamed ShellKey™ → ClawKey™); web and Android now say the same word.
 - [x] **Bidirectional Docs ↔ Code Audit (v0.0.1.10)** — 8 docs-lies corrected against verified code (PRAGMA rekey, limiter counts, identity-file shape, phantom customFields.ts, tlsManager.ts, shipped crypto exports, the fifth `canMove` mask, `_custom` AAD namespaces); privacy policy corrected (`db.sqlite`/`audit.sqlite`, base62 alphabet, user-UUID HKDF salt). Docs bow to code.
-- [x] **Phase 24 Queued (Cryptographic Audit Hardening & Third-Party Auditability)** — Tasks 47/48 (provisional v0.0.2.6/Build 26) with Documentation Impact blockquotes in all queued phases (18-24).
-- [x] **Decision Log Adopted** — `.agents/memory-bank/decision-log.md` (episodic navigation record, 20-entry sliding window).
 - [x] **CaraBase Brand Asset Alignment & Web Server Favicon Distinction (`feat/brand-assets-refresh`)** — Mascot logo and 1:1 thumbnail re-oriented 180° forward/downward clasping the vault safe door with 3D 'S' crest in CaraBase woodcut vector engraving style. Web Server distinct notched carapace crest shield enclosing a multi-grid Web Globe themed to ShellGuard purple/pink palette (`#e4048a`, `#ec4899`, `#c026d3`, `#ffffff`). Dedicated 1024x500 Web Feature Graphic banner. 1:1 twin parity across `public/` and `docs/public/assets/`.
-- [x] **AGPL-3.0 license** — added and npm audit vulnerabilities fixed
-- [x] **Port migration** — settled on :6464 (web) / :6565 (API) development topology, disentangled from CaraBase port range
+- [x] **Phase 18 Implemented — Unified Bitwarden-Style Item Composition & Keypair Engine (v0.0.2.0, Build 20)** — Consolidated vault items into rich composite records (passwords embed notes, live TOTP countdown ring, attachments, custom fields). Decoupled child attachments from Pod metrics so attachments never inflate folder counts. Implemented in-browser WebCrypto SSH keypair engine (`src/lib/keyGen.ts` — Ed25519 + RSA-4096, verified against ssh-keygen).
+- [x] **Phase 19 Implemented — Attachment SQLite BLOB Migration & Streaming Architecture (v0.0.2.1, Build 22)** — Migration `0005_attachment_blobs` rebuilds table with `file_data BLOB` + `size_bytes INTEGER` with idempotent backfill (`attachmentBlobs.ts`). Busboy multipart streaming POST, metadata-only listing (`GET /api/attachments`), chunked 1MB BLOB download via `GET /api/attachments/:id/file`. 50MB per-file ceiling and 500MB per-owner grotto quota (413 fail-closed). Streamed upload progress with cancel, on-demand client decryption, encrypted inline previews for images/PDFs, and folded-forward Eye-beside-Copy ergonomics across all masked field rows. Proven by `tests/attachments-blob.test.ts`.
+- [x] **Decision Log Adopted** — `.agents/memory-bank/decision-log.md` (episodic navigation record, 20-entry sliding window).
+- [x] **AGPL-3.0 license** — added and npm audit vulnerabilities fixed.
+- [x] **Port migration** — settled on :6464 (web) / :6565 (API) development topology, disentangled from CaraBase port range.
 
 ## What's Left to Build
 
-- [ ] **Phase 18: Option C Queue** — Next scheduled roadmap phase
-- [ ] **Unified Bitwarden-Style Item & Pod Presentation** — Refactor vault tabs so items are rich composite records (passwords contain embedded notes, TOTP, attachments, custom fields); ensure child attachments do not artificially inflate Pod item counts; add in-browser cryptographic SSH keypair generation
-- [ ] **Attachment BLOB migration** — move base64 payloads into proper SQLite BLOB columns
-- [ ] **Tagging system** — tag field on item schema, sidebar filter by tag
-- [ ] **Bulk operations** — multi-select with confirmed bulk delete
-- [ ] **Phase 22: Reef Polish Pass** — Unified zero-knowledge search + consolidation; Task 43 eye toggle relocation
-- [ ] **Phase 23: Item Integrity** — Bitwarden-model item integrity
-- [ ] **Phase 24: Cryptographic Audit Hardening** — Third-party auditability, fallback vector parity, constant-time audit, claim battery in CI
+- [ ] **Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]** — Tasks 39 & 40: Multi-dimensional colored tags alongside hierarchical Pods; tag schema and indices, scoped search (`?tags=`), audit logging, tag input autocomplete chips, and sidebar tag cloud with active counts.
+- [ ] **Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]** — Tasks 41 & 42: Transactional `POST /api/vault/bulk-import` with partial-failure reporting (207 Multi-Status), tri-state bulk selection controls, floating bulk action bar, and confirmed batch delete.
+- [ ] **Phase 22: Reef Polish Pass — Unified Search [provisional v0.0.2.4 (Build 26)]** — Tasks 43 & 44: One search bar to rule the reef (client-side, zero-knowledge over already-decrypted in-memory corpus matching titles, keywords, attachment names, note contents, custom fields); header/sidebar search removal; verify Eye-beside-Copy ergonomics.
+- [ ] **Phase 23: Bitwarden-Model Item Integrity [provisional v0.0.2.5 (Build 27)]** — Tasks 45 & 46: Attachment parent enforcement at bedrock (reject standalone attachments; orphan quarantine), notes reject password payloads, type-truthful dashboard display.
+- [ ] **Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [provisional v0.0.2.6 (Build 28)]** — Tasks 47 & 48: WebCrypto fallback vector parity against NIST/RFC/SP vectors (unskip test), mechanized constant-time sweep in CI, claim battery gate script, threat-model addendum.
 
 ## Current Status
 
-**v0.0.1.10 (Build 19 — The Auditable Corpus)** + in-flight **`feat/brand-assets-refresh`** (CaraBase brand asset alignment, Web Server favicon distinction, feature graphic). 100% green test oracle (15 test files, 210 tests passed, 1 skipped). Build and documentation portal (`docs:build`) 100% clean.
+**v0.0.2.1 (Build 22 — The Deep Storage Molt)** — released and live on `main`. 100% green test oracle (19 test files, 230 tests passed, 1 skipped). Build (`vite build`) and documentation portal (`docs:build`) 100% clean. Next milestone: **Phase 20 (v0.0.2.2 / Build 24)**.
 
 ## Known Issues
 

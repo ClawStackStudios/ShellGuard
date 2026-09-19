@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-09-19 — docs bow to code: Phase 19 ripple alignment & Phase 20 500MB sub-task
+Walked the complete codebase and documentation surface to audit production readiness. Found and resolved 12 contradictions: purged 8 obsolete "10 MB" base64 references in favor of the active 50MB Busboy streaming BLOB reality, unfroze ARCHITECTURE.md to v0.0.2.1 (added migration 0005, middleware/utils, 19 test suites, Deltas #21 & #22), fixed conflated auth limiter numbers in architecture docs, and added the 500MB attachment ceiling sub-task to Phase 20 in ROADMAP.md and meta-prompt-ai-studio.md.
+
+## 2026-09-18 — Phase 19: attachment BLOB migration & openBlob limitation
+Migration 0005 moved attachment payloads from base64 text to native BLOBs. Discovered better-sqlite3 exposes no `openBlob()` streaming handle, so upload write path buffers ciphertext chunk up to the 50MB mid-stream ceiling, while downloads stream cleanly in 1MB chunks via SQLite `substr()`.
+
+## 2026-09-17 — Phase 18: composite items & in-browser ssh keypairs
+Consolidated vault logins into primary rich composite records adhering to Bitwarden's model (passwords embed notes, live TOTP countdown ring, attachments, custom fields). Decoupled child attachments from Pod counts so files never inflate folder badges. Implemented in-browser WebCrypto SSH keypair engine (`src/lib/keyGen.ts` — Ed25519 + RSA-4096).
+
 ## 2026-09-17 — long-term memory bank established
 Adopted `long-term-memory-bank` rule into `.agents/memory-bank/long-term/`. Crystallized 16 high-weight ratified entries across `patterns.md`, `decisions.md`, `learnings.md`, and `constraints.md` that held under pressure across multiple releases.
 
@@ -55,11 +64,3 @@ The ROADMAP said next = Phase 18; the memory bank said Phase 22. I nearly "fixed
 ## 2026-09-16 — shell integration swallows output; background long builds
 Long-running commands (vitepress build ~26s, full oracle ~130s) intermittently swallow stdout or hang the completion heuristic. Pattern that works: `nohup npm run docs:build > /tmp/x.log 2>&1 &` then poll the log; heredoc scripts always `> /tmp/x.log 2>&1; cat /tmp/x.log`.
 
-## 2026-09-16 — effort calibration for this repo
-Full test oracle ≈ 130s; docs:build ≈ 26–27s; each assert-guarded doc sweep ≈ 1–3min. `git add <specific>` immediately before every commit — a previously-staged file once rode into the wrong commit and required a message amend (own unpushed commit; disclosed).
-
-## 2026-09-16 — staged-index surprises
-A pre-staged 4-file set rode into an ARCHITECTURE commit under the wrong message. Amended immediately (own, unpushed). Rule: `git add <files> && git diff --cached --stat` is not optional ritual — it's the trust boundary for the two-layer commit grammar.
-
-## 2026-09-16 — mirror files: which .clinerules vs .agents
-The genome's canon lives in `/project/` (tracked); the bank has two roots — `.clinerules/memory-bank/` (tracked) and `.agents/memory-bank/` (partially untracked). Changelog/receipts get mirrored to both; deep-bank files stay `.clinerules`-canonical. `.crustagent/` is gitignored — courtesy fixes on disk only, never force-add.

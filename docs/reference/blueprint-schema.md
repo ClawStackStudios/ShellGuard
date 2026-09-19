@@ -7,7 +7,7 @@ description: Authoritative SQLite Schema Definitions for ShellGuard & Forensic A
 
 <CopyPage />
 
-The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.1.9 (migrations 0001-0004).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`) because SQLite has no crypto primitive - the migration SQL and the code step together form the 0004 migration.
+The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.1 (migrations 0001-0005).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`) and migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`).
 
 ShellGuard maintains two separate SQLite database files:
 1. **`DATA_DIR/db.sqlite`**: The primary operational database, encrypted whole-DB with SQLCipher (Layer 3) and per-row metadata encryption (Layer 2).

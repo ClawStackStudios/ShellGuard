@@ -48,8 +48,11 @@ or junction table) across pearls, notes, and SSH keys. Update route handlers in 
 Update audit logging to capture tag assignment events. Ensure tags respect client-side
 ShellCryption and per-row metadata encryption.
 
+  - [ ] **Sub-task: [Storage Ceiling] Elevate Per-File Attachment Limit (50MB → 500MB)**  
+    Description: Update the attachment streaming upload pipeline and validation (`ATTACHMENT_MAX_MB` default, busboy limits, client dropzone limits, and quota enforcement) to raise the per-file attachment ceiling from 50MB to 500MB. Align error messaging, environment configuration documentation, and test suites.
+
 > Success Criteria: Items support multiple tags; searching by tag filters accurately in
-> SQL with ownership scoping; tag mutations emit audit trail events; 100% test pass.
+> SQL with ownership scoping; tag mutations emit audit trail events; attachment upload ceiling safely allows files up to 500MB with end-to-end streaming validation; 100% test pass.
 
 - [ ] **Task 40: [UI Component] Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State**
 

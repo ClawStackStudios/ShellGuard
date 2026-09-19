@@ -39,7 +39,7 @@ flowchart TD
     Interlude185["🩹 Stage 18.5: Post-Summit Interlude — Vault Header Flush & Version-Test Integrity<br/>(receipt 07ccd61 · unphased · outside the 2-Task Pairing Law)"]
     Phase18["🎨 Stage 19: Phase 18 — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation ✅<br/>(Task 35: Composite Items, Decoupling & Keypair Engine · Task 36: Master Form, Live TOTP & Count Reconciliation)"]
     Phase19["📦 Stage 20: Phase 19 — Attachment SQLite BLOB Migration & Streaming Architecture ⬜<br/>(Task 37: BLOB Storage, Streaming Handlers & Quotas · Task 38: Progress Uploads & File Previewers)"]
-    Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ⬜<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Multi-Filter State)"]
+    Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ⬜<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Multi-Filter State · Sub-task: 500MB Attachment Limit)"]
     Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ⬜<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
     Stage23["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ⬜<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
     Stage24["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
@@ -1150,10 +1150,10 @@ and the full test oracle + tsc + build stay clean!
 ## 🏷️ Stage 21 (Queued): Phase 20 Prompt — Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-20-vault-tagging-system--granular-filter-bar-v0022-build-24)
-> for complete specifications on **Task 39** and **Task 40**.
+> for complete specifications on **Task 39** and **Task 40** (and sub-tasks).
 > **⚠️ Execution state**: QUEUED — executes after Phase 20; green-light from
 > Lucas still required.
-> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) · ARCHITECTURE.md (query contract) · docs/agent-integration/api-reference.md · reference/glossary.md · docs/vault-features
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) · ARCHITECTURE.md (query contract, storage limits) · docs/agent-integration/api-reference.md · reference/glossary.md · docs/vault-features
 > **📖 Required Context Files for Phase 20**:
 > 1. [`database-schema.md`](./database-schema.md) — §2 (Migrations), §3 (Schema v1).
 > 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).
@@ -1161,14 +1161,14 @@ and the full test oracle + tsc + build stay clean!
 > 4. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail & pod invariants).
 > 5. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
 
-Copy and paste this prompt to execute **Phase 20 (Tasks 39 & 40)** once green-lit:
+Copy and paste this prompt to execute **Phase 20 (Tasks 39 & 40 + Sub-task)** once green-lit:
 
 ```markdown
 # PHASE 20 EXECUTION: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)]
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../ROADMAP.md`: Phase 20 (Task 39: Tag Schema & Indices, Tag Assignment Mutation & Scoped Search · Task 40: Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State).
+- `../ROADMAP.md`: Phase 20 (Task 39: Tag Schema & Indices, Tag Assignment Mutation & Scoped Search · Task 40: Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State · Sub-task: Elevate Per-File Attachment Limit 50MB → 500MB).
 - `database-schema.md`: §2–§3 (migrations, schema).
 - `routes-and-contracts.md`: §3 (vault domains).
 - `shellcryption-spec.md`: §1, §6 (ShellCrypted tag payloads).
@@ -1183,6 +1183,10 @@ Execute Phase 20 adhering to the Functionality + UI Component pairing:
   support querying by tag intersection (`?tags=finance,infra`).
 - Update audit logging to capture tag assignment events; ensure tags respect
   client-side ShellCryption and per-row metadata encryption.
+- **Sub-task: [Storage Ceiling] Elevate Per-File Attachment Limit (50MB → 500MB)**:
+  Update `ATTACHMENT_MAX_MB` default from 50MB to 500MB across streaming busboy
+  limits (`src/backend/middleware/attachmentUpload.ts`), route validation (`src/backend/routes/attachments.ts`),
+  client dropzones, and test suites.
 
 ### Task 40: [UI Component] Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State
 - Tag input autocomplete chips in item edit modals with auto-suggested
@@ -1195,7 +1199,8 @@ Execute Phase 20 adhering to the Functionality + UI Component pairing:
 Verify items support multiple tags, tag filtering composes with pod and type
 filters under ownership scoping, tag mutations emit audit events, chips
 add/remove via keyboard, sidebar tag clicks instantly filter the vault grid,
-multi-tag filters combine with AND/OR logic, and the full test oracle + tsc +
+multi-tag filters combine with AND/OR logic, attachment streaming accepts files
+up to 500MB with end-to-end quota integrity, and the full test oracle + tsc +
 build stay clean!
 ```
 

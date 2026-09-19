@@ -11,7 +11,7 @@
 ╚════██║██╔══ ██║██╔══╝   ██║     ██║        ██║  ██║   ██║   ██║  ██╔══██║  ██╔══██╗    ██║   ██║
 ███████║██║   ██║███████╗ ███████╗███████╗   ╚██████╝   ╚██████╝   ██║  ██║  ██║   ██║   ██████╔╝
 ╚══════╝╚═╝   ╚═╝╚══════╝ ╚══════╝╚══════╝    ╚═════╝    ╚═════╝   ╚═╝  ╚═╝  ╚═╝   ╚═╝   ╚═════╝
-                              ~ **ClawStack Mobile Studios©™** ~
+                                  ~ **ClawStack Studios©™** ~
 ```
 
 *Exoskeletal Protection for Human + Agent Secrets — a zero-knowledge vault where Humans and AI Lobsters guard their pearls together.*
@@ -90,7 +90,7 @@
 
 ### 🐚 The Grotto (Vault)
 
-- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 10 MB per file), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
+- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 50 MB per file, 500 MB quota), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods**.
 - 🏷️ **Custom Fields** — Bitwarden-style custom fields (Text, Hidden, Boolean, Linked) across logins, notes, and SSH keys. Hidden custom fields are sealed client-side via AES-GCM-256 with AAD integrity verification.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
 - 📤 **Sovereign Exports & Imports** — Metadata CSV export, re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments, plus native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
@@ -405,12 +405,13 @@ npm run start:api
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/attachments` | canRead | List encrypted attachments |
-| `POST` | `/api/attachments` | canWrite | Upload attachment (base64, 10 MB per-file hard cap) |
-| `PUT` | `/api/attachments/:id` | canEdit | Update attachment metadata/file |
-| `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment |
+| `GET` | `/api/attachments` | canRead | List encrypted attachments metadata |
+| `GET` | `/api/attachments/:id/file` | canRead | Stream / download encrypted attachment BLOB |
+| `POST` | `/api/attachments` | canWrite | Upload attachment (multipart/form-data streaming, 50 MB per-file ceiling, 500 MB quota) |
+| `PUT` | `/api/attachments/:id` | canEdit | Update attachment metadata |
+| `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment and release quota |
 
-Password entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the login's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 10 MB max per file). Deleting a login cascade-deletes its linked attachments.
+Password entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the login's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 50 MB max per file, 500 MB grotto quota). Deleting a login cascade-deletes its linked attachments.
 
 ### Agent Keys (LobsterKeys©™)
 

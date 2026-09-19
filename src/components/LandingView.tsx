@@ -478,7 +478,7 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
                     Password Attachments
                   </h3>
                   <p className="text-sm text-theme-muted leading-relaxed">
-                    Attach recovery keys, license documents, and SSH certs (<strong className="text-theme-main">10 MB limit</strong>) directly to pearls with <strong className="text-emerald-400">atomic cascade deletion</strong>.
+                    Attach recovery keys, license documents, and SSH certs (<strong className="text-theme-main">50 MB limit</strong>) directly to pearls with <strong className="text-emerald-400">atomic cascade deletion</strong>.
                   </p>
                 </div>
 

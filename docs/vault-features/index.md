@@ -21,7 +21,7 @@ The ShellGuard vault is an offline-capable, sovereign secrets engine engineered 
     Extend credentials with Text, Hidden, Checkbox, and dynamic Linked fields, protected by dedicated AAD namespaces.
   </Card>
   <Card title="Password Attachments" href="/vault-features/attachments" icon="📎" tag="Files">
-    Store license files, keypairs, and documents up to 10 MB per file using our isolated Reference Model architecture.
+    Store license files, keypairs, and documents up to 50 MB per file using our isolated Reference Model architecture.
   </Card>
   <Card title="Pearl Password Generator" href="/vault-features/pearl-generator" icon="🎲" tag="Security">
     Generate cryptographically strong passwords using browser CSPRNG with real-time entropy scoring and session history.

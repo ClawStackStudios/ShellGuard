@@ -18,7 +18,7 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 | **Vault Pearl (Login)** | 🔑 | `secret` (Password), `totp_secret` (Seed), `attachments` (File IDs), `custom_fields` | `title`, `username`, `url`, `category`, `notes` |
 | **Secure Note** | 📝 | `content` (Markdown body), `custom_fields` | `title`, `category`, `notes` |
 | **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields` | `title`, `username`, `category`, `notes` |
-| **Encrypted Attachment**| 📎 | `file_data` (Base64 payload up to 10 MB) | `title`, `file_name`, `mime_type`, `category` |
+| **Encrypted Attachment**| 📎 | Encrypted file BLOB (AES-GCM up to 50 MB streaming, 500 MB quota) | `title`, `file_name`, `mime_type`, `category` |
 
 > **Pod tallies count primary items only** — attachments are children of their
 > login/note/key (linked via the parent's `attachments` ID array) and never

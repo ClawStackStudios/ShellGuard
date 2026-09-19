@@ -94,3 +94,22 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 
 - **Strict Boundary**: Antigravity's cognitive memory bank is strictly `.agents/memory-bank/`. Cline's cognitive memory bank is strictly `.clinerules/memory-bank/`.
 - **Zero Cross-Mirroring**: Never edit, mirror, stage, or commit files in the other agent's bank directory. Each agent maintains its own dedicated cognitive substrate.
+
+## Bitwarden-Style Composite Items & Decoupled Pod Counts (Phase 18 — 2026-09-17)
+
+- **Unified Primary Item Model**: Vault logins/pearls encapsulate embedded notes, live TOTP countdown tokens, attached files, and custom fields within a single master card/modal.
+- **Child Attachment Pod Decoupling**: Child records in `vault_secure_attachments` are excluded from pod/folder counts in `server.ts` and `vault.ts` count-aggregation queries; primary items increment counts by exactly 1 regardless of child attachment counts.
+- **In-Browser WebCrypto Keypair Engine**: Native `src/lib/keyGen.ts` generates Ed25519 and RSA-4096 SSH keypairs entirely client-side, formatted as RFC-4716 public keys and PKCS#8 ShellCrypted private keys. Verified against `ssh-keygen`.
+
+## Native SQLite BLOB Storage & Streaming Wire Contract (Phase 19 — 2026-09-18)
+
+- **Migration `0005_attachment_blobs.sql`**: Table rebuild with `file_data BLOB` + `size_bytes INTEGER`, eliminating base64 33% storage inflation. Idempotent in-code migration backfill in `src/server/database/attachmentBlobs.ts` with transaction and VACUUM.
+- **Streaming Upload Wire Contract**: Busboy multipart POST (`POST /api/attachments`) streaming raw ciphertext bytes directly into DB BLOB. Hard per-file ceiling (50MB / `ATTACHMENT_MAX_MB`) aborts mid-stream with 413. Grotto quota (500MB / `GROTTO_QUOTA_MB`) checks `SUM(size_bytes)` and aborts with 413.
+- **Metadata-Only Listing**: `GET /api/attachments` returns strictly metadata headers (`id`, `file_name`, `file_type`, `size_bytes`, `created_at`, `owner_uuid`, `category`) without bulk ciphertext payloads.
+- **Chunked Download Wire Contract**: `GET /api/attachments/:id/file` streams BLOB payloads in 1MB chunks using SQLite `substr(file_data, offset, length)`, preventing process RSS memory spikes.
+- **Client Decryption & Inline Previews**: Client fetches encrypted envelope on demand, decrypts in browser with session `shellKey`. Images preview from decrypted payload; PDFs render safely from in-memory `Blob` object URLs (avoiding insecure origin restrictions).
+
+## Eye-beside-Copy Control Ergonomics (Folded Forward from Phase 22 — 2026-09-18)
+
+- **Right-Hand Action Cluster**: Unmask toggle (Eye/EyeOff) is located immediately LEFT of the Copy button on every masked field row (password, SSH private key, hidden custom fields).
+- **Full-Value Mask Invariant**: Every character is represented by a masking bullet (`•`); no partial leakage; unmasking flips to clear text with 2s copy feedback.

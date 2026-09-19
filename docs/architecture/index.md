@@ -26,8 +26,8 @@ ShellGuard is architected as a lightweight, single-binary container deployment t
 │  Middleware Pipeline:                                                       │
 │  ├─ Helmet & CORS Policy                                                    │
 │  ├─ Cookie Parser (sg_admin_session)                                        │
-│  ├─ Rate Limiters (5/10m Admin, 100/15m Auth, Per-Agent Burst Controls)     │
-│  ├─ Zod Schema Validation (10 MB attachment payload ceiling)                │
+│  ├─ Rate Limiters (5/10m Admin, 10/15m Auth, Per-Agent Burst Controls)      │
+│  ├─ Zod & Busboy Streaming (50 MB attachment ceiling, 500 MB quota)         │
 │  ├─ Per-Row Metadata Encryption Filter (prepareReadAll / prepareWrite)      │
 │  └─ Error Handler (Production masking, SQLITE_BUSY retry)                   │
 └──────────────────────────────────────┬──────────────────────────────────────┘

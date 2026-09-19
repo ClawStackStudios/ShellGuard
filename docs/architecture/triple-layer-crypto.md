@@ -16,7 +16,7 @@ ShellGuard provides **defense-in-depth** by enforcing three separate, mathematic
   - `totp_secret` (TOTP seed)
   - `content` (Secure note Markdown)
   - `key_value` (SSH Private/Public Key)
-  - `file_data` (Base64 file payload up to 10 MB)
+  - Attachment file payload (Encrypted binary BLOB up to 50 MB)
 - **Zero-Knowledge Guarantee**: The server stores only `{ v, alg, iv, ct, aad }` blobs and CANNOT decrypt them under any circumstance.
 
 ---

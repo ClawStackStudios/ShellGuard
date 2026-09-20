@@ -18,6 +18,9 @@ interface ItemListPaneProps {
   onToggleTag?: (tagName: string) => void;
   onClearTags?: () => void;
   onToggleFilterMode?: () => void;
+  selectedItems?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
 }
 
 export function ItemListPane({
@@ -31,7 +34,10 @@ export function ItemListPane({
   tagFilterMode = 'AND',
   onToggleTag,
   onClearTags,
-  onToggleFilterMode
+  onToggleFilterMode,
+  selectedItems = new Set(),
+  onToggleSelect,
+  onToggleSelectAll
 }: ItemListPaneProps) {
   
   const getTypeIcon = (type?: VaultItemType) => {
@@ -130,6 +136,24 @@ export function ItemListPane({
 
       {/* List Stream */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+        {items.length > 0 && onToggleSelectAll && (
+          <div className="flex items-center gap-3 p-2.5 px-3 mb-1 border-b border-theme-subtle">
+            <input
+              type="checkbox"
+              checked={selectedItems.size > 0 && selectedItems.size === items.length}
+              ref={input => {
+                if (input) {
+                  input.indeterminate = selectedItems.size > 0 && selectedItems.size < items.length;
+                }
+              }}
+              onChange={onToggleSelectAll}
+              className="w-4 h-4 rounded border-theme-subtle text-claw-cyan focus:ring-claw-cyan"
+            />
+            <span className="text-xs font-semibold text-theme-muted">
+              {selectedItems.size > 0 ? `${selectedItems.size} selected` : 'Select All'}
+            </span>
+          </div>
+        )}
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-theme-muted p-8 text-center gap-4">
             <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
@@ -152,6 +176,17 @@ export function ItemListPane({
                     : "bg-theme-surface border border-transparent hover:border-theme-subtle hover:shadow-sm"
                 }`}
               >
+                {/* Checkbox */}
+                {onToggleSelect && (
+                  <div className="flex-shrink-0 flex items-center justify-center pl-1 pr-2" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.has(item.id)}
+                      onChange={() => onToggleSelect(item.id)}
+                      className="w-4 h-4 rounded border-theme-subtle text-claw-cyan focus:ring-claw-cyan cursor-pointer"
+                    />
+                  </div>
+                )}
                 {/* Favicon / Icon */}
                 <div className="flex-shrink-0">
                   <Favicon url={item.url} title={item.title} size={36} />

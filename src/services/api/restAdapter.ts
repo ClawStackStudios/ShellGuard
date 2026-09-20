@@ -90,7 +90,10 @@ export const restAdapter = {
     });
   },
 
-  DELETE<T = any>(endpoint: string) {
-    return request<T>(endpoint, { method: "DELETE" });
+  DELETE<T = any>(endpoint: string, body?: any) {
+    return request<T>(endpoint, {
+      method: "DELETE",
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
   },
 };

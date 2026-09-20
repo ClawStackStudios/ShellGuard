@@ -162,6 +162,8 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     setImportJsonText("");
   };
 
+  const [importPreviewList, setImportPreviewList] = useState<any[] | null>(null);
+
   const handleProcessImport = () => {
     if (!importJsonText.trim()) {
       setImportStatus("error");
@@ -205,19 +207,41 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
         throw new Error("No vault items found in import payload.");
       }
 
-      if (onImportItems) {
-        onImportItems(listToImport);
-      }
-
-      setImportStatus("success");
-      setImportMessage(`Successfully imported ${listToImport.length} vault record(s) into your session.`);
-      setImportJsonText("");
+      setImportPreviewList(listToImport);
     } catch (err: any) {
       setImportStatus("error");
       setImportMessage(err.message || "Invalid JSON syntax.");
     } finally {
       setIsImporting(false);
     }
+  };
+
+  const executeBulkImport = async () => {
+    if (!importPreviewList) return;
+
+    setIsImporting(true);
+    setImportStatus("idle");
+    setImportMessage(null);
+    try {
+      if (onImportItems) {
+        await onImportItems(importPreviewList);
+      }
+      setImportStatus("success");
+      setImportMessage(`Successfully imported ${importPreviewList.length} vault record(s) into your session.`);
+      setImportJsonText("");
+      setImportPreviewList(null);
+    } catch (err: any) {
+      setImportStatus("error");
+      setImportMessage(err.message || "Import failed.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const cancelBulkImport = () => {
+    setImportPreviewList(null);
+    setImportStatus("idle");
+    setImportMessage(null);
   };
 
   const handleSgtotpDecryptAndImport = (e: React.FormEvent) => {
@@ -569,6 +593,66 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ── BATCH IMPORT PREVIEW MODAL ── */}
+        {importPreviewList !== null && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-theme-surface rounded-2xl shadow-2xl p-6 max-w-2xl w-full border border-theme-subtle flex flex-col max-h-[80vh]"
+            >
+              <h3 className="text-xl font-bold flex items-center gap-2 text-theme-main">
+                <FolderSync size={20} className="text-claw-cyan" />
+                Batch Import Preview
+              </h3>
+              <p className="text-sm text-theme-muted mt-2">
+                You are about to import {importPreviewList.length} items. Please confirm.
+              </p>
+
+              <div className="mt-4 flex-1 overflow-y-auto custom-scrollbar border border-theme-subtle rounded-xl p-2 bg-theme-base space-y-2">
+                {importPreviewList.slice(0, 10).map((item, i) => (
+                  <div key={i} className="text-xs p-2 bg-theme-surface rounded-lg border border-theme-subtle">
+                    <div className="font-bold text-theme-main">{item.title || "Untitled"}</div>
+                    <div className="text-theme-muted mt-1">{item.username || "No username"}</div>
+                  </div>
+                ))}
+                {importPreviewList.length > 10 && (
+                  <div className="text-center text-xs text-theme-muted p-2 font-mono">
+                    ...and {importPreviewList.length - 10} more items
+                  </div>
+                )}
+              </div>
+
+              {importStatus === "error" && (
+                <div className="mt-4 p-3.5 bg-lobster-red/10 border border-lobster-red/30 rounded-xl text-lobster-red text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>{importMessage}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={cancelBulkImport}
+                  className="px-4 py-2 text-sm font-semibold rounded-xl text-theme-main hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isImporting}
+                  onClick={executeBulkImport}
+                  className="px-6 py-2 bg-claw-cyan hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-ocean-dark font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-sm shadow-claw-cyan/20 text-sm"
+                >
+                  {isImporting ? <Loader2 size={16} className="animate-spin" /> : <FolderSync size={16} />}
+                  <span>Confirm Import</span>
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

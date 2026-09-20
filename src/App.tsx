@@ -1076,6 +1076,63 @@ export default function App() {
                       await restAdapter.DELETE(`${endpoint}/${item.id}`); 
                       if (shellKey) scuttleVault(shellKey);
                     }}
+                    onBulkDelete={async (ids) => {
+                      if (!shellKey || isLocked) return;
+                      await restAdapter.DELETE('/api/vault/bulk', { ids });
+                      if (shellKey) scuttleVault(shellKey);
+                    }}
+                    onBulkMoveToPod={async (ids, category) => {
+                      if (!shellKey || isLocked) return;
+
+                      const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
+                      for (const item of itemsToUpdate) {
+                        await updateTheClaw(
+                          item.id,
+                          {
+                            title: item.title,
+                            secret: item.secret,
+                            username: item.username || "",
+                            url: item.url || "",
+                            category: category,
+                            type: item.type as VaultItemType,
+                            notes: item.notes,
+                            totp_secret: item.totp_secret,
+                            attachments: item.attachments,
+                            custom_fields: item.custom_fields
+                          },
+                          true
+                        );
+                      }
+                      if (shellKey) scuttleVault(shellKey);
+                    }}
+                    onBulkAssignTags={async (ids, tags) => {
+                      if (!shellKey || isLocked) return;
+
+                      const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
+                      for (const item of itemsToUpdate) {
+                        const currentTags = typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : (item.tags || []);
+                        const newTags = Array.from(new Set([...currentTags, ...tags]));
+
+                        await updateTheClaw(
+                          item.id,
+                          {
+                            title: item.title,
+                            secret: item.secret,
+                            username: item.username || "",
+                            url: item.url || "",
+                            category: item.category || "",
+                            type: item.type as VaultItemType,
+                            tags: JSON.stringify(newTags),
+                            notes: item.notes,
+                            totp_secret: item.totp_secret,
+                            attachments: item.attachments,
+                            custom_fields: item.custom_fields
+                          },
+                          true
+                        );
+                      }
+                      if (shellKey) scuttleVault(shellKey);
+                    }}
                   />
                   <ItemFormModal
                     isOpen={isAddingVaultItem || !!editingVaultItem}
@@ -1130,20 +1187,75 @@ export default function App() {
                     items={vaultItems} 
                     lobster={lobster} 
                     onImportItems={async (imported) => {
+                      if (!shellKey || isLocked) return;
+
+                      const itemsToInsert = [];
                       for (const item of imported) {
-                        await lockTheClaw({
+                        const id = generateUUID();
+                        let encryptedSecret = "";
+                        let encryptedTotp = "";
+                        let encryptedContent = "";
+                        let encryptedKey = "";
+                        let encryptedCustomFields = "";
+
+                        const itemType = (item.type as VaultItemType) || "password";
+                        if (itemType === 'note') {
+                          encryptedContent = await encryptField(item.secret || "", shellKey, "vault_secure_notes", id);
+                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
+                        } else if (itemType === 'key') {
+                          encryptedKey = await encryptField(item.secret || "", shellKey, "vault_ssh_keys", id);
+                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
+                        } else {
+                          encryptedSecret = await encryptField(item.secret || "", shellKey, "vault_pearls", id);
+                          if (item.totp_secret) {
+                            encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
+                          }
+                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
+                        }
+
+                        itemsToInsert.push({
+                          id,
                           title: item.title || "Imported Record",
-                          secret: item.secret || "",
+                          secret: itemType === 'note' ? encryptedContent : itemType === 'key' ? encryptedKey : encryptedSecret,
                           username: item.username || "",
                           url: item.url || "",
                           category: item.category || "",
-                          type: (item.type as VaultItemType) || "password",
+                          type: itemType,
+                          tags: item.tags || "[]",
                           notes: item.notes || "",
-                          totp_secret: item.totp_secret || "",
+                          totp_secret: encryptedTotp,
                           attachments: item.attachments || "[]",
-                          custom_fields: item.custom_fields || ""
+                          custom_fields: encryptedCustomFields
                         });
                       }
+
+                      // We can just hit /api/vault/bulk-import which supports pearls
+                      // Wait, does the API support notes and ssh keys?
+                      // The bulk-import route currently only inserts into vault_pearls.
+                      // Let's filter out notes and ssh_keys for individual updates, or we update bulk-import to handle different types.
+                      // Actually, the requirements for bulk-import specifically says: "Bulk Pearl Import Router ... Implement POST /api/vault/bulk-import accepting an array of ShellCrypted items. ... valid items are inserted, invalid skipped."
+
+                      // For simplicity, we can still use bulk import for pearls, and single requests for others.
+                      // Or we can just use single requests if bulk import is only for pearls.
+                      const pearlsToInsert = itemsToInsert.filter(i => i.type === 'password' || i.type === 'attachment');
+                      const others = itemsToInsert.filter(i => i.type !== 'password' && i.type !== 'attachment');
+
+                      if (pearlsToInsert.length > 0) {
+                        try {
+                          await restAdapter.POST('/api/vault/bulk-import', { items: pearlsToInsert });
+                        } catch (e) {
+                          console.error("Bulk import failed", e);
+                        }
+                      }
+
+                      for (const item of others) {
+                         if (item.type === 'note') {
+                           await restAdapter.POST("/api/notes", { id: item.id, title: item.title, content: item.secret, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
+                         } else if (item.type === 'key') {
+                           await restAdapter.POST("/api/keys", { id: item.id, title: item.title, key_value: item.secret, username: item.username, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
+                         }
+                      }
+
                       if (shellKey) await scuttleVault(shellKey);
                     }}
                   />

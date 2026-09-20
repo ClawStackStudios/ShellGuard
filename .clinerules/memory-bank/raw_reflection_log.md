@@ -1,4 +1,29 @@
 ---
+Date: 2026-09-19
+TaskRef: "Memory bank rebuild: v0.0.2.1 -> v0.0.2.2"
+
+Handoff_Context:
+- Session state: ~85% utilized (19 of ~22 files requiring updates)
+- Active work: Rebuilding `.clinerules/memory-bank/` from v0.0.2.1 (frozen Sep 17) to v0.0.2.2 (Sep 19)
+- Pending decisions: Phase 21 green-light already given by Lucas; build labels swept +1
+- Unresolved issues: None — all Phase 20 gates verified green (20 test files, 248 tests, tsc, vite build, docs:build)
+
+Learnings_for_Continuity:
+- The memory bank rebuild itself is a meta-task: my bank was stale (v0.0.2.1) while code was live at v0.0.2.2. The `.agents/memory-bank/` (Antigravity's read-only territory) served as the source-of-truth reference for Phase 20 state — read it to understand current state, write my own bank in my own voice. Never mirror the other agent's bank; synthesize your own.
+- Character encoding (curly quotes, em/en dashes, U+FFFD, approx-eq) causes editor old_text matching failures in files with extensive typographic characters. For bulk replacements on such files, use `sed -i 'N,$d'` for line-range deletions rather than text-matching editor calls — line numbers are reliable; text matches are not.
+- The decision-log sliding window (20 entries) required careful line-based pruning: after adding 4 Phase 20 entries, 2 oldest removed via `sed -i '78,$d'` to maintain the window. Character encoding in old_text made editor-based deletion fail — sed is the reliable tool here.
+- Phase 20 changes spanned 4 dimensions (crypto SSH dual-key, infra 500MB/1000MB ceiling, features vault tagging, docs 12 contradictions fixed), each touching different memory-bank files with different update patterns.
+- The taskHandoff.md full rewrite exceeded the 6000-char editor limit and Python heredocs corrupt emoji — solved via Python textwrap.dedent + explicit unicode escapes, then sed for backtick repair.
+- Phase 20's "500MB ceiling sub-task" was a docs-alignment ripple within the release, not a standalone task — belonged in changelog as sub-entry, not a separate decision-log item.
+
+Improvements_Identified_For_Consolidation:
+- The memory-bank rebuild for a new release should be partially automated: a script that diffs git tags, identifies changed files, and generates a checklist of memory-bank sections needing updates (with cross-references to the .agents bank for reference).
+- Long-term file content with character encoding (decision-log, raw_reflection_log) should use ASCII-only convention to avoid editor matching failures on future edits.
+
+Gates: All 9 memory-bank files verified updated (activeContext, changelog, progress, taskHandoff, decision-log, systemPatterns, techContext, consolidated_learnings, projectBrief). 20-entry window maintained in decision-log.
+---
+
+---
 Date: 2026-09-16
 TaskRef: "Bidirectional docs<->code audit — 8 lies corrected, docs bow to code"
 

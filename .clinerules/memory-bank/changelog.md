@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.0.2.2] - 2026-09-19 — The Bioluminescent Reef
+
+### Added
+- **Vault Tagging System & Granular Filter Bar** — Multi-dimensional categorization alongside hierarchical pods (Phase 20, Tasks 39/40):
+  - Migration `0006_vault_tags` adds `tags TEXT DEFAULT '[]'` column and owner index across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+  - Layer 2 MetadataGuard encryption for all tag payloads at rest.
+  - API list routes support `?tags=a,b` intersection filtering with ownership scoping and forensic audit logging.
+  - `TagSelectorInput` autocomplete chips with inline color palette selection.
+  - Unified bioluminescent color engine (`podUtils.ts`) — shared `hashStringToColor` for pods AND tags with explicit user overrides.
+  - Collapsible sidebar tag cloud with item counts in `SidebarFolderTree.tsx`.
+  - Granular multi-filter bar with `AND` / `OR` toggle in `ItemListPane.tsx`; tag pill badges in `ItemDetailPane.tsx`.
+- **500MB Attachment Storage Ceiling** — Per-file upload ceiling raised from 50MB to 500MB (`ATTACHMENT_MAX_MB`); grotto quota raised from 500MB to 1000MB (`GROTTO_QUOTA_MB`); nginx proxy body size guidance elevated to 60M. (Phase 20 Sub-task.)
+- **SSH Key Dual-Key Architecture & Terminal Ergonomics** — Dual-key serialization envelope (`parseSshKeySecret`/`serializeSshKeySecret`) with backward compatibility for legacy raw PEMs; strict RFC 7468 PKCS#8 framing preventing JSON unmasking leaks; clean multi-line PEM code block display; one-click **Download .pem**, **Copy Public Key**, and **Copy `authorized_keys` Command**.
+
+### Fixed
+- Vault master-detail header flush: item-list header and Item Details header pinned to shared 64px height for continuous T-junction line.
+- Version resolver test de-hardcoded: `tests/unit/version.test.ts` now asserts package.json ground truth + `X.Y.Z.N` shape only (was a latent literal `'0.0.1.8'` assertion).
+
+### Changed
+- Documentation-to-code parity alignment: 12 contradictions resolved across docs and UI (8 obsolete "10 MB" base64 references → 500MB BLOB reality, ARCHITECTURE.md unfrozen from v0.0.1.9 to v0.0.2.1, rate-limiter conflation fixed, blueprint-schema header synced to migrations 0001–0006).
+
 ## [0.0.2.1] - 2026-09-18
 ### Added
 - Attachment native BLOB storage (migration 0005 + idempotent backfill), streamed multipart wire contract, 50MB/file + 500MB/owner quota (413), progress/cancel uploads, encrypted previews, Eye-beside-Copy ergonomics (Phase 19, Tasks 37/38)

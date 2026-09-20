@@ -48,6 +48,11 @@ Every mutation follows this gauntlet (no shortcuts):
 - **Online Backup API backups**: `db.backup()` from better-sqlite3-multiple-ciphers — WAL-safe, live-consistent; SQLCipher copies stay encrypted with the same key.
 - **Audit on mutation**: Every write emits to segregated `audit.sqlite` with extended redaction.
 - **Envelope contract**: All responses use `{success, data}`. RestAdapter unwraps centrally.
+- **Tag metadata encryption**: Tag payloads (`tags TEXT` on `vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`) are registered in `metadataGuard.ts` for Layer 2 per-row AES-256-GCM encryption — same envelope as title/username, distinct from ShellCryption's client-side field encryption.
+- **Server-side tag intersection filtering**: `?tags=a,b` performs set intersection at the SQL layer (all tags must match); AND/OR logic resolved client-side in `ItemListPane.tsx`; ownership scoping applied before tag filtering.
+- **Unified color engine**: `hashStringToColor` in `podUtils.ts` generates deterministic HSL colors for pods AND tags with explicit user overrides; `typeof localStorage === 'undefined'` guards keep it headless-safe in Node test environments.
+- **SSH dual-key serialization**: `parseSshKeySecret`/`serializeSshKeySecret` envelope handles both legacy raw PEM `{publicKey, privateKey}` JSON and clean RFC 7468 PKCS#8; backward compat detects shape on read.
+- **Attachment streaming (Phase 19 tightened in Phase 20)**: 500MB per-file ceiling (`ATTACHMENT_MAX_MB`) + 1000MB per-owner grotto quota (`GROTTO_QUOTA_MB`); Busboy mid-stream 413 abort; 1MB chunked `substr()` downloads; write path peaks at ciphertext size (no `openBlob()`).
 
 ## Critical Implementation Paths
 
@@ -56,6 +61,10 @@ Every mutation follows this gauntlet (no shortcuts):
 - `src/lib/shellCryption.ts` — Client-side HKDF + AES-GCM-256
 - `src/server/middleware/auth.ts` — requireAuth, requirePermission, requireHuman
 - `server.ts` — Express 5 entrypoint, exports `app` for test seam
+- `src/lib/podUtils.ts` — Unified color engine (`hashStringToColor`) for pods + tags (Phase 20)
+- `src/lib/tagUtils.ts` — Client-side tag utilities (`TagSelectorInput` autocomplete chips, color picker integration)
+- `src/server/utils/tagUtils.ts` — Server-side tag filtering (`?tags=a,b` intersection, SQL-layer scoping)
+- `src/lib/keyGen.ts` — SSH dual-key serialization envelope (`parseSshKeySecret`/`serializeSshKeySecret`) with backward compat (Phase 20)
 
 ## Auditability Invariants (Cryptographer's Lens — 2026-09-16)
 

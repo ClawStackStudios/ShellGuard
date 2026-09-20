@@ -44,6 +44,12 @@
 - Legacy plaintext passes through unchanged — backward compatible without migration.
 - *Rationale:* No schema changes, no ALTER TABLE, no new columns. Encrypted and plaintext rows coexist seamlessly.
 
+**Pattern: SSH Dual-Key Serialization Envelope (Phase 20)**
+- The in-browser SSH keypair generator produces a `{publicKey, privateKey}` JSON object that, when unmasked, must yield clean PEM text — not a stringified envelope.
+- `parseSshKeySecret`/`serializeSshKeySecret` in `src/lib/keyGen.ts` provides a dual-key envelope with backward compatibility: legacy raw PEMs pass through, clean RFC 7468 PKCS#8 is extracted for unmasking display.
+- Strict PKCS#8 framing (PKCS#8 SHAY headers, proper line wrapping) prevents JSON envelope leakage at the unmask boundary.
+- *Rationale:* Always inspect the raw secret string at the unmask boundary — a JSON envelope that looks like "a key" is actually two keys concatenated; the fix is at the serialization layer, not the display layer.
+
 **Pattern: Deliberate Algorithm Distinction**
 - Use distinct `alg` values for different encryption systems (`"AES-GCM-256"` for client, `"SG-META"` for server).
 - *Rationale:* Prevents confusion between encryption layers. Each system can identify its own envelopes.
@@ -157,6 +163,17 @@
 - *Fix:* Remove all hardcoded defaults. Draw pods from `getStoredPodColors()` and actual item categories only.
 - *Rationale:* Users control their own pod structure. No forced defaults.
 
+**Pattern: Unified Tag Color Engine with Headless Safety (Phase 20)**
+- `hashStringToColor` in `src/lib/podUtils.ts` generates deterministic HSL colors for **both pods and tags** from a shared engine — no separate color logic.
+- Explicit user overrides stored in `localStorage` take precedence over hashed defaults.
+- `typeof localStorage === 'undefined'` guards ensure client utilities remain headless-safe in Node test environments (where `localStorage` is undefined).
+- *Rationale:* Node test environments crash on unguarded `localStorage` access; the same `vi.hoisted()` DATA_DIR/PORT isolation pattern applies here — guard before access, test against both modes.
+
+**Pattern: Attachment Ceiling Escalation with Env-Driven Limits (Phase 20)**
+- Storage limits are env-tunable and fail-closed: `ATTACHMENT_MAX_MB` (50→500MB default) and `GROTTO_QUOTA_MB` (500→1000MB default), both returning 413 on breach.
+- Busboy mid-stream abort prevents partial writes at the ceiling — the request is torn down before bytes hit disk.
+- *Rationale:* Ceiling escalation is not just a config change — it requires updating nginx body hints (60M), docs/ README API tables, and the blueprint-schema header in lockstep (docs bow to code).
+
 ---
 
 ## Release Protocol
@@ -167,3 +184,8 @@
 - Tag the release-prep commit itself so the tag points at a commit that CONTAINS the exact-version RELEASE file (release.yml hard-fails otherwise); the --no-ff merge to main comes after.
 - Environment-blocked verifications (e.g., Docker daemon unavailable) are recorded as blocked with justification — never claimed as run.
 - *Rationale:* the v0.0.1.9 release published correctly on the first try after these three checks; the catch-and-repush avoided a silent divergence between local main and origin.
+
+**Pattern: Release Build-Label Sweep (v0.0.1.10 → v0.0.2.2)**
+- Consuming Build N shifts every queued phase's provisional `(Build N+x)` label by +1 in BOTH `ROADMAP.md` and `project/meta-prompt-ai-studio.md` — INCLUDING anchor hrefs that embed build numbers, which would silently dangle otherwise.
+- Sweep with version-prefixed regex patterns (disambiguation), assert each replacement count, then re-run the anchor battery afterwards.
+- *Rationale:* Build-number drift in anchor hrefs is invisible in diffs but breaks every TOC link; assert-counted sweeps + anchor re-battery are the only reliable catch.

@@ -2,31 +2,34 @@
 
 ## Current Work Focus
 
-**v0.0.2.1 "The Deep Storage Molt" RELEASED (2026-09-18)** — Phase 19 (Tasks 37/38, Build 22) shipped: attachment ciphertext migrated from base64 TEXT to **native SQLite BLOB** (migration 0005 + in-code idempotent backfill `attachmentBlobs.ts`), streamed wire contract (Busboy multipart uploads of already-encrypted bytes, metadata-only list, chunked 1MB `substr` downloads via `GET /api/attachments/:id/file`), 50MB/file + 500MB/owner grotto quota (413 fail-closed, env `ATTACHMENT_MAX_MB`/`GROTTO_QUOTA_MB`), streaming UI (progress + cancel, on-demand decrypt, encrypted image/PDF preview modal), **Eye-beside-Copy fold-in delivered** (P22/T44 pulled forward — verify-only there now). Honest note: better-sqlite3 has no `openBlob()` — write path peaks at ciphertext size (hard-capped mid-stream), read path fully chunked. **NEXT: Phase 20 — Vault Tagging System & Granular Filter Bar (v0.0.2.2 / Build 24, Tasks 39/40)** on the queue 20 → 21 → 22 → 23 → 24.
+**v0.0.2.2 "The Bioluminescent Reef" RELEASED (2026-09-19)** — Phase 20 (Tasks 39/40, Build 24) shipped: vault tagging system via migration `0006_vault_tags` (tags column + owner indices across pearls/notes/ssh_keys, Layer 2 MetadataGuard encryption), `?tags=a,b` intersection filtering with audit logging, `TagSelectorInput` autocomplete chips with color picker, unified bioluminescent color engine in `podUtils.ts` (`hashStringToColor` shared for pods + tags with overrides), collapsible sidebar tag cloud, AND/OR filter bar; attachment ceiling 50MB → **500MB** (`ATTACHMENT_MAX_MB`) and grotto quota 500MB → **1000MB** (`GROTTO_QUOTA_MB`), both 413 fail-closed; SSH dual-key architecture (`parseSshKeySecret`/`serializeSshKeySecret` with backward compat for legacy PEMs), clean PKCS#8 PEM unmasking (no JSON leaks), one-click **Download .pem**, **Copy Public Key**, **Copy `authorized_keys` Command**. Docs alignment pass resolved 12 contradictions (8 obsolete "10MB" refs → 500MB BLOB reality, ARCHITECTURE unfrozen v0.0.1.9→v0.0.2.1, limiter conflation fixed, nginx body hint → 60M). All gates green: 20 test files, 248 tests (1 skipped), `tsc`, `vite build`, `docs:build`. **NEXT: Phase 21 — Bulk Import Endpoint & Batch Operations (v0.0.2.3 / Build 25, Tasks 41/42)** on the queue 21 → 22 → 23 → 24.
 
 ## Recent Changes (sliding window — 10)
 
-1. **2026-09-18 — v0.0.2.0 "The Composite Reef" SHIPPED (Phase 18, Build 20)**: in-browser SSH keypair engine (`src/lib/keyGen.ts` — ssh-keygen cross-verified byte-identical for Ed25519 + RSA-4096; SSH mpint keeps the DER leading zero), SSH key input + Generate Keypair panel in ItemFormModal (keys previously had NO form input), public-key row in detail pane, pod-decoupling locked by tests (premise correction: `buildPodTree` already filtered — `podUtils.ts:193`); phantom `SshKeyVaultView.tsx` premise corrected; docs synced (the-grotto, blueprint-schema).
-2. **2026-09-18 — Release protocol executed**: P15 → ROADMAP-HISTORY, P18 → Completed Releases (receipts `6f9b00d`/`61336a1`), build labels swept +1 (P19–P24 → Builds 22–27 incl. anchor hrefs), spine Stage 19 → SHIPPED, transcription state 18 phases, NEXT → Phase 19.
-3. **2026-09-17 — README TOTP-style reorg** (`96e6047`): 17-bullet wall → 4 grouped sub-headings, duplicate encryption sections merged, 3 stacked callouts → 1 CAUTION, reference blocks collapsed; 16/16 anchors resolve.
-4. **2026-09-17 — Mermaid rendering fixed** (`ccdfd55`): `vitepress-plugin-mermaid` + `withMermaid()` (portal had ZERO support); README's unquoted `{success, data}` node label (GitHub parse failure); `tests/unit/mermaidDiagrams.test.ts` (5 tests). Lesson: an audit has one blind spot per unexamined class.
-5. **2026-09-16 — Long-Term Memory Bank initialized** (`0a2c16c`/`bb9b95c`): `long-term/{patterns,decisions,learnings,constraints}.md` + `auditPerspective.md` (the sealed 30-year-cryptologist lens). Territory locked: `.clinerules/` is Cline's ONLY memory bank; `.agents/` is Antigravity's.
-6. **2026-09-16 — `/learn` proposal applied** (`2df6d63`): docs-hygiene §5 (docs bow to code + claim battery), ClawKey canon + never-rename in lobsterized NEVER-list, editor env hazards, semantic-versioning build-label sweep — mirrored to `.agents/rules/` (true homes).
-7. **2026-09-16 — Bidirectional docs↔code audit**: 8 docs-lies corrected (PRAGMA rekey, limiter 10/15m skip-success, identity file `shellguard_identity_<username>.json`, phantom customFields.ts, tlsManager.ts, shipped crypto exports, five masks incl. canMove, `<table>_custom:{id}` AAD); claim battery = grep enforcing code first, assert doc second.
-8. **2026-09-16 — docs/ portal truth-sync + canon** (`71c1d7e`/`08e02a6`/`1ba5f19`): blueprint-schema ↔ migration 0004, privacy file names, base62 alphabet, ClawKey with "Human Key" legacy alias, `Card.vue` withBase fix + `tests/unit/docsLinks.test.ts` (all three link classes).
-9. **2026-09-15/16 — v0.0.1.10 "The Auditable Corpus" SHIPPED**: chronology reorg (Stage N = Phase N−1, Stage 18.5 interlude), ClawKey canon in docs+UI, 8-lie audit, Decision Log adopted, Phase 24 queued, Documentation Impact embedded in every phase.
-10. **2026-09-16 — Phase 24 queued + crawl**: Cryptographic Audit Hardening (Tasks 47/48) at queue tail; 📚 Documentation Impact embedded in every queued phase — the schedule carries docs-hygiene.
+1. **2026-09-19 — v0.0.2.2 "The Bioluminescent Reef" SHIPPED (Phase 20, Build 24)**: Vault tagging system (migration `0006_vault_tags`, MetadataGuard Layer 2 encryption, `?tags=a,b` intersection filtering with audit logging); 500MB attachment ceiling + 1000MB grotto quota; SSH dual-key architecture with clean PEM unmasking + terminal ergonomics. 20 test files, 248 tests passing (1 skipped). Release protocol: Build-sweep +1 (P21–P24 → Builds 25–28 incl. anchor hrefs), tag → push → GitHub Release mirror verified.
+2. **2026-09-19 — Documentation-to-Code Parity Alignment (Phase 20 500MB sub-task)**: Full corpus walk resolved 12 contradictions: 8 obsolete "10 MB" refs → 500MB BLOB reality, missing `GET /api/attachments/:id/file` added to README API table, ARCHITECTURE unfrozen v0.0.1.9→v0.0.2.1, rate-limiter conflation fixed, blueprint-schema synced (0001–0006), nginx body hint → 60M. 20 suites / 248 tests + docs:build green.
+3. **2026-09-18 — Release v0.0.2.1 "The Deep Storage Molt" SHIPPED (Phase 19, Build 22)**: BLOB migration (0005 + idempotent backfill), Busboy streaming, 50MB/500MB limits, Eye-beside-Copy folded from P22/T44.
+4. **2026-09-18 — Release protocol executed** (v0.0.2.0): ROADMAP-HISTORY (P15), Completed Releases receipts (`6f9b00d`/`61336a1`), build labels swept +1 (P19–P24 → 22–27 incl. anchors), spine Stage 19 → SHIPPED.
+5. **2026-09-17 — README TOTP-style reorg** (`96e6047`): 17-bullet wall → 4 grouped sub-headings, merged encryption sections, 3 callouts → 1 CAUTION; 16/16 anchors resolve.
+6. **2026-09-17 — Mermaid rendering fixed** (`ccdfd55`): `vitepress-plugin-mermaid` + `withMermaid()`; lesson: an audit has one blind spot per unexamined class.
+7. **2026-09-16 — Long-Term Memory Bank initialized** (`0a2c16c`/`bb9b95c`): `long-term/{patterns,decisions,learnings,constraints}.md` + `auditPerspective.md`. Territory split: `.clinerules/` = Cline; `.agents/` = Antigravity.
+8. **2026-09-16 — `/learn` proposal applied** (`2df6d63`): docs-hygiene §5, ClawKey canon, env hazards, build-label sweep.
+9. **2026-09-16 — Bidirectional docs↔code audit**: 8 docs-lies corrected (PRAGMA rekey, limiter 10/15m, identity file shape, phantom customFields.ts, tlsManager.ts, crypto exports, canMove, `<table>_custom:{id}` AAD).
+10. **2026-09-16 — docs/ portal truth-sync + canon**: blueprint-schema ↔ migration 0004, base62, ClawKey + "Human Key" alias, Card.vue fix + docsLinks test.
 
 ## Active Decisions & Considerations
 
 - **Docs bow to code** (ratified): contradicting docs are the defect; the application works and is secure.
-- **Honest PATCH over milestone theft**: doc-only/architecture sessions ship as PATCH; MINOR versions are reserved for real feature phases.
+- **Honest PATCH over milestone theft**: doc-only/architecture sessions ship as PATCH; MINOR versions reserved for real feature phases.
 - **2-Task Pairing Law + 📚 Documentation Impact** as definition-of-done for every phase.
-- Phase 19 note: the roadmap's server-side count-aggregation premise was corrected in Phase 18 (pod counts are client-side; `server.ts` health counts are instance globals) — P19 focuses on BLOB/quota truth.
-- Phase 23 (attachment parent enforcement) is where standalone attachments are removed — NOT Phase 19.
+- **Phase 20 attachment ceiling escalation**: 50MB → 500MB file ceiling, 500MB → 1000MB grotto quota (env-tunable, 413 fail-closed, Busboy mid-stream abort).
+- **SSH dual-key architecture**: `parseSshKeySecret`/`serializeSshKeySecret` envelope with backward compat for legacy raw PEMs; strict RFC 7468 PKCS#8 framing prevents JSON unmasking leaks.
+- **PodUtils color unification**: shared `hashStringToColor` engine for pods AND tags; Node test-env-safe (`typeof localStorage === 'undefined'` guards).
+- Phase 23 (attachment parent enforcement) is where standalone attachments are removed — NOT Phase 19/20.
 
 ## Next Steps & Pending Items
 
-1. Phase 19 green-light → branch `feat/phase19-attachment-blobs` → Stage 20 paste-block.
-2. Task 38 includes the ergonomics fold-in (Eye LEFT of Copy on every masked row).
-3. Phase 24 (Tasks 47/48) remains the auditor's battery at the queue tail.
+1. **Phase 21**: branch `feat/phase21-bulk-import-batch` → Stage 22 paste-block. Tasks 41/42: transactional `POST /api/vault/bulk-import` with 207 Multi-Status partial-failure reporting, tri-state bulk selection, floating bulk action bar, confirmed batch delete.
+2. **Phase 22**: Unified search (client-side, zero-knowledge over decrypted corpus); header/sidebar search removal; verify Eye-beside-Copy ergonomics.
+3. **Phase 23**: Attachment parent enforcement (reject standalone attachments, orphan quarantine); notes reject password payloads.
+4. **Phase 24**: WebCrypto fallback vector parity (unskip test), mechanized constant-time sweep in CI, claim battery gate script, threat-model addendum.

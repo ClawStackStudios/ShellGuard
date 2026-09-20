@@ -22,12 +22,24 @@ Run a full verification loop:
 
 ## 📝 Step 2: Draft Release Notes & Documentation
 
-1. **Create Release Document:** Create `RELEASE-vX.Y.Z.N.md` in the root directory following `[release-template.md](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.agents/templates/release-template.md)`. Remove older draft release files.
-2. **Synchronize Codebase Versioning:** Follow `/version-update` to bump:
-   - `package.json` (`"version": "X.Y.Z.N"`)
+1. **Create Release Document & Purge Old Drafts:**
+   - Create `RELEASE-vX.Y.Z.N.md` in the root directory following `[release-template.md](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.agents/templates/release-template.md)`.
+   - Purge previous release draft files (e.g. `RELEASE-vX.Y.Z.N-1.md`) ensuring strictly ONE active release draft exists in root.
+2. **Execute Roadmap 3-Version Sliding-Window Protocol:**
+   - Advance `current_position` in `ROADMAP.md` to `vX.Y.Z.N (Build B) — released & live`.
+   - Move the newly completed phase into "Completed Releases".
+   - If "Completed Releases" exceeds 3 milestones, retire the oldest completed phase into `.agents/memory-bank/ROADMAP-HISTORY.md`.
+   - Advance the active forward queue to start at the next pending phase.
+3. **Synchronize Central Version Anchors:**
+   - `package.json` & `package-lock.json` (`"version": "X.Y.Z.N"`)
    - `README.md` badge (`[![Version](https://img.shields.io/badge/Version-vX.Y.Z.N-blue?style=for-the-badge)](CHANGELOG.md)`)
    - `CHANGELOG.md` (`## [X.Y.Z.N] - YYYY-MM-DD`)
-3. **Memory Bank Sync:** Update `.agents/memory-bank/activeContext.md` and `.agents/memory-bank/raw_reflection_log.md`.
+   - `ARCHITECTURE.md` (Header, directory tree, test suite count, and Delta changelog)
+4. **Memory Bank Sync:**
+   - Update `.agents/memory-bank/activeContext.md` (top 10 sliding window).
+   - Update `.agents/memory-bank/progress.md` (milestone checkoff).
+   - Update `.agents/memory-bank/decision-log.md` (maintain top 20 sliding window).
+   - Update `.agents/memory-bank/raw_reflection_log.md` (pre-completion reflection entry).
 
 ---
 

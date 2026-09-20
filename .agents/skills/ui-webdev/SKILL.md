@@ -97,6 +97,37 @@ border-theme-subtle /* Carapace borders and subtle separators */
 
 ---
 
+## 🔐 Cryptographic Secret Presentation & Terminal Ergonomics
+
+When building or refactoring interfaces that display or edit cryptographic credentials, keypairs, or compound secrets (e.g. SSH keys, TLS certificates):
+
+### 1. Compound Secret Isolation (Zero-Leak Presentation)
+- **Decoupled Data Presentation**: When compound secrets (such as an SSH keypair `{ publicKey, privateKey }`) are sealed under client-side Layer 1 encryption in a single vault column, the UI MUST unwrap the payload into distinct, dedicated components.
+- **Zero-Leak Unmasking Invariant**: Unmasking a private key or credential MUST NEVER leak JSON brackets, escaped characters (`\n`), or composite metadata. The private key MUST render as pure, formatted text in a monospace `<pre>` block.
+- **Strict RFC 7468 PEM Formatting**: Multi-line asymmetric keys MUST strictly preserve standard RFC 7468 framing:
+  ```text
+  -----BEGIN PRIVATE KEY-----
+  [Base64 Encoded PKCS#8 Body]
+  -----END PRIVATE KEY-----
+  ```
+- **Independent Form Inputs**: Creation and edit modals MUST provide separate input surfaces (e.g. dedicated textarea for Private Key PEM, dedicated text input for OpenSSH Public Key) to prevent users from corrupting composite envelopes during manual edits.
+
+### 2. High-Velocity Terminal Ergonomics
+Infrastructure secrets require instant, friction-free deployment shortcuts for server administrators:
+- **Direct `.pem` File Download**: Provide a single-click download action producing a clean `.pem` file formatted with standard line endings (`\n`).
+- **Raw Public Key Copy**: One-click clipboard copy of the pure OpenSSH public key line.
+- **Terminal Append Command Copy**: One-click clipboard copy of the terminal-ready shell one-liner:
+  ```bash
+  echo "<public_key>" >> ~/.ssh/authorized_keys
+  ```
+- **Eye-Beside-Copy Alignment**: On all masked field rows, place the Unmask toggle (`Eye`/`EyeOff`) immediately to the left of the Copy button in the right-hand action cluster.
+
+### 3. Headless Environment Safety for Shared Client Utilities
+- Shared client utilities that interact with browser APIs (`localStorage`, `sessionStorage`, `window`, `navigator`) MUST defensively check `typeof <api> === "undefined"` and provide an in-memory fallback.
+- This prevents headless test runners (Vitest, Jest) or server-side build steps from crashing with `ReferenceError`.
+
+---
+
 ## ♿ Accessibility & Quality Checklist
 
 Before finalizing any UI implementation:

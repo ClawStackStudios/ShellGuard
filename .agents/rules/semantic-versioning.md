@@ -68,6 +68,28 @@ Once the user confirms, I will proceed with the following precise file modificat
     - Consuming `Build N` shifts every queued phase's provisional `(Build N+x)` label by +1 in BOTH `ROADMAP.md` and `project/meta-prompt-ai-studio.md` — INCLUDING anchor hrefs that embed build numbers.
     - Sweep with version-prefixed patterns (disambiguation), assert each replacement count, and re-run the anchor battery afterwards.
 
+### Step 3.5: Clean Release Draft Invariant & Archival
+1. **Single Active Release Draft**:
+   - The repository root MUST contain strictly **ONE** active release draft file (`RELEASE-vX.Y.Z.W.md`).
+   - When generating a new release draft, previous draft files (e.g. `RELEASE-v0.0.2.1.md`) MUST be purged in the same stroke. Never leave stale release notes behind.
+2. **Central Version Anchor Grid**:
+   - Ensure the new version is synchronized across all 5 central anchors:
+     1. `package.json` (`"version": "X.Y.Z.W"`)
+     2. `package-lock.json` (`"version": "X.Y.Z.W"` in root and `packages[""]`)
+     3. `README.md` (Version shield badge)
+     4. `CHANGELOG.md` (Promote `[Unreleased]` to `## [X.Y.Z.W] - YYYY-MM-DD`)
+     5. `ARCHITECTURE.md` (Version header, directory structure, test suite counts, and Delta entry)
+
+### Step 3.6: Roadmap 3-Version Sliding-Window Protocol
+To keep `ROADMAP.md` dense, actionable, and token-efficient:
+1. **3-Completed-Milestones Ceiling**:
+   - The "Completed Releases" section of `ROADMAP.md` strictly holds the **3 most recently completed milestones**.
+2. **Historical Archival**:
+   - When a newly completed phase is added to Completed Releases (bringing the total to 4), the oldest of the four MUST be retired into `.agents/memory-bank/ROADMAP-HISTORY.md`.
+3. **Queue Advancement**:
+   - Remove the completed phase from the active forward queue.
+   - Advance `current_position` to `vX.Y.Z.W (Build N) — released & live; next Phase N+1 (vX.Y.Z.W+1 / Build N+1)`.
+
 ### Step 4: 🧠 Intelligently Update Project Documentation
 
 My goal is to ensure all technical and maintenance documentation reflects the new changes, not just list them.

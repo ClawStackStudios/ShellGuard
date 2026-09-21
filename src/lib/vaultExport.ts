@@ -166,7 +166,8 @@ export function isShellGuardEncryptedBackup(raw: unknown): boolean {
 export async function encryptBackupPayload(
   data: string,
   secretKey: string,
-  kind: 'json' | 'csv'
+  kind: 'json' | 'csv',
+  options?: { iterations?: number }
 ): Promise<ShellGuardEncryptedBackupEnvelope> {
   const enc = new TextEncoder();
   const plaintextBytes = enc.encode(data);
@@ -191,7 +192,7 @@ export async function encryptBackupPayload(
   // - Human-supplied passphrase -> PBKDF2-HMAC-SHA256 (600,000 iterations) provides essential brute-force resistance.
   const isClawKey = trimmedKey.startsWith('hu-') && trimmedKey.length === 67;
   const kdf: 'hkdf' | 'pbkdf2' = isClawKey ? 'hkdf' : 'pbkdf2';
-  const kdfIterations = isClawKey ? undefined : DEFAULT_PBKDF2_ITERATIONS;
+  const kdfIterations = isClawKey ? undefined : (options?.iterations || DEFAULT_PBKDF2_ITERATIONS);
 
   const derivedKey = await deriveKeyForEnvelope(keyBytes, salt, kdf, kdfIterations || DEFAULT_PBKDF2_ITERATIONS);
 

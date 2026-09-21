@@ -8,7 +8,7 @@
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
 - **Build**: Vite (strictPort :6464, /api proxy → :6565), VitePress for documentation portal
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 24 suites / 282 passed (1 skipped, 283 total), per-suite DATA_DIR isolation
+- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 24 suites / 285 passed (1 skipped, 286 total), per-suite DATA_DIR isolation
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
 - **License**: AGPL-3.0-only
 - **Mobile Stack (Native Android)**: Kotlin 2.0+, Jetpack Compose, Room (SQLCipher), Android Keystore Biometrics, Retrofit/Ktor, WorkManager

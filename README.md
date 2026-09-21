@@ -380,7 +380,9 @@ npm run start:api
 |---|---|---|---|
 | `GET` | `/api/vault` | canRead | List all pearl logins (owner-scoped; supports `?tags=a,b`) |
 | `POST` | `/api/vault` | canWrite | Create a login (title, secret, username, url, TOTP seed…) |
+| `POST` | `/api/vault/bulk-import` | canWrite | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, returns HTTP 207 Multi-Status with `{ inserted, errors }`) |
 | `PUT` | `/api/vault/:id` | canEdit | Update a login |
+| `DELETE` | `/api/vault/bulk` | canDelete | Batch delete pearls by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
 | `DELETE` | `/api/vault/:id` | canDelete | Delete a login |
 
 ### Secure Notes

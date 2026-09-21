@@ -1,6 +1,6 @@
 # 🛡️ ShellGuard©™ Blueprint
 
-> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql` through `0004_key_ledger.up.sql`) — this document is the map, not the territory.
+> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql` through `0006_vault_tags.up.sql`) — this document is the map, not the territory.
 
 ## 🏛️ Construction Map (ASCII)
 

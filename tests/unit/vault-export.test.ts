@@ -50,11 +50,11 @@ describe('Vault Export & Encryption Suite', () => {
     expect(csv).not.toContain('super-secret-password-123!');
   });
 
-  it('encrypts and round-trips decrypted JSON payload via ClawKey', () => {
+  it('encrypts and round-trips decrypted JSON payload via ClawKey', async () => {
     const jsonStr = JSON.stringify(sampleItems);
     const clawKey = 'hu-abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
 
-    const envelope = encryptBackupPayload(jsonStr, clawKey, 'json');
+    const envelope = await encryptBackupPayload(jsonStr, clawKey, 'json');
     expect(isShellGuardEncryptedBackup(envelope)).toBe(true);
     expect(envelope.v).toBe(1);
     expect(envelope.version).toBe(1);
@@ -62,7 +62,7 @@ describe('Vault Export & Encryption Suite', () => {
     expect(envelope.kind).toBe('json');
     expect(envelope.payload).toBeDefined();
 
-    const result = decryptBackupPayload(envelope, clawKey);
+    const result = await decryptBackupPayload(envelope, clawKey);
     expect(result.kind).toBe('json');
     expect(result.data).toBe(jsonStr);
 
@@ -71,41 +71,37 @@ describe('Vault Export & Encryption Suite', () => {
     expect(parsed[0].title).toBe('GitHub Personal');
   });
 
-  it('encrypts and round-trips decrypted CSV payload via custom passphrase with PBKDF2', () => {
+  it('encrypts and round-trips decrypted CSV payload via custom passphrase with PBKDF2 (600,000 iterations)', async () => {
     const csvStr = generateVaultCsv(sampleItems);
     const passphrase = 'my-super-strong-custom-passphrase-2026';
 
-    const envelope = encryptBackupPayload(csvStr, passphrase, 'csv');
+    const envelope = await encryptBackupPayload(csvStr, passphrase, 'csv');
     expect(isShellGuardEncryptedBackup(envelope)).toBe(true);
     expect(envelope.v).toBe(1);
     expect(envelope.version).toBe(1);
     expect(envelope.kdf).toBe('pbkdf2');
-    expect(envelope.kdfIterations).toBe(100000);
+    expect(envelope.kdfIterations).toBe(600000);
     expect(envelope.kind).toBe('csv');
 
-    const result = decryptBackupPayload(JSON.stringify(envelope), passphrase);
+    const result = await decryptBackupPayload(JSON.stringify(envelope), passphrase);
     expect(result.kind).toBe('csv');
     expect(result.data).toBe(csvStr);
   });
 
-  it('rejects decryption with the wrong passphrase or key', () => {
+  it('rejects decryption with the wrong passphrase or key', async () => {
     const jsonStr = JSON.stringify({ test: 'hello' });
-    const envelope = encryptBackupPayload(jsonStr, 'correct-passphrase', 'json');
+    const envelope = await encryptBackupPayload(jsonStr, 'correct-passphrase', 'json');
 
-    expect(() => {
-      decryptBackupPayload(envelope, 'wrong-passphrase');
-    }).toThrow(/Decryption failed/i);
+    await expect(decryptBackupPayload(envelope, 'wrong-passphrase')).rejects.toThrow(/Decryption failed/i);
   });
 
-  it('rejects tampered ciphertext envelopes', () => {
+  it('rejects tampered ciphertext envelopes', async () => {
     const jsonStr = JSON.stringify({ test: 'hello' });
-    const envelope = encryptBackupPayload(jsonStr, 'passphrase', 'json');
+    const envelope = await encryptBackupPayload(jsonStr, 'passphrase', 'json');
 
     // Tamper with base64 payload
     const tampered = { ...envelope, payload: envelope.payload.slice(0, -4) + 'AAAA' };
 
-    expect(() => {
-      decryptBackupPayload(tampered, 'passphrase');
-    }).toThrow();
+    await expect(decryptBackupPayload(tampered, 'passphrase')).rejects.toThrow();
   });
 });

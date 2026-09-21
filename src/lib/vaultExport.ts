@@ -4,7 +4,7 @@ import { hkdfSha256, pbkdf2Sha256, aesGcmEncrypt, aesGcmDecrypt, sha256 } from '
 
 export const SHELLGUARD_BACKUP_FORMAT = 'shellguard-vault-backup-v1';
 const HKDF_INFO_BACKUP = 'shellguard-vault-backup-v1';
-export const DEFAULT_PBKDF2_ITERATIONS = 100000;
+export const DEFAULT_PBKDF2_ITERATIONS = 600000;
 
 export interface ShellGuardEncryptedBackupEnvelope {
   v?: number;
@@ -50,6 +50,41 @@ function escapeCsvField(val: unknown): string {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
+}
+
+/**
+ * Derives a 256-bit AES key for the backup envelope.
+ * For PBKDF2: prefers native WebCrypto async derivation on secure origins (sub-second for 600k iterations)
+ * and falls back to pure-TS pbkdf2Sha256 on non-secure LAN origins where crypto.subtle is undefined.
+ */
+async function deriveKeyForEnvelope(
+  keyBytes: Uint8Array,
+  salt: Uint8Array,
+  kdf: 'hkdf' | 'pbkdf2',
+  iterations: number
+): Promise<Uint8Array> {
+  if (kdf === 'pbkdf2') {
+    if (typeof globalThis.crypto?.subtle !== 'undefined') {
+      const baseKey = await globalThis.crypto.subtle.importKey(
+        'raw',
+        keyBytes,
+        'PBKDF2',
+        false,
+        ['deriveBits']
+      );
+      const bits = await globalThis.crypto.subtle.deriveBits(
+        { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+        baseKey,
+        256
+      );
+      return new Uint8Array(bits);
+    }
+    // Fallback for insecure LAN contexts where crypto.subtle is undefined
+    return pbkdf2Sha256(keyBytes, salt, iterations, 32);
+  }
+
+  const infoBytes = new TextEncoder().encode(HKDF_INFO_BACKUP);
+  return hkdfSha256(keyBytes, salt, infoBytes, 32);
 }
 
 /**
@@ -128,18 +163,18 @@ export function isShellGuardEncryptedBackup(raw: unknown): boolean {
  * Encrypts an export payload (JSON string or CSV text) into a ShellGuard encrypted envelope.
  * Seals with AES-256-GCM using key material derived from the user's ClawKey or custom password.
  */
-export function encryptBackupPayload(
+export async function encryptBackupPayload(
   data: string,
   secretKey: string,
   kind: 'json' | 'csv'
-): ShellGuardEncryptedBackupEnvelope {
+): Promise<ShellGuardEncryptedBackupEnvelope> {
   const enc = new TextEncoder();
   const plaintextBytes = enc.encode(data);
   // Plaintext checksum is preserved as an explicit diagnostic layer (detects corruption vs key mismatch)
   const checksumSha256 = bytesToHex(sha256(plaintextBytes));
 
   // Generate random salt (16 bytes) and IV (12 bytes) using CSPRNG.
-  // Never fallback to Math.random() in GCM — predictability destroys confidentiality & authenticity.
+  // Never fallback to PRNG in GCM — predictability destroys confidentiality & authenticity.
   const salt = new Uint8Array(16);
   const iv = new Uint8Array(12);
   if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
@@ -153,18 +188,12 @@ export function encryptBackupPayload(
 
   // KDF Selection:
   // - High-entropy sovereign ClawKey ('hu-...' with 256 bits of entropy) -> HKDF-SHA256 is optimal.
-  // - Human-supplied passphrase -> PBKDF2-HMAC-SHA256 (100,000 iterations) provides essential brute-force resistance.
+  // - Human-supplied passphrase -> PBKDF2-HMAC-SHA256 (600,000 iterations) provides essential brute-force resistance.
   const isClawKey = trimmedKey.startsWith('hu-') && trimmedKey.length === 67;
   const kdf: 'hkdf' | 'pbkdf2' = isClawKey ? 'hkdf' : 'pbkdf2';
   const kdfIterations = isClawKey ? undefined : DEFAULT_PBKDF2_ITERATIONS;
 
-  let derivedKey: Uint8Array;
-  if (kdf === 'hkdf') {
-    const infoBytes = enc.encode(HKDF_INFO_BACKUP);
-    derivedKey = hkdfSha256(keyBytes, salt, infoBytes, 32);
-  } else {
-    derivedKey = pbkdf2Sha256(keyBytes, salt, DEFAULT_PBKDF2_ITERATIONS, 32);
-  }
+  const derivedKey = await deriveKeyForEnvelope(keyBytes, salt, kdf, kdfIterations || DEFAULT_PBKDF2_ITERATIONS);
 
   // Authenticated Data
   const aad = enc.encode(`shellguard_backup:${kind}`);
@@ -190,10 +219,10 @@ export function encryptBackupPayload(
 /**
  * Decrypts a ShellGuard encrypted backup envelope, verifying integrity with SHA-256 and AAD.
  */
-export function decryptBackupPayload(
+export async function decryptBackupPayload(
   envelope: ShellGuardEncryptedBackupEnvelope | string,
   secretKey: string
-): { data: string; kind: 'json' | 'csv' } {
+): Promise<{ data: string; kind: 'json' | 'csv' }> {
   let parsedEnv: ShellGuardEncryptedBackupEnvelope;
   if (typeof envelope === 'string') {
     try {
@@ -218,7 +247,6 @@ export function decryptBackupPayload(
 
   const trimmedKey = secretKey.trim();
   const keyBytes = enc.encode(trimmedKey);
-  const infoBytes = enc.encode(HKDF_INFO_BACKUP);
 
   const kind = parsedEnv.kind || 'json';
   const aad = enc.encode(`shellguard_backup:${kind}`);
@@ -227,12 +255,7 @@ export function decryptBackupPayload(
   const kdf = parsedEnv.kdf || (trimmedKey.startsWith('hu-') ? 'hkdf' : 'pbkdf2');
   const iterations = parsedEnv.kdfIterations || DEFAULT_PBKDF2_ITERATIONS;
 
-  let derivedKey: Uint8Array;
-  if (kdf === 'pbkdf2') {
-    derivedKey = pbkdf2Sha256(keyBytes, salt, iterations, 32);
-  } else {
-    derivedKey = hkdfSha256(keyBytes, salt, infoBytes, 32);
-  }
+  const derivedKey = await deriveKeyForEnvelope(keyBytes, salt, kdf, iterations);
 
   let decryptedBytes: Uint8Array;
   try {
@@ -241,9 +264,8 @@ export function decryptBackupPayload(
     // If decryption failed and no explicit KDF was stored, attempt the alternate KDF for backward compatibility
     if (!parsedEnv.kdf) {
       try {
-        const altKey = kdf === 'pbkdf2'
-          ? hkdfSha256(keyBytes, salt, infoBytes, 32)
-          : pbkdf2Sha256(keyBytes, salt, DEFAULT_PBKDF2_ITERATIONS, 32);
+        const altKdf = kdf === 'pbkdf2' ? 'hkdf' : 'pbkdf2';
+        const altKey = await deriveKeyForEnvelope(keyBytes, salt, altKdf, DEFAULT_PBKDF2_ITERATIONS);
         decryptedBytes = aesGcmDecrypt(altKey, iv, payloadBytes, aad);
       } catch {
         throw new Error('Decryption failed: Incorrect password or key provided.');

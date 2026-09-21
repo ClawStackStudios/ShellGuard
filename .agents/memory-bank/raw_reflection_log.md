@@ -3,7 +3,8 @@ Date: 2026-09-20
 TaskRef: "Peer Review Resolution & Hardening — Phase 21 Sub-Phase (Bitwarden Ingestion · Composite Features · Dual Export Suite)"
 
 Learnings:
-- Password-based KDF must provide sufficient work factor (PBKDF2-SHA256 at >=100,000 iterations) rather than high-entropy expansion functions like HKDF, which have no work factor against GPU brute-force when used with human passphrases.
+- Password-based KDF must provide sufficient work factor (PBKDF2-SHA256 at >=100,000 iterations; modern OWASP guidance specifies 600,000 iterations for PBKDF2-HMAC-SHA256) rather than high-entropy expansion functions like HKDF, which have no work factor against GPU brute-force when used with human passphrases.
+- At 600,000 iterations, pure-TS synchronous PBKDF2 computation blocks the main JS thread for 15-20s. Implementing caller-side async acceleration via `crypto.subtle.deriveBits` in `vaultExport.ts` reduces execution to ~1s off-thread on secure origins, while keeping `webCryptoFallback.ts` strictly as an unpolluted pure-TS fallback for non-secure HTTP LAN environments.
 - Pure-TS PBKDF2 (`webCryptoFallback.ts`) implementing RFC 8018 PKCS #5 v2.1 ensures deterministic in-memory derivation without WebCrypto availability or subtle crypto limitations on LAN/HTTP origins.
 - AES-GCM nonces and salts must strictly require CSPRNG (`crypto.getRandomValues`); degrading to `Math.random` breaks both confidentiality and authenticity under GCM. Fail-closed is the only acceptable posture.
 - Secondary login URIs (`uris`) must be registered under `METADATA_COLUMNS` in `metadataGuard.ts` to maintain encryption parity with primary `url` fields at Layer 2.

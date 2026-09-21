@@ -147,7 +147,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
       };
 
       const jsonStr = JSON.stringify(exportPayload, null, 2);
-      const envelope = encryptBackupPayload(jsonStr, keyToUse, 'json');
+      const envelope = await encryptBackupPayload(jsonStr, keyToUse, 'json');
 
       const envelopeStr = JSON.stringify(envelope, null, 2);
       const blob = new Blob([envelopeStr], { type: 'application/json;charset=utf-8;' });
@@ -379,7 +379,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     }
   };
 
-  const handleDecryptEncryptedBackup = (e: React.FormEvent) => {
+  const handleDecryptEncryptedBackup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!encryptedBackupPassword.trim()) {
       setEncryptedBackupError("Please enter your ClawKey or backup passphrase.");
@@ -389,7 +389,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     setEncryptedBackupError(null);
 
     try {
-      const decrypted = decryptBackupPayload(encryptedBackupPending, encryptedBackupPassword);
+      const decrypted = await decryptBackupPayload(encryptedBackupPending, encryptedBackupPassword);
       if (decrypted.kind === "json") {
         const parsed = JSON.parse(decrypted.data);
         let list: any[] = [];

@@ -1253,11 +1253,31 @@ Execute Phase 21 adhering to the Functionality + UI Component pairing:
   (Move to Pod, Assign Tag, Delete), and a dedicated Import wizard with
   preview table and error resolution chips.
 
+### Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite
+- **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
+  - Implement `src/lib/bitwarden.ts` multi-format sniffer hierarchy to prevent unhandled format errors.
+  - Convert Bitwarden Folders to ShellGuard Pods using `normalizePod()`.
+  - Translate Bitwarden items: Logins (with TOTP extraction), Secure Notes, SSH keypairs via `serializeSshKeySecret()`, and Custom Fields (`0: text`, `1: hidden`, `2: boolean`, `3: linked`).
+  - Provide clear user guidance when an encrypted Bitwarden export is uploaded.
+  - Dedicated unit tests in `tests/unit/bitwarden-import.test.ts`.
+- **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
+  - Track per-item password generation history (`password_history`) with timestamps, expandable UI drawer in `ItemFormModal` and `ItemDetailPane`, and one-click password restore.
+  - Support multi-URI entries (`uris`) for login records.
+  - Implement dynamic TOTP configuration variables (`algorithm`: SHA1/SHA256/SHA512, `digits`: 6/8, `period`: 30/60) with form controls in `ItemFormModal` and dynamic live generation in `TotpDisplay.tsx`.
+  - Synchronize Android companion documentation in `compatibility_layer.md`.
+- **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
+  - Implement `src/lib/vaultExport.ts` supporting full JSON and CSV exports across both Encrypted and Unencrypted modes.
+  - Encrypted exports sealed with AES-256-GCM via active ClawKey (`hu-`) or custom passphrase with confirmation.
+  - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.
+  - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
+  - Dedicated unit tests in `tests/unit/vault-export.test.ts`.
+
 Verify importing 100 items with 2 malformed records persists 98 and returns
 an informative 207 Multi-Status with a detailed error array, deletes cascade
 atomically, the floating action bar appears on selection, bulk moves update
 local state optimistically, the import error modal highlights skipped items,
-and the full test oracle + tsc + build stay clean!
+Bitwarden test files import with TOTP and SSH keys intact, per-item password
+history is preserved and restorable, and the full test oracle + tsc + build stay clean!
 ```
 
 ---

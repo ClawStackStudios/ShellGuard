@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       // Dev mode defaults to safe loopback validation (undefined), Prod mode allows wide binds (true)
       allowedHosts: isDev ? undefined : true,
+      watch: {
+        ignored: ['**/tests/**', '**/data*/**', '**/*.sqlite*', '**/*.wal', '**/*.shm', '**/.agents/**', '**/.clinerules/**']
+      },
       proxy: {
         '/api': 'http://localhost:6565'
       }

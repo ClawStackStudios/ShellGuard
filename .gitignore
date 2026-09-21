@@ -23,4 +23,8 @@ tests/data-*/
 # .agents/
 # .claude/
 # .clinerules/
+.clinerules/scratch/
 .crustagent/
+
+# Local export fixtures & test data
+/bitwarden_export_*.json

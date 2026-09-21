@@ -23,9 +23,9 @@ All ShellGuard endpoints return standard `{ success: boolean, data?: any, error?
 | Method | Path | Required Permission | Description |
 |---|---|---|---|
 | `GET` | `/api/vault` | `canRead` | List all vault pearls for owner (supports `?tags=a,b` intersection filter) |
-| `POST` | `/api/vault` | `canWrite` | Create a new vault pearl (supports `tags` array) |
-| `POST` | `/api/vault/bulk-import` | `canWrite` | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, returns HTTP 207 Multi-Status with `{ inserted, errors }`) |
-| `PUT` | `/api/vault/:id` | `canEdit` | Update an existing pearl (supports `tags` array) |
+| `POST` | `/api/vault` | `canWrite` | Create a new vault pearl (supports `tags`, `uris` Layer 2 metadata encryption, and `password_history` Layer 1 ShellCryption) |
+| `POST` | `/api/vault/bulk-import` | `canWrite` | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, supports `tags`, `uris`, `password_history`; returns HTTP 207 Multi-Status with `{ inserted, errors }`) |
+| `PUT` | `/api/vault/:id` | `canEdit` | Update an existing pearl (supports `tags`, `uris`, and `password_history`) |
 | `DELETE` | `/api/vault/bulk` | `canDelete` | Batch delete pearls by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
 | `DELETE` | `/api/vault/:id` | `canDelete` | Delete pearl (cascades linked attachments) |
 

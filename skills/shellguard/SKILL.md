@@ -248,6 +248,8 @@ Retrieve one pearl by ID. Returns `404 Not Found` if it does not exist **or belo
   type?: string            // "password" | "note" | "card" | ... (default "password")
   category?: string        // ≤64 characters (default "")
   tags?: string[] | string // array of tag strings or JSON array (default [])
+  uris?: string            // stringified JSON array of secondary login URIs (Layer 2 metadata-encrypted)
+  password_history?: string // stringified JSON array of password entries, client-side encrypted (Layer 1 ShellCryption)
   notes?: string           // ≤10000 characters, encrypted client-side
   totpSecret?: string      // encrypted client-side
   attachments?: string[]   // linked attachment IDs
@@ -498,8 +500,8 @@ Every sensitive field (`secret`, `content`, `keyValue`, `fileData`, …) holds a
 ```
 
 - **Encryption happens client-side** using a key derived (PBKDF2) from the human's master secret. That key and the raw `hu-` identity never leave the browser.
-- **AAD binding:** the `aad` field binds each ciphertext to its table and record ID (`table:recordId`), preventing ciphertext-swapping between rows.
-- **Server-side storage is opaque:** SQLite rows contain these blobs verbatim plus plaintext *metadata* (title/category/timestamps). If `DB_ENCRYPTION_KEY` (SQLCipher) is set, the metadata layer is encrypted at rest too — but that is defense-in-depth over metadata only, not a substitute for ShellCryption.
+- **AAD binding:** the `aad` field binds each ciphertext to its table and record ID (`table:recordId`), preventing ciphertext-swapping between rows. Primary password secrets bind to `vault_pearls:{id}`, while historical password revisions bind to `vault_pearls_history:{id}`.
+- **Server-side storage is opaque:** SQLite rows contain these blobs verbatim plus metadata. Secondary URIs (`uris`), tags, titles, and categories are protected under Layer 2 metadata encryption (`MetadataGuard`) at rest.
 - **Consequences for agents:**
   - You **MUST NOT expect plaintext** in `secret`, `content`, `keyValue` or `fileData`.
   - You **cannot decrypt** anything without the human's master secret — if you need readable values, ask the human to provide them out-of-band.

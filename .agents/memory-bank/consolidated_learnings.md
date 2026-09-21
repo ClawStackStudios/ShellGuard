@@ -111,6 +111,25 @@
 - Response echoes original plaintext (req.body), NOT encrypted values (toStore).
 - *Rationale:* Client always receives plaintext. Encryption is transparent to the API consumer.
 
+**Pattern: Route Ordering Hygiene (Static / Bulk Subpaths Before Parameterized Handlers)**
+- In Express routers, declare static and sub-resource routes (e.g. `POST /bulk-import`, `DELETE /bulk`) strictly *before* parameterized pattern routes (e.g. `PUT /:id`, `DELETE /:id`).
+- Placing `/bulk` after `/:id` causes Express router to match `/bulk` as `req.params.id = 'bulk'`, silently shadowing the bulk endpoint.
+- *Rationale:* Prevents critical P0 routing defects where batch operations are misinterpreted as single-entity mutations on a literal ID.
+
+**Pattern: 207 Multi-Status Partial Failure Reporting & Ingestion Engine**
+- When designing batch operations where individual records can fail without aborting valid ones:
+  - Validate array container bounds in middleware (`validateBody(z.array(z.any()).min(1).max(1000))`).
+  - Validate individual records per-item in the route handler via `safeParse()`.
+  - Execute valid inserts inside an atomic database transaction (`db.transaction(...)`).
+  - Return `201 Created` with `{ inserted: string[] }` when all records succeed.
+  - Return `207 Multi-Status` with `{ inserted: string[], errors: [{ index, reason }] }` on partial success.
+  - Mount a dedicated scoped body parser (e.g. 10MB on `/bulk-import`) before global 1MB limits.
+- *Rationale:* Enables robust high-volume data ingestion, granular error reporting, and prevents single-record failures from blocking large migrations.
+
+**Pattern: Wire-Exact Documentation Contract Alignment (Docs Bow to Code)**
+- Document endpoint return payloads with exact TypeScript types matching the controller (e.g., distinguishing between an array of IDs `inserted: string[]` versus a count `inserted: number`, and exact HTTP status codes `201 Created` vs `207 Multi-Status`).
+- *Rationale:* Automated agents and API consumers depend on literal contract fidelity; subtle type mismatches cause client parser failures.
+
 ---
 
 ## Project-Specific
@@ -118,7 +137,7 @@
 **ShellGuard Port Allocation:**
 - Development: Frontend :6464, API :6565
 - Production: Single port :6464
-- Tests: 64641 (auth-flow), 64642 (security), 64643 (vault-crud), 64644 (settings), 64645 (admin), 64648 (metadata-encryption)
+- Tests: 64641 (auth-flow), 64642 (security), 64643 (vault-crud), 64644 (settings), 64645 (admin), 64648 (metadata-encryption), 64650 (vault-bulk-import)
 
 **ShellGuard Key System:**
 - `hu-` key: 67 chars (`hu-` + 64 base62). Identity + ShellCryption seed. SHA-256 hash stored server-side only.
@@ -142,6 +161,15 @@
 **Pattern: Granular Background Account Locking**
 - If an app architecture supports multiple simultaneous unlocked sessions in `sessionStorage` (unlike traditional strict singlet-session password managers), expose granular lock controls in the account switcher.
 - *Rationale:* Major privacy win for multi-tenant users (e.g. keeping Work vault locked while Personal is active).
+
+**Pattern: Reef Modernist UI Modals over Native Browser Dialogs**
+- Never invoke native browser `window.prompt()` or `window.confirm()`.
+- Implement accessible, dark-mode inline input cards and modal dialogs (`ConfirmDialog`) for user input, batch confirmations, and deletion warnings.
+- *Rationale:* Browser native prompts block JavaScript execution, break automated headless testing (Vitest / Playwright / Puppeteer), and destroy dark-mode theme fidelity.
+
+**Pattern: Mutation Field Preservation in Bulk Operations**
+- When updating a subset of item attributes across multiple items (e.g. bulk moving items to a pod or assigning tags), ensure existing metadata fields (such as `tags: item.tags`) are explicitly preserved in the payload sent to the update endpoint.
+- *Rationale:* Endpoints that update records by overwriting column values will silently clear unmentioned fields if not preserved by the client adapter.
 
 ---
 

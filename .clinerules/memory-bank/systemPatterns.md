@@ -53,6 +53,10 @@ Every mutation follows this gauntlet (no shortcuts):
 - **Unified color engine**: `hashStringToColor` in `podUtils.ts` generates deterministic HSL colors for pods AND tags with explicit user overrides; `typeof localStorage === 'undefined'` guards keep it headless-safe in Node test environments.
 - **SSH dual-key serialization**: `parseSshKeySecret`/`serializeSshKeySecret` envelope handles both legacy raw PEM `{publicKey, privateKey}` JSON and clean RFC 7468 PKCS#8; backward compat detects shape on read.
 - **Attachment streaming (Phase 19 tightened in Phase 20)**: 500MB per-file ceiling (`ATTACHMENT_MAX_MB`) + 1000MB per-owner grotto quota (`GROTTO_QUOTA_MB`); Busboy mid-stream 413 abort; 1MB chunked `substr()` downloads; write path peaks at ciphertext size (no `openBlob()`).
+- **Bulk operations with per-record partial failure (Phase 21)**: validate the *container* (`items: 1..1000`) in middleware, then `VaultSchemas.bulkImportItem.safeParse()` **per record inside the route** — failures aggregate into `errors: [{ index, reason }]` (field-qualified) while valid records persist in a single `db.transaction()`. Declining middleware-level item typing is deliberate: `validateBody` would reject the entire payload with 400 and make 207 impossible.
+- **207 Multi-Status envelope**: partial success still returns `{ success: true, data: { inserted: string[], errors: [...] } }` — errors MUST live inside `data` because `restAdapter` unwraps `{success, data}` → `data` and treats every 2xx as success. Bulk delete mirrors it with `{ deleted: string[], errors: [{ id, reason }] }`.
+- **Literal-path route ordering invariant**: bulk/literal routes (`/bulk-import`, `/bulk`) MUST register ABOVE parameterized `/:id` siblings — otherwise Express captures the literal as the param value (`id="bulk"`) and 404s. This was a shipped P0 in Phase 21.
+- **Scoped body parser pattern**: `app.use('/api/vault/bulk-import', express.json({ limit: '10mb' }))` mounted BEFORE the global 1MB parser — the first parser consumes JSON and the global one no-ops, so one route gets headroom without weakening the global ceiling.
 
 ## Critical Implementation Paths
 
@@ -65,6 +69,9 @@ Every mutation follows this gauntlet (no shortcuts):
 - `src/lib/tagUtils.ts` — Client-side tag utilities (`TagSelectorInput` autocomplete chips, color picker integration)
 - `src/server/utils/tagUtils.ts` — Server-side tag filtering (`?tags=a,b` intersection, SQL-layer scoping)
 - `src/lib/keyGen.ts` — SSH dual-key serialization envelope (`parseSshKeySecret`/`serializeSshKeySecret`) with backward compat (Phase 20)
+- `src/server/routes/vault.ts` — `POST /bulk-import` + `DELETE /bulk` (Phase 21; registered ABOVE `/:id`)
+- `src/server/validation/schemas.ts` — `VaultSchemas.bulkImport` (container) + `bulkImportItem` (per-record) + `bulkDelete`
+- `src/components/Vault/VaultShell.tsx` — tri-state selection state + floating bulk action bar (Phase 21)
 
 ## Auditability Invariants (Cryptographer's Lens — 2026-09-16)
 

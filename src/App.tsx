@@ -299,15 +299,24 @@ export default function App() {
         }
       }));
 
-      // Decrypt custom_fields for each item type
+      // Decrypt custom_fields and password_history for each item
       const decryptedLoginsWithCustom = await Promise.all(decryptedLogins.map(async (p: any) => {
+        let updated = { ...p };
         if (p.custom_fields) {
           try {
             const decrypted = await decryptField(p.custom_fields, key, "vault_pearls_custom", p.id);
-            return { ...p, custom_fields: decrypted };
-          } catch { return { ...p, custom_fields: "" }; }
+            updated.custom_fields = decrypted;
+          } catch { updated.custom_fields = ""; }
         }
-        return p;
+        if (p.password_history) {
+          try {
+            const decryptedHist = await decryptField(p.password_history, key, "vault_pearls_history", p.id);
+            updated.password_history = decryptedHist;
+          } catch {
+            updated.password_history = p.password_history;
+          }
+        }
+        return updated;
       }));
 
       const decryptedNotes = await Promise.all(reefNotes.map(async (p: any) => {
@@ -564,11 +573,13 @@ export default function App() {
     secret: string;
     username: string;
     url: string;
+    uris?: string;
     category: string;
     type: VaultItemType;
     tags?: string;
     notes?: string;
     totp_secret?: string;
+    password_history?: string;
     attachments?: string;
     custom_fields?: string;
     newAttachments?: PendingAttachment[];
@@ -602,6 +613,10 @@ export default function App() {
         if (item.totp_secret) {
           encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
         }
+        let encryptedHistory = "";
+        if (item.password_history) {
+          encryptedHistory = await encryptField(item.password_history, shellKey, "vault_pearls_history", id);
+        }
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
         await restAdapter.POST("/api/vault", {
           id,
@@ -609,11 +624,13 @@ export default function App() {
           secret: encryptedSecret,
           username: item.username,
           url: item.url,
+          uris: item.uris,
           category: item.category,
           tags: item.tags,
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
+          password_history: encryptedHistory,
           attachments: attachmentIdsJson,
           custom_fields: encryptedCustomFields
         });
@@ -631,11 +648,13 @@ export default function App() {
       secret: string;
       username: string;
       url: string;
+      uris?: string;
       category: string;
       type: VaultItemType;
       tags?: string;
       notes?: string;
       totp_secret?: string;
+      password_history?: string;
       attachments?: string;
       custom_fields?: string;
       newAttachments?: PendingAttachment[];
@@ -672,17 +691,23 @@ export default function App() {
         if (item.totp_secret) {
           encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
         }
+        let encryptedHistory = "";
+        if (item.password_history) {
+          encryptedHistory = await encryptField(item.password_history, shellKey, "vault_pearls_history", id);
+        }
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
         await restAdapter.PUT(`/api/vault/${id}`, {
           title: item.title,
           secret: encryptedSecret,
           username: item.username,
           url: item.url,
+          uris: item.uris,
           category: item.category,
           tags: item.tags,
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
+          password_history: encryptedHistory,
           attachments: item.attachments || "[]",
           custom_fields: encryptedCustomFields
         });
@@ -1217,6 +1242,7 @@ export default function App() {
                         let encryptedCustomFields = "";
 
                         const itemType = (item.type as VaultItemType) || "password";
+                        let encryptedHistory = "";
                         if (itemType === 'note') {
                           encryptedContent = await encryptField(item.secret || "", shellKey, "vault_secure_notes", id);
                           encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
@@ -1228,6 +1254,9 @@ export default function App() {
                           if (item.totp_secret) {
                             encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
                           }
+                          if (item.password_history) {
+                            encryptedHistory = await encryptField(item.password_history, shellKey, "vault_pearls_history", id);
+                          }
                           encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
                         }
 
@@ -1237,11 +1266,13 @@ export default function App() {
                           secret: itemType === 'note' ? encryptedContent : itemType === 'key' ? encryptedKey : encryptedSecret,
                           username: item.username || "",
                           url: item.url || "",
+                          uris: item.uris || "[]",
                           category: item.category || "",
                           type: itemType,
                           tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
                           notes: item.notes || "",
                           totp_secret: encryptedTotp,
+                          password_history: encryptedHistory,
                           attachments: item.attachments || "[]",
                           custom_fields: encryptedCustomFields
                         });

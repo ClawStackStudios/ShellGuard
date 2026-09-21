@@ -72,6 +72,19 @@ When a user imports an `sgtotp.bak` into the ShellGuard Web Application:
 3. **Map** each item to a new `vault_pearl` record:
    - `title` -> `title`
    - `username` -> `username`
-   - `category` -> `category`
-   - `totp_secret` -> Ensure the Base32 `secret` is packed into the standard web TOTP envelope, then encrypted via the web's `ShellCryptionEngine` using the user's web `shellKey` and `vault_pearls_totp:{id}` AAD.
+   - `category` -> `category` mapped through `normalizePod(item.category)`
+   - `totp_secret` -> Formatted into a standard `otpauth://totp/...` URI preserving `algorithm` (`SHA1`, `SHA256`, `SHA512`), `digits` (`6`, `8`), and `period` (`30`, `60`, etc.), or normalized Base32 secret, then encrypted via the web's `ShellCryptionEngine` using the user's web `shellKey` and `vault_pearls_totp:{id}` AAD.
 4. **Insert** the records. On the next Android sync cycle, these new items will securely mirror back down to the Android app within the "☁️ Synced from ShellGuard" group!
+
+## Dynamic TOTP Variable Interoperability
+
+Both ShellGuard Web and the ShellGuard-TOTP Android Companion strictly support dynamic TOTP parameters adhering to RFC 6238 and standard `otpauth://` URI conventions:
+
+| Parameter | Supported Values | Default | Description |
+|:--|:--|:--|:--|
+| `algorithm` | `SHA1`, `SHA256`, `SHA512` | `SHA1` | HMAC cryptographic hashing function |
+| `digits` | `6`, `8` | `6` | Length of generated rolling one-time passcode |
+| `period` | `30`, `60` (or custom seconds) | `30` | Time interval step before token rotation |
+
+When importing from Bitwarden, 1Password, or standard authenticator QR codes, any specified `algorithm`, `digits`, or `period` parameters are preserved and respected identically by both the Web Vault's `TotpDisplay` component and the Android Companion's TOTP engine.
+

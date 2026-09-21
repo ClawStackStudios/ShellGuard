@@ -102,13 +102,30 @@ ShellGuard supports multi-dimensional tagging alongside hierarchical pods:
 
 ---
 
-## ⏱️ Built-In TOTP Authenticator Engine
+## ⏱️ Dynamic RFC 6238 TOTP Authenticator Engine
 
-ShellGuard includes a zero-knowledge, client-side TOTP engine:
-- **Seed Ingestion**: Paste a Base32 secret seed (`JBSWY3DPEHPK3PXP`) or scan a QR code.
-- **Zero-Knowledge Storage**: The TOTP seed is encrypted client-side inside the `totp_secret` column.
-- **Client-Side Generation**: RFC 6238 6-digit dynamic codes and 30-second countdown rings calculate directly in browser RAM without server interaction.
-- **Companion Mirroring**: Stored TOTP seeds seamlessly mirror to the native [ShellGuard-TOTP Android companion](/companion/) for offline authentication on your mobile device.
+ShellGuard includes a zero-knowledge, client-side dynamic TOTP engine (`totpUtils.ts`):
+- **Dynamic Algorithm & Interval Support**: Generates codes for standard and advanced authenticator configurations, supporting **SHA1**, **SHA256**, and **SHA512** HMAC hashing, **6 or 8 digits**, and custom refresh intervals (**15s, 30s, 60s**).
+- **Full URI & Seed Ingestion**: Paste raw Base32 secret seeds (`JBSWY3DPEHPK3PXP`) or complete `otpauth://totp/...` URIs. Parameters like `algorithm`, `digits`, and `period` are parsed dynamically and preserved round-trip.
+- **Zero-Knowledge Storage**: The TOTP seed or URI is sealed client-side inside the `totp_secret` column under Layer 1 ShellCryption (`vault_pearls_totp:{id}`).
+- **Client-Side Generation**: Countdown rings and dynamic verification codes calculate purely in browser RAM with zero server interaction.
+- **Companion Mirroring**: Stored TOTP parameters seamlessly mirror to the native [ShellGuard-TOTP Android companion](/companion/) for offline authentication on your mobile device.
+
+---
+
+## 🔗 Composite Item Features: Multi-URI & Password History
+
+ShellGuard provides rich composite credential features matching modern power-user workflows:
+
+### Multi-URI Row Support
+- **Secondary Login Domains**: Add arbitrary secondary URIs per login item (e.g. `https://accounts.google.com`, `https://mail.google.com`, `androidapp://...`).
+- **Domain Extraction & Quick Launch**: Automatically parses hostnames and renders external launch buttons beside each URI row.
+- **Layer 2 Metadata Encryption**: Secondary URIs are encrypted at rest using `MetadataGuard` (`vault_pearls.uris`), matching the protection model of the primary URL.
+
+### Item Password Generation History
+- **Per-Item Generation Tracking**: Every time the password generator is triggered inside the item form, the previous password revision is preserved in the item's history drawer with a timestamp.
+- **Client-Side Layer 1 ShellCryption**: Password history records are sealed in the browser under dedicated AAD `vault_pearls_history:{id}` (`vault_pearls.password_history`), ensuring the server never sees historical passwords.
+- **Interactive History Drawer**: View previous passwords with unmask toggles, copy actions, and instant one-click restore.
 
 ---
 

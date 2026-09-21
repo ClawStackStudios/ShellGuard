@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Loader2, Terminal } from 'lucide-react';
-import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty } from '../../types.ts';
+import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Loader2, Terminal, History } from 'lucide-react';
+import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty, PasswordHistoryEntry } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
 import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
@@ -31,6 +31,7 @@ export function ItemDetailPane({
   onFetchAttachment
 }: ItemDetailPaneProps) {
   const [revealed, setRevealed] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [revealedHiddenFields, setRevealedHiddenFields] = useState<Set<string>>(new Set());
   // Phase 19: on-demand attachment fetch + encrypted object-URL preview modal.
@@ -42,6 +43,7 @@ export function ItemDetailPane({
   // Reset state when item changes
   useEffect(() => {
     setRevealed(false);
+    setShowHistory(false);
     setCopyFeedback(null);
     setRevealedHiddenFields(new Set());
   }, [item?.id]);
@@ -374,6 +376,28 @@ export function ItemDetailPane({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    {(() => {
+                      let histList: PasswordHistoryEntry[] = [];
+                      if (item.password_history) {
+                        try {
+                          const parsed = JSON.parse(item.password_history);
+                          if (Array.isArray(parsed)) histList = parsed;
+                        } catch {}
+                      }
+                      if (histList.length === 0) return null;
+                      return (
+                        <button
+                          onClick={() => setShowHistory(!showHistory)}
+                          className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                            showHistory ? 'bg-claw-cyan/15 text-claw-cyan border border-claw-cyan/30' : 'text-slate-400 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                          title="Password History"
+                        >
+                          <History size={14} />
+                          <span className="text-[10px]">{histList.length}</span>
+                        </button>
+                      );
+                    })()}
                     <button
                       onClick={() => setRevealed(!revealed)}
                       className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
@@ -389,6 +413,43 @@ export function ItemDetailPane({
                   </div>
                 </div>
               )}
+
+              {/* Password History Drawer */}
+              {showHistory && item.password_history && (() => {
+                let histList: PasswordHistoryEntry[] = [];
+                try {
+                  const parsed = JSON.parse(item.password_history);
+                  if (Array.isArray(parsed)) histList = parsed;
+                } catch {}
+                if (histList.length === 0) return null;
+                return (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/40 border border-theme-subtle rounded-xl space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-theme-muted">
+                      <span>Password Generation History</span>
+                      <button onClick={() => setShowHistory(false)} className="hover:text-theme-main cursor-pointer"><X size={13} /></button>
+                    </div>
+                    <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
+                      {histList.slice().reverse().map((hist, idx) => (
+                        <div key={idx} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle text-xs">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-mono text-theme-main truncate select-all">{hist.password}</span>
+                            <span className="text-[10px] text-theme-muted">{new Date(hist.generatedAt).toLocaleString()}</span>
+                          </div>
+                          <button
+                            onClick={() => handleCopy(hist.password, `hist-${idx}`)}
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              copyFeedback === `hist-${idx}` ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                            }`}
+                            title="Copy Password"
+                          >
+                            {copyFeedback === `hist-${idx}` ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* URL */}
               {item.url && (
@@ -410,6 +471,35 @@ export function ItemDetailPane({
                   </button>
                 </div>
               )}
+
+              {/* Extra Multi-URIs */}
+              {item.uris && (() => {
+                let urisList: string[] = [];
+                try {
+                  const parsed = JSON.parse(item.uris);
+                  if (Array.isArray(parsed)) urisList = parsed.filter(Boolean);
+                } catch {}
+                if (urisList.length === 0) return null;
+                return urisList.map((extraUrl, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Globe size={16} className="text-slate-400" />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Additional Website</span>
+                        <a href={extraUrl.startsWith('http') ? extraUrl : `https://${extraUrl}`} target="_blank" rel="noopener noreferrer" className="text-sm text-claw-cyan hover:underline flex items-center gap-1 truncate">
+                          {extractDomain(extraUrl)} <ExternalLink size={12} />
+                        </a>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(extraUrl, `url-${idx}`)}
+                      className={`p-2 rounded-lg transition-colors flex-shrink-0 ${copyFeedback === `url-${idx}` ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"}`}
+                    >
+                      {copyFeedback === `url-${idx}` ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                ));
+              })()}
             </div>
 
             {/* TOTP */}

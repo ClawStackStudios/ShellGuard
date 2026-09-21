@@ -97,8 +97,7 @@ interface CustomField {
 
 - **Client-side encryption with distinct AAD namespaces per item type**:
   `vault_pearls_custom:{id}`, `vault_secure_notes_custom:{id}`,
-  `vault_ssh_keys_custom:{id}` — same ShellCryption engine, namespace
-  isolates cross-item substitution.
+  `vault_ssh_keys_custom:{id}`, and `vault_pearls_history:{id}` (for item password revision history) — same ShellCryption engine, namespace isolates cross-item substitution.
 - Server treatment: opaque blob — validated only for length/type, stored
   byte-for-byte, never inspected, never registered in metadataGuard.
 

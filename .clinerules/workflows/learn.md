@@ -74,7 +74,7 @@ Set `request_feedback = true`. Present to the user for review.
 
 Once the user approves:
 
-1. **Update target files**: Apply the proposed changes to `.clinerules/` files directly.
+1. **Update target files**: Apply the proposed changes to `.clinerules/scratch/` files directly.
 2. **Log to raw reflection**: Append a new entry to `raw_reflection_log.md` with the date, task reference, and what was learned.
 3. **Consolidate**: If the insight is durable and broadly applicable, add it to `consolidated_learnings.md`.
 4. **Prune raw log**: Remove processed entries from `raw_reflection_log.md` after consolidation.
@@ -111,8 +111,9 @@ When patterns recur across multiple sessions or the user's feedback indicates a 
 
 Before completing this workflow, verify:
 1. **Proposal was reviewed**: User approved the learning proposal before any file changes.
-2. **Target file exists**: The `.clinerules/` file being updated is the correct one.
+2. **Target file exists**: The `.clinerules/scratch/` file being updated is the correct one.
 3. **No duplication**: The insight doesn't already exist in the target file.
 4. **Memory bank logged**: `raw_reflection_log.md` has a new entry.
 5. **Consolidated (if applicable)**: `consolidated_learnings.md` reflects the durable insight.
 6. **Raw log pruned**: Processed entries are removed from `raw_reflection_log.md`.
+7. **Clean up Completed**: Cleaned up the used learning proposal from my scratch directory.

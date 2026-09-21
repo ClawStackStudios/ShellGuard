@@ -1,4 +1,60 @@
 ---
+Date: 2026-09-20
+TaskRef: "/learn cycle — territory ruling, review discipline, delegation brief, contract-doc priority"
+
+Learnings:
+- **Territory ruling (broadened):** `.clinerules/` — the WHOLE tree (rules, skills, workflows, templates, memory bank) — is my home. `.agents/` (Antigravity) and `.jules/` (Jules) are theirs. Rules are "shared seeds, not shared state": identical rule text across agent trees does NOT imply mirrored edits, because each agent grows its own path. Cross-home reading is read-only; a defect in another agent's file gets reported, not reached into. This retires the old "mirror to `.agents/rules/`" habit and answers the governance question I raised in the proposal.
+- The /learn classification filter that worked: ask "is this a *behavior* or a *fact*?" Phase 21's domain patterns (route ordering, partial-failure validation, 207 envelope, scoped parser) are facts — they went to the memory bank, not the rules. Proposing them as rules would have been a category error and would have diluted the rule layer.
+
+Difficulties:
+- I initially over-built the review: I read files instead of interrogating the commit graph, which is exactly the failure Candidate 1 now encodes. The lesson arrived by being the mistake.
+- The `learning_proposal.md` artifact had to be rewritten wholesale (152 lines) rather than appended — a full-file rewrite via bash heredoc needed an ASCII-only discipline (no astral emoji) plus a post-write U+FFFD byte-scan. Confirmed clean.
+
+Successes:
+- 4 candidates applied, all in `.clinerules/` only: git-hygiene § Territory + § Reviewing another author's work; docs-hygiene §5 contract-doc priority + self-consistency sweep; new skill `skills/delegation-brief.md`.
+- The delegation-brief pattern is the highest-leverage artifact of the cycle: leading a brief with a verified ground-truth table (real paths, line numbers, current-state facts, false spec claims) instead of a feature description is what turned a memoryless executor's guesswork into a clean pass.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: delegated briefs lead with verified ground truth and resolved defaults, not task descriptions.
+- Pattern: contract docs (agent-facing) take the claim battery first — wrong status codes/types are build-breaking, not cosmetic.
+- Pattern: territory is a home, not a shared directory; divergence between agent rule-trees is the learning, not drift.
+
+Gates: No code gates involved (rules/skills/memory-bank only). Encoding scan 0× U+FFFD; proposal artifact 152 lines; rule diffs verified by re-read.
+---
+
+---
+Date: 2026-09-20
+TaskRef: "Phase 21 — Bulk Import Endpoint & Batch Operations: adversarial PR review, gate verification, doc-lie correction"
+
+Learnings:
+- Express route matching is registration-ordered: `router.delete('/bulk')` placed after `router.delete('/:id')` is unreachable — the param route binds `id="bulk"` and 404s. The feature compiled, every gate stayed green, and the route was dead. A route with no integration test is a hypothesis, not a feature.
+- Middleware `validateBody(schema)` is structurally incompatible with HTTP 207 partial failure: it 400s the whole payload on the first bad field. The working shape is container-bounds validation in middleware (`items: 1..1000`) plus per-record `itemSchema.safeParse()` inside the handler, aggregating `{index, reason}` while valid rows persist in one transaction. The container schema therefore reads `z.array(z.any())` — which looks like a hole and is the mechanism. Documented explicitly so nobody "tightens" it back.
+- The 207 envelope must keep errors INSIDE `data`: `restAdapter` unwraps `{success, data}` → `data` and treats every 2xx as success, so a top-level `{success:false, errors}` is silently discarded client-side. Also `inserted` is an array of IDs, not a count.
+- Scoped body parser pattern: `app.use('/api/vault/bulk-import', express.json({limit:'10mb'}))` mounted BEFORE the global 1MB parser — the first parser consumes the stream, the global one no-ops. One route gets headroom without weakening the global ceiling.
+- The agent-facing `SKILL.md` had drifted in four places (200 vs actual 201; `inserted` count vs array; `{index,id,title,reason}` vs actual `{index,reason}`; `secret` as nested object vs required string). The closer a doc sits to an external consumer, the more expensive its drift. Fixed via claim battery (grep the enforcing code first).
+- **Verify the commit, not the checkout.** Jules fixed all five review blockers but left them uncommitted; `HEAD` still held the broken commit. Only `git status --porcelain` + `git log origin/main..HEAD` + `git show HEAD:<file>` expose that gap. A review that reads disk is reviewing an intention.
+- `tsconfig.json` includes only `["src", "server.ts"]` — `tsc --noEmit` passing does NOT type-check `tests/`. New suites are only proven by actually running vitest.
+
+Difficulties:
+- The 4-gate verification could not be done statically; I had to run the full oracle (~191s) plus three builds in background and poll logs (shell integration swallows long-command output).
+- Character-encoding and TTY-collapse quirks: vitest per-suite summary lines weren't greppable from the redirected log ("tests)"), though the aggregate `Test Files 21 passed (21) / Tests 259 passed | 1 skipped` was. Had to rely on the aggregate + arithmetic (248 + 11 = 259).
+
+Successes:
+- All four gates verified green on the fixed tree: oracle 21 files / 259 passed / 1 skipped / 0 failed; `tsc --noEmit` clean; `vite build` 2177 modules / 55.05s; `docs:build` ~101s (re-verified at ~100.68s after my doc edits).
+- The `.agents` bank claim ("21 suites, 259 passed, 1 skipped, all gates green") was independently confirmed accurate — 13 apparent "fail-ish" log lines all proved to be expected error-path logs.
+- Caught and corrected 4 SKILL.md contract lies + 1 ARCHITECTURE.md internal count contradiction that the implementer's own docs pass had missed.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: literal-path routes register ABOVE parameterized `/:id` siblings (Express ordering invariant).
+- Pattern: partial-failure APIs need per-record validation, not a middleware schema gate.
+- Pattern: 207/partial-success envelope keeps errors inside `data` for the restAdapter unwrap.
+- Pattern: scoped body parser ahead of the global ceiling.
+- Pattern: review the committed diff (HEAD), not the working tree.
+
+Gates: oracle 21 files / 259 passed / 1 skipped / 0 failed (190.85s); tsc clean; vite build OK (55.05s); docs:build OK (100.68s). Commits `6f862e5` + `3b40008` on `feature/phase-21-bulk-operations-11309179680338905330` — unmerged, untagged.
+---
+
+---
 Date: 2026-09-19
 TaskRef: "Memory bank rebuild: v0.0.2.1 -> v0.0.2.2"
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Lock, Eye, EyeOff, Globe, Sparkles, Paperclip, Upload, Plus, AlertTriangle, RefreshCw, Check, Zap, Terminal } from 'lucide-react';
-import { VaultItem, VaultItemType, CustomField, CustomFieldType, CustomFieldLinkedProperty, Tag } from '../../types.ts';
+import { X, Lock, Eye, EyeOff, Globe, Sparkles, Paperclip, Upload, Plus, AlertTriangle, RefreshCw, Check, Zap, Terminal, History, Copy, Trash2 } from 'lucide-react';
+import { VaultItem, VaultItemType, CustomField, CustomFieldType, CustomFieldLinkedProperty, Tag, PasswordHistoryEntry } from '../../types.ts';
 import { FolderInputGroup } from './FolderInputGroup.tsx';
 import { TagSelectorInput } from './TagSelectorInput.tsx';
 import { parseTags, extractAllTags } from '../../lib/tagUtils.ts';
@@ -10,6 +10,7 @@ import { generateUUID } from '../../lib/crypto.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
 import { generatePassword, getGlobalGeneratorConfig, GeneratorConfig } from '../../lib/generator.ts';
 import { generateSshKeyPair, keypairGenerationSupported, GeneratedSshKeyPair, SshKeyAlgorithm, parseSshKeySecret, serializeSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
+import { parseTotpSecret, formatTotpSecret, TotpAlgorithm } from '../../lib/totpUtils.ts';
 
 // We inline Favicon and PasswordStrengthIndicator here for simplicity if needed, 
 // or import them if they are exported.
@@ -27,11 +28,13 @@ interface ItemFormModalProps {
     secret: string;
     username: string;
     url: string;
+    uris?: string;
     category: string;
     type: VaultItemType;
     tags?: string;
     notes?: string;
     totp_secret?: string;
+    password_history?: string;
     attachments?: string;
     custom_fields?: string;
     newAttachments?: PendingAttachment[];
@@ -59,6 +62,15 @@ export function ItemFormModal({
   // Extra fields
   const [notes, setNotes] = useState("");
   const [totpSecret, setTotpSecret] = useState("");
+  const [totpAlgorithm, setTotpAlgorithm] = useState<TotpAlgorithm>('SHA1');
+  const [totpDigits, setTotpDigits] = useState<number>(6);
+  const [totpPeriod, setTotpPeriod] = useState<number>(30);
+  const [showAdvancedTotp, setShowAdvancedTotp] = useState(false);
+
+  // Multi-URI & Password History
+  const [extraUris, setExtraUris] = useState<string[]>([]);
+  const [passwordHistory, setPasswordHistory] = useState<PasswordHistoryEntry[]>([]);
+  const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
   
   // Field visibility
   const [showNoteField, setShowNoteField] = useState(false);
@@ -110,6 +122,26 @@ export function ItemFormModal({
           setSshPublicKey("");
         }
         setUrl(initialItem.url || "");
+        if (initialItem.uris) {
+          try {
+            const parsed = JSON.parse(initialItem.uris);
+            if (Array.isArray(parsed)) setExtraUris(parsed);
+            else setExtraUris([]);
+          } catch { setExtraUris([]); }
+        } else {
+          setExtraUris([]);
+        }
+
+        if (initialItem.password_history) {
+          try {
+            const parsed = JSON.parse(initialItem.password_history);
+            if (Array.isArray(parsed)) setPasswordHistory(parsed);
+            else setPasswordHistory([]);
+          } catch { setPasswordHistory([]); }
+        } else {
+          setPasswordHistory([]);
+        }
+
         setCategory(initialItem.category || "all");
         
         if (initialItem.notes) {
@@ -121,10 +153,24 @@ export function ItemFormModal({
         }
         
         if (initialItem.totp_secret) {
-          setTotpSecret(initialItem.totp_secret);
+          const parsedConfig = parseTotpSecret(initialItem.totp_secret);
+          if (parsedConfig) {
+            setTotpSecret(parsedConfig.secret);
+            setTotpAlgorithm(parsedConfig.algorithm);
+            setTotpDigits(parsedConfig.digits);
+            setTotpPeriod(parsedConfig.period);
+          } else {
+            setTotpSecret(initialItem.totp_secret);
+            setTotpAlgorithm('SHA1');
+            setTotpDigits(6);
+            setTotpPeriod(30);
+          }
           setShowTotpField(true);
         } else {
           setTotpSecret("");
+          setTotpAlgorithm('SHA1');
+          setTotpDigits(6);
+          setTotpPeriod(30);
           setShowTotpField(false);
         }
 
@@ -167,10 +213,17 @@ export function ItemFormModal({
         setPassword("");
         setSshPublicKey("");
         setUrl("");
+        setExtraUris([]);
+        setPasswordHistory([]);
+        setShowHistoryDrawer(false);
         setCategory("all");
         setTags([]);
         setNotes("");
         setTotpSecret("");
+        setTotpAlgorithm('SHA1');
+        setTotpDigits(6);
+        setTotpPeriod(30);
+        setShowAdvancedTotp(false);
         setShowNoteField(false);
         setShowTotpField(false);
         setShowAttachmentField(false);
@@ -205,16 +258,31 @@ export function ItemFormModal({
     setIsSaving(true);
     try {
       const finalSecret = type === 'key' ? serializeSshKeySecret(password, sshPublicKey) : password;
+      
+      let finalTotp = "";
+      if (showTotpField && totpSecret.trim()) {
+        finalTotp = formatTotpSecret({
+          secret: totpSecret.trim(),
+          algorithm: totpAlgorithm,
+          digits: totpDigits,
+          period: totpPeriod,
+        }, title);
+      }
+
+      const validUris = extraUris.map(u => u.trim()).filter(Boolean);
+
       await onSave({
         title,
         secret: finalSecret,
         username,
         url,
+        uris: validUris.length > 0 ? JSON.stringify(validUris) : undefined,
         category,
         type,
         tags: JSON.stringify(tags),
         notes: showNoteField ? notes : "",
-        totp_secret: showTotpField ? totpSecret : "",
+        totp_secret: finalTotp,
+        password_history: passwordHistory.length > 0 ? JSON.stringify(passwordHistory) : undefined,
         attachments: JSON.stringify(linkedAttachmentIds),
         custom_fields: customFieldsState.length > 0 ? JSON.stringify(customFieldsState) : "",
         newAttachments: pendingAttachments,
@@ -230,7 +298,11 @@ export function ItemFormModal({
 
   const handleGeneratePassword = () => {
     const config = getGlobalGeneratorConfig();
-    setPassword(generatePassword(config));
+    const newPass = generatePassword(config);
+    if (password && password !== newPass) {
+      setPasswordHistory(prev => [...prev, { password, generatedAt: new Date().toISOString() }]);
+    }
+    setPassword(newPass);
     setShowPassword(true);
   };
 
@@ -393,9 +465,25 @@ export function ItemFormModal({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted">Password <span className="text-red-500">*</span></label>
-                    <button type="button" onClick={handleGeneratePassword} className="text-xs font-semibold text-claw-cyan hover:text-cyan-600 flex items-center gap-1">
-                      <Sparkles size={13} /> Generate
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {passwordHistory.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowHistoryDrawer(!showHistoryDrawer)}
+                          className={`text-xs font-semibold flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
+                            showHistoryDrawer
+                              ? 'bg-claw-cyan/15 text-claw-cyan border-claw-cyan/30'
+                              : 'text-theme-muted hover:text-theme-main border-theme-subtle'
+                          }`}
+                          title="View Password Generation History"
+                        >
+                          <History size={13} /> History ({passwordHistory.length})
+                        </button>
+                      )}
+                      <button type="button" onClick={handleGeneratePassword} className="text-xs font-semibold text-claw-cyan hover:text-cyan-600 flex items-center gap-1 cursor-pointer">
+                        <Sparkles size={13} /> Generate
+                      </button>
+                    </div>
                   </div>
                   <div className="relative flex items-center">
                     <input 
@@ -409,12 +497,55 @@ export function ItemFormModal({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 text-slate-400 hover:text-theme-main p-1"
+                      className="absolute right-3 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                   <PasswordStrengthIndicator password={password} />
+
+                  {/* Password Generation History Drawer */}
+                  {showHistoryDrawer && passwordHistory.length > 0 && (
+                    <div className="mt-2.5 p-3 bg-theme-base/60 border border-theme-subtle rounded-xl space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-theme-muted">
+                        <span>Password Generation History</span>
+                        <button type="button" onClick={() => setShowHistoryDrawer(false)} className="hover:text-theme-main cursor-pointer"><X size={13} /></button>
+                      </div>
+                      <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
+                        {passwordHistory.slice().reverse().map((hist, idx) => (
+                          <div key={idx} className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-theme-surface border border-theme-subtle text-xs">
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-mono text-theme-main truncate">{hist.password}</span>
+                              <span className="text-[10px] text-theme-muted">{new Date(hist.generatedAt).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => navigator.clipboard?.writeText(hist.password)}
+                                className="p-1 hover:text-claw-cyan text-theme-muted cursor-pointer"
+                                title="Copy"
+                              >
+                                <Copy size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (password && password !== hist.password) {
+                                    setPasswordHistory(prev => [...prev, { password, generatedAt: new Date().toISOString() }]);
+                                  }
+                                  setPassword(hist.password);
+                                }}
+                                className="text-[10px] font-bold text-claw-cyan hover:underline px-1.5 py-0.5 rounded bg-claw-cyan/10 cursor-pointer"
+                                title="Restore this password"
+                              >
+                                Restore
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-span-1 md:col-span-2">
@@ -429,6 +560,42 @@ export function ItemFormModal({
                       className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-10 pr-4 py-3 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main"
                     />
                   </div>
+
+                  {/* Extra Multi-URIs */}
+                  {extraUris.map((extraUri, idx) => (
+                    <div key={idx} className="relative mt-2 flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"><Globe size={16} /></div>
+                        <input
+                          type="text"
+                          value={extraUri}
+                          onChange={(e) => {
+                            const updated = [...extraUris];
+                            updated[idx] = e.target.value;
+                            setExtraUris(updated);
+                          }}
+                          placeholder="https://alternative-login.example.com"
+                          className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-10 pr-4 py-2.5 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExtraUris(prev => prev.filter((_, i) => i !== idx))}
+                        className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        title="Remove URL"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setExtraUris(prev => [...prev, ''])}
+                    className="mt-2 text-xs font-semibold text-claw-cyan hover:text-cyan-600 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus size={13} /> Add Another URL
+                  </button>
                 </div>
               </>
             )}
@@ -571,10 +738,83 @@ export function ItemFormModal({
                   </div>
                 )}
                 {showTotpField && (
-                  <div className="col-span-1 md:col-span-2 relative">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">TOTP Secret</label>
-                    <input type="text" value={totpSecret} onChange={(e) => setTotpSecret(e.target.value)} className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main font-mono uppercase" />
-                    <button type="button" onClick={() => setShowTotpField(false)} className="absolute top-8 right-3 text-slate-400 hover:text-red-500"><X size={16}/></button>
+                  <div className="col-span-1 md:col-span-2 relative p-4 bg-theme-base/40 border border-theme-subtle rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted">
+                        Authenticator Key (TOTP)
+                      </label>
+                      <button type="button" onClick={() => setShowTotpField(false)} className="text-slate-400 hover:text-red-500 cursor-pointer"><X size={16}/></button>
+                    </div>
+                    <input
+                      type="text"
+                      value={totpSecret}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val.trim().toLowerCase().startsWith('otpauth://')) {
+                          const parsed = parseTotpSecret(val);
+                          if (parsed) {
+                            setTotpSecret(parsed.secret);
+                            setTotpAlgorithm(parsed.algorithm);
+                            setTotpDigits(parsed.digits);
+                            setTotpPeriod(parsed.period);
+                            return;
+                          }
+                        }
+                        setTotpSecret(val);
+                      }}
+                      placeholder="Base32 key (e.g. JBSWY3DPEHPK3PXP) or otpauth:// URI"
+                      className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main font-mono uppercase"
+                    />
+
+                    {/* Advanced TOTP Settings Toggle */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedTotp(!showAdvancedTotp)}
+                        className="text-xs font-semibold text-claw-cyan hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        ⚙️ {showAdvancedTotp ? 'Hide' : 'Show'} Advanced TOTP Variables
+                      </button>
+
+                      {showAdvancedTotp && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-theme-subtle mt-2">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-theme-muted mb-1">Algorithm</label>
+                            <select
+                              value={totpAlgorithm}
+                              onChange={e => setTotpAlgorithm(e.target.value as TotpAlgorithm)}
+                              className="w-full bg-theme-base border border-theme-subtle rounded-lg px-2.5 py-1.5 text-xs text-theme-main outline-none focus:border-claw-cyan cursor-pointer"
+                            >
+                              <option value="SHA1">SHA-1 (Default)</option>
+                              <option value="SHA256">SHA-256</option>
+                              <option value="SHA512">SHA-512</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-theme-muted mb-1">Digits</label>
+                            <select
+                              value={totpDigits}
+                              onChange={e => setTotpDigits(Number(e.target.value))}
+                              className="w-full bg-theme-base border border-theme-subtle rounded-lg px-2.5 py-1.5 text-xs text-theme-main outline-none focus:border-claw-cyan cursor-pointer"
+                            >
+                              <option value={6}>6 Digits (Standard)</option>
+                              <option value={8}>8 Digits</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-theme-muted mb-1">Period (Interval)</label>
+                            <select
+                              value={totpPeriod}
+                              onChange={e => setTotpPeriod(Number(e.target.value))}
+                              className="w-full bg-theme-base border border-theme-subtle rounded-lg px-2.5 py-1.5 text-xs text-theme-main outline-none focus:border-claw-cyan cursor-pointer"
+                            >
+                              <option value={30}>30 Seconds (Standard)</option>
+                              <option value={60}>60 Seconds</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 {showAttachmentField && (

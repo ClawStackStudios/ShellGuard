@@ -176,7 +176,39 @@
 
 ---
 
+## API, Express & Partial-Failure Patterns
+
+**Pattern: Literal routes must register ABOVE parameterized siblings (Phase 21)**
+- Express matches in registration order. `router.delete('/bulk')` placed *after* `router.delete('/:id')` is unreachable — the param route captures `id="bulk"` and 404s.
+- Symptom is silent: the handler compiles, the route exists in the file, and only a live request reveals the shadow.
+- Rule: register every literal-path route (`/bulk`, `/bulk-import`, `/export`, …) above the `/:id` family in the same router, and assert it with an integration test that actually calls the literal path.
+- *Rationale:* shipped as a P0 in Phase 21 — the entire bulk-delete feature was dead on arrival despite passing code review.
+
+**Pattern: Partial-failure APIs need per-record validation, not a middleware schema gate (Phase 21)**
+- Middleware-level `validateBody(schema)` rejects the whole payload with 400 on the first bad field — structurally incompatible with 207 Multi-Status.
+- Correct shape: middleware validates only *container bounds* (`items: 1..1000`); each record goes through `itemSchema.safeParse()` inside the handler, aggregating failures into `errors: [{index, reason}]` while valid records persist in one transaction.
+- Malformed-example arithmetic is the cheapest oracle: "100 items / 2 malformed → 207 + 98 persisted" catches both over-rejection and silent drops in a single assertion.
+- *Rationale:* review asked for "per-record validation"; the naive implementation would have been a fully-typed array schema that 400s on one bad record and never returns 207.
+
+**Pattern: 207 envelope must keep errors INSIDE `data` (Phase 21)**
+- `restAdapter` unwraps `{success, data}` → `data` and treats every 2xx (including 207) as success. Errors returned at the top level (`{success:false, errors}`) are silently discarded by the client.
+- Contract: `res.status(207).json({ success: true, data: { inserted: string[], errors: [...] } })`.
+- `inserted` is an **array of IDs**, not a count — an agent built against a "count" contract breaks on every `await`.
+- *Rationale:* the SKILL.md shipped documenting `200`/count/`{index,id,title,reason}`; only a line-by-line doc-vs-code check caught it.
+
+**Pattern: Scoped body parser ahead of the global ceiling (Phase 21)**
+- `app.use('/api/vault/bulk-import', express.json({ limit: '10mb' }))` mounted BEFORE `express.json({ limit: '1mb' })` — the first parser consumes the stream and the global one no-ops.
+- Gives one high-volume route headroom without weakening the global ceiling or resurrecting a wide-open parser.
+- *Rationale:* Phase 19 retired the 32mb scoped parser; Phase 21 reintroduced the pattern deliberately and narrowly (one path, documented reason).
+
+---
+
 ## Release Protocol
+
+**Pattern: Review the committed diff (HEAD), not the working tree (Phase 21)**
+- A PR review that reads the working tree can pass on code that was never committed. In Phase 21 the fixes sat uncommitted while `HEAD` still held the broken commit — merging then would have shipped the P0.
+- Before declaring a PR reviewable: `git status --porcelain` (is it clean?), `git log --oneline origin/main..HEAD` (what is actually in the PR?), and grep the fix by name inside `git show HEAD:<file>`.
+- *Rationale:* the gap between "the file on disk is fixed" and "the commit is fixed" is invisible to every static code read.
 
 **Pattern: Verify Pushes and Tag Position (v0.0.1.9, 2026-09-13)**
 - Read the previous tag's target commit before writing the release ledger — tags can point at merge commits, making the honest ledger longer than the visible story.

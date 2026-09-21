@@ -90,10 +90,10 @@
 
 ### 🐚 The Grotto (Vault)
 
-- 🐚 **The Grotto (Vault)** — Logins (with username/URL/TOTP and unlimited encrypted file attachments, 500 MB per file, 1000 MB quota), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods** and multi-dimensional **tags**.
+- 🐚 **The Grotto (Vault)** — Logins (with multi-URI support, dynamic RFC 6238 TOTP, client-side password generation history drawer, and encrypted attachments with 500 MB per file, 1000 MB quota), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods** and multi-dimensional **tags**.
 - 🏷️ **Custom Fields** — Bitwarden-style custom fields (Text, Hidden, Boolean, Linked) across logins, notes, and SSH keys. Hidden custom fields are sealed client-side via AES-GCM-256 with AAD integrity verification.
-- 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring and session history.
-- 📤 **Sovereign Exports & Imports** — Metadata CSV export, re-auth-gated decrypted JSON/encrypted vault archives containing all pearls, TOTP seeds, notes, SSH keys, and attachments, plus native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
+- 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring, and client-side revision history sealed under Layer 1 ShellCryption.
+- 📤 **Sovereign Exports & Imports** — Atomic bulk import engine (up to 1,000 items with HTTP 207 Multi-Status partial failure reporting), universal Bitwarden ingestion parity (unencrypted JSON and CSV with automatic folder-to-pod conversion and custom field translation), zero-knowledge AES-256-GCM encrypted backup archives (sealed via ClawKey HKDF or custom passphrase PBKDF2-100k), RFC 4180 CSV spreadsheet export with password sanitization controls, and native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
 - 📱 **ShellGuard-TOTP Android Companion** — Dedicated native Android 2FA authenticator with biometrics, hardware-backed KeyStore isolation, camera & gallery QR scanning, and 1-way mirror sync with the ShellGuard web vault. Releases: [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases).
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically without flushing offline recovery buffers.
 

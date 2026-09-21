@@ -45,11 +45,13 @@ export const VaultSchemas = {
     secret: z.string().min(1).max(20000),
     username: z.string().max(255).optional(),
     url: z.string().max(2048).optional(),
+    uris: z.string().max(100000).optional(),
     type: z.enum(['password', 'pearl']).optional(),
     category: itemCategory,
     tags: itemTags,
     notes: z.string().max(10000).optional(),
     totp_secret: z.string().max(5000).optional(),
+    password_history: z.string().max(500000).optional(),
     attachments: z.string().max(2000000).optional(),
     custom_fields: z.string().max(500000).optional()
   }),
@@ -65,11 +67,13 @@ export const VaultSchemas = {
     secret: z.string().min(1).max(20000), // opaque
     username: z.string().max(255).optional(),
     url: z.string().max(2048).optional(),
+    uris: z.string().max(100000).optional(),
     type: z.string().max(32).optional(),
     category: itemCategory,
     tags: itemTags,
     notes: z.string().max(10000).optional(),
     totp_secret: z.string().max(5000).optional(), // opaque
+    password_history: z.string().max(500000).optional(), // opaque: ShellCrypted PasswordHistoryEntry[] JSON
     attachments: z.string().max(2000000).optional(), // opaque JSON string
     custom_fields: z.string().max(500000).optional(), // opaque: ShellCrypted CustomField[] JSON
   }),
@@ -78,11 +82,13 @@ export const VaultSchemas = {
     secret: z.string().min(1).max(20000), // opaque
     username: z.string().max(255).optional(),
     url: z.string().max(2048).optional(),
+    uris: z.string().max(100000).optional(),
     type: z.string().max(32).optional(),
     category: itemCategory,
     tags: itemTags,
     notes: z.string().max(10000).optional(),
     totp_secret: z.string().max(5000).optional(), // opaque
+    password_history: z.string().max(500000).optional(), // opaque: ShellCrypted PasswordHistoryEntry[] JSON
     attachments: z.string().max(2000000).optional(), // opaque JSON string
     custom_fields: z.string().max(500000).optional(), // opaque: ShellCrypted CustomField[] JSON
   }),

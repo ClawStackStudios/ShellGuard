@@ -3,6 +3,23 @@
 *Episodic memory: how I moved through the codebase. Semantic truth lives in the Memory Bank; walls, detours, and instincts live here. Sliding window: 20 entries.*
 
 ---
+## 2026-09-20 — the route that compiled but never ran
+
+Jules' first cut registered `router.delete('/bulk')` *after* `router.delete('/:id')`. Express matches in order, so `/api/vault/bulk` bound `id="bulk"`, queried a pearl named "bulk", and 404'd — the entire bulk-delete feature was dead on arrival while every gate stayed green, because no test exercised the literal path. The fix is one block-move (bulk routes above the `:id` family). The lesson is not "read your routes" but "a route with no integration test is a hypothesis": the witness suite is what made the shadow visible, and it only exists because the review demanded a test file rather than a description.
+
+## 2026-09-20 — validateBody is the wrong shape for partial failure
+
+The roadmap said "per-record validation, invalid items skipped, 207 Multi-Status" — which is structurally impossible with a middleware schema gate, since `validateBody` 400s the whole payload on the first bad field. Resolution: middleware validates only the *container* (`items: 1..1000`), and the route calls `VaultSchemas.bulkImportItem.safeParse()` per record, accumulating `{index, reason}` while valid rows persist in one transaction. The outer schema therefore reads `z.array(z.any())` — which looks like a hole and is actually the mechanism. Recorded in `techContext`/`systemPatterns` precisely so a future reader doesn't "tighten" it back into an all-or-nothing 400.
+
+## 2026-09-20 — reviewing a PR from the working tree
+
+I reviewed the first PR and reported five blockers; Jules fixed all five — but left them **uncommitted**. `HEAD` still held the broken commit, so the PR as pushed would have shipped the route-shadowing P0 and the missing test. Nothing in a file-by-file read reveals that gap; only `git status --porcelain` (dirty), `git log origin/main..HEAD` (one commit), and `git show HEAD:<file>` (old content) expose it. Durable rule: verify the *commit*, not the checkout. A review that reads disk is reviewing an intention.
+
+## 2026-09-20 — the agent contract that lied in four places
+
+`skills/shellguard/SKILL.md` — the agent-facing contract — documented `200 OK` (code returns 201), `inserted` as a number (code returns an array of IDs), error entries `{index, id, title, reason}` (code returns `{index, reason}`), and `secret` as a nested object (schema requires a string). An agent built against it would have checked the wrong status, mis-typed the payload, and never seen `errors[]`. Fixed this cycle. The pattern generalizes: the closer a doc sits to an external consumer, the more expensive its drift — and the claim battery (grep the enforcing code first) catches all four in one pass.
+
+
 
 ## 2026-09-19 — Phase 20 release & 3-version sliding window
 
@@ -63,16 +80,4 @@ Documented the permission model as four masks from memory; `schemas.ts:140` carr
 
 ## 2026-09-16 — heredoc emoji corruption
 A 🏛️ passed through a bash heredoc became 2×U+FFFD on disk. Emoji through heredocs are corrupted silently; caught only by a byte-level scan (`b'\xef\xbf\xbd'` count). Rule: emoji content goes through the editor tool; heredocs stay ASCII, and any heredoc write gets a U+FFFD scan after.
-
-## 2026-09-16 — assert-before-write is 5-for-5
-Every fail-closed assert this arc (missing `./` prefix, 2-element tuple, count mismatch 5-vs-4, wrong padding) prevented a partial multi-file write. The `swap(expected=N)` pattern costs seconds and has never cost a false stop. Keep it for all mechanical sweeps.
-
-## 2026-09-16 — decimal interlude pattern for non-phase work
-Unphased hotfixes broke the spine's `Stage N = Phase N−1` invariant until I adopted the TOTP's decimal pattern (Stage 18.5). Non-phase work slots at decimal positions *between* phases; stage numbering stays a pure phase ladder. (See `activeContext.md` § Recent Changes, chronology entry.)
-
-## 2026-09-16 — the bank can be the stale side
-The ROADMAP said next = Phase 18; the memory bank said Phase 22. I nearly "fixed" the roadmap. Docs-vs-bank contradictions cut either way — audit **both sides against the runtime** before deciding which is stale. (Here the doc was right.)
-
-## 2026-09-16 — non-greedy finditer truncates matches
-`re.finditer(r'^## .*?Stage \d', ...)` truncates each match at the first digit, so `m.group(0)` reads `"...Stage 1"` for Stage 19. Checker regexes must iterate full lines, not match objects. Third checker bug of the arc — checkers deserve the same scrutiny as edits.
 

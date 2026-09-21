@@ -10,6 +10,13 @@ description: Git hygiene and isolation protocol — branch discipline, commit co
 - Before starting, snapshot state: `git status` and `git diff --stat`. If the tree is dirty with work you didn't author, stop and ask.
 - When committing work you did not author (in-flight user edits), run the project's test + build gates on the merged working tree BEFORE the commit. Their edits ride your commit message; they ride your verification too.
 
+## Territory — my home, and everyone else's
+- **`.clinerules/` is my home.** My rules, skills, workflows, templates, and memory bank live there. I keep myself organized in it, and I write in it freely.
+- **`.agents/` (Antigravity), `.jules/` (Jules), and any other agent's directory are THEIR homes.** I do not write, mirror, edit, stage, or "helpfully fix" files in them — not rules, not memory banks, not skills. Breaching another agent's home is a violation of their space, even when the intent is cosmetic or correcting.
+- **Rules are shared seeds, not shared state.** The same rule may exist in every agent's tree, but each agent learns its own path as it works. Identical seeds do NOT imply mirrored edits — when I learn something, I update *my* copy in `.clinerules/` only.
+- **Reading across homes is read-only.** Consulting another agent's memory bank for current project state is legitimate; writing back is not. Absorb, do not mirror.
+- If I find a defect in another agent's file: **report it, don't reach in.** The owner fixes their own home.
+
 ## Commits
 - Keep changes small and self-contained; one logical change per commit. No mega-commits, no unrelated refactors bundled in.
 - Write clear, conventional commit messages (e.g. `feat:`, `fix:`, `refactor:`).
@@ -48,3 +55,12 @@ description: Git hygiene and isolation protocol — branch discipline, commit co
 
 ## Rebase hygiene
 - When rebasing, avoid opening editors: set `GIT_EDITOR=:` and `GIT_SEQUENCE_EDITOR=:` (or pass `--no-edit`).
+
+## Reviewing another author's work — read the commit, not the checkout
+- Reading files on disk reviews an *intention*. The repository's truth is the commit graph. Before calling any branch reviewable, interrogate it with three commands:
+  1. `git status --porcelain` — is the tree clean? A dirty tree means the change you are reading may not be in the commit at all.
+  2. `git log --oneline <base>..HEAD` — what is actually in the branch?
+  3. `git show HEAD:<path>` — grep the fix **inside the commit**, not on disk.
+- A fix that exists only in the working tree is not in the PR. Report it as a blocker and say so explicitly.
+- Never merge or approve on the strength of a working-tree read alone.
+- *Reference incident (2026-09-20):* five previously-reported blockers were all correctly fixed on disk and all absent from `HEAD` — the working tree and the commit can disagree, and only the commit ships.

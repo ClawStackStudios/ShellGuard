@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased] — Phase 21: Bulk Import Endpoint & Batch Operations
+
+> Committed on `feature/phase-21-bulk-operations-11309179680338905330` (`6f862e5` feat + `3b40008` docs). Rename to `## [0.0.2.3] - <date>` once merged + tagged (Build 25). Gates verified: 21 test files / 259 passed / 1 skipped / 0 failed, `tsc`, `vite build`, `docs:build`.
+
+### Added
+- **Bulk Import Endpoint (Task 41)** — `POST /api/vault/bulk-import` accepting up to 1,000 ShellCrypted pearls in a single atomic `db.transaction()`. Per-record `VaultSchemas.bulkImportItem.safeParse()` validation aggregates failures into `errors: [{ index, reason }]` (field-qualified, e.g. `title: Required`) while valid records persist. Returns **HTTP 207 Multi-Status** on partial success, **201** when all records land. Metadata columns run through `prepareWrite` (Layer 2 encryption); `secret`/`totp_secret`/`custom_fields`/`attachments` pass through byte-for-byte (no double-encryption). `type` constrained to `password | pearl`.
+- **Bulk Delete Endpoint (Task 41)** — `DELETE /api/vault/bulk` (`{ ids: string[] }`, owner-scoped, gated `canDelete`). Transaction-wrapped cascade to referenced `vault_secure_attachments` rows with audit events; missing/foreign IDs reported via 207 `errors: [{ id, reason }]` rather than failing the batch.
+- **Scoped 10MB Body Parser (Task 41)** — `app.use('/api/vault/bulk-import', express.json({ limit: '10mb' }))` mounted ahead of the 1MB global parser so large batches fit without raising the global ceiling.
+- **Multi-Select & Floating Bulk Action Bar (Task 42)** — Checkbox multi-select with tri-state select-all in `ItemListPane.tsx` (selection state lifted to `VaultShell.tsx`); floating action bar offering **Move to Pod**, **Assign Tag**, and **Delete**; hidden while the vault is locked (`!isLocked`) and cleared on lock. Reef Modernist modals (`ConfirmDialog` + custom input modal) replace native `prompt()`/`confirm()`.
+- **Batch Import Wizard (Task 42)** — `ImportExportView.tsx` gained a preview table before commit and **error-resolution chips** ("Skipped Items (N)") fed by the 207 `data.errors[]`, distinguishing partial success (`warning`) from hard failure (`error`).
+- **Witness Suite** — `tests/vault-bulk-import.test.ts` (350 lines, 11 tests, isolated port 64650) proving the headline criterion (100 items / 2 malformed → 207, 98 persisted), ciphertext opacity roundtrip, tenant isolation, permission gates on both routes, and cascade atomicity.
+
+### Fixed
+- **Route shadowing (P0)** — `DELETE /api/vault/bulk` was registered *after* `router.delete('/:id')`, so Express matched `:id = "bulk"` and the entire bulk-delete feature 404'd. Bulk routes now register ABOVE the `:id` family.
+- **Silent tag loss on bulk move** — `App.tsx` now preserves `tags` when reassigning pods (`typeof item.tags === 'string' ? item.tags : JSON.stringify(...)`).
+- **SKILL.md contract accuracy** — the agent-facing contract documented `200 OK` (actual: **201**), `inserted` as a count (actual: **array of IDs**), and error entries `{index, id, title, reason}` (actual: **`{index, reason}`**); `secret` was shown as a nested object (actual: opaque JSON string). All corrected, plus the previously undocumented bulk-delete 207 shape.
+- **ARCHITECTURE.md** test count `all 20 suites` → `all 21 suites` (internal contradiction with the same file's header).
+
 ## [0.0.2.2] - 2026-09-19 — The Bioluminescent Reef
 
 ### Added

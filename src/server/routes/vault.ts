@@ -35,7 +35,7 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
  * Payloads are stored byte-for-byte; only their length is validated.
  */
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields } = req.body;
+  const { id, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields } = req.body;
   const normalizedTags = normalizeTagsForDb(tags);
 
   try {
@@ -49,8 +49,8 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       req.userUuid,
@@ -58,11 +58,13 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       secret,
       toStore.username,
       toStore.url,
+      uris || '[]',
       type || 'password',
       toStore.category,
       toStore.tags,
       toStore.notes,
       totp_secret || '',
+      password_history || '[]',
       attachments || '[]',
       custom_fields || '',
       new Date().toISOString()
@@ -98,8 +100,8 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
   const inserted: string[] = [];
 
   const insertStmt = db.prepare(`
-    INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Prepare all writes asynchronously before opening the transaction
@@ -148,11 +150,13 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
             p.original.secret,
             p.toStore.username,
             p.toStore.url,
+            p.original.uris || '[]',
             p.original.type || 'password',
             p.toStore.category,
             p.toStore.tags,
             p.toStore.notes,
             p.original.totp_secret || '',
+            p.original.password_history || '[]',
             p.original.attachments || '[]',
             p.original.custom_fields || '',
             new Date().toISOString()
@@ -293,13 +297,12 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
  */
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields } = req.body;
+  const { title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields } = req.body;
 
   try {
-    // Ownership check first so foreign IDs yield 404, not a silent no-op write.
-    const existing = db.prepare('SELECT id, tags FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as { id: string; tags?: string } | undefined;
+    const existing = db.prepare('SELECT * FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
     if (!existing) {
-      return res.status(404).json({ success: false, error: 'Password entry not found in your vault.' });
+      return res.status(404).json({ success: false, error: 'Vault entry not found.' });
     }
 
     const normalizedTags = tags !== undefined ? normalizeTagsForDb(tags) : (existing.tags || '[]');
@@ -315,18 +318,20 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
 
     db.prepare(`
       UPDATE vault_pearls
-      SET title = ?, secret = ?, username = ?, url = ?, type = ?, category = ?, tags = ?, notes = ?, totp_secret = ?, attachments = ?, custom_fields = ?
+      SET title = ?, secret = ?, username = ?, url = ?, uris = ?, type = ?, category = ?, tags = ?, notes = ?, totp_secret = ?, password_history = ?, attachments = ?, custom_fields = ?
       WHERE id = ? AND owner_uuid = ?
     `).run(
       toStore.title,
       secret,
       toStore.username,
       toStore.url,
+      uris !== undefined ? uris : (existing.uris || '[]'),
       type || 'password',
       toStore.category,
       toStore.tags,
       toStore.notes,
-      totp_secret || '',
+      totp_secret !== undefined ? totp_secret : (existing.totp_secret || ''),
+      password_history !== undefined ? password_history : (existing.password_history || '[]'),
       attachments || '[]',
       custom_fields || '',
       id,

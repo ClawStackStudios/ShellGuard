@@ -151,6 +151,44 @@ export function hkdfSha256(ikm: Uint8Array, salt: Uint8Array, info: Uint8Array, 
   return okm;
 }
 
+// ─── 2b. PBKDF2-HMAC-SHA256 (RFC 8018 PKCS #5 v2.1) ────────────────────────────
+
+export function pbkdf2Sha256(
+  password: Uint8Array,
+  salt: Uint8Array,
+  iterations: number,
+  length: number = 32
+): Uint8Array {
+  const hLen = 32;
+  const l = Math.ceil(length / hLen);
+  const r = length - (l - 1) * hLen;
+  const out = new Uint8Array(length);
+  let outOffset = 0;
+
+  for (let i = 1; i <= l; i++) {
+    const saltBlock = new Uint8Array(salt.length + 4);
+    saltBlock.set(salt, 0);
+    const view = new DataView(saltBlock.buffer, saltBlock.byteOffset, saltBlock.byteLength);
+    view.setUint32(salt.length, i, false);
+
+    let u = hmacSha256(password, saltBlock);
+    const t = new Uint8Array(u);
+
+    for (let c = 1; c < iterations; c++) {
+      u = hmacSha256(password, u);
+      for (let j = 0; j < hLen; j++) {
+        t[j] ^= u[j];
+      }
+    }
+
+    const copyLen = i === l ? r : hLen;
+    out.set(t.subarray(0, copyLen), outOffset);
+    outOffset += copyLen;
+  }
+
+  return out;
+}
+
 // ─── 3. AES-256-GCM (NIST SP 800-38D) ───────────────────────────────────────────
 
 // S-Box and Rcon tables

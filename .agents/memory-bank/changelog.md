@@ -3,10 +3,48 @@
 ## [Unreleased]
 
 ### Added
+- **Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite (Sub-Phases 21.1, 21.2, 21.3)**:
+  - **Universal Bitwarden Ingestion Pipeline (`src/lib/bitwarden.ts`)**: Supports both unencrypted Bitwarden JSON and CSV exports; normalizes folders to pods (`normalizePod`); translates custom fields (text, hidden, checkbox, linked); serializes compound SSH keypairs; sniffs encrypted Bitwarden exports to provide clear user guidance to export unencrypted or use CLI.
+  - **Dynamic RFC 6238 TOTP Engine (`src/lib/totpUtils.ts`)**: Pure-TS parser, formatter (`otpauth://`), and live generator supporting SHA1/SHA256/SHA512 algorithms, 6 or 8 digits, and custom refresh intervals (15s, 30s, 60s); synchronizes dynamic TOTP interoperability in `compatibility_layer.md`.
+  - **Item Password Generation History**: Client-side password revision tracking on every generator trigger; migration `0007_composite_item_features.{up,down}.sql` adds `uris` and `password_history` columns to `vault_pearls`. `password_history` is client-side encrypted under Layer 1 ShellCryption (`vault_pearls_history:{id}` AAD) and `uris` is encrypted under Layer 2 metadata encryption (`MetadataGuard`); history drawer in item form and detail panes with instant restore button.
+  - **Multi-URI Row Support**: Support for multiple login URIs per item with domain extraction, launch action buttons, and Layer 2 metadata encryption.
+  - **Dual Export Suite (`src/lib/vaultExport.ts`)**: Zero-knowledge AES-256-GCM encrypted backup envelopes (`v: 1`) sealed with ClawKey (HKDF-SHA256) or custom user passphrase (PBKDF2-SHA256, 100,000 iterations), enforcing CSPRNG without fallback; RFC 4180 CSV spreadsheet export with toggleable password sanitization audit controls.
+  - **Modernized Settings UI (`ImportExportView.tsx`)**: Safe format sniffer routing Bitwarden JSON/CSV, ShellGuard encrypted backups, sgtotp.bak, and plain JSON; encrypted backup decryption modal; rich batch import preview modal with record counts and badge breakdown.
+  - **Test Coverage**: Dedicated test suites across `tests/unit/bitwarden-import.test.ts`, `tests/unit/vault-export.test.ts`, and `tests/unit/totpUtils.test.ts` (bringing total suites to 24).
+- **Phase 21: Bulk Import Endpoint & Batch Operations (Tasks 41 & 42)**:
+  - **High-Throughput Bulk Import Engine (`POST /api/vault/bulk-import`)**: Atomic transaction ingestion supporting up to 1000 items per request, scoped 10MB JSON body parser, per-record Zod schema validation (`VaultSchemas.bulkImportItem.safeParse`), and HTTP 207 Multi-Status partial failure handling (`{ inserted: string[], errors: [{ index, reason }] }`). Full success returns `201 Created` with ID array.
+  - **Batch Deletion (`DELETE /api/vault/bulk`)**: Atomically deletes multiple pearls in a single query with cascading attachment deletion, ownership scoping, and audit logging.
+  - **Reef Modernist Batch Selection UI**: Tri-state header selection checkbox (`none`, `some`, `all`), individual item checkboxes in list pane, and floating action bar in `VaultShell.tsx` guarded by `!isLocked`.
+  - **Batch Operations**: Bulk move to pod (with metadata field preservation — tags are never cleared), bulk tag assignment (appending new tags without clobbering existing), and batch delete with accessible custom modal confirmation dialog (`ConfirmDialog`).
+  - **Import Partial Failure Reporting**: `ImportExportView.tsx` surfaces granular error resolution chips for 207 Multi-Status responses displaying line number and rejection cause.
+  - **Test Suite**: Dedicated integration test suite `tests/vault-bulk-import.test.ts` (11 tests) verifying 100 items / 2 malformed / 98 inserted 207 Multi-Status, cascading attachment deletes, and owner isolation.
 - **CaraBase Woodcut Vector Mascot Alignment (`feat/brand-assets-refresh`)**: Redesigned 1:1 thumbnail (`shellguard-thumbnail.png`) and 16:9 presentation logo card (`shellguard-logo.png`) in CaraBase woodcut vector engraving aesthetic. Mascot crab body turned 180° forward/downward with eyestalks, mouthparts, and front claws clasping the vault safe door with 3D 'S' crest atop stacked server blade nodes.
 - **Web Server Favicon Distinction**: Created a server-distinct favicon (`favicon.svg`) featuring a notched carapace crest shield enclosing a multi-grid Web Globe. Center Web Globe themed to the ShellGuard purple/pink palette (`#e4048a` Lobster Fuchsia, `#ec4899` Hot Pink equator, `#ffffff` high-contrast prime meridian, `#c026d3` Royal Purple meridians, `#f472b6` light pink latitudes).
 - **Web Application Feature Graphic Banner**: Authored high-res 1024x500 panoramic showcase banner (`shellguard-feature-graphic.png`) with glowing Web Globe carapace shield on left and floating dark glassmorphic credential card on right.
 - **Twin Asset Parity**: Synchronized all assets 1:1 across web root (`public/`) and VitePress documentation portal (`docs/public/assets/`).
+
+## [0.0.2.2] - 2026-09-19
+
+### Added
+- **Vault Tagging System & Granular Filter Bar** — Multi-dimensional categorization alongside hierarchical pods (Phase 20, Tasks 39/40):
+  - Migration `0006_vault_tags` adds `tags TEXT DEFAULT '[]'` column and owner indices across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+  - Layer 2 metadata encryption via `MetadataGuard` for all tag payloads stored on disk.
+  - API list routes support `?tags=a,b` intersection filtering with forensic audit logging.
+  - `TagSelectorInput` with autocomplete chip suggestions, keyboard creation, and inline color palette selection.
+  - Unified bioluminescent color engine (`podUtils.ts`) sharing palette between pods and tags with deterministic string hashing and headless-safe storage.
+  - Collapsible sidebar tag cloud with active counts and granular multi-tag filter bar with `AND` / `OR` intersection logic.
+- **Attachment Storage Ceiling Elevation** — Per-file upload ceiling raised from 50MB to 500MB (`ATTACHMENT_MAX_MB`) and grotto quota from 500MB to 1000MB (`GROTTO_QUOTA_MB`) with Busboy streaming validation and client dropzone alignment (Phase 20 Sub-task).
+- **SSH Key Dual-Key Management & Terminal Ergonomics**:
+  - Dual-key serialization architecture `{ publicKey, privateKey }` sealed under Layer 1 ShellCryption, with transparent backward compatibility for raw legacy PEM keys (`parseSshKeySecret`).
+  - Strict RFC 7468 PKCS#8 private key framing (`-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`) preserving clean multiline formatting for OpenSSH and GUI clients.
+  - Dedicated private key code block with unmask toggle immediately left of Copy, plus direct in-browser **Download .pem** file action.
+  - OpenSSH public key card featuring algorithm badge, one-click **Copy Public Key**, and instant **Copy `authorized_keys` Command** (`echo "<pub>" >> ~/.ssh/authorized_keys`) for remote terminal paste.
+  - Decoupled form modal fields providing independent inputs for private key PEM and public key string, preventing JSON serialization leaks.
+
+### Fixed
+- **Vault master-detail header flush:** the item-list (search) header and the Item Details header are pinned to a shared 64px height (`h-16`), so their bottom borders form one continuous line across the dashboard T-junction instead of stepping (left bar rendered ~59px vs right ~64px).
+- **Version resolver test de-hardcoded:** `tests/unit/version.test.ts` asserted a literal `'0.0.1.8'`, which silently failed after every version bump (latent failure shipped in v0.0.1.9). The invariant is now package.json ground truth + `X.Y.Z.N` shape only.
+
 ## [0.0.2.1] - 2026-09-18
 
 ### Added

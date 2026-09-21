@@ -73,7 +73,7 @@ Four vault domains, one uniform CRUD contract each. Routers live in
 
 | Domain | Router | Payload columns (opaque blobs) |
 |:---|:---|:---|
-| Passwords | `vault.ts` (`/api/vault`) | `secret`, `totp_secret`, `attachments` (supports `?tags=a,b`) |
+| Passwords | `vault.ts` (`/api/vault`) | `secret`, `totp_secret`, `attachments`, `uris` (Layer 2 metadata encryption), `password_history` (Layer 1 ShellCryption) (supports `?tags=a,b`) |
 | Secure Notes | `notes.ts` (`/api/notes`) | `content` (supports `?tags=a,b`) |
 | SSH Keys | `sshKeys.ts` (`/api/keys`) | `key_value` (supports `?tags=a,b`) |
 | Attachments | `attachments.ts` (`/api/attachments`) | `file_data` (native BLOB since migration 0005 — streamed multipart in, 500MB ceiling, 1000MB quota) |

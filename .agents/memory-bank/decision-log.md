@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-09-20 — Peer review hardening: KDF branching, CSPRNG enforcement & metadata registration
+Addressing Cline's peer review audit highlighted that HKDF cannot be used for user-supplied passphrases due to lack of a work factor against GPU brute-force; implemented pure-TS PBKDF2-SHA256 (100k iterations) in webCryptoFallback.ts and branched derivation between ClawKey and passphrase. Enforced fail-closed CSPRNG on AES-GCM salt/nonce, registered 'uris' under MetadataGuard Layer 2 metadata encryption, converted 0007.down.sql to a safe no-op, and built dedicated published RFC 6238 vectors in totpUtils.test.ts.
+
+## 2026-09-20 — Bitwarden export sniffer priority & encrypted export tripwire
+Bitwarden export sniffer must inspect for proprietary encrypted exports before running standard JSON array mappings, or it would attempt to process encrypted ciphertext (`2.***`) as valid item titles. Surfacing an actionable guidance alert instructs the user to export unencrypted JSON/CSV or use the Bitwarden CLI. Additionally, dynamic TOTP URI parsing seamlessly normalizes non-standard 8-digit and SHA256/512 configurations without data loss.
+
+## 2026-09-20 — Express route shadowing on parameterized subpaths
+Placing `DELETE /bulk` and `POST /bulk-import` after parameterized `:id` handlers caused Express to capture `/bulk` as `req.params.id = 'bulk'`. Declaring static and batch subpaths strictly before parameterized routes resolved the shadowing immediately. In Express routers, order of declaration is an immutable routing invariant.
+
 ## 2026-09-20 — Phase 21: Per-record Zod safeParse vs middleware validateBody for 207 Multi-Status
 Express `validateBody(schema)` runs before route execution and rejects an entire payload with HTTP 400 if any record fails validation. To achieve true 207 Multi-Status partial failure handling in `POST /api/vault/bulk-import`, the middleware validates only the container array bounds (`1..1000`), while the route handler executes `VaultSchemas.bulkImportItem.safeParse(item)` per record, aggregating failures into `{ index, reason }` chips and persisting valid records in an atomic transaction.
 
@@ -57,11 +66,3 @@ authLimiter (10/15m, skip-success), adminAuthLimiter (5/10m), apiLimiter (100/mi
 
 ## 2026-09-16 — canMove taught me to enumerate, not recall
 Documented the permission model as four masks from memory; `schemas.ts:140` carries a fifth (`canMove`) and the wizard surfaces seven presets. Permission/security models must be **enumerated from the zod schema** every time, never recalled.
-
-## 2026-09-16 — heredoc emoji corruption
-A 🏛️ passed through a bash heredoc became 2×U+FFFD on disk. Emoji through heredocs are corrupted silently; caught only by a byte-level scan (`b'\xef\xbf\xbd'` count). Rule: emoji content goes through the editor tool; heredocs stay ASCII, and any heredoc write gets a U+FFFD scan after.
-
-## 2026-09-16 — assert-before-write is 5-for-5
-Every fail-closed assert this arc (missing `./` prefix, 2-element tuple, count mismatch 5-vs-4, wrong padding) prevented a partial multi-file write. The `swap(expected=N)` pattern costs seconds and has never cost a false stop. Keep it for all mechanical sweeps.
-
-

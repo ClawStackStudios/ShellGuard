@@ -7,7 +7,7 @@ description: Authoritative SQLite Schema Definitions for ShellGuard & Forensic A
 
 <CopyPage />
 
-The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.2 (migrations 0001-0006).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`), migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`), and migration `0006_vault_tags` adds `tags` JSON columns and owner indices across vault pearls, secure notes, and SSH keys.
+The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.3 (migrations 0001-0007).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`), migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`), migration `0006_vault_tags` adds `tags` JSON columns and owner indices, and migration `0007_composite_item_features` adds secondary login URIs (`uris`) and password generation revision history (`password_history`) to `vault_pearls`.
 
 ShellGuard maintains two separate SQLite database files:
 1. **`DATA_DIR/db.sqlite`**: The primary operational database, encrypted whole-DB with SQLCipher (Layer 3) and per-row metadata encryption (Layer 2).
@@ -49,24 +49,26 @@ CREATE INDEX IF NOT EXISTS idx_api_tokens_owner ON api_tokens(owner_uuid, owner_
 ```
 
 ### 3. `vault_pearls` (Logins & Credentials)
-Stores login credentials. `secret`, `totp_secret`, `attachments`, and `custom_fields` contain client-side ShellCryption ciphertext envelopes.
+Stores login credentials. `secret`, `totp_secret`, `attachments`, `custom_fields`, and `password_history` contain client-side ShellCryption ciphertext envelopes. `uris` is sealed under Layer 2 metadata encryption.
 
 ```sql
 CREATE TABLE IF NOT EXISTS vault_pearls (
-  id            TEXT PRIMARY KEY,
-  owner_uuid    TEXT NOT NULL,
-  title         TEXT NOT NULL,
-  secret        TEXT NOT NULL,
-  username      TEXT DEFAULT '',
-  url           TEXT DEFAULT '',
-  type          TEXT DEFAULT 'password',
-  category      TEXT DEFAULT '',
-  notes         TEXT DEFAULT '',
-  totp_secret   TEXT DEFAULT '',
-  attachments   TEXT DEFAULT '[]',
-  custom_fields TEXT DEFAULT '',
-  tags          TEXT DEFAULT '[]',
-  created_at    TEXT NOT NULL,
+  id               TEXT PRIMARY KEY,
+  owner_uuid       TEXT NOT NULL,
+  title            TEXT NOT NULL,
+  secret           TEXT NOT NULL,
+  username         TEXT DEFAULT '',
+  url              TEXT DEFAULT '',
+  type             TEXT DEFAULT 'password',
+  category         TEXT DEFAULT '',
+  notes            TEXT DEFAULT '',
+  totp_secret      TEXT DEFAULT '',
+  attachments      TEXT DEFAULT '[]',
+  custom_fields    TEXT DEFAULT '',
+  tags             TEXT DEFAULT '[]',
+  uris             TEXT DEFAULT '[]',
+  password_history TEXT DEFAULT '[]',
+  created_at       TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 

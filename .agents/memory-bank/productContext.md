@@ -33,6 +33,7 @@ ShellGuard exists because the ClawStack Studios ecosystem needs a secrets vault 
 - **Reef Modernist design**: "Bioluminescent Defense" — deep abyssal surfaces, glowing shells
 - **Instant feedback**: Every mutation returns the updated item, audit logs are real-time
 - **Sovereign exports**: Comprehensive decrypted/encrypted JSON backup with all attachments, CSV metadata export
+- **Universal Bitwarden Ingestion & Dual Export Suite**: Effortless migration from Bitwarden (folders mapped to pods, compound SSH keys, custom fields, dynamic TOTP) and sovereign AES-256-GCM encrypted backup envelopes (`v: 1`) protected with ClawKey (HKDF) or custom passphrase (OWASP 600,000 PBKDF2 iterations) alongside sanitized/full CSV exports.
 - **High-Throughput Bulk Import & Batch Operations**: Transactional JSON import with HTTP 207 Multi-Status partial failure recovery and line-level error chips; multi-item selection with floating action bar for bulk pod reassignment, bulk tagging, and batch deletion.
 - **Agent-friendly**: `lb-` keys with granular permissions, rate limits, expiry
 

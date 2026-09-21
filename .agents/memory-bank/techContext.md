@@ -8,7 +8,7 @@
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
 - **Build**: Vite (strictPort :6464, /api proxy → :6565), VitePress for documentation portal
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 21 suites / 259 passed (1 skipped, 260 total), per-suite DATA_DIR isolation
+- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 24 suites / 282 passed (1 skipped, 283 total), per-suite DATA_DIR isolation
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
 - **License**: AGPL-3.0-only
 - **Mobile Stack (Native Android)**: Kotlin 2.0+, Jetpack Compose, Room (SQLCipher), Android Keystore Biometrics, Retrofit/Ktor, WorkManager
@@ -36,7 +36,9 @@ npm run scuttle:dev-start
 
 - `crypto.webcrypto.subtle` HANGS in this environment — always use native `crypto` module
 - `crypto.hkdfSync` for key derivation, `crypto.createCipheriv`/`createDecipheriv` for AES-256-GCM
-- **WebCrypto Insecure Origin Fallback**: Client-side uses pure TypeScript fallback engine (`src/lib/webCryptoFallback.ts`) for SHA-256, HMAC, HKDF, and AES-GCM when accessing ShellGuard over plain HTTP LAN origins where `window.crypto.subtle` is undefined.
+- **WebCrypto Insecure Origin Fallback**: Client-side uses pure TypeScript fallback engine (`src/lib/webCryptoFallback.ts`) for SHA-256, HMAC, HKDF, PBKDF2, and AES-GCM when accessing ShellGuard over plain HTTP LAN origins where `window.crypto.subtle` is undefined.
+- **Async Native PBKDF2 Fast Path**: For vault export envelopes requiring 600,000 PBKDF2 iterations, `vaultExport.ts` uses caller-side feature detection (`globalThis.crypto?.subtle.deriveBits`) for sub-second off-thread derivation, falling back to pure-TS `pbkdf2Sha256` for non-secure origins.
+- **Vite Dev Watcher Ignores**: `server.watch.ignored` in `vite.config.ts` ignores `tests/**`, `data*/**`, `*.sqlite*`, and `*.wal` to prevent crash loops when SQLite ephemeral WAL files are generated and deleted during test runs.
 - **Node.js 22 WebCrypto Prototype Mocking**: `crypto.subtle` in Node 22 is a getter on `Crypto.prototype`. Mocking non-secure browser contexts in unit tests requires redefining the property descriptor on `Object.getPrototypeOf(globalThis.crypto)`.
 - **Git Tracking Index vs. .gitignore**: When a directory is added to `.gitignore` after files were already staged/committed, Git continues tracking modifications. Run `git rm -r --cached <dir>` to clear the Git index without modifying local disk files.
 - **GitHub Actions Release Trigger Regex**: `.github/workflows/release.yml` parses `--release[ =]+v?[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?` from commit messages on push to `main`, automating remote tag creation and GitHub Release publication.

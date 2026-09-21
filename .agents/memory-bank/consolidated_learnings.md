@@ -34,6 +34,13 @@
 - `LobsterKeys`: Granular, scoped agent API keys (`lb-` prefix) minted for automated AI agents.
 - *Rationale:* Verbatim terminology parity across Web and Android companion eliminates cross-platform user confusion.
 
+**Pattern: Branched KDF & Caller-Side Native Acceleration**
+- For high-entropy machine keys (ClawKey `hu-` with 256 bits entropy), HKDF-SHA256 provides instant expansion.
+- For human-supplied passphrases, PBKDF2-HMAC-SHA256 (600,000 iterations per OWASP guidance) provides essential GPU brute-force resistance.
+- In browser clients, compute PBKDF2 via caller-side async feature detection (`globalThis.crypto?.subtle.deriveBits`) to run off-thread in ~1s without UI freezing, falling back to pure-TS `pbkdf2Sha256` for non-secure HTTP origins.
+- Enforce fail-closed CSPRNG (`crypto.getRandomValues`) for all nonces/salts — never fallback to PRNG under AES-GCM.
+- *Rationale:* Eliminates main-thread blocking on client export/import while maintaining cryptographic defense against offline brute force.
+
 ---
 
 ## Testing

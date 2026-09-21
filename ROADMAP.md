@@ -66,20 +66,20 @@ and dedicated Import wizard with preview table and error resolution chips.
 > compound SSH keys, custom fields, and folders converted to Pods), per-item password generation history,
 > dynamic TOTP configuration parity with Android companion, and dual Encrypted / Unencrypted export suite.
 
-- [ ] **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
+- [x] **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
   - Implement `src/lib/bitwarden.ts` multi-format sniffer hierarchy to prevent unhandled format errors.
   - Convert Bitwarden Folders to ShellGuard Pods using `normalizePod()`.
   - Translate Bitwarden items: Logins (with TOTP extraction), Secure Notes, SSH keypairs via `serializeSshKeySecret()`, and Custom Fields (`0: text`, `1: hidden`, `2: boolean`, `3: linked`).
   - Provide clear user guidance when an encrypted Bitwarden export is uploaded.
   - Unit test suite: `tests/unit/bitwarden-import.test.ts` verifying end-to-end mapping of all Bitwarden record types.
 
-- [ ] **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
+- [x] **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
   - Track per-item password generation history (`password_history`) with timestamps, expandable UI drawer in `ItemFormModal` and `ItemDetailPane`, and one-click password restore.
   - Support multi-URI entries (`uris`) for login records.
   - Implement dynamic TOTP configuration variables (`algorithm`: SHA1/SHA256/SHA512, `digits`: 6/8, `period`: 30/60) with form controls in `ItemFormModal` and dynamic live generation in `TotpDisplay.tsx`.
   - Synchronize Android companion documentation in `compatibility_layer.md`.
 
-- [ ] **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
+- [x] **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
   - Implement `src/lib/vaultExport.ts` supporting full JSON and CSV exports across both Encrypted and Unencrypted modes.
   - Encrypted exports sealed with AES-256-GCM via active ClawKey (`hu-`) or custom passphrase with confirmation.
   - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.

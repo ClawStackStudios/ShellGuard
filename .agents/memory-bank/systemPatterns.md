@@ -13,8 +13,8 @@ ShellCryption      Per-Row Encryption     SQLCipher
 
 | Layer | Scope | Key Source | Algorithm | What It Encrypts |
 |---|---|---|---|---|
-| ShellCryption | Client-side | `hu-` key via HKDF | AES-GCM-256 | secret, totp_secret, content, key_value, file_data |
-| Per-Row Metadata | Server-side | `DB_ENCRYPTION_KEY` via HKDF | AES-256-GCM | title, username, url, category, notes, file_name |
+| ShellCryption | Client-side | `hu-` key via HKDF | AES-GCM-256 | secret, totp_secret, content, key_value, password_history, file_data |
+| Per-Row Metadata | Server-side | `DB_ENCRYPTION_KEY` via HKDF | AES-256-GCM | title, username, url, uris, category, notes, tags, file_name |
 | SQLCipher | Whole-DB | `DB_ENCRYPTION_KEY` | AES-256 | Entire SQLite file |
 
 ## Key System
@@ -38,7 +38,8 @@ Every mutation follows this gauntlet (no shortcuts):
 
 - **In-place encryption**: Encrypted JSON envelopes stored in same TEXT columns as plaintext. No schema changes.
 - **Backward compatibility**: `isEncryptedField()` check — non-SG-META values pass through unchanged.
-- **WebCrypto Fallback Pattern**: `window.crypto.subtle` is undefined on plain HTTP browser origins. `src/lib/webCryptoFallback.ts` provides pure TypeScript fallback implementations (SHA-256, HMAC-SHA256, HKDF, AES-GCM-256) that transparently replace crypto.subtle methods when unavailable.
+- **Dual Export Suite & KDF Branching**: Vault export envelope (`v: 1`) uses AES-256-GCM. High-entropy ClawKeys derive key material via HKDF-SHA256; user-supplied passphrases derive key material via PBKDF2-HMAC-SHA256 (600,000 iterations). Caller-side native WebCrypto async acceleration (`crypto.subtle.deriveBits`) ensures sub-second derivation off-thread without freezing the UI, falling back to pure-TS PBKDF2 (`webCryptoFallback.ts`) for non-secure HTTP origins. CSPRNG is strictly required (fail closed).
+- **WebCrypto Fallback Pattern**: `window.crypto.subtle` is undefined on plain HTTP browser origins. `src/lib/webCryptoFallback.ts` provides pure TypeScript fallback implementations (SHA-256, HMAC-SHA256, HKDF, PBKDF2, AES-GCM-256) that transparently replace crypto.subtle methods when unavailable.
 - **Blob download pattern**: Replace `data:` URI links with `Blob` + `URL.createObjectURL(blob)` to avoid Chromium insecure-connection download blocks on HTTP LAN.
 - **UUID entropy fallback**: Multi-tier RFC 4122 v4 UUID generation for environments where `crypto.randomUUID` is unavailable.
 - **Singleton cipher**: `fieldCipher` initialized once at startup, null when `DB_ENCRYPTION_KEY` unset.

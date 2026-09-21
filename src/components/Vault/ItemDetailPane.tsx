@@ -4,6 +4,7 @@ import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download,
 import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty, PasswordHistoryEntry } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
+import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
 import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
 import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
@@ -34,6 +35,7 @@ export function ItemDetailPane({
   const [showHistory, setShowHistory] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [revealedHiddenFields, setRevealedHiddenFields] = useState<Set<string>>(new Set());
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   // Phase 19: on-demand attachment fetch + encrypted object-URL preview modal.
   const [previewState, setPreviewState] = useState<
     { loading: boolean; name: string; mime: string; dataUrl?: string; error?: string } | null
@@ -46,6 +48,7 @@ export function ItemDetailPane({
     setShowHistory(false);
     setCopyFeedback(null);
     setRevealedHiddenFields(new Set());
+    setIsConfirmingDelete(false);
   }, [item?.id]);
 
   // Revoke the preview object URL when the modal closes or unmounts.
@@ -154,7 +157,7 @@ export function ItemDetailPane({
                 <Edit size={16} />
               </button>
               <button 
-                onClick={() => onDelete(item)}
+                onClick={() => setIsConfirmingDelete(true)}
                 className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                 title="Delete Item"
               >
@@ -773,6 +776,22 @@ export function ItemDetailPane({
           </>
         )}
       </AnimatePresence>
+
+      {/* Delete Item Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isConfirmingDelete}
+        title="Delete Vault Item"
+        description={`Are you sure you want to delete "${item?.title || 'this item'}"? This action cannot be undone and will cascade to any associated attachments.`}
+        confirmText="Delete Item"
+        cancelText="Cancel"
+        onConfirm={() => {
+          setIsConfirmingDelete(false);
+          if (item) {
+            onDelete(item);
+          }
+        }}
+        onCancel={() => setIsConfirmingDelete(false)}
+      />
     </>
   );
 }

@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-21 — Vault item deletion routing & zombie process port shadowing
+A stale Node process on port 6565 from before Phase 21 intercepted `DELETE /api/vault/bulk` as `DELETE /api/vault/:id` with `:id = 'bulk'`, returning 404. Terminated the zombie PID, restored correct routing in `App.tsx` for TOTP/pearl items, integrated `ConfirmDialog` into `ItemDetailPane` for single-item parity with bulk deletes, and cleared `selectedItemId` on deletion to prevent dead selection state.
+
 ## 2026-09-20 — Async native PBKDF2 WebCrypto acceleration & 600,000 iteration guidance (N1, N2)
 Pure-TS PBKDF2 running 600k iterations synchronously on the main thread blocked for ~15-20s. Kept the fallback module pure while implementing caller-side native acceleration via `crypto.subtle.deriveBits` in `vaultExport.ts` (~1s execution off-thread) with graceful fallback to pure-TS for non-secure HTTP origins. Upgraded default iteration count from 100,000 to OWASP-recommended 600,000 with backward compatibility.
 
@@ -66,6 +69,3 @@ The auditLogger redacts a `humanKey` *detail key*, which tempted a wrong inferen
 
 ## 2026-09-16 — neighbor numbers conflate easily
 authLimiter (10/15m, skip-success), adminAuthLimiter (5/10m), apiLimiter (100/min) — docs had conflated the admin and auth limiters. When documenting any tunable, cite its **env var** (`AUTH_RATE_LIMIT`) and its neighbor's name explicitly; neighbors drift independently.
-
-## 2026-09-16 — canMove taught me to enumerate, not recall
-Documented the permission model as four masks from memory; `schemas.ts:140` carries a fifth (`canMove`) and the wizard surfaces seven presets. Permission/security models must be **enumerated from the zod schema** every time, never recalled.

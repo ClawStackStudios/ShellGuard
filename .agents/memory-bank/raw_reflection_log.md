@@ -1,4 +1,26 @@
 ---
+Date: 2026-09-21
+TaskRef: "Vault Item Deletion Fix & Single-Item Confirmation Dialog"
+
+Learnings:
+- Stale Node background processes binding development ports (`6565`) can silently intercept requests and mask newer routes (e.g. `DELETE /api/vault/bulk` falling back to parameterized `DELETE /api/vault/:id` where `:id = 'bulk'`). Verifying running listener PIDs via `fuser` / `ss` is essential when server route updates appear ignored.
+- Item deletion dispatch in `App.tsx` previously fell back to `/api/attachments` for any item whose `type` was not strictly `'password'`, `'note'`, or `'key'`. Explicitly routing all pearl types (including `'totp'` and custom items) to `/api/vault` and reserving `/api/attachments` strictly for `'attachment'` items prevents 404 deletion rejections.
+- In `VaultShell.tsx`, deleting an item while it was actively selected left `selectedItemId` set, causing `ItemDetailPane` to hold onto stale or dead item state. Clearing `selectedItemId` to `null` if `selectedItemId === item.id` cleanly deselects the item upon deletion.
+- Single item delete in `ItemDetailPane.tsx` lacked confirmation gating prior to invoking `onDelete`. Integrating the Reef Modernist `ConfirmDialog` modal provides consistent confirmation ergonomics across both single-item and bulk-item deletion workflows.
+
+Difficulties:
+- Silent rejection in UI when API calls failed due to lack of try/catch wrapping around `onDelete` and `onBulkDelete` in `App.tsx`. Resolved by wrapping deletion calls in try/catch and reporting errors to UI error state while ensuring `scuttleVault(shellKey)` is awaited.
+
+Successes:
+- Added dedicated unit test suite `tests/unit/vaultDelete.test.ts` validating API endpoint routing and bulk delete partitioning across all item types.
+- All 25 test suites pass 100% green (288 passed, 1 skipped).
+
+Improvements_Identified_For_Consolidation:
+- General pattern: ConfirmDialog symmetry across single and bulk destructive actions.
+- General pattern: PID/port hygiene on development server restarts (`scuttle:stop` before `scuttle:dev-start`).
+---
+
+---
 Date: 2026-09-20
 TaskRef: "Peer Review Resolution & Hardening — Phase 21 Sub-Phase (Bitwarden Ingestion · Composite Features · Dual Export Suite)"
 

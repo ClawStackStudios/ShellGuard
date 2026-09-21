@@ -1095,33 +1095,41 @@ export default function App() {
                     onEdit={(item) => setEditingVaultItem(item)}
                     onDelete={async (item) => {
                       if (!shellKey || isLocked) return;
-                      const endpoint = item.type === 'password' ? '/api/vault' : 
-                                       item.type === 'note' ? '/api/notes' : 
-                                       item.type === 'key' ? '/api/keys' : '/api/attachments';
-                      await restAdapter.DELETE(`${endpoint}/${item.id}`); 
-                      if (shellKey) scuttleVault(shellKey);
+                      try {
+                        const endpoint = item.type === 'note' ? '/api/notes' : 
+                                         item.type === 'key' ? '/api/keys' : 
+                                         item.type === 'attachment' ? '/api/attachments' : '/api/vault';
+                        await restAdapter.DELETE(`${endpoint}/${item.id}`); 
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to delete item from vault.');
+                      }
                     }}
                     onBulkDelete={async (ids) => {
                       if (!shellKey || isLocked) return;
-                      const itemsToDelete = vaultItems.filter(i => ids.includes(i.id));
-                      const pearlIds = itemsToDelete.filter(i => i.type === 'password' || !i.type).map(i => i.id);
-                      const noteIds = itemsToDelete.filter(i => i.type === 'note').map(i => i.id);
-                      const keyIds = itemsToDelete.filter(i => i.type === 'key').map(i => i.id);
-                      const attIds = itemsToDelete.filter(i => i.type === 'attachment').map(i => i.id);
+                      try {
+                        const itemsToDelete = vaultItems.filter(i => ids.includes(i.id));
+                        const pearlIds = itemsToDelete.filter(i => i.type !== 'note' && i.type !== 'key' && i.type !== 'attachment').map(i => i.id);
+                        const noteIds = itemsToDelete.filter(i => i.type === 'note').map(i => i.id);
+                        const keyIds = itemsToDelete.filter(i => i.type === 'key').map(i => i.id);
+                        const attIds = itemsToDelete.filter(i => i.type === 'attachment').map(i => i.id);
 
-                      if (pearlIds.length > 0) {
-                        await restAdapter.DELETE('/api/vault/bulk', { ids: pearlIds });
+                        if (pearlIds.length > 0) {
+                          await restAdapter.DELETE('/api/vault/bulk', { ids: pearlIds });
+                        }
+                        for (const id of noteIds) {
+                          await restAdapter.DELETE(`/api/notes/${id}`).catch(() => {});
+                        }
+                        for (const id of keyIds) {
+                          await restAdapter.DELETE(`/api/keys/${id}`).catch(() => {});
+                        }
+                        for (const id of attIds) {
+                          await restAdapter.DELETE(`/api/attachments/${id}`).catch(() => {});
+                        }
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to delete items from vault.');
                       }
-                      for (const id of noteIds) {
-                        await restAdapter.DELETE(`/api/notes/${id}`).catch(() => {});
-                      }
-                      for (const id of keyIds) {
-                        await restAdapter.DELETE(`/api/keys/${id}`).catch(() => {});
-                      }
-                      for (const id of attIds) {
-                        await restAdapter.DELETE(`/api/attachments/${id}`).catch(() => {});
-                      }
-                      if (shellKey) scuttleVault(shellKey);
                     }}
                     onBulkMoveToPod={async (ids, category) => {
                       if (!shellKey || isLocked) return;

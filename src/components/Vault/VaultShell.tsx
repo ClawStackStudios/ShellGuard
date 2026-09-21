@@ -18,10 +18,10 @@ interface VaultShellProps {
   onFetchAttachment?: (id: string) => Promise<string>;
   onAdd: (type?: VaultItemType) => void;
   onEdit: (item: VaultItem) => void;
-  onDelete: (item: VaultItem) => void;
+  onDelete: (item: VaultItem) => Promise<void> | void;
   onBulkMoveToPod?: (ids: string[], category: string) => void;
   onBulkAssignTags?: (ids: string[], tags: string[]) => void;
-  onBulkDelete?: (ids: string[]) => void;
+  onBulkDelete?: (ids: string[]) => Promise<void> | void;
 }
 
 export function VaultShell({
@@ -187,12 +187,18 @@ export function VaultShell({
         description={`Are you sure you want to delete ${selectedItems.size} selected item(s)? This action will cascade to any associated attachments and cannot be undone.`}
         confirmText="Delete Items"
         cancelText="Cancel"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (onBulkDelete) {
-            onBulkDelete(Array.from(selectedItems));
+            const idsToDelete: string[] = Array.from(selectedItems);
+            if (selectedItemId && selectedItems.has(selectedItemId)) {
+              setSelectedItemId(null);
+            }
             setSelectedItems(new Set());
+            setBulkModalType(null);
+            await onBulkDelete(idsToDelete);
+          } else {
+            setBulkModalType(null);
           }
-          setBulkModalType(null);
         }}
         onCancel={() => setBulkModalType(null)}
       />
@@ -282,7 +288,12 @@ export function VaultShell({
           item={selectedItem}
           onClose={() => setSelectedItemId(null)}
           onEdit={onEdit}
-          onDelete={onDelete}
+          onDelete={async (item) => {
+            if (selectedItemId === item.id) {
+              setSelectedItemId(null);
+            }
+            await onDelete(item);
+          }}
           isLocked={isLocked}
           attachmentItemsById={attachmentItemsById}
           onFetchAttachment={onFetchAttachment}

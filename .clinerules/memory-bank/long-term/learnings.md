@@ -41,3 +41,15 @@ Bash heredocs corrupt astral emoji to U+FFFD; long commands and multi-line hered
 - 2026-09-20: the 207 envelope must keep errors INSIDE `data` — `restAdapter` unwraps `{success, data}` → `data` and treats every 2xx as success, so top-level errors vanish client-side.
 
 **Shaped perspective:** A schema is a gate with one verdict; a partial-failure contract needs N verdicts. Reaching for the middleware is the reflex, and it silently converts "report the 2 bad records" into "reject all 100". The default tool for validation is the wrong tool for aggregation.
+
+---
+
+## Dual-path crypto is a portability contract
+**weight**: 3 | **last validated**: 2026-09-20 | **first observed**: 2026-09-20
+
+When one cipher primitive has two implementations chosen by environment — native `crypto.subtle` on secure origins, a pure-TS fallback on plain-HTTP LAN — they are a *contract*: bytes sealed under one must open under the other. The fallback branch typically runs in **no suite** (tests execute in Node, where `subtle` exists), so a divergence ships with every gate green and surfaces only for the user on the origin CI cannot reach.
+
+**History:**
+- 2026-09-20: `deriveKeyForEnvelope` in `src/lib/vaultExport.ts` (native PBKDF2 vs pure-TS `pbkdf2Sha256`) shipped with no parity assertion and no known-answer vector. Found by reading the code in review — no gate, test, or build could have caught it.
+
+**Shaped perspective:** Coverage measures which lines ran, not which *contracts* held. Where two implementations must agree, the equality assertion IS the test — and the branch that never runs is exactly where agreement is assumed rather than proven. A backup that seals on HTTPS and refuses to open on the LAN fails at the moment the user has already lost the original.

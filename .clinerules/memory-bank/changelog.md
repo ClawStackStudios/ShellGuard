@@ -2,7 +2,7 @@
 
 ## [Unreleased] — Phase 21: Bulk Import Endpoint & Batch Operations
 
-> Committed on `feature/phase-21-bulk-operations-11309179680338905330` (`6f862e5` feat + `3b40008` docs). Rename to `## [0.0.2.3] - <date>` once merged + tagged (Build 25). Gates verified: 21 test files / 259 passed / 1 skipped / 0 failed, `tsc`, `vite build`, `docs:build`.
+> Committed on `feature/phase-21-bulk-operations-11309179680338905330`: `6f862e5` (Tasks 41/42) · `3b40008` (docs) · `a72ce7d` (sub-phase + 14-surface documentation walk) · `baab110` (native PBKDF2 + 600k). Rename to `## [0.0.2.3] - <date>` once merged + tagged (Build 25). **Ships migration `0007_composite_item_features`.** Gates: 24 test files / 282 passed / 1 skipped / 0 failed, `tsc`, `vite build`, `docs:build`.
 
 ### Added
 - **Bulk Import Endpoint (Task 41)** — `POST /api/vault/bulk-import` accepting up to 1,000 ShellCrypted pearls in a single atomic `db.transaction()`. Per-record `VaultSchemas.bulkImportItem.safeParse()` validation aggregates failures into `errors: [{ index, reason }]` (field-qualified, e.g. `title: Required`) while valid records persist. Returns **HTTP 207 Multi-Status** on partial success, **201** when all records land. Metadata columns run through `prepareWrite` (Layer 2 encryption); `secret`/`totp_secret`/`custom_fields`/`attachments` pass through byte-for-byte (no double-encryption). `type` constrained to `password | pearl`.
@@ -17,6 +17,24 @@
 - **Silent tag loss on bulk move** — `App.tsx` now preserves `tags` when reassigning pods (`typeof item.tags === 'string' ? item.tags : JSON.stringify(...)`).
 - **SKILL.md contract accuracy** — the agent-facing contract documented `200 OK` (actual: **201**), `inserted` as a count (actual: **array of IDs**), and error entries `{index, id, title, reason}` (actual: **`{index, reason}`**); `secret` was shown as a nested object (actual: opaque JSON string). All corrected, plus the previously undocumented bulk-delete 207 shape.
 - **ARCHITECTURE.md** test count `all 20 suites` → `all 21 suites` (internal contradiction with the same file's header).
+
+### Added — Phase 21 Sub-Phases 21.1–21.3 (Bitwarden Parity, Composite Ergonomics & Dual Export Suite)
+- **Universal Bitwarden Ingestion Engine** (`src/lib/bitwarden.ts`) — accepts unencrypted Bitwarden **JSON and CSV** exports; folders become pods (`normalizePod`); compound SSH keypairs are serialized into the dual-key envelope; custom fields map by Bitwarden type (text / hidden / boolean / linked); `otpauth://` TOTP parameters (algorithm, digits, period) are preserved. **Encrypted exports are detected (`encrypted: true`, or ciphertext beginning `2.`) and refused with instructions** rather than importing corrupt ciphertext.
+- **Dynamic RFC 6238 TOTP Engine** (`src/lib/totpUtils.ts`) — pure-TS parse/format/generate supporting SHA1/SHA256/SHA512, 6 or 8 digits, and custom periods (15/30/60s); `otpauth://` round-trip with raw-Base32 backward compatibility. `TotpDisplay.tsx` now scales its countdown ring to the item's period and groups digits for readability.
+- **Item Password Generation History** — migration `0007_composite_item_features` adds `password_history TEXT DEFAULT '[]'` to `vault_pearls`; the client seals it under ShellCryption with the **new `vault_pearls_history:{id}` AAD namespace**, matching the `secret` / `totp_secret` / `custom_fields` pattern (no server-side re-encryption). History drawer with relative timestamps and one-click restore in both the form and detail panes (max 50 entries).
+- **Multi-URI Rows** — `uris TEXT DEFAULT '[]'` on `vault_pearls`; secondary login URIs gain domain extraction, copy, and launch actions. `uris` is registered in `metadataGuard.ts` for **Layer 2 metadata encryption**, symmetric with the primary `url`.
+- **Dual Export Suite** (`src/lib/vaultExport.ts`) — zero-knowledge backup envelopes sealed with the ClawKey (HKDF-SHA256) or a custom passphrase (PBKDF2-SHA256 @600,000 iterations, OWASP guidance), envelope `v: 1` persisting `kdf` + `kdfIterations`, fail-closed CSPRNG, AES-256-GCM with `shellguard_backup:json` AAD binding, plus an RFC 4180 CSV export with a password-sanitization audit toggle.
+- **Native PBKDF2 acceleration** — `deriveKeyForEnvelope` uses `crypto.subtle.deriveBits` on secure origins and falls back to pure-TS `pbkdf2Sha256` on plain-HTTP LAN, removing the synchronous main-thread block that 600k pure-JS iterations would otherwise cause. `encryptBackupPayload` / `decryptBackupPayload` are now **async**.
+
+### Changed — Phase 21 Sub-Phases
+- Migration `0007_composite_item_features.down.sql` is a **documented no-op** (`SELECT 1;`), matching the 0002/0003 precedent — rolling back added columns must not silently drop user password history and secondary URIs.
+- 14 documentation surfaces synchronized: `ARCHITECTURE.md` (0007 in the tree, 24 suites ×2, deltas #24 + #25), `project/database-schema.md`, `project/encryption-layers-spec.md`, `project/shellcryption-spec.md` (the `vault_pearls_history` AAD), `docs/reference/blueprint-schema.md` (ground truth → v0.0.2.3 / migrations 0001–0007), root `CHANGELOG.md`, `README.md`, `SECURITY.md`, `skills/shellguard/SKILL.md`, `docs/agent-integration/api-reference.md`, `project/routes-and-contracts.md`, `docs/vault-features/import-export.md`, `docs/vault-features/the-grotto.md`, `compatibility_layer.md` (dynamic TOTP interoperability table).
+
+### Fixed — Phase 21 Sub-Phases
+- **`uris` plaintext gap** — secondary login URIs were sent raw on all three write paths (create / update / bulk-import) and registered nowhere, so they bypassed both crypto layers while the semantically identical `url` was Layer 2 encrypted. Now registered in `metadataGuard`.
+- **HKDF misused as a passphrase KDF** — HKDF has no work factor and is the wrong primitive for human-entropy input; replaced with PBKDF2-SHA256 for the passphrase path (HKDF retained for the high-entropy ClawKey).
+- **`Math.random()` GCM nonce fallback** — removed entirely; the export now throws when `crypto.getRandomValues` is unavailable.
+- **Test fixtures in the repository root** — two plaintext Bitwarden exports sat untracked and un-gitignored in the repo root while `tests/unit/bitwarden-import.test.ts` resolved them from `process.cwd()`, making the suite unreproducible from a clean clone and one `git add .` away from committing credential-shaped data. Replaced with synthetic committed fixtures under `tests/fixtures/`, resolved via `__dirname`, and the export filename pattern added to `.gitignore`.
 
 ## [0.0.2.2] - 2026-09-19 — The Bioluminescent Reef
 

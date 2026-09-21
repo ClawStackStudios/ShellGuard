@@ -203,6 +203,31 @@
 
 ---
 
+## Cross-Agent Review & Crypto Boundaries
+
+**Pattern: Review the artifact, not the report (Phase 21)**
+- Treat another author's summary as a set of *claims to verify*, never as facts. Every finding that mattered in the Phase 21 review came from reading code; one walkthrough claim ("zero `.clinerules/` files staged or touched") was flatly false and a single grep proved it.
+- Attach `file:line` evidence and the exact reproduction command to every finding. A review that says "trust me" cannot be audited; one that says "here is how to check me" can.
+- Verify the *fix*, not the intention: `git show HEAD:<path>`. Five blockers were once all correct on disk and all absent from the commit.
+- *Rationale:* a peer review is worth exactly what its evidence is worth. And the reviewer is fallible too — record your own near-misses (I read `password_history` as plaintext and was wrong) so the reader can calibrate the rest.
+
+**Pattern: Dual-path crypto needs a parity test (Phase 21)**
+- When one primitive has two implementations selected by environment (native `crypto.subtle` vs a pure-TS fallback), they are a **portability contract**: bytes sealed under one must open under the other.
+- The fallback branch usually executes in **no suite** — tests run in Node, where `subtle` exists. A divergence therefore ships with every gate green and fails only for the user on the origin CI cannot reach.
+- Assert both: a known-answer vector (RFC, or a trusted local oracle) **and** native-vs-fallback byte equality.
+- *Rationale:* a backup sealed over HTTPS that refuses to open on a plain-HTTP LAN origin fails at the worst possible moment — during recovery from loss.
+
+**Pattern: Test fixtures must be synthetic, committed, and path-relative (Phase 21)**
+- Fixtures live in a committed `tests/fixtures/`, hold obviously-fake data, and resolve via `__dirname` — never `process.cwd()`.
+- Two real-shaped Bitwarden exports once sat un-gitignored in the repo root with the suite reading them from `process.cwd()`: the oracle was unreproducible from a clean clone, and one `git add .` (`finish-task.md`'s own instruction) from publishing credential-shaped files.
+- *Rationale:* a suite that passes only because of untracked local files is not a suite — it is a local ritual.
+
+**Pattern: Prefer the documented no-op down-migration (Phase 21)**
+- Rolling back a column-add is not worth user data. `0007.down.sql` began as `ALTER TABLE … DROP COLUMN` — silently destroying password history and secondary URIs — and was corrected to `SELECT 1;`, matching the 0002/0003 precedent.
+- *Rationale:* a down-migration executes precisely when something has already gone wrong. It must never become the second failure.
+
+---
+
 ## Release Protocol
 
 **Pattern: Review the committed diff (HEAD), not the working tree (Phase 21)**

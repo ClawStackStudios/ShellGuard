@@ -1,5 +1,36 @@
 ---
 Date: 2026-09-20
+TaskRef: "Adversarial peer review of the Phase 21 sub-phase — 14 findings over two rounds, all resolved"
+
+Learnings:
+- **Review the artifact, not the report.** Every finding that mattered came from reading code; one walkthrough claim ("zero `.clinerules/` files staged or touched") was demonstrably false — `git show a72ce7d --stat | grep -c '.clinerules/'` → 18. A peer summary is a list of claims to verify, not a status.
+- **The commit graph vs the working tree, again.** Round 2's headline: all five fixes from round 1 were correct on disk and all absent from `HEAD`. Same lesson as the previous phase, and it recurred — which is why the `git-hygiene` rule and the `delegation-brief` skill now exist.
+- **Crypto boundaries hide in plain sight.** `uris` was sent raw on all three write paths while the semantically identical `url` was Layer 2 encrypted — a metadata-privacy regression invisible to every gate. Conversely I mis-read `password_history` as plaintext; it *was* correctly sealed (Layer 1, `vault_pearls_history:{id}` AAD). Record the near-miss, not just the hit.
+- **HKDF is not a password KDF.** It has no work factor; the passphrase path needed PBKDF2 (600k, OWASP). The correct shape is a *branched* KDF: HKDF for high-entropy keys, PBKDF2/scrypt/Argon2 for human input.
+- **Never degrade a nonce.** A `Math.random()` fallback guarded the GCM salt/IV — in GCM, nonce predictability breaks authenticity as well as confidentiality. Fail closed instead.
+- **Dual-path crypto is a portability contract.** `deriveKeyForEnvelope` picks native `subtle.deriveBits` on secure origins and pure-TS `pbkdf2Sha256` on plain-HTTP LAN; the fallback branch runs in no suite (tests execute in Node where `subtle` exists). A parity divergence would seal backups on HTTPS and refuse to open them on the LAN — all gates green.
+- **Fixtures: synthetic, committed, `__dirname`-relative.** Two real-shaped Bitwarden exports sat un-gitignored in the repo root with tests reading them from `process.cwd()`: unreproducible from a clean clone, and one `git add .` from publishing credential-shaped data.
+
+Difficulties:
+- The PBKDF2 iteration recommendation had to be ordered *after* the native fast path — 600k pure-JS iterations on the main thread would have been a 6× worse freeze. Sequencing recommendations matters as much as the recommendations.
+- I recommended the caller-side-vs-fallback-module architecture without knowing which the module's charter allowed; flagged it as fallible and invited pushback. The right call came back.
+
+Successes:
+- Round 1 produced 11 findings, round 2 produced 3, and every one was resolved and independently re-verified from `HEAD` (not from the walkthrough).
+- The final finding — no PBKDF2 parity/known-answer coverage — was found by asking "which branch does no test execute?" rather than "do the tests pass?"
+
+Improvements_Identified_For_Consolidation:
+- Pattern: review the artifact, not the report (evidence + reproduction command attached to every finding).
+- Pattern: dual-path crypto needs a parity test — the branch CI never runs is where the contract is assumed.
+- Pattern: fixtures must be synthetic, committed, and path-relative.
+- Pattern: prefer the documented no-op down-migration over a destructive rollback.
+- **Self-implicating:** `.clinerules/workflows/finish-task.md` instructs `git add .` — my own workflow told an agent to sweep every in-flight file, which is how 18 of my `.clinerules/` files ended up inside an unrelated "feat(agents)" commit. Fix pending.
+
+Gates: 24 test files / 282 passed / 1 skipped / 0 failed (reported; `tsc` independently confirmed clean by me). Commits `a72ce7d` (sub-phase + doc walk) and `baab110` (native PBKDF2 + 600k) on `feature/phase-21-bulk-operations-11309179680338905330` — unmerged, untagged.
+---
+
+---
+Date: 2026-09-20
 TaskRef: "/learn cycle — territory ruling, review discipline, delegation brief, contract-doc priority"
 
 Learnings:

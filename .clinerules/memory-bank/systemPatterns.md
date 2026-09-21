@@ -57,6 +57,10 @@ Every mutation follows this gauntlet (no shortcuts):
 - **207 Multi-Status envelope**: partial success still returns `{ success: true, data: { inserted: string[], errors: [...] } }` — errors MUST live inside `data` because `restAdapter` unwraps `{success, data}` → `data` and treats every 2xx as success. Bulk delete mirrors it with `{ deleted: string[], errors: [{ id, reason }] }`.
 - **Literal-path route ordering invariant**: bulk/literal routes (`/bulk-import`, `/bulk`) MUST register ABOVE parameterized `/:id` siblings — otherwise Express captures the literal as the param value (`id="bulk"`) and 404s. This was a shipped P0 in Phase 21.
 - **Scoped body parser pattern**: `app.use('/api/vault/bulk-import', express.json({ limit: '10mb' }))` mounted BEFORE the global 1MB parser — the first parser consumes JSON and the global one no-ops, so one route gets headroom without weakening the global ceiling.
+- **Bitwarden ingestion mapping (Phase 21 sub-phase)**: `src/lib/bitwarden.ts` sniffs JSON vs CSV, resolves folders to pods via `normalizePod()` (folderId→name map), maps custom fields by Bitwarden type (0 text / 1 hidden / 2 boolean / 3 linked), serializes compound SSH keypairs through `serializeSshKeySecret()`, and extracts `otpauth://` TOTP params. Encrypted exports (`encrypted === true` or ciphertext beginning `2.`) are **detected and refused with guidance**, never imported.
+- **Dynamic TOTP contract (Phase 21 sub-phase)**: `src/lib/totpUtils.ts` is the single parser/formatter/generator for RFC 6238 — algorithm (SHA1/256/512), digits (6/8), and period (15/30/60/custom) flow through `otpauth://` URIs with raw-Base32 backward compatibility. Invalid (non-Base32) secrets return `null` rather than a garbage config.
+- **Envelope v1 with persisted KDF parameters (Phase 21 sub-phase)**: the encrypted backup envelope carries `v`, `version`, `kdf`, and `kdfIterations`, so the reader honors whatever the writer used — iteration-count bumps stay backward-compatible. GCM salt (16B) / IV (12B) are **fail-closed**: the export throws if `crypto.getRandomValues` is absent rather than degrading a nonce.
+- **Dual-path key derivation (Phase 21 sub-phase)**: `deriveKeyForEnvelope` in `src/lib/vaultExport.ts` selects native `crypto.subtle.deriveBits` on secure origins and pure-TS `pbkdf2Sha256` on plain-HTTP LAN; HKDF serves the 256-bit ClawKey, PBKDF2-SHA256 @600k serves human passphrases. **This makes the two implementations a portability contract** — they must derive identical bytes or backups seal on one origin and fail to open on the other.
 
 ## Critical Implementation Paths
 
@@ -72,6 +76,9 @@ Every mutation follows this gauntlet (no shortcuts):
 - `src/server/routes/vault.ts` — `POST /bulk-import` + `DELETE /bulk` (Phase 21; registered ABOVE `/:id`)
 - `src/server/validation/schemas.ts` — `VaultSchemas.bulkImport` (container) + `bulkImportItem` (per-record) + `bulkDelete`
 - `src/components/Vault/VaultShell.tsx` — tri-state selection state + floating bulk action bar (Phase 21)
+- `src/lib/bitwarden.ts` — Bitwarden JSON/CSV ingestion engine (Phase 21 sub-phase)
+- `src/lib/totpUtils.ts` — dynamic RFC 6238 TOTP parse/format/generate (Phase 21 sub-phase)
+- `src/lib/vaultExport.ts` — encrypted backup envelope v1 + branched KDF + RFC 4180 CSV export (Phase 21 sub-phase)
 
 ## Auditability Invariants (Cryptographer's Lens — 2026-09-16)
 

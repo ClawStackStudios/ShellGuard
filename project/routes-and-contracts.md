@@ -93,6 +93,13 @@ Request bodies are validated by zod schemas in `src/server/validation/schemas.ts
 (`VaultSchemas.create`, `VaultSchemas.update`, …) — a route without a schema
 does not ship.
 
+**Batch Operations (Phase 21, Tasks 41 & 42):**
+
+| HTTP Verb | Middleware chain | Permission | Purpose |
+|:---|:---|:---|:---|
+| `POST /bulk-import` | `requireAuth` → `requirePermission('canWrite')` → `validateBody(VaultSchemas.bulkImport)` | write | Atomic batch import (up to 1000 items, scoped 10MB parser, per-record Zod validation, HTTP 207 Multi-Status partial success envelope `{ inserted, errors }`) |
+| `DELETE /bulk` | `requireAuth` → `requirePermission('canDelete')` → `validateBody(VaultSchemas.bulkDelete)` | delete | Batch pearl deletion by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
+
 ---
 
 ## §4. Lobster Keys Lifecycle (`/api/agent-keys`)

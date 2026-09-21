@@ -40,7 +40,7 @@ statistics:
 
 > 📚 **Documentation Impact**: ARCHITECTURE.md API routes table (new route + 207 contract) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract!) - docs/vault-features (bulk UI)
 
-- [ ] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
+- [x] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
 
 Description: Implement `POST /api/vault/bulk-import` accepting an array of ShellCrypted
 items. Execute inside a database transaction with per-record validation: valid items are
@@ -50,7 +50,7 @@ Update bulk delete endpoints to ensure atomic cascades across custom fields and 
 > Success Criteria: Importing 100 items with 2 malformed records successfully persists
 > 98 items and returns an informative 207 Multi-Status / detailed error array; atomic deletes.
 
-- [ ] **Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal**
+- [x] **Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal**
 
 Description: Expand bulk selection controls across all vault item views: select-all checkbox
 with tri-state (none, some, all), floating bulk action bar (Move to Pod, Assign Tag, Delete),

@@ -89,11 +89,12 @@ ShellGuard/
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # 20 Vitest + supertest suites, per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 21 Vitest + supertest suites, per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
 │   ├── vault-crud.test.ts             # Envelope shapes + opacity invariant
+│   ├── vault-bulk-import.test.ts      # Phase 21 bulk import (207 Multi-Status) & bulk delete
 │   ├── agent-key-hash.test.ts         # Hash-only LobsterKey ledger invariant
 │   ├── attachments-blob.test.ts       # Phase 19 BLOB streaming, 500MB ceiling, 1000MB quota
 │   ├── vault-tags.test.ts             # Phase 20 tag filtering, metadata encryption & API CRUD
@@ -624,7 +625,9 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 |---|---|---|---|
 | `GET` | `/api/vault` | canRead | List pearl logins (newest first, owner-scoped; supports `?tags=a,b`) |
 | `POST` | `/api/vault` | canWrite | Create login — title ≤255, url ≤2048, notes ≤10000, optional TOTP seed |
+| `POST` | `/api/vault/bulk-import` | canWrite | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, returns HTTP 207 Multi-Status with `{ inserted, errors }`) |
 | `PUT` | `/api/vault/:id` | canEdit | Update login |
+| `DELETE` | `/api/vault/bulk` | canDelete | Batch delete pearls by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
 | `DELETE` | `/api/vault/:id` | canDelete | Delete login |
 
 ### Secure Notes (`routes/notes.ts`)
@@ -746,7 +749,7 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `unit/webCryptoFallback.test.ts` | Pure TypeScript WebCrypto fallback engine (HKDF, PBKDF2, AES-256-GCM, SHA-256) for non-secure HTTP LAN |
 | `unit/version.test.ts` | Dynamic ground-truth version resolution and semver structure validation |
 
-Run them: `npm test` (all 20 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 21 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 
@@ -779,6 +782,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 21 | Composite Items & In-Browser Keypair Generation (`custom_fields` decoupled form layout, live TOTP tickers in login view, in-browser Ed25519 & RSA-4096 keypair generator via WebCrypto API) | Bitwarden-parity master item composition (Phase 18, v0.0.2.0) allowing arbitrary secret payloads and instant SSH keypair generation without external CLI tools |
 | 22 | Attachment SQLite BLOB Migration & Streaming Architecture (Busboy multipart streaming, 500MB per-file ceiling, 1000MB grotto quota, chunked BLOB downloads via `GET /api/attachments/:id/file`, migration 0005) | Replaced legacy 10MB base64 JSON payload model with high-throughput native SQLite BLOB storage (Phase 19, v0.0.2.1), preventing RSS memory exhaustion and enforcing strict per-owner storage quotas |
 | 23 | Vault Tagging System & Granular Filter Bar + SSH Key Dual-Key Management (multi-dimensional `tags` column, metadata encryption in `metadataGuard.ts`, `?tags=a,b` intersection queries across pearls/notes/keys, `TagSelectorInput` chip autocomplete, unified pod/tag bioluminescent color engine in `podUtils.ts`, migration 0006, dual-key `{ publicKey, privateKey }` serialization in `keyGen.ts` with clean PKCS#8 PEM display, `.pem` download, and `authorized_keys` command generation) | Rich multi-dimensional categorization and instant filtering across vault items (Phase 20, v0.0.2.2), decoupling discovery from hierarchical pods while maintaining Layer 2 AES-256-GCM encryption, paired with terminal-ergonomic SSH key management |
+| 24 | Bulk Operations & 207 Multi-Status Import (`POST /api/vault/bulk-import` with up to 1000 items, scoped 10MB parser, per-record Zod validation, HTTP 207 Multi-Status partial success envelope `{ inserted, errors }`, `DELETE /api/vault/bulk` with cascade attachment deletion and audit logging, floating action bar in `VaultShell.tsx` guarded by `!isLocked`, multi-select batch pod/tag operations, and import error resolution chips) | High-volume vault migration and mass item management without single-record HTTP request roundtrips or silent tag loss (Phase 21, v0.0.2.3, Tasks 41 & 42) |
 
 ---
 

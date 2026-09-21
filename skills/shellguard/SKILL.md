@@ -158,9 +158,9 @@ The HTTP verb determines which permission bit is required:
 | Endpoint group | `canRead` | `canWrite` | `canEdit` | `canDelete` |
 |----------------|:---------:|:----------:|:---------:|:-----------:|
 | `GET /api/vault`, `GET /api/vault/:id` | ✔ | — | — | — |
-| `POST /api/vault` | — | ✔ | — | — |
+| `POST /api/vault`, `POST /api/vault/bulk-import` | — | ✔ | — | — |
 | `PUT /api/vault/:id` | — | — | ✔ | — |
-| `DELETE /api/vault/:id` | — | — | — | ✔ |
+| `DELETE /api/vault/:id`, `DELETE /api/vault/bulk` | — | — | — | ✔ |
 | Notes (`GET`/`POST`/`PUT`/`DELETE /api/notes`) | ✔ | ✔ | ✔ | ✔ |
 | SSH Keys (`GET`/`POST`/`PUT`/`DELETE /api/keys`) | ✔ | ✔ | ✔ | ✔ |
 | Attachments (`GET`/`POST`/`PUT`/`DELETE /api/attachments`) | ✔ | ✔ | ✔ | ✔ |
@@ -275,6 +275,80 @@ Replace an existing pearl's mutable fields. Ownership-scoped: `404` if not yours
 **Permissions Required:** `canDelete`
 
 **Error Responses:** `401 Unauthorized` · `403 Forbidden` (no `canDelete`) · `404 Not Found`
+
+### POST /api/vault/bulk-import — Batch Import Vault Items
+
+Batch insert up to 1,000 vault pearls in an atomic transaction with per-record validation.
+
+**Permissions Required:** `canWrite`  
+**Payload Limit:** 10MB scoped parser
+
+**Request Body:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid-v4",
+      "title": "Encrypted or Plain Title",
+      "secret": "<opaque ShellCryption envelope — a JSON string, never a nested object>",
+      "type": "password",
+      "tags": ["prod", "cloud"]
+    }
+  ]
+}
+```
+
+**Responses:**
+- `201 Created` — All items inserted successfully. `inserted` is an **array of the persisted IDs** (not a count):
+  ```json
+  { "success": true, "data": { "inserted": ["uuid-v4", "uuid-v5"] } }
+  ```
+- `207 Multi-Status` — Partial success (valid items persisted, invalid items reported). Each error carries the **zero-based source index** and a field-qualified reason:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "inserted": ["uuid-v4"],
+      "errors": [
+        { "index": 4, "reason": "title: Required" },
+        { "index": 12, "reason": "secret: String must contain at least 1 character(s)" }
+      ]
+    }
+  }
+  ```
+- `400 Bad Request` — Array missing, empty, or exceeds 1,000 items
+- `401 Unauthorized` · `403 Forbidden` (no `canWrite`)
+
+### DELETE /api/vault/bulk — Batch Delete Vault Items
+
+Delete multiple vault pearls by their IDs in a single operation. Automatically cascades to linked file attachments and records audit events.
+
+**Permissions Required:** `canDelete`
+
+**Request Body:**
+```json
+{
+  "ids": ["uuid-1", "uuid-2"]
+}
+```
+
+**Responses:**
+- `200 OK` — All requested IDs deleted. `deleted` is an **array of the removed IDs**:
+  ```json
+  { "success": true, "data": { "deleted": ["uuid-1", "uuid-2"] } }
+  ```
+- `207 Multi-Status` — Partial success (some IDs were not found or not owned). `errors[]` carries `{ id, reason }`:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "deleted": ["uuid-1"],
+      "errors": [{ "id": "uuid-2", "reason": "Not found" }]
+    }
+  }
+  ```
+- `400 Bad Request` — `ids` is not a non-empty array of strings
+- `401 Unauthorized` · `403 Forbidden` (no `canDelete`)
 
 ---
 

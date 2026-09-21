@@ -149,11 +149,10 @@ app.use(helmet({
 
 app.use(cors(getCorsConfig()));
 
-// Delta #4 (Phase 19 revision): 1mb global body ceiling. Attachment POSTs are
-// multipart/form-data (Busboy streams them directly in the route — the JSON
-// parser no-ops on non-JSON content types); attachment PUTs are metadata-only
-// and fit the global ceiling. The old scoped 32mb JSON parser is retired with
-// the base64 wire contract it served.
+// Delta #4 (Phase 19 & Phase 21 revision): 1mb global body ceiling, with a scoped
+// 10mb limit for bulk pearl imports (/api/vault/bulk-import) to support batches
+// of up to 1000 items with custom fields.
+app.use('/api/vault/bulk-import', express.json({ limit: '10mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use('/api', apiLimiter);

@@ -1078,7 +1078,24 @@ export default function App() {
                     }}
                     onBulkDelete={async (ids) => {
                       if (!shellKey || isLocked) return;
-                      await restAdapter.DELETE('/api/vault/bulk', { ids });
+                      const itemsToDelete = vaultItems.filter(i => ids.includes(i.id));
+                      const pearlIds = itemsToDelete.filter(i => i.type === 'password' || !i.type).map(i => i.id);
+                      const noteIds = itemsToDelete.filter(i => i.type === 'note').map(i => i.id);
+                      const keyIds = itemsToDelete.filter(i => i.type === 'key').map(i => i.id);
+                      const attIds = itemsToDelete.filter(i => i.type === 'attachment').map(i => i.id);
+
+                      if (pearlIds.length > 0) {
+                        await restAdapter.DELETE('/api/vault/bulk', { ids: pearlIds });
+                      }
+                      for (const id of noteIds) {
+                        await restAdapter.DELETE(`/api/notes/${id}`).catch(() => {});
+                      }
+                      for (const id of keyIds) {
+                        await restAdapter.DELETE(`/api/keys/${id}`).catch(() => {});
+                      }
+                      for (const id of attIds) {
+                        await restAdapter.DELETE(`/api/attachments/${id}`).catch(() => {});
+                      }
                       if (shellKey) scuttleVault(shellKey);
                     }}
                     onBulkMoveToPod={async (ids, category) => {
@@ -1095,6 +1112,7 @@ export default function App() {
                             url: item.url || "",
                             category: category,
                             type: item.type as VaultItemType,
+                            tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
                             notes: item.notes,
                             totp_secret: item.totp_secret,
                             attachments: item.attachments,
@@ -1221,7 +1239,7 @@ export default function App() {
                           url: item.url || "",
                           category: item.category || "",
                           type: itemType,
-                          tags: item.tags || "[]",
+                          tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
                           notes: item.notes || "",
                           totp_secret: encryptedTotp,
                           attachments: item.attachments || "[]",
@@ -1229,34 +1247,46 @@ export default function App() {
                         });
                       }
 
-                      // We can just hit /api/vault/bulk-import which supports pearls
-                      // Wait, does the API support notes and ssh keys?
-                      // The bulk-import route currently only inserts into vault_pearls.
-                      // Let's filter out notes and ssh_keys for individual updates, or we update bulk-import to handle different types.
-                      // Actually, the requirements for bulk-import specifically says: "Bulk Pearl Import Router ... Implement POST /api/vault/bulk-import accepting an array of ShellCrypted items. ... valid items are inserted, invalid skipped."
+                      const pearlsToInsert = itemsToInsert.filter(i => i.type === 'password' || !i.type);
+                      const others = itemsToInsert.filter(i => i.type !== 'password' && Boolean(i.type));
 
-                      // For simplicity, we can still use bulk import for pearls, and single requests for others.
-                      // Or we can just use single requests if bulk import is only for pearls.
-                      const pearlsToInsert = itemsToInsert.filter(i => i.type === 'password' || i.type === 'attachment');
-                      const others = itemsToInsert.filter(i => i.type !== 'password' && i.type !== 'attachment');
+                      const result: { inserted: string[]; errors: { index: number; reason: string }[] } = {
+                        inserted: [],
+                        errors: [],
+                      };
 
                       if (pearlsToInsert.length > 0) {
                         try {
-                          await restAdapter.POST('/api/vault/bulk-import', { items: pearlsToInsert });
-                        } catch (e) {
+                          const bulkRes = await restAdapter.POST<{ inserted: string[]; errors?: { index: number; reason: string }[] }>('/api/vault/bulk-import', { items: pearlsToInsert });
+                          if (bulkRes) {
+                            result.inserted.push(...(bulkRes.inserted || []));
+                            if (bulkRes.errors && bulkRes.errors.length > 0) {
+                              result.errors.push(...bulkRes.errors);
+                            }
+                          }
+                        } catch (e: any) {
                           console.error("Bulk import failed", e);
+                          throw e;
                         }
                       }
 
-                      for (const item of others) {
-                         if (item.type === 'note') {
-                           await restAdapter.POST("/api/notes", { id: item.id, title: item.title, content: item.secret, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
-                         } else if (item.type === 'key') {
-                           await restAdapter.POST("/api/keys", { id: item.id, title: item.title, key_value: item.secret, username: item.username, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
-                         }
+                      for (let idx = 0; idx < others.length; idx++) {
+                        const item = others[idx];
+                        try {
+                          if (item.type === 'note') {
+                            await restAdapter.POST("/api/notes", { id: item.id, title: item.title, content: item.secret, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
+                            result.inserted.push(item.id);
+                          } else if (item.type === 'key') {
+                            await restAdapter.POST("/api/keys", { id: item.id, title: item.title, key_value: item.secret, username: item.username, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
+                            result.inserted.push(item.id);
+                          }
+                        } catch (err: any) {
+                          result.errors.push({ index: pearlsToInsert.length + idx, reason: err.message || 'Insert failed' });
+                        }
                       }
 
                       if (shellKey) await scuttleVault(shellKey);
+                      return result;
                     }}
                   />
                 </motion.div>

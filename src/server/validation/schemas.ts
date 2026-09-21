@@ -39,21 +39,22 @@ const itemTags = z.union([
 ]).optional();
 
 export const VaultSchemas = {
+  bulkImportItem: z.object({
+    id: itemId,
+    title: itemTitle,
+    secret: z.string().min(1).max(20000),
+    username: z.string().max(255).optional(),
+    url: z.string().max(2048).optional(),
+    type: z.enum(['password', 'pearl']).optional(),
+    category: itemCategory,
+    tags: itemTags,
+    notes: z.string().max(10000).optional(),
+    totp_secret: z.string().max(5000).optional(),
+    attachments: z.string().max(2000000).optional(),
+    custom_fields: z.string().max(500000).optional()
+  }),
   bulkImport: z.object({
-    items: z.array(z.object({
-      id: itemId,
-      title: itemTitle,
-      secret: z.string().min(1).max(20000),
-      username: z.string().max(255).optional(),
-      url: z.string().max(2048).optional(),
-      type: z.string().max(32).optional(),
-      category: itemCategory,
-      tags: itemTags,
-      notes: z.string().max(10000).optional(),
-      totp_secret: z.string().max(5000).optional(),
-      attachments: z.string().max(2000000).optional(),
-      custom_fields: z.string().max(500000).optional()
-    })).max(1000) // limit bulk import to 1000 items at a time
+    items: z.array(z.any()).min(1).max(1000) // limit bulk import to 1-1000 items at a time
   }),
   bulkDelete: z.object({
     ids: z.array(itemId).min(1).max(1000)

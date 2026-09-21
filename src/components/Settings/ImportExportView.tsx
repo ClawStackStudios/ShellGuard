@@ -28,7 +28,7 @@ import { Smartphone } from "lucide-react";
 interface ImportExportViewProps {
   items: VaultItem[];
   lobster: Lobster;
-  onImportItems?: (importedItems: VaultItem[]) => void;
+  onImportItems?: (importedItems: VaultItem[]) => Promise<{ inserted: string[]; errors?: { index: number; reason: string }[] } | void> | void;
 }
 
 export function ImportExportView({ items, lobster, onImportItems }: ImportExportViewProps) {
@@ -43,8 +43,9 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
 
   // Import States
   const [importJsonText, setImportJsonText] = useState("");
-  const [importStatus, setImportStatus] = useState<"idle" | "success" | "error">("idle");
+  const [importStatus, setImportStatus] = useState<"idle" | "success" | "warning" | "error">("idle");
   const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [importErrors, setImportErrors] = useState<{ index: number; title?: string; reason: string }[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   // sgtotp.bak import states
   const [isSgtotpKeyModalOpen, setIsSgtotpKeyModalOpen] = useState(false);
@@ -174,6 +175,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     setIsImporting(true);
     setImportStatus("idle");
     setImportMessage(null);
+    setImportErrors([]);
 
     try {
       // ShellGuard-TOTP sgtotp.bak detection first — encrypted envelopes route to the key modal.
@@ -222,12 +224,28 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     setIsImporting(true);
     setImportStatus("idle");
     setImportMessage(null);
+    setImportErrors([]);
     try {
+      let result: { inserted: string[]; errors?: { index: number; reason: string }[] } | void;
       if (onImportItems) {
-        await onImportItems(importPreviewList);
+        result = await onImportItems(importPreviewList);
       }
-      setImportStatus("success");
-      setImportMessage(`Successfully imported ${importPreviewList.length} vault record(s) into your session.`);
+
+      if (result && result.errors && result.errors.length > 0) {
+        const enrichedErrors = result.errors.map(err => ({
+          ...err,
+          title: importPreviewList[err.index]?.title || `Record #${err.index + 1}`
+        }));
+        setImportErrors(enrichedErrors);
+        setImportStatus("warning");
+        setImportMessage(
+          `Partially imported: ${result.inserted.length} record(s) saved, ${result.errors.length} record(s) failed validation.`
+        );
+      } else {
+        setImportStatus("success");
+        setImportMessage(`Successfully imported ${importPreviewList.length} vault record(s) into your session.`);
+      }
+
       setImportJsonText("");
       setImportPreviewList(null);
     } catch (err: any) {
@@ -242,6 +260,7 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
     setImportPreviewList(null);
     setImportStatus("idle");
     setImportMessage(null);
+    setImportErrors([]);
   };
 
   const handleSgtotpDecryptAndImport = (e: React.FormEvent) => {
@@ -425,6 +444,34 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
             <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
               <ShieldCheck size={16} />
               <span>{importMessage}</span>
+            </div>
+          )}
+
+          {importStatus === "warning" && (
+            <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-600 dark:text-amber-400 text-xs space-y-3">
+              <div className="flex items-center gap-2 font-semibold">
+                <AlertCircle size={16} />
+                <span>{importMessage}</span>
+              </div>
+              {importErrors.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                    Skipped Items ({importErrors.length}):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 pt-1 max-h-40 overflow-y-auto">
+                    {importErrors.map((err, i) => (
+                      <div
+                        key={i}
+                        className="px-2.5 py-1 bg-amber-500/20 dark:bg-amber-500/30 border border-amber-500/40 rounded-lg text-[11px] font-mono flex items-center gap-1.5"
+                        title={`Index ${err.index}: ${err.reason}`}
+                      >
+                        <span className="font-bold">{err.title || `#${err.index + 1}`}:</span>
+                        <span className="opacity-90">{err.reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

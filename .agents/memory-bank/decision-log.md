@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-20 — Phase 21: Per-record Zod safeParse vs middleware validateBody for 207 Multi-Status
+Express `validateBody(schema)` runs before route execution and rejects an entire payload with HTTP 400 if any record fails validation. To achieve true 207 Multi-Status partial failure handling in `POST /api/vault/bulk-import`, the middleware validates only the container array bounds (`1..1000`), while the route handler executes `VaultSchemas.bulkImportItem.safeParse(item)` per record, aggregating failures into `{ index, reason }` chips and persisting valid records in an atomic transaction.
+
 ## 2026-09-19 — Phase 20 release drafting & 3-version roadmap sliding window
 Rolled over ROADMAP.md to release v0.0.2.2 (Build 24 — The Bioluminescent Reef) holding completed Phases 18, 19, and 20. Retired Phase 17 into ROADMAP-HISTORY.md preserving the 3-completed-milestones ceiling. Verified dynamic package version resolver ensures 0.0.2.2 passes tests cleanly with zero assertion drift.
 
@@ -60,8 +63,5 @@ A 🏛️ passed through a bash heredoc became 2×U+FFFD on disk. Emoji through 
 
 ## 2026-09-16 — assert-before-write is 5-for-5
 Every fail-closed assert this arc (missing `./` prefix, 2-element tuple, count mismatch 5-vs-4, wrong padding) prevented a partial multi-file write. The `swap(expected=N)` pattern costs seconds and has never cost a false stop. Keep it for all mechanical sweeps.
-
-## 2026-09-16 — decimal interlude pattern for non-phase work
-Unphased hotfixes broke the spine's `Stage N = Phase N−1` invariant until I adopted the TOTP's decimal pattern (Stage 18.5). Non-phase work slots at decimal positions *between* phases; stage numbering stays a pure phase ladder. (See `activeContext.md` § Recent Changes, chronology entry.)
 
 

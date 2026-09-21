@@ -109,3 +109,16 @@ ShellGuard includes a zero-knowledge, client-side TOTP engine:
 - **Zero-Knowledge Storage**: The TOTP seed is encrypted client-side inside the `totp_secret` column.
 - **Client-Side Generation**: RFC 6238 6-digit dynamic codes and 30-second countdown rings calculate directly in browser RAM without server interaction.
 - **Companion Mirroring**: Stored TOTP seeds seamlessly mirror to the native [ShellGuard-TOTP Android companion](/companion/) for offline authentication on your mobile device.
+
+---
+
+## ⚡ Batch Multi-Selection, Pod Reassignment & Bulk Operations
+
+ShellGuard provides rich batch management tools to organize, migrate, and prune credentials in bulk:
+
+- **Tri-State Multi-Selection**: Select individual items via checkbox, or toggle select-all across filtered views using the header tri-state checkbox.
+- **Floating Action Bar**: Displays selected item counts with bulk actions (Move to Pod, Assign Tags, Delete Selected). Guarded automatically against display when the vault is locked (`!isLocked`).
+- **Bulk Move to Pod**: Move multiple logins, notes, or keys to a destination pod in one action, fully preserving tags and metadata.
+- **Bulk Tag Assignment**: Add tags across multiple selected items without wiping pre-existing tags.
+- **Bulk Delete with Safe Cascade**: Batch remove selected items with a Reef Modernist confirmation modal (`ConfirmDialog`); automatically cascades deletions to linked file attachments without orphan records.
+- **Bulk Import with 207 Multi-Status**: Import up to 1,000 items in a single atomic transaction. Any malformed records are reported with granular error resolution chips indicating item index, title, and validation reason while valid items persist cleanly.

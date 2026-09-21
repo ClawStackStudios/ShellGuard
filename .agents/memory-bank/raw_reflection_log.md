@@ -1,4 +1,28 @@
 ---
+Date: 2026-09-20
+TaskRef: "Phase 21: Bulk Import Endpoint & Batch Operations (Tasks 41 & 42)"
+
+Learnings:
+- Discovered Express route shadowing defect in `src/server/routes/vault.ts`: `DELETE /bulk` and `POST /bulk-import` were declared after parameterized routes `PUT /:id` and `DELETE /:id`, causing Express router to match `/bulk` as `:id = "bulk"`. Ordering bulk endpoints directly before parameterized routes is mandatory.
+- Middleware validation vs per-record partial status: If `validateBody` validates every element strictly, any malformed item fails the whole request with 400. Validating the container bounds with `z.array(z.any()).min(1).max(1000)` in middleware, combined with `VaultSchemas.bulkImportItem.safeParse(item)` per record inside the route handler, enables true HTTP 207 Multi-Status partial success with granular `{ index, title, reason }` reporting.
+- Silent tag wiping on bulk mutations: In `App.tsx`, `onBulkMoveToPod` previously omitted the `tags` property when updating items, causing tags to be silently cleared. Preserving `tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || [])` keeps tag state intact.
+- Replaced native browser `window.prompt` and `window.confirm` with Reef Modernist modals (`ConfirmDialog` and inline custom inputs) for tag assignment, pod moves, and batch deletions, ensuring seamless headless browser testing and consistent dark-mode styling.
+- Guarded floating action bar in `VaultShell.tsx` against locked vault access: checked `!isLocked && selectedItems.size > 0` and cleared selection state upon vault locking.
+- Created `tests/vault-bulk-import.test.ts` on isolated port 64650, verifying 100 items / 2 malformed / 98 inserted 207 Multi-Status, cascading attachment deletes, and owner isolation.
+
+Difficulties:
+- In `VaultShell.tsx`, adding the floating bar inside the list pane accidentally introduced an extra closing `</div>` that truncated the left pane container, breaking the Vite build. Resolved by inspecting the JSX AST tree and aligning container boundaries.
+
+Successes:
+- All 21 test suites (259 passed, 1 skipped) pass 100% green.
+- `tsc --noEmit`, `vite build`, and `npm run docs:build` pass with zero errors.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Route ordering hygiene — always declare static and bulk subpaths before parameterized `:id` handlers.
+- General pattern: 207 Multi-Status pattern — container-level validation in middleware + per-record safeParse in handler.
+---
+
+---
 Date: 2026-09-19
 TaskRef: "Release Draft v0.0.2.2 (Build 24) — The Bioluminescent Reef"
 

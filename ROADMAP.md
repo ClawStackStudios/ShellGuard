@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-09-19
-current_position: "v0.0.2.2 (Build 24) — released & live; next Phase 21: Bulk Import Endpoint & Batch Operations (v0.0.2.3 / Build 25, Tasks 41/42) — queue 21 → 22 → 23 → 24"
+last_updated: 2026-09-22
+current_position: "v0.0.2.3 (Build 25) — released & live; next Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics (provisional v0.0.2.4 / Build 26) — queue 22 → 23 → 24"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "███████████████████░ 79% (19 of 24 formalized phases)"
+  features_completed: "████████████████████ 83% (20 of 24 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,90 +13,22 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 21+) and the 3 most recent completed phases (Phases 18, 19, and 20).*
-> *Historical Phases 1 through 17 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 22+) and the 3 most recent completed phases (Phases 19, 20, and 21).*
+> *Historical Phases 1 through 18 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.2 (Build 24)`
-- **Next Planned Milestone**: `v0.0.2.3 (Build 25)` (Phase 21)
+- **Current Production Release**: `v0.0.2.3 (Build 25)`
+- **Next Planned Milestone**: `v0.0.2.4 (Build 26)` (Phase 22)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 21 completes, Phase 18 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 22 completes, Phase 19 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
-
-### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]
-
-> Phase Feature Set Overview:
-> Empowers high-volume vault ingestion and management: transactional bulk import endpoint
-> with granular per-record failure reporting, tri-state bulk selection actions, and confirmed
-> batch deletion with cascading cleanup.
-> *(Source: Root ROADMAP backlog, memory-bank/progress.md)*
-
-> 📚 **Documentation Impact**: ARCHITECTURE.md API routes table (new route + 207 contract) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract!) - docs/vault-features (bulk UI)
-
-- [x] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
-
-Description: Implement `POST /api/vault/bulk-import` accepting an array of ShellCrypted
-items. Execute inside a database transaction with per-record validation: valid items are
-inserted, invalid items are skipped and returned in an `errors: [{index, reason}]` report.
-Update bulk delete endpoints to ensure atomic cascades across custom fields and attachments.
-
-> Success Criteria: Importing 100 items with 2 malformed records successfully persists
-> 98 items and returns an informative 207 Multi-Status / detailed error array; atomic deletes.
-
-- [x] **Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal**
-
-Description: Expand bulk selection controls across all vault item views: select-all checkbox
-with tri-state (none, some, all), floating bulk action bar (Move to Pod, Assign Tag, Delete),
-and dedicated Import wizard with preview table and error resolution chips.
-
-> Success Criteria: Floating action bar appears when items are checked; bulk moving items
-> updates local React state optimistically; import error modal highlights skipped items.
-
-#### 🌊 Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite
-
-> Sub-Phase Feature Set Overview:
-> Bridges enterprise vault mobility: native ingestion of Bitwarden JSON and CSV archives (including
-> compound SSH keys, custom fields, and folders converted to Pods), per-item password generation history,
-> dynamic TOTP configuration parity with Android companion, and dual Encrypted / Unencrypted export suite.
-
-- [x] **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
-  - Implement `src/lib/bitwarden.ts` multi-format sniffer hierarchy to prevent unhandled format errors.
-  - Convert Bitwarden Folders to ShellGuard Pods using `normalizePod()`.
-  - Translate Bitwarden items: Logins (with TOTP extraction), Secure Notes, SSH keypairs via `serializeSshKeySecret()`, and Custom Fields (`0: text`, `1: hidden`, `2: boolean`, `3: linked`).
-  - Provide clear user guidance when an encrypted Bitwarden export is uploaded.
-  - Unit test suite: `tests/unit/bitwarden-import.test.ts` verifying end-to-end mapping of all Bitwarden record types.
-
-- [x] **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
-  - Track per-item password generation history (`password_history`) with timestamps, expandable UI drawer in `ItemFormModal` and `ItemDetailPane`, and one-click password restore.
-  - Support multi-URI entries (`uris`) for login records.
-  - Implement dynamic TOTP configuration variables (`algorithm`: SHA1/SHA256/SHA512, `digits`: 6/8, `period`: 30/60) with form controls in `ItemFormModal` and dynamic live generation in `TotpDisplay.tsx`.
-  - Synchronize Android companion documentation in `compatibility_layer.md`.
-
-- [x] **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
-  - Implement `src/lib/vaultExport.ts` supporting full JSON and CSV exports across both Encrypted and Unencrypted modes.
-  - Encrypted exports sealed with AES-256-GCM via active ClawKey (`hu-`) or custom passphrase with confirmation.
-  - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.
-  - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
-  - Unit test suite: `tests/unit/vault-export.test.ts` verifying round-trip encryption, decryption, and CSV formatting.
-
-- [x] **Sub-Phase 21.4: [Hardening & UI Seams] Post-Verification Hardening, Note Attachments Parity & Sticky Detail Selection**
-  - Migration `0008_note_attachments.{up,down}.sql` adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`.
-  - Cascading deletion parity on `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
-  - Background lifecycle cleanups (`cleanupOrphanedFiles`, `deleteExpiredSharePods`) to purge temporary artifacts.
-  - Detail pane sticky selection preserving `selectedType` and `selectedId` during item edit/save.
-  - UI label polish: explicit `Attachments (max 500MB per attachment)` guidance in `ItemFormModal.tsx`.
-  - Established formal tiered verification templates in `.agents/templates/verification/`.
-  - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
-
-
----
 
 ### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 26)]
 
@@ -315,6 +247,76 @@ mentions it.
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
+### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)] ✅
+
+> Phase Feature Set Overview:
+> Empowers high-volume vault ingestion and enterprise data portability: transactional bulk import
+> endpoint with granular per-record 207 Multi-Status reporting, tri-state bulk selection actions,
+> confirmed batch deletion with cascading cleanup, universal Bitwarden JSON & CSV ingestion pipeline,
+> dynamic RFC 6238 TOTP engine, per-item password revision history, dual export suite (zero-knowledge
+> AES-256-GCM backups with PBKDF2/HKDF and sanitized CSV), Migration 0008 Note Attachments Parity
+> with cascading deletion, ghost pod purging, and sticky detail pane selection.
+> *(Receipts: Phase 21 Tasks 41/42 + Sub-Phases 21.1–21.4, 2026-09-22. Released & live.)*
+
+> 📚 **Documentation Impact**: ARCHITECTURE.md API routes table (new routes + 207 contract, Delta #26) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract) - docs/vault-features (bulk UI, encrypted attachments, import-export) - walk-the-docs workflow — ✅ synced.
+
+- [x] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
+
+Description: Implement `POST /api/vault/bulk-import` accepting an array of ShellCrypted
+items. Execute inside a database transaction with per-record validation: valid items are
+inserted, invalid items are skipped and returned in an `errors: [{index, reason}]` report.
+Update bulk delete endpoints to ensure atomic cascades across custom fields and attachments.
+
+> Success Criteria: Importing 100 items with 2 malformed records successfully persists
+> 98 items and returns an informative 207 Multi-Status / detailed error array; atomic deletes.
+
+- [x] **Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal**
+
+Description: Expand bulk selection controls across all vault item views: select-all checkbox
+with tri-state (none, some, all), floating bulk action bar (Move to Pod, Assign Tag, Delete),
+and dedicated Import wizard with preview table and error resolution chips.
+
+> Success Criteria: Floating action bar appears when items are checked; bulk moving items
+> updates local React state optimistically; import error modal highlights skipped items.
+
+#### 🌊 Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite
+
+> Sub-Phase Feature Set Overview:
+> Bridges enterprise vault mobility: native ingestion of Bitwarden JSON and CSV archives (including
+> compound SSH keys, custom fields, and folders converted to Pods), per-item password generation history,
+> dynamic TOTP configuration parity with Android companion, and dual Encrypted / Unencrypted export suite.
+
+- [x] **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
+  - Implement `src/lib/bitwarden.ts` multi-format sniffer hierarchy to prevent unhandled format errors.
+  - Convert Bitwarden Folders to ShellGuard Pods using `normalizePod()`.
+  - Translate Bitwarden items: Logins (with TOTP extraction), Secure Notes, SSH keypairs via `serializeSshKeySecret()`, and Custom Fields (`0: text`, `1: hidden`, `2: boolean`, `3: linked`).
+  - Provide clear user guidance when an encrypted Bitwarden export is uploaded.
+  - Unit test suite: `tests/unit/bitwarden-import.test.ts` verifying end-to-end mapping of all Bitwarden record types.
+
+- [x] **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
+  - Track per-item password generation history (`password_history`) with timestamps, expandable UI drawer in `ItemFormModal` and `ItemDetailPane`, and one-click password restore.
+  - Support multi-URI entries (`uris`) for login records.
+  - Implement dynamic TOTP configuration variables (`algorithm`: SHA1/SHA256/SHA512, `digits`: 6/8, `period`: 30/60) with form controls in `ItemFormModal` and dynamic live generation in `TotpDisplay.tsx`.
+  - Synchronize Android companion documentation in `compatibility_layer.md`.
+
+- [x] **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
+  - Implement `src/lib/vaultExport.ts` supporting full JSON and CSV exports across both Encrypted and Unencrypted modes.
+  - Encrypted exports sealed with AES-256-GCM via active ClawKey (`hu-`) or custom passphrase with confirmation.
+  - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.
+  - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
+  - Unit test suite: `tests/unit/vault-export.test.ts` verifying round-trip encryption, decryption, and CSV formatting.
+
+- [x] **Sub-Phase 21.4: [Hardening & UI Seams] Post-Verification Hardening, Note Attachments Parity & Sticky Detail Selection**
+  - Migration `0008_note_attachments.{up,down}.sql` adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`.
+  - Cascading deletion parity on `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
+  - Background lifecycle cleanups (`cleanupOrphanedFiles`, `deleteExpiredSharePods`) to purge temporary artifacts.
+  - Detail pane sticky selection preserving `selectedType` and `selectedId` during item edit/save.
+  - UI label polish: explicit `Attachments (max 500MB per attachment)` guidance in `ItemFormModal.tsx`.
+  - Established formal tiered verification templates in `.agents/templates/verification/`.
+  - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
+
+---
+
 ### Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)] ✅
 
 > Phase Feature Set Overview:
@@ -371,32 +373,26 @@ state alongside search keywords and pod selection.
 > `27df54b` — Task 38 streaming UI + previews + ergonomics fold-in,
 > `dee897f` — documentation impact sync, 2026-09-18. Released & live.)*
 
-> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB column) - SECURITY.md + ARCHITECTURE.md (50MB ceiling, quota 413 behavior, body-limit change) - .env.example + README env table - docs/vault-features/attachments.md - reference/design-system.md (eye+copy ergonomics fold-in) — ✅ synced in `dee897f`.
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB file_data, size_bytes) - ARCHITECTURE.md (streaming wire contract, quota enforcement, Delta 21 & 22) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (chunked GET /file, multipart POST, metadata-only PUT) - docs/vault-features/attachments.md (BLOB architecture, limits) — ✅ synced.
 
-- [x] **Task 37: [Functionality] Migration 0005 BLOB Storage, Streaming Chunk Handlers & Quota Enforcement**
+- [x] **Task 37: [Functionality] Native BLOB Storage Migration, Streaming Wire Contract & Strict Quotas**
 
-Description: Delivered `migrations/0005_attachment_blobs.{up,down}.sql` (table rebuild:
-`file_data BLOB` + `size_bytes INTEGER`, verbatim legacy copy) with the in-code idempotent
-backfill (`attachmentBlobs.ts` — TEXT rows re-encoded to raw envelope bytes, transactional,
-VACUUM'd). Rewrote `src/server/routes/attachments.ts` to the Phase 19 wire contract:
-Busboy multipart streaming POST with mid-stream 413 abort, metadata-only list, chunked
-`substr` streaming download, metadata-only PUT; 50MB/file ceiling and 500MB/`owner_uuid`
-grotto quota (env-tunable). Honest engineering note: better-sqlite3 exposes no `openBlob()`
-— the write path peaks at the ciphertext size (hard-capped mid-stream); the read path is
-fully chunked. Proven in `tests/attachments-blob.test.ts` (6 tests).
+Description: Create `migrations/0005_attachment_blobs.up.sql` rebuilding `vault_secure_attachments`
+with `file_data BLOB NOT NULL` and `size_bytes INTEGER NOT NULL`. Implement idempotent in-code
+backfill (`attachmentBlobs.ts`) re-encoding legacy base64 TEXT rows into raw binary ShellCryption
+envelopes. Refactor `attachments.ts`: replace base64 JSON parser with `busboy` multipart streaming,
+reject uploads exceeding 50MB (`ATTACHMENT_MAX_MB`) or 500MB per-owner quota (`GROTTO_QUOTA_MB`) with
+`413` mid-stream; strip `file_data` from list responses; implement `GET /api/attachments/:id/file`
+streaming 1MB chunks. Add comprehensive integration suite in `tests/attachments-blob.test.ts`.
 
-> Success Criteria: Binary payloads round-trip cleanly without base64 encoding overhead ✅;
-> over-quota uploads yield 413 and store nothing ✅; chunked BLOB reads avoid RSS spikes ✅;
-> backward-compatible migration verified (legacy TEXT → BLOB, idempotent) ✅.
+> Success Criteria: Base64 JSON parser removed; 50MB files upload and download via streaming
+> with constant memory overhead; over-quota uploads reject with 413; 100% test oracle passes.
 
-- [x] **Task 38: [UI Component] Streamed Progress Uploads, Chunked Decryption & File Previewers**
+- [x] **Task 38: [UI Component] Streaming Attachment Manager, In-Memory Decryption & Inline Previews**
 
-Description: `attachmentUtils.ts` gained `uploadAttachmentMultipart` (XHR `onprogress` +
-abort), `fetchAttachmentEnvelope` (streamed ciphertext fetch) and `dataUrlToBlob`;
-`App.tsx` streams uploads with a progress overlay + cancel button, maps the metadata-only
-list (payloads never touched server-side), and exposes `handleFetchAttachment`
-(client-side decryption only) through `VaultShell` to `ItemDetailPane` — on-demand
-download/decrypt plus encrypted preview modal for images (decrypted payload) and PDFs
+Description: Update client attachment handling in `ItemFormModal.tsx` and `ItemDetailPane.tsx`:
+stream encrypted payloads via `FormData` with live progress bars and cancel support; download
+and decrypt BLOB chunks on-demand using active `shellKey`; render encrypted inline image/PDF previews
 (Blob object URL). **Eye-beside-Copy fold-in delivered**: Unmask immediately LEFT of Copy
 on hidden custom-field rows (the password/SSH secret row already shipped the cluster);
 masked value stays in the value column; full-value mask invariant intact.
@@ -409,59 +405,14 @@ masked value stays in the value column; full-value mask invariant intact.
 
 ---
 
-### Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 20)] ✅
-
-> Phase Feature Set Overview:
-> Consolidates vault item architecture into primary, rich composite records adhering
-> to the Bitwarden model. Passwords/logins encapsulate embedded notes, live TOTP seeds,
-> attached files, and custom fields in a single cohesive entity. Decouples child
-> attachments from Pod item metrics so attached files never artificially inflate
-> folder counts. Introduces native in-browser WebCrypto ED25519/RSA-4096 SSH keypair
-> generation with downloadable public/private keys.
-> *(Source: Attractor Beacon §6, memory-bank/progress.md)*
-> *(Receipts: `6f9b00d` — Task 35 keypair engine + pod-decoupling receipts,
-> `61336a1` — Task 36 master-form key section, release prep + tag `v0.0.2.0` — 2026-09-17. Released & live.)*
-
-> 📚 **Documentation Impact**: docs/vault-features (composite model, attachments) - reference/blueprint-schema.md (composite semantics, decoupled tallies) - ARCHITECTURE.md (count-aggregation contract) - BLUEPRINT.md
-
-- [x] **Task 35: [Functionality] Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine**
-
-Description: Refactor item composition contracts across client and server. Ensure
-`vault_pearls` serves as the primary composite entity embedding credentials, URI arrays,
-ShellCrypted rich notes, TOTP seeds, attachments, and custom fields. In `server.ts` and
-`vault.ts`, update count aggregation queries so child records in `vault_secure_attachments`
-are scoped strictly to parent items and excluded from root pod item tallies. Implement
-in-browser WebCrypto cryptographic SSH key generation (`generateKeyPair`) supporting
-Ed25519 and RSA-4096, outputting RFC-4716 public keys and PKCS#8 ShellCrypted private keys.
-Add test coverage in `tests/vault-crud.test.ts` and `tests/unit/keyGen.test.ts`.
-
-> Success Criteria: Creating a login with 3 attachments increases Pod item count by
-> exactly 1; generating an Ed25519 keypair produces valid OpenSSH/RFC formats; child
-> attachments cleanly cascade delete with the parent; 100% test oracle passes.
-
-- [x] **Task 36: [UI Component] Bitwarden-Style Master Form, Live TOTP Embedding & Pod Item Count Reconciliation**
-
-Description: Redesign `ItemFormModal.tsx` and `ItemDetailPane.tsx` into a unified,
-Bitwarden-style master view: username, password with generation slider/strength gauge,
-URI list with launch buttons, embedded live-rendered TOTP token with 30-second progress ring,
-expandable rich notes, attachment drag-and-drop zone, and custom fields. Update
-`SidebarFolderTree.tsx` to display true primary item counts. Add the "Generate Keypair"
-action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-features/`.
-
-> Success Criteria: Vault view renders rich composite cards with embedded TOTP
-> countdowns and attachment action chips; folder badges accurately reflect primary
-> items; SSH key generator modal copies public keys and stores private keys in one click.
-
----
-
 
 
 ---
 
 
-## 🏛️ Historical Archive (Phases 1 through 17)
+## 🏛️ Historical Archive (Phases 1 through 18)
 
-Earlier development phases (`v0.0.0.0` void through `v0.0.1.9` Build 20) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.2.0` Build 20) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -483,5 +434,6 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.1.9` Build 20) are per
 | **Phase 15** | `v0.0.1.7 (Build 16)` | `sgtotp.bak` Import Compatibility Layer & Strict Release Mirror | Tasks 29 & 30 |
 | **Phase 16** | `v0.0.1.8 (Build 17)` | Docs Bridge Parity, Agentic Infrastructure & Version Resolver — Summit | Tasks 31 & 32 |
 | **Phase 17** | `v0.0.1.9 (Build 20)` | Key Ledger Hardening & Pod Purity — Security Hotfix | Tasks 33 & 34 |
+| **Phase 18** | `v0.0.2.0 (Build 20)` | Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation | Tasks 35 & 36 |
 
 ---

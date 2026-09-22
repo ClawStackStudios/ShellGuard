@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.2.3] - 2026-09-22
+
 ### Added
 - **Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite (Sub-Phases 21.1, 21.2, 21.3)**:
   - **Universal Bitwarden Ingestion Pipeline (`src/lib/bitwarden.ts`)**: Supports both unencrypted Bitwarden JSON and CSV exports; normalizes folders to pods (`normalizePod`); translates custom fields (text, hidden, checkbox, linked); serializes compound SSH keypairs; sniffs encrypted Bitwarden exports to provide clear user guidance to export unencrypted or use CLI.

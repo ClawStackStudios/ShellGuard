@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 17 (`v0.0.0.0` → `v0.0.1.9`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 18 (`v0.0.0.0` → `v0.0.2.0`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 18, 19, and 20), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 19, 20, and 21), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -946,3 +946,48 @@ across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
 >   failure shipped inside v0.0.1.9 (the bump commit landed after the last full oracle run);
 >   the test now asserts `package.json` ground truth + `X.Y.Z.N` shape only, so version bumps
 >   can never silently break it again.
+
+---
+
+## Phase 18: Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation [v0.0.2.0 (Build 20)]
+
+> Phase Feature Set Overview:
+> Consolidates vault item architecture into primary, rich composite records adhering
+> to the Bitwarden model. Passwords/logins encapsulate embedded notes, live TOTP seeds,
+> attached files, and custom fields in a single cohesive entity. Decouples child
+> attachments from Pod item metrics so attached files never artificially inflate
+> folder counts. Introduces native in-browser WebCrypto ED25519/RSA-4096 SSH keypair
+> generation with downloadable public/private keys.
+> *(Source: Attractor Beacon §6, memory-bank/progress.md)*
+> *(Receipts: `6f9b00d` — Task 35 keypair engine + pod-decoupling receipts,
+> `61336a1` — Task 36 master-form key section, release prep + tag `v0.0.2.0` — 2026-09-17. Released & live.)*
+
+> 📚 **Documentation Impact**: docs/vault-features (composite model, attachments) - reference/blueprint-schema.md (composite semantics, decoupled tallies) - ARCHITECTURE.md (count-aggregation contract) - BLUEPRINT.md
+
+- [x] **Task 35: [Functionality] Rich Composite Items, Child-Attachment Decoupling & Cryptographic Keypair Engine**
+
+Description: Refactor item composition contracts across client and server. Ensure
+`vault_pearls` serves as the primary composite entity embedding credentials, URI arrays,
+ShellCrypted rich notes, TOTP seeds, attachments, and custom fields. In `server.ts` and
+`vault.ts`, update count aggregation queries so child records in `vault_secure_attachments`
+are scoped strictly to parent items and excluded from root pod item tallies. Implement
+in-browser WebCrypto cryptographic SSH key generation (`generateKeyPair`) supporting
+Ed25519 and RSA-4096, outputting RFC-4716 public keys and PKCS#8 ShellCrypted private keys.
+Add test coverage in `tests/vault-crud.test.ts` and `tests/unit/keyGen.test.ts`.
+
+> Success Criteria: Creating a login with 3 attachments increases Pod item count by
+> exactly 1; generating an Ed25519 keypair produces valid OpenSSH/RFC formats; child
+> attachments cleanly cascade delete with the parent; 100% test oracle passes.
+
+- [x] **Task 36: [UI Component] Bitwarden-Style Master Form, Live TOTP Embedding & Pod Item Count Reconciliation**
+
+Description: Redesign `ItemFormModal.tsx` and `ItemDetailPane.tsx` into a unified,
+Bitwarden-style master view: username, password with generation slider/strength gauge,
+URI list with launch buttons, embedded live-rendered TOTP token with 30-second progress ring,
+expandable rich notes, attachment drag-and-drop zone, and custom fields. Update
+`SidebarFolderTree.tsx` to display true primary item counts. Add the "Generate Keypair"
+action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-features/`.
+
+> Success Criteria: Vault view renders rich composite cards with embedded TOTP
+> countdowns and attachment action chips; folder badges accurately reflect primary
+> items; SSH key generator modal copies public keys and stores private keys in one click.

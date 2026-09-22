@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.2. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.3. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 

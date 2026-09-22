@@ -1,5 +1,26 @@
 ---
 Date: 2026-09-22
+TaskRef: "Draft Release v0.0.2.3 (Build 25) — The Deep Ingestion & Vault Parity Molt"
+
+Learnings:
+- Adhering to the ClawStack Studios Release Protocol requires coordinating multiple synchronization anchors: `package.json`, `package-lock.json`, `README.md`, `CHANGELOG.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `ROADMAP-HISTORY.md`, and the active release document `RELEASE-vX.Y.Z.N.md`.
+- Strict enforcement of the Single Active Release Draft invariant (purging `RELEASE-v0.0.2.2.md` upon creation of `RELEASE-v0.0.2.3.md`) prevents ambiguity in downstream CI workflows (`.github/workflows/release.yml`) which mirror root release notes directly into GitHub Releases.
+- The Roadmap 3-version sliding-window protocol preserves readability of root `ROADMAP.md` by archiving older completed milestones (Phase 18 retired to `ROADMAP-HISTORY.md`) while keeping the 3 most recent completed phases (Phases 19, 20, 21) in view.
+
+Difficulties:
+- Ensuring no files from other agent directories (`.clinerules/`, `.jules/`) enter the index or get touched during release drafting. Enforced through strict staging boundaries and isolation rules.
+
+Successes:
+- Successfully drafted `RELEASE-v0.0.2.3.md` detailing all Phase 21 achievements (Batch Operations, Universal Bitwarden Ingestion, RFC 6238 TOTP, Item Password History, Dual Export Suite, Migration 0008 Note Attachments Parity, Ghost Pod Purging).
+- 100% test oracle green across all 26 test suites (313 passed, 1 skipped).
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Automated release document lifecycle maintaining Single Active Release Draft invariant.
+- General pattern: 3-version sliding-window archival in milestone roadmaps.
+---
+
+---
+Date: 2026-09-22
 TaskRef: "Note Attachments Parity, Ghost Pod Purging & Detail Pane Selection Preservation"
 
 Learnings:

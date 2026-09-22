@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-21 — Project hygiene & the live verification handshake
+Discovered that passing 285 isolated tests masked a broken delete function in the UI due to an untested client seam. Solidified `.agents/rules/project-hygiene.md` ratifying the 5-phase development lifecycle: Cartography, Seam-Aware Planning, Layered Stroke Commits, Automated Gates, and the mandatory Live Verification Handshake with Lucas. Tests verify logic; only human live verification proves the joint holds.
+
 ## 2026-09-21 — Vault item deletion routing & zombie process port shadowing
 A stale Node process on port 6565 from before Phase 21 intercepted `DELETE /api/vault/bulk` as `DELETE /api/vault/:id` with `:id = 'bulk'`, returning 404. Terminated the zombie PID, restored correct routing in `App.tsx` for TOTP/pearl items, integrated `ConfirmDialog` into `ItemDetailPane` for single-item parity with bulk deletes, and cleared `selectedItemId` on deletion to prevent dead selection state.
 
@@ -66,6 +69,3 @@ Wrote `open(rl,'w').write(entry + open(rl).read())` — Python opens `'w'` (trun
 
 ## 2026-09-16 — identity-file shape ≠ redaction lists
 The auditLogger redacts a `humanKey` *detail key*, which tempted a wrong inference about the identity-file schema. Truth lives in the producer (`crypto.ts:63-80`): filename is per-username (`shellguard_identity_<username>.json`), shape is `{username, displayName, uuid, token, createdAt}`. Never infer data shapes from redaction lists.
-
-## 2026-09-16 — neighbor numbers conflate easily
-authLimiter (10/15m, skip-success), adminAuthLimiter (5/10m), apiLimiter (100/min) — docs had conflated the admin and auth limiters. When documenting any tunable, cite its **env var** (`AUTH_RATE_LIMIT`) and its neighbor's name explicitly; neighbors drift independently.

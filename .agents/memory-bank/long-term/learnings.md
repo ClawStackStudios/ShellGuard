@@ -58,3 +58,17 @@ Never chain file reading inside an open write stream in Python (e.g. `open(f, 'w
 - 2026-09-17: Maintained 100% data integrity across all multi-file memory bank updates.
 
 **Shaped perspective:** The file descriptor is a destructive tool when misused. Python's expression evaluation order makes nested file handles deceptive. Atomic file operations require separating the acquisition of source state from the mutation of target state. A craftsman does not cut into the board while still measuring its length.
+
+---
+
+## the-seam-is-the-test-oracle
+**weight**: 3 | **last validated**: 2026-09-21 | **first observed**: 2026-09-21
+
+Passing isolated test suites does not prove the application works. Testing components in isolation (backend routes, crypto helpers, React state) creates the illusion of correctness while leaving the human-facing operational seams—where user gestures trigger network payloads, state teardown, and cache invalidation—completely unverified. "Don't trust, Verify" must be enforced at the seam.
+
+**History:**
+- 2026-09-21: 24 test suites (285 tests passed), TypeScript compilation (0 errors), Vite production build, and 14 documentation files were 100% green. Yet in the live application, vault items failed to delete due to an unverified UI client dispatch seam and a zombie process on port 6565 shadowing routes.
+- 2026-09-21: Resolved the deletion bug by verifying the complete operational circuit: zombie process eviction, UI confirmation dialog parity (`ConfirmDialog`), polymorphic entity routing, and selection state teardown.
+- 2026-09-21: Formalized `.agents/rules/project-hygiene.md` ratifying the 5-phase lifecycle and the mandatory Live Verification Handshake between the Agent and human Project Manager.
+
+**Shaped perspective:** Software does not live in an isolated test runner; it lives in the hand of the human using it. A test oracle is only as honest as the territory it covers. When tests mock the seams, they test our assumptions, not our reality. The seam—where the user's physical gesture translates into state, network payload, and visual feedback—is the ultimate test oracle. Work is never complete until the joint holds under the human operator's live witness.

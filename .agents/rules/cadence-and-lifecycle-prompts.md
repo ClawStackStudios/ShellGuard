@@ -11,15 +11,15 @@ The agent acts as an active cartographer of the project's development lifecycle.
 
 ## 🧭 The 4 Boundary Prompts
 
-### 1. Task Completion Gate (Verified → Commit Check)
-- **When to Trigger**: Immediately after a task's code changes are implemented and the pre-flight verification gate (`./gradlew testDebugUnitTest`) passes 100% green.
-- **Agent Action**: Ask the user:
-  > *"All tests are passing 100% green. Should I commit these changes now under our two-layer attribution format, or are you still reviewing / experimenting locally?"*
+### 1. Task Completion Gate (Automated Pass → Live Handshake → Commit Check)
+- **When to Trigger**: Immediately after a task's code changes pass the automated pre-flight gates (Phase 4 of `project-hygiene.md`: `npm run lint`, `npm test`, `npm run build` all 100% green).
+- **Agent Action**: Present the automated results and provide a numbered **Live Verification Checklist** for physical testing in the browser, then ask:
+  > *"All automated gates pass 100% green. Here is your Live Verification Checklist to test in the running app: [Checklist]. Once you have tested and verified live, should I commit these changes now under our two-layer attribution format, or are you still reviewing / experimenting locally?"*
 
 ### 2. Commit Completion Gate (Committed → Version Bump Check)
 - **When to Trigger**: Immediately after a commit is successfully created following `git-hygiene.md`.
 - **Agent Action**: Ask the user:
-  > *"Commit is recorded cleanly. Does this change warrant bumping our release version tag (`versionCode` + `versionName` in `app/build.gradle.kts`), or are we keeping the current version to bundle additional tasks?"*
+  > *"Commit is recorded cleanly. Does this change warrant bumping our release version tag (`version` in `package.json` / `ROADMAP.md`), or are we keeping the current version to bundle additional tasks?"*
 
 ### 3. Version Bump Gate (Versioned → Release Movement Check)
 - **When to Trigger**: Immediately after `versionCode` / `versionName` are updated.

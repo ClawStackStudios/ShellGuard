@@ -1,5 +1,38 @@
 # Changelog — ShellGuard
 
+## [Unreleased]
+
+## [0.0.2.3] - 2026-09-22
+
+### Added
+- **Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite (Sub-Phases 21.1, 21.2, 21.3)**:
+  - **Universal Bitwarden Ingestion Pipeline (`src/lib/bitwarden.ts`)**: Supports both unencrypted Bitwarden JSON and CSV exports; normalizes folders to pods (`normalizePod`); translates custom fields (text, hidden, checkbox, linked); serializes compound SSH keypairs; sniffs encrypted Bitwarden exports to provide clear user guidance to export unencrypted or use CLI.
+  - **Dynamic RFC 6238 TOTP Engine (`src/lib/totpUtils.ts`)**: Pure-TS parser, formatter (`otpauth://`), and live generator supporting SHA1/SHA256/SHA512 algorithms, 6 or 8 digits, and custom refresh intervals (15s, 30s, 60s); tested against published RFC 6238 test vectors; synchronizes dynamic TOTP interoperability in `compatibility_layer.md`.
+  - **Item Password Generation History**: Client-side password revision tracking on every generator trigger; migration `0007_composite_item_features.{up,down}.sql` adds `uris` and `password_history` columns to `vault_pearls`. `password_history` is client-side encrypted under Layer 1 ShellCryption (`vault_pearls_history:{id}` AAD) and `uris` is encrypted under Layer 2 metadata encryption (`MetadataGuard`); history drawer in item form and detail panes with instant restore button.
+  - **Multi-URI Row Support**: Support for multiple login URIs per item with domain extraction, launch action buttons, and Layer 2 metadata encryption.
+  - **Dual Export Suite (`src/lib/vaultExport.ts`)**: Zero-knowledge AES-256-GCM encrypted backup envelopes (`v: 1`) sealed with ClawKey (HKDF-SHA256) or custom user passphrase (PBKDF2-SHA256, 100,000 iterations), enforcing CSPRNG without fallback; RFC 4180 CSV spreadsheet export with toggleable password sanitization audit controls.
+  - **Modernized Settings UI (`ImportExportView.tsx`)**: Safe format sniffer routing Bitwarden JSON/CSV, ShellGuard encrypted backups, sgtotp.bak, and plain JSON; encrypted backup decryption modal; rich batch import preview modal with record counts and badge breakdown.
+  - **Test Coverage**: Dedicated test suites across `tests/unit/bitwarden-import.test.ts`, `tests/unit/vault-export.test.ts`, and `tests/unit/totpUtils.test.ts` (bringing total suites to 24).
+- **Phase 21: Bulk Import Endpoint & Batch Operations (Tasks 41 & 42)**:
+  - **High-Throughput Bulk Import Engine (`POST /api/vault/bulk-import`)**: Atomic transaction ingestion supporting up to 1000 items per request, scoped 10MB JSON body parser, per-record Zod schema validation (`VaultSchemas.bulkImportItem.safeParse`), and HTTP 207 Multi-Status partial failure handling (`{ inserted: string[], errors: [{ index, reason }] }`). Full success returns `201 Created` with ID array.
+  - **Batch Deletion (`DELETE /api/vault/bulk`)**: Atomically deletes multiple pearls in a single query with cascading attachment deletion, ownership scoping, and audit logging.
+  - **Reef Modernist Batch Selection UI**: Tri-state header selection checkbox (`none`, `some`, `all`), individual item checkboxes in list pane, and floating action bar in `VaultShell.tsx` guarded by `!isLocked`.
+  - **Batch Operations**: Bulk move to pod (with metadata field preservation — tags are never cleared), bulk tag assignment (appending new tags without clobbering existing), and batch delete with accessible custom modal confirmation dialog (`ConfirmDialog`).
+  - **Import Partial Failure Reporting**: `ImportExportView.tsx` surfaces granular error resolution chips for 207 Multi-Status responses displaying line number and rejection cause.
+  - **Test Suite**: Dedicated integration test suite `tests/vault-bulk-import.test.ts` (11 tests) verifying 100 items / 2 malformed / 98 inserted 207 Multi-Status, cascading attachment deletes, and owner isolation.
+- **Phase 21 Sub-Phase 21.4: Post-Verification Hardening & UI Seams**:
+  - **Note Attachments Parity (Migration 0008)**: Applied `0008_note_attachments.{up,down}.sql` adding `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`. Secure Notes now share 100% attachment feature parity with Vault Pearls under the Reference Model.
+  - **Cascade Deletion Parity (`DELETE /api/notes/:id`)**: Deleting a secure note now discovers and cascade-deletes all linked binary attachment records in `vault_secure_attachments`, mirroring pearl deletion and maintaining grotto quota accuracy.
+  - **Ghost Pod Purging & Lifecycle Cleanup**: Background cleanup routines purge orphaned files and expired share pods without leaving phantom records.
+  - **Detail Pane Sticky Selection & State Preservation**: Item Details pane preserves active selection (`selectedType`, `selectedId`) on item edit and save, eliminating jarring list-reset jumps.
+  - **UI Label Clarification**: Explicitly clarified attachment upload limits in `ItemFormModal.tsx` to read `Attachments (max 500MB per attachment)`.
+  - **Tiered Verification Canvases**: Established formal verification templates (`.agents/templates/verification/`) with simple, standard, and complex tiers to institutionalize human live-testing handshakes.
+  - **Test Suite Expansion**: Added `tests/uiSeams.test.ts` (25 unit tests) and `tests/vaultDelete.test.ts` (7 integration tests), bringing total coverage to 26 test suites and 313 passing tests.
+- **CaraBase Woodcut Vector Mascot Alignment (`feat/brand-assets-refresh`)**: Redesigned 1:1 thumbnail (`shellguard-thumbnail.png`) and 16:9 presentation logo card (`shellguard-logo.png`) in CaraBase woodcut vector engraving aesthetic. Mascot crab body turned 180° forward/downward with eyestalks, mouthparts, and front claws clasping the vault safe door with 3D 'S' crest atop stacked server blade nodes.
+- **Web Server Favicon Distinction**: Created a server-distinct favicon (`favicon.svg`) featuring a notched carapace crest shield enclosing a multi-grid Web Globe. Center Web Globe themed to the ShellGuard purple/pink palette (`#e4048a` Lobster Fuchsia, `#ec4899` Hot Pink equator, `#ffffff` high-contrast prime meridian, `#c026d3` Royal Purple meridians, `#f472b6` light pink latitudes).
+- **Web Application Feature Graphic Banner**: Authored high-res 1024x500 panoramic showcase banner (`shellguard-feature-graphic.png`) with glowing Web Globe carapace shield on left and floating dark glassmorphic credential card on right.
+- **Twin Asset Parity**: Synchronized all assets 1:1 across web root (`public/`) and VitePress documentation portal (`docs/public/assets/`).
+
 ## [0.0.2.2] - 2026-09-19
 
 ### Added

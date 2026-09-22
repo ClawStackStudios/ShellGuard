@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import crypto from 'crypto';
-import { sha256, hmacSha256, hkdfSha256, aesGcmEncrypt, aesGcmDecrypt } from '../../src/lib/webCryptoFallback.ts';
+import { sha256, hmacSha256, hkdfSha256, pbkdf2Sha256, aesGcmEncrypt, aesGcmDecrypt } from '../../src/lib/webCryptoFallback.ts';
 import { deriveShellKey, encryptField, decryptField } from '../../src/lib/shellCryption.ts';
 import { hashToken } from '../../src/lib/crypto.ts';
+import { encryptBackupPayload, decryptBackupPayload } from '../../src/lib/vaultExport.ts';
 
 describe('WebCrypto Fallback Engine for Non-Secure LAN HTTP', () => {
   it('computes byte-exact SHA-256 compared to Node crypto', () => {
@@ -110,6 +111,100 @@ describe('WebCrypto Fallback Engine for Non-Secure LAN HTTP', () => {
 
       const decrypted = await decryptField(encrypted, shellKey, "vault_items", "item-123");
       expect(decrypted).toBe("MySecretPassphrase42!");
+    } finally {
+      if (originalDescriptor) {
+        Object.defineProperty(cryptoProto, 'subtle', originalDescriptor);
+      }
+    }
+  });
+
+  it('computes byte-exact PBKDF2-SHA256 compared to Node crypto and standard RFC 6070 vectors', () => {
+    // Vector 1: Standard RFC 6070 test vector 1 (c = 1)
+    const pw1 = Buffer.from('password', 'utf8');
+    const salt1 = Buffer.from('salt', 'utf8');
+    const fallback1 = pbkdf2Sha256(pw1, salt1, 1, 32);
+    const node1 = crypto.pbkdf2Sync(pw1, salt1, 1, 32, 'sha256');
+    expect(Buffer.from(fallback1).toString('hex')).toBe(node1.toString('hex'));
+
+    // Vector 2: RFC 6070 test vector 2 (c = 2)
+    const fallback2 = pbkdf2Sha256(pw1, salt1, 2, 32);
+    const node2 = crypto.pbkdf2Sync(pw1, salt1, 2, 32, 'sha256');
+    expect(Buffer.from(fallback2).toString('hex')).toBe(node2.toString('hex'));
+
+    // Vector 3: RFC 6070 test vector 3 (c = 4096)
+    const fallback4096 = pbkdf2Sha256(pw1, salt1, 4096, 32);
+    const node4096 = crypto.pbkdf2Sync(pw1, salt1, 4096, 32, 'sha256');
+    expect(Buffer.from(fallback4096).toString('hex')).toBe(node4096.toString('hex'));
+
+    // Vector 4: Longer key / salt with non-32 byte length (RFC 6070 vector 4, dkLen = 40)
+    const pw4 = Buffer.from('passwordPASSWORDpassword', 'utf8');
+    const salt4 = Buffer.from('saltSALTsaltSALTsaltSALTsaltSALTsalt', 'utf8');
+    const fallbackLong = pbkdf2Sha256(pw4, salt4, 4096, 40);
+    const nodeLong = crypto.pbkdf2Sync(pw4, salt4, 4096, 40, 'sha256');
+    expect(Buffer.from(fallbackLong).toString('hex')).toBe(nodeLong.toString('hex'));
+  });
+
+  it('computes byte-exact PBKDF2-SHA256 parity between fallback engine and WebCrypto subtle.deriveBits', async () => {
+    const password = Buffer.from('sovereign-backup-passphrase-2026', 'utf8');
+    const salt = Buffer.from('1c8705b8-c31c-4b12-aa71-6da046a357ba', 'utf8');
+    const iterations = 5000;
+    const keyLength = 32;
+
+    const fallbackBytes = pbkdf2Sha256(password, salt, iterations, keyLength);
+
+    const baseKey = await globalThis.crypto.subtle.importKey(
+      'raw',
+      password,
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    const bits = await globalThis.crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+      baseKey,
+      keyLength * 8
+    );
+    const nativeBytes = new Uint8Array(bits);
+
+    expect(Buffer.from(fallbackBytes).toString('hex')).toBe(Buffer.from(nativeBytes).toString('hex'));
+  });
+
+  it('guarantees cross-origin backup interoperability: HTTPS (WebCrypto) export decrypts on HTTP LAN (fallback) and vice-versa', async () => {
+    const payload = JSON.stringify([{ id: 'pearl-1', title: 'GitHub', username: 'lucas', password: 'secret-password-123!' }]);
+    const passphrase = 'test-disaster-recovery-passphrase';
+
+    // 1. Export under HTTPS/secure context using native WebCrypto Subtle
+    const httpsEnvelope = await encryptBackupPayload(payload, passphrase, 'json', { iterations: 2000 });
+    expect(httpsEnvelope.kdf).toBe('pbkdf2');
+    expect(httpsEnvelope.kdfIterations).toBe(2000);
+
+    // 2. Mock plain HTTP LAN origin (crypto.subtle is undefined)
+    const cryptoProto = Object.getPrototypeOf(globalThis.crypto);
+    const originalDescriptor = Object.getOwnPropertyDescriptor(cryptoProto, 'subtle');
+    try {
+      Object.defineProperty(cryptoProto, 'subtle', {
+        get: () => undefined,
+        configurable: true,
+      });
+
+      // Decrypt HTTPS-generated backup on insecure LAN origin using pure-TS fallback
+      const lanDecrypted = await decryptBackupPayload(httpsEnvelope, passphrase);
+      expect(lanDecrypted.kind).toBe('json');
+      expect(lanDecrypted.data).toBe(payload);
+
+      // Encrypt a backup on insecure LAN origin using pure-TS fallback
+      const lanEnvelope = await encryptBackupPayload(payload, passphrase, 'json', { iterations: 2000 });
+      expect(lanEnvelope.v).toBe(1);
+      expect(lanEnvelope.kdf).toBe('pbkdf2');
+      expect(lanEnvelope.kdfIterations).toBe(2000);
+
+      // Restore native WebCrypto Subtle
+      Object.defineProperty(cryptoProto, 'subtle', originalDescriptor);
+
+      // Decrypt LAN-generated backup on HTTPS origin using native WebCrypto Subtle
+      const httpsDecrypted = await decryptBackupPayload(lanEnvelope, passphrase);
+      expect(httpsDecrypted.kind).toBe('json');
+      expect(httpsDecrypted.data).toBe(payload);
     } finally {
       if (originalDescriptor) {
         Object.defineProperty(cryptoProto, 'subtle', originalDescriptor);

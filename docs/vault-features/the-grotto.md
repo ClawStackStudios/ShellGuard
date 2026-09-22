@@ -16,7 +16,7 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 | Item Type | Icon | Encrypted Payload Fields | Metadata Fields (Layer 2 Encrypted) |
 | :--- | :--- | :--- | :--- |
 | **Vault Pearl (Login)** | 🔑 | `secret` (Password), `totp_secret` (Seed), `attachments` (File IDs), `custom_fields` | `title`, `username`, `url`, `category`, `notes`, `tags` |
-| **Secure Note** | 📝 | `content` (Markdown body), `custom_fields` | `title`, `category`, `notes`, `tags` |
+| **Secure Note** | 📝 | `content` (Markdown body), `attachments` (File IDs), `custom_fields` | `title`, `category`, `notes`, `tags` |
 | **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields` | `title`, `username`, `category`, `notes`, `tags` |
 | **Encrypted Attachment**| 📎 | Encrypted file BLOB (AES-GCM up to 500 MB streaming, 1000 MB quota) | `title`, `file_name`, `mime_type`, `category` |
 
@@ -102,10 +102,40 @@ ShellGuard supports multi-dimensional tagging alongside hierarchical pods:
 
 ---
 
-## ⏱️ Built-In TOTP Authenticator Engine
+## ⏱️ Dynamic RFC 6238 TOTP Authenticator Engine
 
-ShellGuard includes a zero-knowledge, client-side TOTP engine:
-- **Seed Ingestion**: Paste a Base32 secret seed (`JBSWY3DPEHPK3PXP`) or scan a QR code.
-- **Zero-Knowledge Storage**: The TOTP seed is encrypted client-side inside the `totp_secret` column.
-- **Client-Side Generation**: RFC 6238 6-digit dynamic codes and 30-second countdown rings calculate directly in browser RAM without server interaction.
-- **Companion Mirroring**: Stored TOTP seeds seamlessly mirror to the native [ShellGuard-TOTP Android companion](/companion/) for offline authentication on your mobile device.
+ShellGuard includes a zero-knowledge, client-side dynamic TOTP engine (`totpUtils.ts`):
+- **Dynamic Algorithm & Interval Support**: Generates codes for standard and advanced authenticator configurations, supporting **SHA1**, **SHA256**, and **SHA512** HMAC hashing, **6 or 8 digits**, and custom refresh intervals (**15s, 30s, 60s**).
+- **Full URI & Seed Ingestion**: Paste raw Base32 secret seeds (`JBSWY3DPEHPK3PXP`) or complete `otpauth://totp/...` URIs. Parameters like `algorithm`, `digits`, and `period` are parsed dynamically and preserved round-trip.
+- **Zero-Knowledge Storage**: The TOTP seed or URI is sealed client-side inside the `totp_secret` column under Layer 1 ShellCryption (`vault_pearls_totp:{id}`).
+- **Client-Side Generation**: Countdown rings and dynamic verification codes calculate purely in browser RAM with zero server interaction.
+- **Companion Mirroring**: Stored TOTP parameters seamlessly mirror to the native [ShellGuard-TOTP Android companion](/companion/) for offline authentication on your mobile device.
+
+---
+
+## 🔗 Composite Item Features: Multi-URI & Password History
+
+ShellGuard provides rich composite credential features matching modern power-user workflows:
+
+### Multi-URI Row Support
+- **Secondary Login Domains**: Add arbitrary secondary URIs per login item (e.g. `https://accounts.google.com`, `https://mail.google.com`, `androidapp://...`).
+- **Domain Extraction & Quick Launch**: Automatically parses hostnames and renders external launch buttons beside each URI row.
+- **Layer 2 Metadata Encryption**: Secondary URIs are encrypted at rest using `MetadataGuard` (`vault_pearls.uris`), matching the protection model of the primary URL.
+
+### Item Password Generation History
+- **Per-Item Generation Tracking**: Every time the password generator is triggered inside the item form, the previous password revision is preserved in the item's history drawer with a timestamp.
+- **Client-Side Layer 1 ShellCryption**: Password history records are sealed in the browser under dedicated AAD `vault_pearls_history:{id}` (`vault_pearls.password_history`), ensuring the server never sees historical passwords.
+- **Interactive History Drawer**: View previous passwords with unmask toggles, copy actions, and instant one-click restore.
+
+---
+
+## ⚡ Batch Multi-Selection, Pod Reassignment & Bulk Operations
+
+ShellGuard provides rich batch management tools to organize, migrate, and prune credentials in bulk:
+
+- **Tri-State Multi-Selection**: Select individual items via checkbox, or toggle select-all across filtered views using the header tri-state checkbox.
+- **Floating Action Bar**: Displays selected item counts with bulk actions (Move to Pod, Assign Tags, Delete Selected). Guarded automatically against display when the vault is locked (`!isLocked`).
+- **Bulk Move to Pod**: Move multiple logins, notes, or keys to a destination pod in one action, fully preserving tags and metadata.
+- **Bulk Tag Assignment**: Add tags across multiple selected items without wiping pre-existing tags.
+- **Bulk Delete with Safe Cascade**: Batch remove selected items with a Reef Modernist confirmation modal (`ConfirmDialog`); automatically cascades deletions to linked file attachments without orphan records.
+- **Bulk Import with 207 Multi-Status**: Import up to 1,000 items in a single atomic transaction. Any malformed records are reported with granular error resolution chips indicating item index, title, and validation reason while valid items persist cleanly.

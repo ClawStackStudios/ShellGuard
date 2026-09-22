@@ -13,8 +13,8 @@ ShellCryption      Per-Row Encryption     SQLCipher
 
 | Layer | Scope | Key Source | Algorithm | What It Encrypts |
 |---|---|---|---|---|
-| ShellCryption | Client-side | `hu-` key via HKDF | AES-GCM-256 | secret, totp_secret, content, key_value, file_data |
-| Per-Row Metadata | Server-side | `DB_ENCRYPTION_KEY` via HKDF | AES-256-GCM | title, username, url, category, notes, file_name |
+| ShellCryption | Client-side | `hu-` key via HKDF | AES-GCM-256 | secret, totp_secret, content, key_value, password_history, file_data |
+| Per-Row Metadata | Server-side | `DB_ENCRYPTION_KEY` via HKDF | AES-256-GCM | title, username, url, uris, category, notes, tags, file_name |
 | SQLCipher | Whole-DB | `DB_ENCRYPTION_KEY` | AES-256 | Entire SQLite file |
 
 ## Key System
@@ -38,7 +38,8 @@ Every mutation follows this gauntlet (no shortcuts):
 
 - **In-place encryption**: Encrypted JSON envelopes stored in same TEXT columns as plaintext. No schema changes.
 - **Backward compatibility**: `isEncryptedField()` check — non-SG-META values pass through unchanged.
-- **WebCrypto Fallback Pattern**: `window.crypto.subtle` is undefined on plain HTTP browser origins. `src/lib/webCryptoFallback.ts` provides pure TypeScript fallback implementations (SHA-256, HMAC-SHA256, HKDF, AES-GCM-256) that transparently replace crypto.subtle methods when unavailable.
+- **Dual Export Suite & KDF Branching**: Vault export envelope (`v: 1`) uses AES-256-GCM. High-entropy ClawKeys derive key material via HKDF-SHA256; user-supplied passphrases derive key material via PBKDF2-HMAC-SHA256 (600,000 iterations). Caller-side native WebCrypto async acceleration (`crypto.subtle.deriveBits`) ensures sub-second derivation off-thread without freezing the UI, falling back to pure-TS PBKDF2 (`webCryptoFallback.ts`) for non-secure HTTP origins. CSPRNG is strictly required (fail closed).
+- **WebCrypto Fallback Pattern**: `window.crypto.subtle` is undefined on plain HTTP browser origins. `src/lib/webCryptoFallback.ts` provides pure TypeScript fallback implementations (SHA-256, HMAC-SHA256, HKDF, PBKDF2, AES-GCM-256) that transparently replace crypto.subtle methods when unavailable.
 - **Blob download pattern**: Replace `data:` URI links with `Blob` + `URL.createObjectURL(blob)` to avoid Chromium insecure-connection download blocks on HTTP LAN.
 - **UUID entropy fallback**: Multi-tier RFC 4122 v4 UUID generation for environments where `crypto.randomUUID` is unavailable.
 - **Singleton cipher**: `fieldCipher` initialized once at startup, null when `DB_ENCRYPTION_KEY` unset.
@@ -113,3 +114,26 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 
 - **Right-Hand Action Cluster**: Unmask toggle (Eye/EyeOff) is located immediately LEFT of the Copy button on every masked field row (password, SSH private key, hidden custom fields).
 - **Full-Value Mask Invariant**: Every character is represented by a masking bullet (`•`); no partial leakage; unmasking flips to clear text with 2s copy feedback.
+
+## Vault Tagging System & Unified Color Engine (Phase 20 — 2026-09-19)
+
+- **Migration `0006_vault_tags.sql`**: Added `tags TEXT DEFAULT '[]'` column and owner indices across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+- **Layer 2 Metadata Encryption**: `MetadataGuard` registers `tags` for per-row metadata encryption on disk, preventing plaintext tag leakage.
+- **Intersection Tag Filtering**: API list endpoints support `?tags=a,b` query parameter with audit logging and owner isolation.
+- **Unified Color Engine (`podUtils.ts`)**: Bioluminescent color palette shared between Pods and Tags with deterministic string hashing (`hashStringToColor`) and explicit user overrides. Defensive checks ensure headless test safety.
+- **SSH Key Dual-Key Architecture (`src/lib/keyGen.ts`)**: Keypairs serialize into JSON `{ publicKey, privateKey }` sealed under Layer 1 ShellCryption in `key_value`. `parseSshKeySecret` provides transparent backward-compatibility for legacy raw PEMs. Dedicated UI provides PKCS#8 PEM unmasking, direct `.pem` download, and one-click `authorized_keys` shell command copy.
+- **Storage Ceiling Elevation**: Per-file upload ceiling elevated from 50MB to 500MB (`ATTACHMENT_MAX_MB`) and grotto quota from 500MB to 1000MB (`GROTTO_QUOTA_MB`).
+
+## Bulk Import Endpoint & Batch Operations (Phase 21 — 2026-09-20)
+
+- **High-Throughput Bulk Import Engine (`POST /api/vault/bulk-import`)**:
+  - Scoped 10MB JSON body parser mounted directly before global 1MB middleware.
+  - Container-level validation in middleware (`z.array(z.any()).min(1).max(1000)`).
+  - Per-record schema validation in route handler via `VaultSchemas.bulkImportItem.safeParse(item)`.
+  - Atomic database transaction (`db.transaction(...)`) persisting valid items.
+  - Return `201 Created` with `{ inserted: string[] }` on complete success; return `207 Multi-Status` with `{ inserted: string[], errors: [{ index, reason }] }` on partial failures.
+- **Batch Deletion (`DELETE /api/vault/bulk`)**: Atomically deletes multiple pearls in a single query with cascading attachment deletion, ownership scoping, and audit logging.
+- **Express Route Ordering Hygiene**: Static and bulk routes (`POST /bulk-import`, `DELETE /bulk`) MUST be registered strictly before parameterized routes (`PUT /:id`, `DELETE /:id`) to prevent Express routing shadowing.
+- **Reef Modernist Modals over Native Dialogs**: Zero browser `prompt()` or `confirm()` calls. Batch actions use accessible custom modal cards (`ConfirmDialog` and inline inputs) styled in dark-mode aesthetic, ensuring headless browser test compatibility.
+- **Mutation Field Preservation**: Batch mutation handlers (e.g. `onBulkMoveToPod`) explicitly preserve all existing item metadata (e.g. `tags: item.tags`) to prevent silent column clobbering.
+

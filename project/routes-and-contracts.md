@@ -73,8 +73,8 @@ Four vault domains, one uniform CRUD contract each. Routers live in
 
 | Domain | Router | Payload columns (opaque blobs) |
 |:---|:---|:---|
-| Passwords | `vault.ts` (`/api/vault`) | `secret`, `totp_secret`, `attachments` (supports `?tags=a,b`) |
-| Secure Notes | `notes.ts` (`/api/notes`) | `content` (supports `?tags=a,b`) |
+| Passwords | `vault.ts` (`/api/vault`) | `secret`, `totp_secret`, `attachments`, `uris` (Layer 2 metadata encryption), `password_history` (Layer 1 ShellCryption) (supports `?tags=a,b`; DELETE cascades linked attachments) |
+| Secure Notes | `notes.ts` (`/api/notes`) | `content`, `attachments` (Layer 1 ShellCryption, Migration 0008) (supports `?tags=a,b`; DELETE cascades linked attachments) |
 | SSH Keys | `sshKeys.ts` (`/api/keys`) | `key_value` (supports `?tags=a,b`) |
 | Attachments | `attachments.ts` (`/api/attachments`) | `file_data` (native BLOB since migration 0005 — streamed multipart in, 500MB ceiling, 1000MB quota) |
 
@@ -92,6 +92,13 @@ never from a request parameter. Every mutation writes an audit entry.
 Request bodies are validated by zod schemas in `src/server/validation/schemas.ts`
 (`VaultSchemas.create`, `VaultSchemas.update`, …) — a route without a schema
 does not ship.
+
+**Batch Operations (Phase 21, Tasks 41 & 42):**
+
+| HTTP Verb | Middleware chain | Permission | Purpose |
+|:---|:---|:---|:---|
+| `POST /bulk-import` | `requireAuth` → `requirePermission('canWrite')` → `validateBody(VaultSchemas.bulkImport)` | write | Atomic batch import (up to 1000 items, scoped 10MB parser, per-record Zod validation, HTTP 207 Multi-Status partial success envelope `{ inserted, errors }`) |
+| `DELETE /bulk` | `requireAuth` → `requirePermission('canDelete')` → `validateBody(VaultSchemas.bulkDelete)` | delete | Batch pearl deletion by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
 
 ---
 

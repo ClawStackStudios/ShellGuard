@@ -35,7 +35,7 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
  * Payloads are stored byte-for-byte; only their length is validated.
  */
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields } = req.body;
+  const { id, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields } = req.body;
   const normalizedTags = normalizeTagsForDb(tags);
 
   try {
@@ -49,8 +49,8 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       req.userUuid,
@@ -58,11 +58,13 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       secret,
       toStore.username,
       toStore.url,
+      uris || '[]',
       type || 'password',
       toStore.category,
       toStore.tags,
       toStore.notes,
       totp_secret || '',
+      password_history || '[]',
       attachments || '[]',
       custom_fields || '',
       new Date().toISOString()
@@ -89,17 +91,218 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
 });
 
 /**
+ * 🐚 POST /api/vault/bulk-import — Bulk import pearls.
+ * Executes inside a database transaction with per-record validation.
+ */
+router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.bulkImport), async (req: AuthRequest, res) => {
+  const { items } = req.body;
+  const errors: { index: number; reason: string }[] = [];
+  const inserted: string[] = [];
+
+  const insertStmt = db.prepare(`
+    INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // Prepare all writes asynchronously before opening the transaction
+  const preparedItems: any[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const rawItem = items[i];
+    const validation = VaultSchemas.bulkImportItem.safeParse(rawItem);
+    if (!validation.success) {
+      const issue = validation.error.issues[0];
+      const fieldPath = issue?.path?.join('.') || 'item';
+      errors.push({ index: i, reason: `${fieldPath}: ${issue?.message || 'Invalid item schema'}` });
+      continue;
+    }
+
+    const item = validation.data;
+    try {
+      const normalizedTags = normalizeTagsForDb(item.tags);
+      const toStore = await prepareWrite('vault_pearls', {
+        title: item.title.trim(),
+        username: item.username ? item.username.trim() : '',
+        url: item.url ? item.url.trim() : '',
+        category: item.category || '',
+        tags: normalizedTags,
+        notes: item.notes || '',
+      }, fieldCipher);
+
+      preparedItems.push({
+        index: i,
+        original: item,
+        toStore,
+        normalizedTags,
+      });
+    } catch (err: any) {
+      errors.push({ index: i, reason: err.message });
+    }
+  }
+
+  try {
+    const runImport = db.transaction((itemsToInsert: any[]) => {
+      for (const p of itemsToInsert) {
+        try {
+          insertStmt.run(
+            p.original.id,
+            req.userUuid,
+            p.toStore.title,
+            p.original.secret,
+            p.toStore.username,
+            p.toStore.url,
+            p.original.uris || '[]',
+            p.original.type || 'password',
+            p.toStore.category,
+            p.toStore.tags,
+            p.toStore.notes,
+            p.original.totp_secret || '',
+            p.original.password_history || '[]',
+            p.original.attachments || '[]',
+            p.original.custom_fields || '',
+            new Date().toISOString()
+          );
+          inserted.push(p.original.id);
+        } catch (err: any) {
+          errors.push({ index: p.index, reason: err.message });
+        }
+      }
+    });
+
+    runImport(preparedItems);
+
+    for (const p of preparedItems) {
+      if (inserted.includes(p.original.id)) {
+        audit.log('VAULT_ITEM_CREATED', {
+          action: 'vault_item_created',
+          outcome: 'success',
+          actor: req.userUuid,
+          details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true },
+        });
+      }
+    }
+
+    if (errors.length > 0) {
+      res.status(207).json({
+        success: true,
+        data: {
+          inserted,
+          errors
+        }
+      });
+    } else {
+      res.status(201).json({
+        success: true,
+        data: {
+          inserted
+        }
+      });
+    }
+
+  } catch (err: any) {
+    console.error('Vault POST bulk-import error:', err);
+    res.status(500).json({ success: false, error: 'Bedrock failure during bulk import.' });
+  }
+});
+
+/**
+ * 🐚 DELETE /api/vault/bulk — Bulk delete items.
+ * Executes inside a transaction, cascades to attachments.
+ */
+router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody(VaultSchemas.bulkDelete), async (req: AuthRequest, res) => {
+  const { ids } = req.body;
+  const deleted: string[] = [];
+  const errors: { id: string; reason: string }[] = [];
+  const cascadeAuditEvents: { itemId: string; cascadeFrom: string }[] = [];
+
+  const getStmt = db.prepare('SELECT type, category, attachments FROM vault_pearls WHERE id = ? AND owner_uuid = ?');
+  const delAttachmentStmt = db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?');
+  const delPearlStmt = db.prepare('DELETE FROM vault_pearls WHERE id = ? AND owner_uuid = ?');
+
+  try {
+    const runBulkDelete = db.transaction((itemsToDelete: string[]) => {
+      for (const id of itemsToDelete) {
+        try {
+          const row = getStmt.get(id, req.userUuid) as any;
+          if (!row) {
+            errors.push({ id, reason: 'Not found' });
+            continue;
+          }
+
+          let cascadeIds: string[] = [];
+          try {
+            const parsed = JSON.parse(row.attachments || '[]');
+            if (Array.isArray(parsed)) cascadeIds = parsed.filter((v: unknown): v is string => typeof v === 'string');
+          } catch { }
+
+          if (cascadeIds.length > 0) {
+            for (const attId of cascadeIds) {
+              const result = delAttachmentStmt.run(attId, req.userUuid);
+              if (result.changes > 0) {
+                cascadeAuditEvents.push({ itemId: attId, cascadeFrom: id });
+              }
+            }
+          }
+
+          delPearlStmt.run(id, req.userUuid);
+          deleted.push(id);
+        } catch (err: any) {
+          errors.push({ id, reason: err.message });
+        }
+      }
+    });
+
+    runBulkDelete(ids);
+
+    for (const att of cascadeAuditEvents) {
+      audit.log('ATTACHMENT_DELETED', {
+        action: 'attachment_deleted',
+        outcome: 'success',
+        actor: req.userUuid,
+        details: { itemId: att.itemId, cascadeFrom: att.cascadeFrom, bulk: true },
+      });
+    }
+
+    for (const id of deleted) {
+      audit.log('VAULT_ITEM_DELETED', {
+        action: 'vault_item_deleted',
+        outcome: 'success',
+        actor: req.userUuid,
+        details: { itemId: id, bulk: true },
+      });
+    }
+
+    if (errors.length > 0) {
+      res.status(207).json({
+        success: true,
+        data: {
+          deleted,
+          errors
+        }
+      });
+    } else {
+      res.json({
+        success: true,
+        data: { deleted }
+      });
+    }
+
+  } catch (err: any) {
+    console.error('Vault DELETE bulk error:', err);
+    res.status(500).json({ success: false, error: 'Bedrock failure during bulk delete.' });
+  }
+});
+
+/**
  * 🐚 PUT /api/vault/:id — update an owned pearl.
  */
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, secret, username, url, type, category, tags, notes, totp_secret, attachments, custom_fields } = req.body;
+  const { title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields } = req.body;
 
   try {
-    // Ownership check first so foreign IDs yield 404, not a silent no-op write.
-    const existing = db.prepare('SELECT id, tags FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as { id: string; tags?: string } | undefined;
+    const existing = db.prepare('SELECT * FROM vault_pearls WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
     if (!existing) {
-      return res.status(404).json({ success: false, error: 'Password entry not found in your vault.' });
+      return res.status(404).json({ success: false, error: 'Vault entry not found.' });
     }
 
     const normalizedTags = tags !== undefined ? normalizeTagsForDb(tags) : (existing.tags || '[]');
@@ -115,18 +318,20 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
 
     db.prepare(`
       UPDATE vault_pearls
-      SET title = ?, secret = ?, username = ?, url = ?, type = ?, category = ?, tags = ?, notes = ?, totp_secret = ?, attachments = ?, custom_fields = ?
+      SET title = ?, secret = ?, username = ?, url = ?, uris = ?, type = ?, category = ?, tags = ?, notes = ?, totp_secret = ?, password_history = ?, attachments = ?, custom_fields = ?
       WHERE id = ? AND owner_uuid = ?
     `).run(
       toStore.title,
       secret,
       toStore.username,
       toStore.url,
+      uris !== undefined ? uris : (existing.uris || '[]'),
       type || 'password',
       toStore.category,
       toStore.tags,
       toStore.notes,
-      totp_secret || '',
+      totp_secret !== undefined ? totp_secret : (existing.totp_secret || ''),
+      password_history !== undefined ? password_history : (existing.password_history || '[]'),
       attachments || '[]',
       custom_fields || '',
       id,

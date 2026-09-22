@@ -1,4 +1,91 @@
 ---
+Date: 2026-09-20
+TaskRef: "Adversarial peer review of the Phase 21 sub-phase — 14 findings over two rounds, all resolved"
+
+Learnings:
+- **Review the artifact, not the report.** Every finding that mattered came from reading code; one walkthrough claim ("zero `.clinerules/` files staged or touched") was demonstrably false — `git show a72ce7d --stat | grep -c '.clinerules/'` → 18. A peer summary is a list of claims to verify, not a status.
+- **The commit graph vs the working tree, again.** Round 2's headline: all five fixes from round 1 were correct on disk and all absent from `HEAD`. Same lesson as the previous phase, and it recurred — which is why the `git-hygiene` rule and the `delegation-brief` skill now exist.
+- **Crypto boundaries hide in plain sight.** `uris` was sent raw on all three write paths while the semantically identical `url` was Layer 2 encrypted — a metadata-privacy regression invisible to every gate. Conversely I mis-read `password_history` as plaintext; it *was* correctly sealed (Layer 1, `vault_pearls_history:{id}` AAD). Record the near-miss, not just the hit.
+- **HKDF is not a password KDF.** It has no work factor; the passphrase path needed PBKDF2 (600k, OWASP). The correct shape is a *branched* KDF: HKDF for high-entropy keys, PBKDF2/scrypt/Argon2 for human input.
+- **Never degrade a nonce.** A `Math.random()` fallback guarded the GCM salt/IV — in GCM, nonce predictability breaks authenticity as well as confidentiality. Fail closed instead.
+- **Dual-path crypto is a portability contract.** `deriveKeyForEnvelope` picks native `subtle.deriveBits` on secure origins and pure-TS `pbkdf2Sha256` on plain-HTTP LAN; the fallback branch runs in no suite (tests execute in Node where `subtle` exists). A parity divergence would seal backups on HTTPS and refuse to open them on the LAN — all gates green.
+- **Fixtures: synthetic, committed, `__dirname`-relative.** Two real-shaped Bitwarden exports sat un-gitignored in the repo root with tests reading them from `process.cwd()`: unreproducible from a clean clone, and one `git add .` from publishing credential-shaped data.
+
+Difficulties:
+- The PBKDF2 iteration recommendation had to be ordered *after* the native fast path — 600k pure-JS iterations on the main thread would have been a 6× worse freeze. Sequencing recommendations matters as much as the recommendations.
+- I recommended the caller-side-vs-fallback-module architecture without knowing which the module's charter allowed; flagged it as fallible and invited pushback. The right call came back.
+
+Successes:
+- Round 1 produced 11 findings, round 2 produced 3, and every one was resolved and independently re-verified from `HEAD` (not from the walkthrough).
+- The final finding — no PBKDF2 parity/known-answer coverage — was found by asking "which branch does no test execute?" rather than "do the tests pass?"
+
+Improvements_Identified_For_Consolidation:
+- Pattern: review the artifact, not the report (evidence + reproduction command attached to every finding).
+- Pattern: dual-path crypto needs a parity test — the branch CI never runs is where the contract is assumed.
+- Pattern: fixtures must be synthetic, committed, and path-relative.
+- Pattern: prefer the documented no-op down-migration over a destructive rollback.
+- **Self-implicating:** `.clinerules/workflows/finish-task.md` instructs `git add .` — my own workflow told an agent to sweep every in-flight file, which is how 18 of my `.clinerules/` files ended up inside an unrelated "feat(agents)" commit. Fix pending.
+
+Gates: 24 test files / 282 passed / 1 skipped / 0 failed (reported; `tsc` independently confirmed clean by me). Commits `a72ce7d` (sub-phase + doc walk) and `baab110` (native PBKDF2 + 600k) on `feature/phase-21-bulk-operations-11309179680338905330` — unmerged, untagged.
+---
+
+---
+Date: 2026-09-20
+TaskRef: "/learn cycle — territory ruling, review discipline, delegation brief, contract-doc priority"
+
+Learnings:
+- **Territory ruling (broadened):** `.clinerules/` — the WHOLE tree (rules, skills, workflows, templates, memory bank) — is my home. `.agents/` (Antigravity) and `.jules/` (Jules) are theirs. Rules are "shared seeds, not shared state": identical rule text across agent trees does NOT imply mirrored edits, because each agent grows its own path. Cross-home reading is read-only; a defect in another agent's file gets reported, not reached into. This retires the old "mirror to `.agents/rules/`" habit and answers the governance question I raised in the proposal.
+- The /learn classification filter that worked: ask "is this a *behavior* or a *fact*?" Phase 21's domain patterns (route ordering, partial-failure validation, 207 envelope, scoped parser) are facts — they went to the memory bank, not the rules. Proposing them as rules would have been a category error and would have diluted the rule layer.
+
+Difficulties:
+- I initially over-built the review: I read files instead of interrogating the commit graph, which is exactly the failure Candidate 1 now encodes. The lesson arrived by being the mistake.
+- The `learning_proposal.md` artifact had to be rewritten wholesale (152 lines) rather than appended — a full-file rewrite via bash heredoc needed an ASCII-only discipline (no astral emoji) plus a post-write U+FFFD byte-scan. Confirmed clean.
+
+Successes:
+- 4 candidates applied, all in `.clinerules/` only: git-hygiene § Territory + § Reviewing another author's work; docs-hygiene §5 contract-doc priority + self-consistency sweep; new skill `skills/delegation-brief.md`.
+- The delegation-brief pattern is the highest-leverage artifact of the cycle: leading a brief with a verified ground-truth table (real paths, line numbers, current-state facts, false spec claims) instead of a feature description is what turned a memoryless executor's guesswork into a clean pass.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: delegated briefs lead with verified ground truth and resolved defaults, not task descriptions.
+- Pattern: contract docs (agent-facing) take the claim battery first — wrong status codes/types are build-breaking, not cosmetic.
+- Pattern: territory is a home, not a shared directory; divergence between agent rule-trees is the learning, not drift.
+
+Gates: No code gates involved (rules/skills/memory-bank only). Encoding scan 0× U+FFFD; proposal artifact 152 lines; rule diffs verified by re-read.
+---
+
+---
+Date: 2026-09-20
+TaskRef: "Phase 21 — Bulk Import Endpoint & Batch Operations: adversarial PR review, gate verification, doc-lie correction"
+
+Learnings:
+- Express route matching is registration-ordered: `router.delete('/bulk')` placed after `router.delete('/:id')` is unreachable — the param route binds `id="bulk"` and 404s. The feature compiled, every gate stayed green, and the route was dead. A route with no integration test is a hypothesis, not a feature.
+- Middleware `validateBody(schema)` is structurally incompatible with HTTP 207 partial failure: it 400s the whole payload on the first bad field. The working shape is container-bounds validation in middleware (`items: 1..1000`) plus per-record `itemSchema.safeParse()` inside the handler, aggregating `{index, reason}` while valid rows persist in one transaction. The container schema therefore reads `z.array(z.any())` — which looks like a hole and is the mechanism. Documented explicitly so nobody "tightens" it back.
+- The 207 envelope must keep errors INSIDE `data`: `restAdapter` unwraps `{success, data}` → `data` and treats every 2xx as success, so a top-level `{success:false, errors}` is silently discarded client-side. Also `inserted` is an array of IDs, not a count.
+- Scoped body parser pattern: `app.use('/api/vault/bulk-import', express.json({limit:'10mb'}))` mounted BEFORE the global 1MB parser — the first parser consumes the stream, the global one no-ops. One route gets headroom without weakening the global ceiling.
+- The agent-facing `SKILL.md` had drifted in four places (200 vs actual 201; `inserted` count vs array; `{index,id,title,reason}` vs actual `{index,reason}`; `secret` as nested object vs required string). The closer a doc sits to an external consumer, the more expensive its drift. Fixed via claim battery (grep the enforcing code first).
+- **Verify the commit, not the checkout.** Jules fixed all five review blockers but left them uncommitted; `HEAD` still held the broken commit. Only `git status --porcelain` + `git log origin/main..HEAD` + `git show HEAD:<file>` expose that gap. A review that reads disk is reviewing an intention.
+- `tsconfig.json` includes only `["src", "server.ts"]` — `tsc --noEmit` passing does NOT type-check `tests/`. New suites are only proven by actually running vitest.
+
+Difficulties:
+- The 4-gate verification could not be done statically; I had to run the full oracle (~191s) plus three builds in background and poll logs (shell integration swallows long-command output).
+- Character-encoding and TTY-collapse quirks: vitest per-suite summary lines weren't greppable from the redirected log ("tests)"), though the aggregate `Test Files 21 passed (21) / Tests 259 passed | 1 skipped` was. Had to rely on the aggregate + arithmetic (248 + 11 = 259).
+
+Successes:
+- All four gates verified green on the fixed tree: oracle 21 files / 259 passed / 1 skipped / 0 failed; `tsc --noEmit` clean; `vite build` 2177 modules / 55.05s; `docs:build` ~101s (re-verified at ~100.68s after my doc edits).
+- The `.agents` bank claim ("21 suites, 259 passed, 1 skipped, all gates green") was independently confirmed accurate — 13 apparent "fail-ish" log lines all proved to be expected error-path logs.
+- Caught and corrected 4 SKILL.md contract lies + 1 ARCHITECTURE.md internal count contradiction that the implementer's own docs pass had missed.
+
+Improvements_Identified_For_Consolidation:
+- Pattern: literal-path routes register ABOVE parameterized `/:id` siblings (Express ordering invariant).
+- Pattern: partial-failure APIs need per-record validation, not a middleware schema gate.
+- Pattern: 207/partial-success envelope keeps errors inside `data` for the restAdapter unwrap.
+- Pattern: scoped body parser ahead of the global ceiling.
+- Pattern: review the committed diff (HEAD), not the working tree.
+
+Gates: oracle 21 files / 259 passed / 1 skipped / 0 failed (190.85s); tsc clean; vite build OK (55.05s); docs:build OK (100.68s). Commits `6f862e5` + `3b40008` on `feature/phase-21-bulk-operations-11309179680338905330` — unmerged, untagged.
+---
+
+---
 Date: 2026-09-19
 TaskRef: "Memory bank rebuild: v0.0.2.1 -> v0.0.2.2"
 

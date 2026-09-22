@@ -52,6 +52,15 @@ $DATA_DIR/
 > **Migration 0006 (Phase 20, v0.0.2.2)** adds a `tags TEXT DEFAULT '[]'` column
 > across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`, backed by
 > `idx_*_owner_tags` indexes and Layer 2 metadata encryption (`metadataGuard.ts`).
+>
+> **Migration 0007 (Phase 21 Sub-Phase, v0.0.2.3)** adds secondary login URIs
+> (`uris TEXT DEFAULT '[]'`) and client-side password generation history
+> (`password_history TEXT DEFAULT '[]'`) to `vault_pearls`. `uris` is sealed under
+> Layer 2 metadata encryption (`metadataGuard.ts`), and `password_history` is sealed
+> client-side under Layer 1 ShellCryption with the `vault_pearls_history:{id}` AAD namespace.
+>
+> **Migration 0008 (Phase 21 Post-Verification Hardening, v0.0.2.3)** adds `attachments TEXT DEFAULT '[]'`
+> to `vault_secure_notes` to provide 1:1 attachment feature parity between Secure Notes and Passwords.
 
 ```sql
 CREATE TABLE IF NOT EXISTS lobsters (
@@ -71,28 +80,33 @@ CREATE TABLE IF NOT EXISTS api_tokens (
 );
 
 CREATE TABLE IF NOT EXISTS vault_pearls (
-  id          TEXT PRIMARY KEY,
-  owner_uuid  TEXT NOT NULL,            -- tenant isolation: ALWAYS scoped
-  title       TEXT NOT NULL,
-  secret      TEXT NOT NULL,            -- ShellCryption blob (opaque)
-  username    TEXT DEFAULT '',
-  url         TEXT DEFAULT '',
-  type        TEXT DEFAULT 'password',
-  category    TEXT DEFAULT 'Personal',
-  notes       TEXT DEFAULT '',
-  totp_secret TEXT DEFAULT '',
-  attachments TEXT DEFAULT '[]',
-  created_at  TEXT NOT NULL,
+  id               TEXT PRIMARY KEY,
+  owner_uuid       TEXT NOT NULL,            -- tenant isolation: ALWAYS scoped
+  title            TEXT NOT NULL,
+  secret           TEXT NOT NULL,            -- ShellCryption blob (opaque)
+  username         TEXT DEFAULT '',
+  url              TEXT DEFAULT '',
+  type             TEXT DEFAULT 'password',
+  category         TEXT DEFAULT '',          -- Phase 17: default purged to uncategorized ''
+  notes            TEXT DEFAULT '',
+  totp_secret      TEXT DEFAULT '',          -- ShellCryption blob (vault_pearls_totp)
+  attachments      TEXT DEFAULT '[]',
+  tags             TEXT DEFAULT '[]',        -- Phase 20: Migration 0006
+  uris             TEXT DEFAULT '[]',        -- Phase 21: Migration 0007 (Layer 2 metadata encrypted)
+  password_history TEXT DEFAULT '[]',        -- Phase 21: Migration 0007 (Layer 1 ShellCryption)
+  created_at       TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 
 CREATE TABLE IF NOT EXISTS vault_secure_notes (
-  id         TEXT PRIMARY KEY,
-  owner_uuid TEXT NOT NULL,
-  title      TEXT NOT NULL,
-  content    TEXT NOT NULL,             -- ShellCryption blob (opaque)
-  category   TEXT DEFAULT 'Personal',
-  created_at TEXT NOT NULL,
+  id          TEXT PRIMARY KEY,
+  owner_uuid  TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  content     TEXT NOT NULL,             -- ShellCryption blob (opaque)
+  category    TEXT DEFAULT '',           -- Phase 17: default purged to uncategorized ''
+  attachments TEXT DEFAULT '[]',         -- Phase 21: Migration 0008
+  tags        TEXT DEFAULT '[]',         -- Phase 20: Migration 0006
+  created_at  TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 
@@ -102,7 +116,8 @@ CREATE TABLE IF NOT EXISTS vault_ssh_keys (
   title      TEXT NOT NULL,
   key_value  TEXT NOT NULL,             -- ShellCryption blob (opaque)
   username   TEXT DEFAULT '',
-  category   TEXT DEFAULT 'Personal',
+  category   TEXT DEFAULT '',           -- Phase 17: default purged to uncategorized ''
+  tags       TEXT DEFAULT '[]',         -- Phase 20: Migration 0006
   created_at TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );

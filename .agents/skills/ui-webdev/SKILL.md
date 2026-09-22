@@ -126,6 +126,18 @@ Infrastructure secrets require instant, friction-free deployment shortcuts for s
 - Shared client utilities that interact with browser APIs (`localStorage`, `sessionStorage`, `window`, `navigator`) MUST defensively check `typeof <api> === "undefined"` and provide an in-memory fallback.
 - This prevents headless test runners (Vitest, Jest) or server-side build steps from crashing with `ReferenceError`.
 
+### 4. Reef Modernist Custom Modals over Native Browser Dialogs
+- **Absolute Ban on Native Dialogs**: NEVER invoke `window.prompt()`, `window.confirm()`, or `window.alert()`.
+- **Theme & Thread Fidelity**: Native browser dialogs block the JS main thread, break dark-mode/abyssal visual immersion, cannot be styled, and break automated headless testing suites.
+- **Custom Modal Standard**:
+  - Use accessible, theme-styled modal cards (e.g. `ConfirmDialog`) with clear primary/cancel buttons.
+  - Use inline input cards or popovers with keyboard navigation (`Enter` to submit, `Escape` to dismiss).
+  - Always guard action bars and modal triggers with vault state checks (e.g. `!isLocked`).
+
+### 5. Client Mutation Field Preservation Invariant
+- When constructing payloads for item update endpoints (`PUT /api/vault/:id`), client adapters MUST explicitly pass and preserve all existing metadata attributes (e.g. `tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || [])`).
+- Partial payloads sent to full-row update endpoints will silently overwrite and clear unmentioned columns.
+
 ---
 
 ## ♿ Accessibility & Quality Checklist

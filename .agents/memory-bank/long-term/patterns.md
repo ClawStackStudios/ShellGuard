@@ -59,3 +59,32 @@ Every integration test suite must hoist its unique `DATA_DIR` and port configura
 - 2026-09-17: Verified across 15 test files with `fileParallelism: false`; complete zero-leak test isolation achieved across 210 tests.
 
 **Shaped perspective:** In an application anchored to SQLite and SQLCipher, the database connection is a stateful singleton bound at module import time. If environment variables are set inside `beforeAll()` instead of hoisted before import, the singleton evaluates against the default path, silently polluting dev databases. Hoisting enforces that configuration precedes evaluation, making tests true independent witnesses.
+
+---
+
+## dual-verification-and-the-live-handshake
+**weight**: 4 | **last validated**: 2026-09-22 | **first observed**: 2026-09-21
+
+Automated test suites and human operational verification are orthogonal, non-interchangeable layers of truth. A feature is only verified when both automated gates (typecheck, tests, build) and the human Live Verification Handshake confirm it holds.
+
+**History:**
+- 2026-09-21: Automated test suites passed 100% green while vault item deletion failed in the browser due to glue code misrouting and a background port listener collision.
+- 2026-09-21: Instituted `.agents/rules/project-hygiene.md` mandating that before marking any task complete, the agent must formulate a concrete, step-by-step Live Verification Checklist for Lucas to physically test in the browser.
+- 2026-09-21: Aligned `cadence-and-lifecycle-prompts.md` Gate 1 so the live test handshake precedes any final commit approval.
+- 2026-09-22: Live verification handshake on Phase 21 surfaced 3 subtle interaction faults (ghost pod 'Attachment' in bulk modals, lack of note attachment schema parity, and detail pane unmounting on save due to AnimatePresence mode='wait') despite 100% green automated test suites (306 tests). After rapid remediation, physical re-testing confirmed all 3 items passed.
+
+**Shaped perspective:** Machine gates prove internal syntactic and algorithmic consistency within the boundaries of what the author remembered to test. Human live verification proves that the software meets reality at the surface of use. One without the other is half-blind. Pairing automated test oracles with the human project manager's live witness forms the dual lock that prevents silent regression.
+
+---
+
+## template-scaffolded-verification-canvases
+**weight**: 3 | **last validated**: 2026-09-22 | **first observed**: 2026-09-21
+
+Standardized verification templates (`verificationChecklist-basic.md`, `verificationChecklist-advanced`) paired with an active scratchpad file (`.agents/scratch/verificationChecklist.md`) establish a resilient, asynchronous contract between the AI agent and the human project manager across resets and compactions.
+
+**History:**
+- 2026-09-21: Formulated the first dedicated checklist artifact in `.agents/scratch/verificationChecklist.md` covering 4 functional areas.
+- 2026-09-21: Lucas reorganized root templates into structured basic and advanced tiers (`.agents/templates/verificationChecklist-basic.md`, `verificationChecklist-advanced`).
+- 2026-09-22: The scratchpad persisted across context window compactions, preserving test notes, reproduction steps, and pass/fail statuses seamlessly until 100% verification was achieved.
+
+**Shaped perspective:** An ad-hoc verification prompt in chat vanishes into conversational scrollback and token compaction. A file-backed verification canvas, structured by a formal template, creates an immutable audit artifact. It forces the agent to formulate unambiguous, numbered operational steps, and empowers the human to record experiential feedback in place. The template is the scaffold; the scratchpad is the shared workbench.

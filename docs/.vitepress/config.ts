@@ -119,7 +119,7 @@ export default withMermaid(
           items: [
             { text: 'Overview & Zero-Knowledge', link: '/vault-features/' },
             { text: 'The Grotto, Pods & Tags', link: '/vault-features/the-grotto' },
-            { text: 'Password Attachments', link: '/vault-features/attachments' },
+            { text: 'Encrypted Attachments', link: '/vault-features/attachments' },
             { text: 'Pearl Password Generator', link: '/vault-features/pearl-generator' },
             { text: 'Import & Export', link: '/vault-features/import-export' },
           ]

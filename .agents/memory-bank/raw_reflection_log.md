@@ -1,4 +1,122 @@
 ---
+Date: 2026-09-22
+TaskRef: "Draft Release v0.0.2.3 (Build 25) — The Deep Ingestion & Vault Parity Molt"
+
+Learnings:
+- Adhering to the ClawStack Studios Release Protocol requires coordinating multiple synchronization anchors: `package.json`, `package-lock.json`, `README.md`, `CHANGELOG.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `ROADMAP-HISTORY.md`, and the active release document `RELEASE-vX.Y.Z.N.md`.
+- Strict enforcement of the Single Active Release Draft invariant (purging `RELEASE-v0.0.2.2.md` upon creation of `RELEASE-v0.0.2.3.md`) prevents ambiguity in downstream CI workflows (`.github/workflows/release.yml`) which mirror root release notes directly into GitHub Releases.
+- The Roadmap 3-version sliding-window protocol preserves readability of root `ROADMAP.md` by archiving older completed milestones (Phase 18 retired to `ROADMAP-HISTORY.md`) while keeping the 3 most recent completed phases (Phases 19, 20, 21) in view.
+
+Difficulties:
+- Ensuring no files from other agent directories (`.clinerules/`, `.jules/`) enter the index or get touched during release drafting. Enforced through strict staging boundaries and isolation rules.
+
+Successes:
+- Successfully drafted `RELEASE-v0.0.2.3.md` detailing all Phase 21 achievements (Batch Operations, Universal Bitwarden Ingestion, RFC 6238 TOTP, Item Password History, Dual Export Suite, Migration 0008 Note Attachments Parity, Ghost Pod Purging).
+- 100% test oracle green across all 26 test suites (313 passed, 1 skipped).
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Automated release document lifecycle maintaining Single Active Release Draft invariant.
+- General pattern: 3-version sliding-window archival in milestone roadmaps.
+---
+
+---
+Date: 2026-09-22
+TaskRef: "Note Attachments Parity, Ghost Pod Purging & Detail Pane Selection Preservation"
+
+Learnings:
+- Standalone attachments uploaded with category defaulting to "Attachment" caused the unique pod derivation logic (`items.map(i => i.category)`) to produce an unintended pod named 'Attachment' in bulk move chips and pod trees. In `src/lib/podUtils.ts` and `VaultShell.tsx`, filtering out case-insensitive 'attachment' and 'all' across `getAllUniquePods`, `setPodColor`, and `getStoredPodColors` permanently prevents phantom pods.
+- Secure notes (`vault_secure_notes`) lacked an `attachments` column in the database schema. Added `migrations/0008_note_attachments.up.sql` (`ALTER TABLE vault_secure_notes ADD COLUMN attachments TEXT DEFAULT '[]';`), updated `NoteSchemas` create/update Zod validation, updated `POST /api/notes` and `PUT /api/notes/:id` to accept attachments, and added cascade deletion in `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
+- Client-side note attachment uploading required handling `newAttachments` and `removedAttachmentIds` inside `lockTheClaw` and `updateTheClaw` in `src/App.tsx`, mirroring password attachment behavior and sending the updated attachments JSON array.
+- Detail pane blanking on save was caused by rendering `uploadProgress` inside `<AnimatePresence mode="wait">` that wrapped the main views (`view === "vault"`). When upload started, `uploadProgress` mounted and unmounted `VaultShell`. When upload finished, `VaultShell` remounted with default `selectedItemId = null`. Decoupling `uploadProgress` and `error` banners into their own non-blocking container and lifting `selectedItemId` to `App.tsx` guarantees selection stickiness across item saves.
+
+Difficulties:
+- Diagnosing the root cause of detail pane blanking required tracing the lifecycle of `VaultShell` mounts across Framer Motion `mode="wait"` triggers during file upload.
+
+Successes:
+- Added 7 new unit tests in `tests/unit/uiSeams.test.ts` (bringing the total to 25 unit tests) covering ghost pod filtering, note attachment scuttle mapping, note deletion cascade extraction, and selection retention across updates.
+- All 26 test suites passed 100% green (313 passed, 1 skipped).
+- Clean `npm run lint` (0 errors) and clean `npm run build`.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Decouple transient overlay/progress banners from view-routing AnimatePresence to prevent accidental component unmounting.
+- General pattern: Schema parity across primary vault record types for composite features (attachments, tags).
+---
+
+---
+Date: 2026-09-21
+TaskRef: "Vault Item Deletion Fix & Single-Item Confirmation Dialog"
+
+Learnings:
+- Stale Node background processes binding development ports (`6565`) can silently intercept requests and mask newer routes (e.g. `DELETE /api/vault/bulk` falling back to parameterized `DELETE /api/vault/:id` where `:id = 'bulk'`). Verifying running listener PIDs via `fuser` / `ss` is essential when server route updates appear ignored.
+- Item deletion dispatch in `App.tsx` previously fell back to `/api/attachments` for any item whose `type` was not strictly `'password'`, `'note'`, or `'key'`. Explicitly routing all pearl types (including `'totp'` and custom items) to `/api/vault` and reserving `/api/attachments` strictly for `'attachment'` items prevents 404 deletion rejections.
+- In `VaultShell.tsx`, deleting an item while it was actively selected left `selectedItemId` set, causing `ItemDetailPane` to hold onto stale or dead item state. Clearing `selectedItemId` to `null` if `selectedItemId === item.id` cleanly deselects the item upon deletion.
+- Single item delete in `ItemDetailPane.tsx` lacked confirmation gating prior to invoking `onDelete`. Integrating the Reef Modernist `ConfirmDialog` modal provides consistent confirmation ergonomics across both single-item and bulk-item deletion workflows.
+
+Difficulties:
+- Silent rejection in UI when API calls failed due to lack of try/catch wrapping around `onDelete` and `onBulkDelete` in `App.tsx`. Resolved by wrapping deletion calls in try/catch and reporting errors to UI error state while ensuring `scuttleVault(shellKey)` is awaited.
+
+Successes:
+- Added dedicated unit test suite `tests/unit/vaultDelete.test.ts` validating API endpoint routing and bulk delete partitioning across all item types.
+- All 25 test suites pass 100% green (288 passed, 1 skipped).
+
+Improvements_Identified_For_Consolidation:
+- General pattern: ConfirmDialog symmetry across single and bulk destructive actions.
+- General pattern: PID/port hygiene on development server restarts (`scuttle:stop` before `scuttle:dev-start`).
+---
+
+---
+Date: 2026-09-20
+TaskRef: "Peer Review Resolution & Hardening — Phase 21 Sub-Phase (Bitwarden Ingestion · Composite Features · Dual Export Suite)"
+
+Learnings:
+- Password-based KDF must provide sufficient work factor (PBKDF2-SHA256 at >=100,000 iterations; modern OWASP guidance specifies 600,000 iterations for PBKDF2-HMAC-SHA256) rather than high-entropy expansion functions like HKDF, which have no work factor against GPU brute-force when used with human passphrases.
+- At 600,000 iterations, pure-TS synchronous PBKDF2 computation blocks the main JS thread for 15-20s. Implementing caller-side async acceleration via `crypto.subtle.deriveBits` in `vaultExport.ts` reduces execution to ~1s off-thread on secure origins, while keeping `webCryptoFallback.ts` strictly as an unpolluted pure-TS fallback for non-secure HTTP LAN environments.
+- Pure-TS PBKDF2 (`webCryptoFallback.ts`) implementing RFC 8018 PKCS #5 v2.1 ensures deterministic in-memory derivation without WebCrypto availability or subtle crypto limitations on LAN/HTTP origins.
+- AES-GCM nonces and salts must strictly require CSPRNG (`crypto.getRandomValues`); degrading to `Math.random` breaks both confidentiality and authenticity under GCM. Fail-closed is the only acceptable posture.
+- Secondary login URIs (`uris`) must be registered under `METADATA_COLUMNS` in `metadataGuard.ts` to maintain encryption parity with primary `url` fields at Layer 2.
+- Test fixtures containing real or real-shaped exports must be sanitized, relocated into `tests/fixtures/`, referenced via relative `__dirname` paths, and excluded from accidental root commits via `.gitignore`.
+- Down migrations adding nullable/default columns in SQLite should default to no-op (`SELECT 1;`) to prevent irreversible data loss on rollback.
+- Vite's dev server file watcher (`server.watch.ignored`) should explicitly ignore `**/tests/**`, `**/*.sqlite*`, and `**/*.wal` to prevent crash loops when test suites create and unlink transient SQLite WAL files.
+- Dedicated RFC 6238 published test vectors (SHA1/256/512 at varying epoch timestamps T=59, T=1111111109, T=1111111111) are critical to ensuring zero drift in TOTP implementations.
+
+Difficulties:
+- Vite file watcher crashed on ephemeral SQLite WAL files generated by tests running in parallel with `scuttle:dev-start`. Resolved by configuring `server.watch.ignored` in `vite.config.ts`.
+
+Successes:
+- All 24 test suites passed 100% green (282 passed, 1 skipped).
+- `tsc --noEmit`, production `vite build`, and VitePress `docs:build` all pass 100% green with zero errors or broken links.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Branched KDF (HKDF for high-entropy machine keys, PBKDF2 for human passphrases).
+- General pattern: Fail-closed CSPRNG policy for all authenticated encryption envelopes.
+- General pattern: File watcher ignore filters for ephemeral SQLite test artifacts.
+---
+
+Date: 2026-09-20
+TaskRef: "Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite (Sub-Phases 21.1, 21.2, 21.3)"
+
+Learnings:
+- Implemented universal Bitwarden JSON and CSV ingestion engine (`src/lib/bitwarden.ts`) mapping folders to normalized pods (`normalizePod`), custom fields (text, hidden, checkbox, linked), and compound SSH keypairs (`serializeSshKeySecret`).
+- Identified that encrypted Bitwarden exports cannot be decrypted directly without proprietary account-derived KDF parameters; added clear detection and guidance alerts instructing users to export unencrypted JSON/CSV or use Bitwarden CLI.
+- Built dynamic RFC 6238 TOTP parsing, formatting, and live generation (`src/lib/totpUtils.ts`) supporting SHA1/SHA256/SHA512, 6/8 digits, and custom intervals (15s/30s/60s). Synchronized Android `compatibility_layer.md` with interoperability details.
+- Added database migration `0007_composite_item_features.{up,down}.sql` creating `uris TEXT DEFAULT '[]'` and `password_history TEXT DEFAULT '[]'` columns on `vault_pearls` with Layer 2 metadata encryption.
+- Added client-side password generation history tracking with history drawer and restore button in item form and detail panes, alongside multi-URI rows.
+- Built dual export suite (`src/lib/vaultExport.ts`) delivering zero-knowledge AES-256-GCM encrypted backup envelopes protected by ClawKey or custom passphrase, and RFC 4180 CSV exports with toggleable password sanitization audit controls.
+- Modernized `ImportExportView.tsx` with resilient format sniffer, encrypted backup decryption modal, format cards, and rich batch import preview modal.
+- Built 12 new unit tests across `tests/unit/bitwarden-import.test.ts` and `tests/unit/vault-export.test.ts`.
+
+Difficulties:
+- Previous sniffer logic threw unhandled exceptions on non-sgtotp JSON files. Resolved by ordering detection: Bitwarden CSV -> JSON parsing -> Bitwarden encrypted check -> ShellGuard encrypted backup envelope -> Bitwarden JSON -> SGTOTP backup (with try/catch) -> standard ShellGuard JSON.
+
+Successes:
+- Full verification passed 100% green across all 23 test suites (271 passed, 1 skipped), `npx tsc --noEmit`, production `vite build`, and VitePress `docs:build`.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Safe multi-format sniffer priority ordering with proactive failure messaging for proprietary encrypted formats.
+- General pattern: Password sanitization audit toggle on plaintext exports to prevent accidental credential leakage in compliance workflows.
+---
+
+---
 Date: 2026-09-19
 TaskRef: "Release Draft v0.0.2.2 (Build 24) — The Bioluminescent Reef"
 

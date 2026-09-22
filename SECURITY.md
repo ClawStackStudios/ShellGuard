@@ -127,6 +127,7 @@ See [ARCHITECTURE.md § Key System Architecture](./ARCHITECTURE.md) for full tec
 - The derived AES-GCM ShellCryption key is non-extractable and held only in session memory; closing the tab destroys it.
 - Encryption uses per-field random IVs and AAD bound to `table:recordId`, so ciphertexts cannot be transplanted between rows.
 - Custom Fields (`custom_fields`) adhere to the same zero-knowledge invariant: client-side AAD binds the custom-fields blob to a `<table>_custom:{recordId}` namespace (e.g. `vault_pearls_custom:{id}`), ensuring tamper-resistant field integrity.
+- Item Password Generation History (`password_history`) is client-side encrypted under Layer 1 ShellCryption with dedicated AAD `vault_pearls_history:{id}`, while secondary login URIs (`uris`) are protected under Layer 2 metadata encryption.
 - ShellGuard-TOTP Android Companion interop adheres to zero-knowledge parity; companion keys leverage hardware-backed Android KeyStore / StrongBox enclaves, and backup exports (`sgtotp.bak`) are encrypted end-to-end with AES-256-GCM.
 - Generator history stays in `sessionStorage`; preferences synced to the server are non-secret only (theme, generator defaults, pods, security timeout).
 - Exports of decrypted vault contents require **re-entering the `hu-` key** even mid-session (Settings → Import/Export).

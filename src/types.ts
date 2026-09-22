@@ -21,6 +21,11 @@ export interface Tag {
   color?: string;
 }
 
+export interface PasswordHistoryEntry {
+  password: string;
+  generatedAt: string;
+}
+
 export interface VaultItem {
   id: string;
   type: VaultItemType;
@@ -28,10 +33,12 @@ export interface VaultItem {
   secret: string; // Decrypted password in memory / encrypted in DB
   username?: string;
   url?: string;
+  uris?: string; // JSON string of additional URLs (string[])
   category?: string;
   tags?: string; // JSON string of tags (string[] or Tag[])
   notes?: string;
   totp_secret?: string; // encrypted
+  password_history?: string; // JSON string of PasswordHistoryEntry[]
   attachments?: string; // JSON string of attachments
   custom_fields?: string; // ShellCrypted CustomField[] JSON (server) / decrypted JSON string (client)
   // Present on attachment-type items (from vault_secure_attachments rows)
@@ -39,6 +46,7 @@ export interface VaultItem {
   mime_type?: string;
   created_at: string;
 }
+
 
 export interface SecureNote {
   id: string;

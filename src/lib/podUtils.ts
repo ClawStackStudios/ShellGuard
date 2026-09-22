@@ -59,7 +59,15 @@ export function getStoredPodColors(): Record<string, string> {
   try {
     const raw = localStorage.getItem(POD_COLOR_STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const colors = JSON.parse(raw);
+      if (colors["Attachment"] || colors["attachment"]) {
+        delete colors["Attachment"];
+        delete colors["attachment"];
+        try {
+          localStorage.setItem(POD_COLOR_STORAGE_KEY, JSON.stringify(colors));
+        } catch { }
+      }
+      return colors;
     }
   } catch (e) {
     console.error("Error reading pod colors:", e);
@@ -93,7 +101,7 @@ export function getPodColor(podName?: string, explicitColor?: string): string {
 export function setPodColor(podName: string, color: string): void {
   if (typeof localStorage === "undefined") return;
   const norm = normalizePod(podName);
-  if (!norm) return;
+  if (!norm || norm.toLowerCase() === "attachment" || norm === "all") return;
   const colors = getStoredPodColors();
   colors[norm] = color;
   try {
@@ -239,19 +247,23 @@ export function getAllUniquePods(items: VaultItem[] = [], _includeDefaults?: boo
   const storedColors = getStoredPodColors();
   Object.keys(storedColors).forEach(p => {
     const norm = normalizePod(p);
-    if (norm) podSet.add(norm);
+    if (norm && norm.toLowerCase() !== "attachment" && norm !== "all") {
+      podSet.add(norm);
+    }
   });
 
   items.forEach(item => {
     if (!item.category || !item.category.trim()) return;
     const norm = normalizePod(item.category);
-    if (!norm) return;
+    if (!norm || norm.toLowerCase() === "attachment" || norm === "all") return;
     // Add all ancestor paths as well
     const parts = norm.split("/");
     let current = "";
     for (let i = 0; i < parts.length; i++) {
       current = current ? `${current}/${parts[i]}` : parts[i];
-      podSet.add(current);
+      if (current.toLowerCase() !== "attachment" && current !== "all") {
+        podSet.add(current);
+      }
     }
   });
 

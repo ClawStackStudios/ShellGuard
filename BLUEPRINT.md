@@ -1,6 +1,6 @@
 # 🛡️ ShellGuard©™ Blueprint
 
-> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql` through `0004_key_ledger.up.sql`) — this document is the map, not the territory.
+> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql` through `0008_note_attachments.up.sql`) — this document is the map, not the territory.
 
 ## 🏛️ Construction Map (ASCII)
 
@@ -78,7 +78,9 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 | `type` | TEXT | `password` \| `note` \| `totp` \| `key` \| `attachment` |
 | `category` | TEXT | Pod assignment (Layer 2 per-row encrypted metadata) |
 | `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
-| `attachments` | TEXT | JSON reference array |
+| `attachments` | TEXT | JSON reference array of child attachment IDs (default `'[]'`) |
+| `uris` | TEXT | JSON array of multi-URIs (default `'[]'`; Layer 2 metadata, Migration 0007) |
+| `password_history` | TEXT | JSON array of password revision history (default `'[]'`; Layer 1 ShellCryption, Migration 0007) |
 | `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
 | `created_at` | TEXT | |
 
@@ -91,6 +93,7 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 | `content` | TEXT | ShellCryption blob (Layer 1 zero-knowledge note payload) |
 | `category` | TEXT | Layer 2 per-row encrypted metadata |
 | `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
+| `attachments` | TEXT | JSON reference array of child attachment IDs (default `'[]'`; Migration 0008) |
 | `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
 | `created_at` | TEXT | |
 
@@ -133,6 +136,8 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 - **`migrations/0004_key_ledger.{up,down}.sql`** — Phase 17 (v0.0.1.9): adds `agent_keys.key_hash`/`key_fingerprint` (in-code SHA-256 backfill via `keyLedger.ts`, then the plaintext column is retired) and drops the hardcoded `DEFAULT 'Personal'` from all four category columns — the uncategorized default is `''`, matching `normalizePod()`.
 - **`migrations/0005_attachment_blobs.{up,down}.sql`** — Phase 19 (v0.0.2.1): rebuilds `vault_secure_attachments` with `file_data BLOB` + `size_bytes INTEGER` (in-code backfill re-encodes legacy TEXT rows to raw envelope bytes via `attachmentBlobs.ts`; down is best-effort — documented data risk for rows written as raw binary).
 - **`migrations/0006_vault_tags.{up,down}.sql`** — Phase 20 (v0.0.2.2): adds `tags TEXT DEFAULT '[]'` column and `owner_uuid` index across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+- **`migrations/0007_composite_item_features.{up,down}.sql`** — Phase 21 (v0.0.2.3): adds `uris TEXT DEFAULT '[]'` (Layer 2 metadata encrypted) and `password_history TEXT DEFAULT '[]'` (Layer 1 ShellCryption) to `vault_pearls`.
+- **`migrations/0008_note_attachments.{up,down}.sql`** — Phase 21 Sub-Phase 21.4 (v0.0.2.3): adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes` establishing full child attachment parity with vault pearls.
 - **`schema_migrations`** *(in `db.sqlite`)* — version tracking for the transactional migration runner.
 - **`audit_logs`** *(in the segregated append-only `audit.sqlite` — NOT schema v1's data bedrock)* — `timestamp, event_type, actor, actor_type, resource, action, outcome, ip_address, user_agent, details`. Redacted per delta #2; pruned daily against `system_settings.audit_retention_days`, capped at 10k rows.
 

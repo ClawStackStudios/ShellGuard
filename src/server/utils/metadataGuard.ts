@@ -13,7 +13,7 @@ import { isEncryptedField } from './fieldEncryption.js';
 // ── Column registry ──────────────────────────────────────────────────────────
 
 const METADATA_COLUMNS: Record<string, readonly string[]> = {
-  vault_pearls:              ['title', 'username', 'url', 'category', 'notes', 'tags'] as const,
+  vault_pearls:              ['title', 'username', 'url', 'uris', 'category', 'notes', 'tags'] as const,
   vault_secure_notes:        ['title', 'category', 'tags'] as const,
   vault_ssh_keys:            ['title', 'username', 'category', 'tags'] as const,
   vault_secure_attachments:  ['title', 'file_name', 'category'] as const,

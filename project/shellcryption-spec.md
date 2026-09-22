@@ -77,6 +77,7 @@ TEXT column as plaintext would occupy — no schema changes:
 | `vault_pearls:{id}` | Pearl `secret` | |
 | `vault_pearls_totp:{id}` | Pearl `totp_secret` | Re-encryption target for imported Android seeds |
 | `vault_pearls_custom:{id}` | Pearl `custom_fields` blob | |
+| `vault_pearls_history:{id}` | Pearl `password_history` blob | Client-side sealed password generation history (Phase 21 Sub-Phase) |
 | `vault_secure_notes:{id}` | Note `content` | |
 | `vault_secure_notes_custom:{id}` | Note `custom_fields` blob | |
 | `vault_ssh_keys:{id}` | SSH key `key_value` | |

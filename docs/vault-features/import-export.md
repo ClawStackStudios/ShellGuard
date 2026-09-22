@@ -15,55 +15,65 @@ Navigate to **Settings &rarr; Import & Export** to manage data portability.
 
 ## 📤 Sovereign Export Formats
 
-### 1. Full Sovereign JSON Export (Complete Vault Backup)
-- **Identity Re-Authentication**: Requires re-entering your `hu-` sovereign master key to authorize decryption.
-- **Payload Scope**: Exports all vault pearls (with passwords and TOTP seeds), secure notes, SSH keys, attachments, and custom fields.
-- **Export Formats**:
-  - **Decrypted Plaintext JSON**: Ideal for transferring secrets to another vault or creating a personal physical cold-storage backup.
-  - **Encrypted Backup JSON**: Fully re-sealed with a user-supplied passphrase, suitable for offsite cloud storage.
-
-### 2. Metadata CSV Export
-- **Auditing Catalog**: Generates a structured CSV containing item titles, usernames, URLs, categories, and creation dates.
-- **Confidential Field Redaction**: Passwords, notes bodies, private SSH keys, and TOTP seeds are strictly omitted.
-- **Use Case**: Excellent for credential hygiene auditing, identifying legacy accounts, and cataloging domain usage.
+### 1. Dual Vault Export Suite
+- **Identity Re-Authentication**: Requires re-entering your `hu-` sovereign master key to authorize decryption of in-memory items before export.
+- **Payload Scope**: Complete vault archive containing pearls, logins (with multi-URI and password history), secure notes, SSH keys, attachments, and custom fields.
+- **Export Options**:
+  - **Encrypted Backup JSON (`shellguard-vault-backup-v1`, Envelope `v: 1`)**: Sealed client-side via AES-256-GCM. Derives encryption keys from either your 256-bit ClawKey (HKDF-SHA256) or a custom user passphrase (PBKDF2-SHA256, 100,000 iterations). Enforces CSPRNG generation for salt and IV. Includes byte-exact SHA-256 checksum and AAD tamper protection.
+  - **Decrypted Plaintext JSON**: Complete unencrypted vault schema suitable for cold offline storage or direct migration to another ShellGuard instance.
+  - **RFC 4180 CSV Spreadsheet Export**: Clean tabular export with a user-toggleable **"Include Decrypted Passwords"** audit control. Omitting passwords produces a sanitized credential registry for organizational hygiene auditing.
 
 ---
 
 ## 📥 Import Formats & Compatibility
 
-ShellGuard features a unified client-side import engine capable of auto-detecting and ingesting three distinct backup formats:
+ShellGuard features a unified client-side import engine capable of auto-detecting and ingesting five distinct backup formats:
 
 ```mermaid
 flowchart TD
-    Upload["Upload File (.json / .bak)"] --> Sniff{"Format Sniffer"}
+    Upload["Upload File (.json / .csv / .bak)"] --> Sniff{"Format Sniffer"}
     
-    Sniff -->|"shellguard-vault-backup.json"| JsonFlow["Sovereign JSON Vault"]
+    Sniff -->|"Bitwarden JSON"| BwJson["Bitwarden Ingestion Engine"]
+    Sniff -->|"Bitwarden CSV"| BwCsv["RFC 4180 CSV Ingestion"]
+    Sniff -->|"shellguard-vault-backup-v1"| EncVault["Encrypted Vault Backup"]
+    Sniff -->|"Plain Vault JSON"| PlainVault["Sovereign Vault JSON"]
     Sniff -->|"shellguard-totp-backup-v1"| EncBakFlow["Encrypted .sgtotp.bak"]
     Sniff -->|"shellguard-totp-plain-export-v1"| PlainBakFlow["Plaintext .sgtotp.bak"]
 
+    BwJson --> Normalize["Normalize Pods & Custom Fields"]
+    BwCsv --> Normalize
+    EncVault --> DecryptVault["Decrypt via ClawKey or Passphrase"]
+    DecryptVault --> Normalize
+    PlainVault --> Normalize
     EncBakFlow --> PassPrompt["Prompt for Export Passphrase"]
     PassPrompt --> HKDF["HKDF-SHA256 & AES-GCM Decrypt<br/>(Verify AAD & SHA-256 Checksum)"]
-    HKDF --> Normalize["Sanitize Base32 & Map Pods"]
+    HKDF --> Normalize
     PlainBakFlow --> Normalize
-    JsonFlow --> ReSeal["Re-Seal Client-Side via Active hu- Key"]
-    Normalize --> ReSeal
-    ReSeal --> ServerCommit["Commit to SQLite Bedrock"]
+
+    Normalize --> BatchPreview["Interactive Batch Import Preview"]
+    BatchPreview --> ReSeal["Re-Seal Client-Side via Active hu- Key"]
+    ReSeal --> ServerCommit["Atomic Bulk Import (/api/vault/bulk-import)"]
 
     classDef upload fill:#1e1b4b,stroke:#818cf8,stroke-width:1px,color:#ffffff;
     classDef crypto fill:#0f172a,stroke:#e4048a,stroke-width:1px,color:#ffffff;
     classDef done fill:#111827,stroke:#10b981,stroke-width:1px,color:#ffffff;
 
-    class Upload,Sniff upload;
-    class EncBakFlow,PassPrompt,HKDF,Normalize,JsonFlow,PlainBakFlow crypto;
+    class Upload,Sniff,BatchPreview upload;
+    class BwJson,BwCsv,EncVault,DecryptVault,PlainVault,EncBakFlow,PassPrompt,HKDF,Normalize crypto;
     class ReSeal,ServerCommit done;
 ```
 
-### 1. Sovereign ShellGuard JSON Import
-Upload any previously exported `shellguard-vault-backup.json`. The client validates schema compliance and batch-imports logins, notes, SSH keys, and custom fields. Every secret is re-encrypted in browser RAM with your active `hu-` master key before transmission to the server.
+### 1. Bitwarden Ingestion Parity (JSON & CSV)
+ShellGuard provides first-class, seamless migration from Bitwarden:
+- **Unencrypted Bitwarden JSON**: Automatically parses `items[]` across Logins, Secure Notes, and SSH keys. Normalizes Bitwarden folders to ShellGuard pods (`normalizePod`), converts multi-URIs into structured login rows, extracts password revision history, translates custom fields (`Text`, `Hidden`, `Checkbox`, `Linked`), and parses dynamic TOTP seeds (`otpauth://` URIs with SHA1/256/512, 6/8 digits, custom periods).
+- **Bitwarden CSV**: Adheres to RFC 4180 CSV standards for quoted multiline fields, commas, and escaped quotes.
+- **Encrypted Bitwarden Sniffer**: Detects encrypted Bitwarden exports (`encrypted: true`) and immediately informs the user to export unencrypted JSON/CSV from the Bitwarden web vault or use the Bitwarden CLI, preventing silent corrupt imports.
 
-### 2. ShellGuard-TOTP Android Backup (`.sgtotp.bak`)
+### 2. Sovereign ShellGuard Vault Backups (Encrypted & Plaintext)
+Upload any previously exported ShellGuard backup. If encrypted (`v: 1`), an in-browser modal prompts for either the active ClawKey or the custom passphrase used during export. The client decrypts, verifies integrity, displays the import preview, and re-seals each item under the current session's key.
+
+### 3. ShellGuard-TOTP Android Backup (`.sgtotp.bak`)
 ShellGuard natively supports direct import of backups generated by the official [ShellGuard-TOTP Android Companion](/companion/sync-and-backups):
-
 - **Auto-Sniffing**: The file uploader automatically detects `.sgtotp.bak` extensions and envelope headers.
 - **Encrypted Backups (`shellguard-totp-backup-v1`)**: When an encrypted companion backup is uploaded, an in-browser modal prompts for the export passphrase. Decryption is performed entirely client-side using HKDF-SHA256 and AES-GCM-256, verifying the AAD (`totp_backup:{ownerUuid}`) and the byte-exact SHA-256 payload checksum.
 - **Plaintext Backups (`shellguard-totp-plain-export-v1`)**: Unencrypted companion exports and raw JSON token arrays are parsed directly.
@@ -71,3 +81,13 @@ ShellGuard natively supports direct import of backups generated by the official 
   - **Base32 Normalization**: Secret seeds are sanitized (stripping spaces, hyphens, and converting to uppercase).
   - **Fresh UUID Assignment**: Items receive new collision-free Web UUIDs.
   - **Pod Mapping**: Android categories map to vault Pods using `normalizePod()`.
+
+---
+
+## ⚡ High-Throughput Bulk Import & Partial-Failure Engine
+
+ShellGuard includes an optimized transactional bulk import engine (`POST /api/vault/bulk-import`) engineered for migrating large credential databases without single-item request round-trips:
+
+- **10MB Scoped Payload Parser**: Accommodates bulk imports of up to 1,000 items in a single HTTP request while preserving tight 1MB limits across other API endpoints.
+- **Transactional Atomicity**: All valid items are committed inside an atomic SQLite transaction.
+- **Interactive UI Error Resolution**: Skipped items are visually flagged in the Import view with warning badges and item chips detailing the zero-based index and field validation errors.

@@ -4,6 +4,39 @@
 
 ---
 
+## 2026-09-22 — Release v0.0.2.3 (Build 25) & ClawStack release protocol execution
+Executed release protocol for v0.0.2.3 ("The Deep Ingestion & Vault Parity Molt"). Maintained Single Active Release Draft invariant by drafting RELEASE-v0.0.2.3.md and purging RELEASE-v0.0.2.2.md. Archived Phase 18 to ROADMAP-HISTORY.md preserving the 3-completed-phases sliding window in ROADMAP.md. Synchronized version anchors across package.json, README badge, CHANGELOG.md, and ARCHITECTURE.md with 100% green test oracle.
+
+## 2026-09-22 — Note attachments parity, ghost pod purging & detail pane selection preservation
+Physical verification of Areas 3 & 4 surfaced 3 friction points: standalone attachments defaulting to category 'Attachment' created ghost pods in bulk modals; notes lacked binary attachment support across db schema and routes; and saving an item unmounted VaultShell because uploadProgress was rendered inside mode="wait", dropping selectedItemId. Resolved by pruning ghost pods in podUtils and VaultShell, executing Migration 0008 to add attachments to vault_secure_notes with cascade deletion in notes.ts, lifting selectedItemId to App.tsx, and decoupling progress/error banners into their own non-blocking container.
+
+## 2026-09-21 — Live verification friction points & decoupling preview complexity
+Lucas's physical verification surfaced 4 critical joints: switching accounts to a locked user trapped the modal in a re-render loop if `activeLobsterId` changed prematurely, while switching between unlocked accounts required an un-reactive page reload; hidden custom fields gave zero visual feedback before saving; bulk modals lacked pod/tag chips; and binary attachments suffered 415 errors and preview bloat. Decoupled preview complexity in favor of pure encrypted BLOB storage with direct download and delete, staged switch targets safely, added eye toggles to custom fields, and derived chip pickers directly from vault items.
+
+## 2026-09-21 — UI action seams & pod metadata defense
+Direct inspection of `App.tsx` handlers revealed that pod renames and bulk updates were sending payloads missing `tags`, `uris`, and `password_history`, risking silent data loss if the backend handler does not defensively read `existing` values. Hardened `handleRenamePod`, `handleDeletePod`, `onBulkMoveToPod`, and `onBulkAssignTags` to pass complete data models, wrapped operations in `try/catch` with reactive error reporting and `scuttleVault` recovery, and built `tests/unit/uiSeams.test.ts` (11 tests) verifying glue logic and endpoint dispatch.
+
+## 2026-09-21 — Project hygiene & the live verification handshake
+Discovered that passing 285 isolated tests masked a broken delete function in the UI due to an untested client seam. Solidified `.agents/rules/project-hygiene.md` ratifying the 5-phase development lifecycle: Cartography, Seam-Aware Planning, Layered Stroke Commits, Automated Gates, and the mandatory Live Verification Handshake with Lucas. Tests verify logic; only human live verification proves the joint holds.
+
+## 2026-09-21 — Vault item deletion routing & zombie process port shadowing
+A stale Node process on port 6565 from before Phase 21 intercepted `DELETE /api/vault/bulk` as `DELETE /api/vault/:id` with `:id = 'bulk'`, returning 404. Terminated the zombie PID, restored correct routing in `App.tsx` for TOTP/pearl items, integrated `ConfirmDialog` into `ItemDetailPane` for single-item parity with bulk deletes, and cleared `selectedItemId` on deletion to prevent dead selection state.
+
+## 2026-09-20 — Async native PBKDF2 WebCrypto acceleration & 600,000 iteration guidance (N1, N2)
+Pure-TS PBKDF2 running 600k iterations synchronously on the main thread blocked for ~15-20s. Kept the fallback module pure while implementing caller-side native acceleration via `crypto.subtle.deriveBits` in `vaultExport.ts` (~1s execution off-thread) with graceful fallback to pure-TS for non-secure HTTP origins. Upgraded default iteration count from 100,000 to OWASP-recommended 600,000 with backward compatibility.
+
+## 2026-09-20 — Peer review hardening: KDF branching, CSPRNG enforcement & metadata registration
+Addressing Cline's peer review audit highlighted that HKDF cannot be used for user-supplied passphrases due to lack of a work factor against GPU brute-force; implemented pure-TS PBKDF2-SHA256 (100k iterations) in webCryptoFallback.ts and branched derivation between ClawKey and passphrase. Enforced fail-closed CSPRNG on AES-GCM salt/nonce, registered 'uris' under MetadataGuard Layer 2 metadata encryption, converted 0007.down.sql to a safe no-op, and built dedicated published RFC 6238 vectors in totpUtils.test.ts.
+
+## 2026-09-20 — Bitwarden export sniffer priority & encrypted export tripwire
+Bitwarden export sniffer must inspect for proprietary encrypted exports before running standard JSON array mappings, or it would attempt to process encrypted ciphertext (`2.***`) as valid item titles. Surfacing an actionable guidance alert instructs the user to export unencrypted JSON/CSV or use the Bitwarden CLI. Additionally, dynamic TOTP URI parsing seamlessly normalizes non-standard 8-digit and SHA256/512 configurations without data loss.
+
+## 2026-09-20 — Express route shadowing on parameterized subpaths
+Placing `DELETE /bulk` and `POST /bulk-import` after parameterized `:id` handlers caused Express to capture `/bulk` as `req.params.id = 'bulk'`. Declaring static and batch subpaths strictly before parameterized routes resolved the shadowing immediately. In Express routers, order of declaration is an immutable routing invariant.
+
+## 2026-09-20 — Phase 21: Per-record Zod safeParse vs middleware validateBody for 207 Multi-Status
+Express `validateBody(schema)` runs before route execution and rejects an entire payload with HTTP 400 if any record fails validation. To achieve true 207 Multi-Status partial failure handling in `POST /api/vault/bulk-import`, the middleware validates only the container array bounds (`1..1000`), while the route handler executes `VaultSchemas.bulkImportItem.safeParse(item)` per record, aggregating failures into `{ index, reason }` chips and persisting valid records in an atomic transaction.
+
 ## 2026-09-19 — Phase 20 release drafting & 3-version roadmap sliding window
 Rolled over ROADMAP.md to release v0.0.2.2 (Build 24 — The Bioluminescent Reef) holding completed Phases 18, 19, and 20. Retired Phase 17 into ROADMAP-HISTORY.md preserving the 3-completed-milestones ceiling. Verified dynamic package version resolver ensures 0.0.2.2 passes tests cleanly with zero assertion drift.
 
@@ -30,38 +63,4 @@ Lucas clarified hard bank boundary: Antigravity's memory bank is strictly `.agen
 
 ## 2026-09-17 — carabase brand asset alignment & web server favicon distinction
 Lucas noticed the prior steampunk lobster had awkward asymmetry and claws emerging from the rear. Re-anchored to the CaraBase woodcut engraving style: forward/downward crab gaze, pincers clasping the safe door, and 3D 'S' crest. For the favicon, Lucas directed dropping the inner vault arch and using the notched carapace crest shield with a glowing cyan Web Globe in the center to cleanly distinguish the self-hosted Web Server from the TOTP mobile companion.
-
-## 2026-09-16 — first governance release (v0.0.1.10)
-Lucas chose the honest PATCH (v0.0.1.10/Build 19) over consuming Phase 18's reserved v0.0.2.0 milestone for a docs-only release — label-inflation prevention in action; queue Build labels swept +1 (including spine anchor hrefs) so no two releases share a build. 34 commits of documentation-governance work shipped as a release. The version was decided by asking, per the semantic-versioning rule, not by guessing.
-
-## 2026-09-16 — the cryptographer's lens formalized
-The auditor-confidence conversation (would a 30-year cryptologist be satisfied?) surfaced three gaps — the skipped webCryptoFallback test, the unmechanized constant-time claim, the undocumented limiter/LRU/redaction semantics. Lucas chose to formalize them as Phase 24 (queue tail, provisional v0.0.2.6) instead of leaving them as open observations, and the lens itself entered the bank as declarative truth (projectBrief standard + systemPatterns invariants). The corpus started being built for an audience we could not name. Also: the queue crawl embedded Documentation Impact lines into every queued phase (18-24) — docs-hygiene now rides in the schedule itself.
-
-## 2026-09-16 — docs bow to code (governance ruling)
-The bidirectional audit (L1–L8) found docs contradicting shipped, verified, secure behavior. Lucas ruled: **docs bow to code** — the application works, so stale prose is the defect, never an excuse to retune a limiter or drop a permission flag. Verify against enforcing code first; only then assert the doc.
-
-## 2026-09-16 — test oracle beats literal grep
-No code contained the documented custom-field AAD pattern `${table}:${recordId}:custom_fields`. Lesson: when a crypto claim has zero literal code hits, don't conclude "wrong docs or wrong code" — go read the **test fixtures** (`tests/unit/customFields.test.ts`) which revealed the truth (`<table>_custom:{id}`). Tests are the oracle for behavioral details.
-
-## 2026-09-16 — truncate-before-read data loss
-Wrote `open(rl,'w').write(entry + open(rl).read())` — Python opens `'w'` (truncating) *before* evaluating the read, destroying ~488 lines of reflection history. Git recovered it (`a640e09`), but the pattern is banned: **read first into a variable, then write.** Also learned the commit stat is the tripwire — `488 deletions` in a "log entry" commit is an alarm.
-
-## 2026-09-16 — identity-file shape ≠ redaction lists
-The auditLogger redacts a `humanKey` *detail key*, which tempted a wrong inference about the identity-file schema. Truth lives in the producer (`crypto.ts:63-80`): filename is per-username (`shellguard_identity_<username>.json`), shape is `{username, displayName, uuid, token, createdAt}`. Never infer data shapes from redaction lists.
-
-## 2026-09-16 — neighbor numbers conflate easily
-authLimiter (10/15m, skip-success), adminAuthLimiter (5/10m), apiLimiter (100/min) — docs had conflated the admin and auth limiters. When documenting any tunable, cite its **env var** (`AUTH_RATE_LIMIT`) and its neighbor's name explicitly; neighbors drift independently.
-
-## 2026-09-16 — canMove taught me to enumerate, not recall
-Documented the permission model as four masks from memory; `schemas.ts:140` carries a fifth (`canMove`) and the wizard surfaces seven presets. Permission/security models must be **enumerated from the zod schema** every time, never recalled.
-
-## 2026-09-16 — heredoc emoji corruption
-A 🏛️ passed through a bash heredoc became 2×U+FFFD on disk. Emoji through heredocs are corrupted silently; caught only by a byte-level scan (`b'\xef\xbf\xbd'` count). Rule: emoji content goes through the editor tool; heredocs stay ASCII, and any heredoc write gets a U+FFFD scan after.
-
-## 2026-09-16 — assert-before-write is 5-for-5
-Every fail-closed assert this arc (missing `./` prefix, 2-element tuple, count mismatch 5-vs-4, wrong padding) prevented a partial multi-file write. The `swap(expected=N)` pattern costs seconds and has never cost a false stop. Keep it for all mechanical sweeps.
-
-## 2026-09-16 — decimal interlude pattern for non-phase work
-Unphased hotfixes broke the spine's `Stage N = Phase N−1` invariant until I adopted the TOTP's decimal pattern (Stage 18.5). Non-phase work slots at decimal positions *between* phases; stage numbering stays a pure phase ladder. (See `activeContext.md` § Recent Changes, chronology entry.)
-
 

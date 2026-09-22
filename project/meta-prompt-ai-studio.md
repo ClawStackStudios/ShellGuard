@@ -69,17 +69,17 @@ flowchart TD
     Phase18 --> Phase19
     Phase19 --> Phase20
     Phase20 --> Phase21
-    Phase21 --> Stage23
-    Stage23 --> Stage24
-    Stage24 --> Phase24
+    Phase21 --> Phase22
+    Phase22 --> Phase23
+    Phase23 --> Phase24
     Phase24 --> Summit
 ```
 
-> **Transcription state**: **21 phases transcribed** (Stage 0 → 21, `v0.0.0.0`
-> void → `v0.0.2.2` parity) — the walk and the codebase occupy the same commit
-> through the summit tag. **Phases 17–20 (`v0.0.1.9` → `v0.0.2.2`) are SHIPPED.**
+> **Transcription state**: **22 phases transcribed** (Stage 0 → 22, `v0.0.0.0`
+> void → `v0.0.2.3` parity) — the walk and the codebase occupy the same commit
+> through the summit tag. **Phases 17–21 (`v0.0.1.9` → `v0.0.2.3`) are SHIPPED.**
 > **Stage 18.5** records the post-summit hotfix receipt (`07ccd61`).
-> **Stages 22–25 (Phases 21–24) are QUEUED** in the
+> **Stages 23–25 (Phases 22–24) are QUEUED** in the
 > active forward queue; each stage prompt is transcribed when its phase becomes
 > the next molt. Execution order is strictly chronological:
 > Phase 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
@@ -1212,12 +1212,11 @@ build stay clean!
 
 ---
 
-## 📥 Stage 22 (Queued): Phase 21 Prompt — Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]
+## 📥 Stage 22: Phase 21 Prompt — Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)] ✅
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-21-bulk-import-endpoint--batch-operations-v0023-build-25)
 > for complete specifications on **Task 41** and **Task 42**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 21; green-light from
-> Lucas still required.
+> **✅ Execution state**: SHIPPED — released & live in `v0.0.2.3 (Build 25)`.
 > 📚 **Documentation Impact**: ARCHITECTURE.md API routes table · docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract) · docs/vault-features
 > **📖 Required Context Files for Phase 21**:
 > 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).
@@ -1253,11 +1252,39 @@ Execute Phase 21 adhering to the Functionality + UI Component pairing:
   (Move to Pod, Assign Tag, Delete), and a dedicated Import wizard with
   preview table and error resolution chips.
 
+### Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite
+- **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
+  - Implement `src/lib/bitwarden.ts` multi-format sniffer hierarchy to prevent unhandled format errors.
+  - Convert Bitwarden Folders to ShellGuard Pods using `normalizePod()`.
+  - Translate Bitwarden items: Logins (with TOTP extraction), Secure Notes, SSH keypairs via `serializeSshKeySecret()`, and Custom Fields (`0: text`, `1: hidden`, `2: boolean`, `3: linked`).
+  - Provide clear user guidance when an encrypted Bitwarden export is uploaded.
+  - Dedicated unit tests in `tests/unit/bitwarden-import.test.ts`.
+- **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
+  - Track per-item password generation history (`password_history`) with timestamps, expandable UI drawer in `ItemFormModal` and `ItemDetailPane`, and one-click password restore.
+  - Support multi-URI entries (`uris`) for login records.
+  - Implement dynamic TOTP configuration variables (`algorithm`: SHA1/SHA256/SHA512, `digits`: 6/8, `period`: 30/60) with form controls in `ItemFormModal` and dynamic live generation in `TotpDisplay.tsx`.
+  - Synchronize Android companion documentation in `compatibility_layer.md`.
+- **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
+  - Implement `src/lib/vaultExport.ts` supporting full JSON and CSV exports across both Encrypted and Unencrypted modes.
+  - Encrypted exports sealed with AES-256-GCM via active ClawKey (`hu-`) or custom passphrase with confirmation.
+  - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.
+  - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
+  - Dedicated unit tests in `tests/unit/vault-export.test.ts`.
+- **Sub-Phase 21.4: [Hardening & UI Seams] Post-Verification Hardening, Note Attachments Parity & Sticky Detail Selection**
+  - Migration `0008_note_attachments.{up,down}.sql` adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`.
+  - Cascading deletion parity on `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
+  - Background lifecycle cleanups (`cleanupOrphanedFiles`, `deleteExpiredSharePods`) to purge temporary artifacts.
+  - Detail pane sticky selection preserving `selectedType` and `selectedId` during item edit/save.
+  - UI label polish: explicit `Attachments (max 500MB per attachment)` guidance in `ItemFormModal.tsx`.
+  - Established formal tiered verification templates in `.agents/templates/verification/`.
+  - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
+
 Verify importing 100 items with 2 malformed records persists 98 and returns
 an informative 207 Multi-Status with a detailed error array, deletes cascade
 atomically, the floating action bar appears on selection, bulk moves update
 local state optimistically, the import error modal highlights skipped items,
-and the full test oracle + tsc + build stay clean!
+Bitwarden test files import with TOTP and SSH keys intact, per-item password
+history is preserved and restorable, and the full test oracle + tsc + build stay clean!
 ```
 
 ---
@@ -1356,7 +1383,7 @@ Bitwarden model (verified): attachments are never standalone vault items.
 - attachments.ts POST requires a parent item reference (zod + route guard);
   standalone creation rejected; parent's attachments JSON ID array gains the
   child id in the same transaction.
-- migrations/0006_attachment_integrity.{up,down}.sql + backfill: relink
+- migrations/0009_attachment_integrity.{up,down}.sql + backfill: relink
   orphans where a parent is determinable, otherwise QUARANTINE (hidden from
   lists, never deleted); audit quarantine events.
 - schemas.ts: Secure Notes CANNOT carry password credentials (no `secret`

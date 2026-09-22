@@ -8,7 +8,7 @@
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
 - **Build**: Vite (strictPort :6464, /api proxy → :6565), VitePress for documentation portal
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 19 suites / 230 tests (1 skipped), per-suite DATA_DIR isolation
+- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 24 suites / 285 passed (1 skipped, 286 total), per-suite DATA_DIR isolation
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
 - **License**: AGPL-3.0-only
 - **Mobile Stack (Native Android)**: Kotlin 2.0+, Jetpack Compose, Room (SQLCipher), Android Keystore Biometrics, Retrofit/Ktor, WorkManager
@@ -30,19 +30,21 @@ npm run scuttle:dev-start
 |---|---|---|
 | Development | :6464 (Vite) | :6565 (Express) |
 | Production | :6464 (served by Express) | :6464 (same port) |
-| Tests | N/A | 64641-64649 (per-suite) |
+| Tests | N/A | 64641-64650 (per-suite) |
 
 ## Technical Constraints
 
 - `crypto.webcrypto.subtle` HANGS in this environment — always use native `crypto` module
 - `crypto.hkdfSync` for key derivation, `crypto.createCipheriv`/`createDecipheriv` for AES-256-GCM
-- **WebCrypto Insecure Origin Fallback**: Client-side uses pure TypeScript fallback engine (`src/lib/webCryptoFallback.ts`) for SHA-256, HMAC, HKDF, and AES-GCM when accessing ShellGuard over plain HTTP LAN origins where `window.crypto.subtle` is undefined.
+- **WebCrypto Insecure Origin Fallback**: Client-side uses pure TypeScript fallback engine (`src/lib/webCryptoFallback.ts`) for SHA-256, HMAC, HKDF, PBKDF2, and AES-GCM when accessing ShellGuard over plain HTTP LAN origins where `window.crypto.subtle` is undefined.
+- **Async Native PBKDF2 Fast Path**: For vault export envelopes requiring 600,000 PBKDF2 iterations, `vaultExport.ts` uses caller-side feature detection (`globalThis.crypto?.subtle.deriveBits`) for sub-second off-thread derivation, falling back to pure-TS `pbkdf2Sha256` for non-secure origins.
+- **Vite Dev Watcher Ignores**: `server.watch.ignored` in `vite.config.ts` ignores `tests/**`, `data*/**`, `*.sqlite*`, and `*.wal` to prevent crash loops when SQLite ephemeral WAL files are generated and deleted during test runs.
 - **Node.js 22 WebCrypto Prototype Mocking**: `crypto.subtle` in Node 22 is a getter on `Crypto.prototype`. Mocking non-secure browser contexts in unit tests requires redefining the property descriptor on `Object.getPrototypeOf(globalThis.crypto)`.
 - **Git Tracking Index vs. .gitignore**: When a directory is added to `.gitignore` after files were already staged/committed, Git continues tracking modifications. Run `git rm -r --cached <dir>` to clear the Git index without modifying local disk files.
 - **GitHub Actions Release Trigger Regex**: `.github/workflows/release.yml` parses `--release[ =]+v?[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?` from commit messages on push to `main`, automating remote tag creation and GitHub Release publication.
 - Express 5 rejects `app.get("*")` — use regex literal for SPA catch-all
 - SQLite CURRENT_TIMESTAMP and JS ISO strings do NOT compare correctly — use JS ISO comparison
-- Body limits & Streaming: 1MB global JSON body limit. `/api/attachments` uses Busboy multipart streaming (no base64 inflation); 50MB per-file ceiling (`ATTACHMENT_MAX_MB`, mid-stream abort) and 500MB per-owner grotto quota (`GROTTO_QUOTA_MB`), both returning 413. Downloads stream in 1MB chunks via SQLite `substr`.
+- Body limits & Streaming: 1MB global JSON body limit; scoped 10MB JSON body parser for `/api/vault/bulk-import`. `/api/attachments` uses Busboy multipart streaming (no base64 inflation); 500MB per-file ceiling (`ATTACHMENT_MAX_MB`, mid-stream abort) and 1000MB per-owner grotto quota (`GROTTO_QUOTA_MB`), both returning 413. Downloads stream in 1MB chunks via SQLite `substr`.
 - Admin plane: `ADMIN_TOKEN` env gates the SuperLobster Panel (503 when unset); cookie `sg_admin_session` (httpOnly/SameSite=Strict/20-min sliding); admin auth rate limit 5/10min; backups in `DATA_DIR/backups/`
 
 ## Dependencies (Key)
@@ -56,7 +58,7 @@ npm run scuttle:dev-start
 
 ## Tool Usage Patterns
 
-- `npm test` — all suites (19 test files, 230 tests)
+- `npm test` — all suites (21 test files, 259 passed, 1 skipped)
 - `npm run test:integration` — auth-flow + vault-crud + settings + metadata-encryption
 - `npm run test:security` — cross-owner isolation + permission bypass
 - `npm run test:build-gates` — Dockerfile/config shape gates

@@ -3,6 +3,36 @@
 *Episodic memory: how I moved through the codebase. Semantic truth lives in the Memory Bank; walls, detours, and instincts live here. Sliding window: 20 entries.*
 
 ---
+## 2026-09-20 — fourteen findings in one suite, and why the review was worth it
+
+The Phase 21 sub-phase arrived as a large, confident, gate-green change set: Bitwarden ingestion, a dynamic TOTP engine, password history, multi-URI rows, and a dual export suite. Reviewing it against the code rather than the walkthrough produced fourteen findings across two rounds — and none of them were style. Two plaintext Bitwarden exports sat in the repo root, un-gitignored, with the test suite resolving them from `process.cwd()` (so the oracle was unreproducible from a clean clone and one `git add .` from publishing credential-shaped data). `uris` was sent raw on all three write paths while the semantically identical `url` was Layer 2 encrypted. HKDF — a key-expansion function with no work factor — was serving as the passphrase KDF. A `Math.random()` fallback guarded the GCM nonce. The down migration dropped user columns outright. The lesson is not that the work was careless; it is that **a suite this wide has more seams than its author can see**, and the seams are where the invariants live.
+
+## 2026-09-20 — the commit that swept another agent's home
+
+`a72ce7d` is titled *"feat(agents): formalize home-directory boundaries for Antigravity"* and contains 70 files: Antigravity's rules, **18 `.clinerules/` files of mine**, the entire Phase 21 sub-phase source, 14 documentation surfaces, and two config files. The walkthrough reported "zero `.clinerules/` files staged or touched" — the grep says 18. The systemic cause was in my own house: `.clinerules/workflows/finish-task.md` instructs `git add .`, which sweeps every in-flight file, including other agents' uncommitted work. I had just written the rule about committing work you did not author, and the workflow I own told an agent to violate it. Fix the workflow, not just the commit.
+
+## 2026-09-20 — dual-path crypto is a contract, not an implementation detail
+
+`deriveKeyForEnvelope` picks native `crypto.subtle.deriveBits` on secure origins and pure-TS `pbkdf2Sha256` on plain-HTTP LAN — a reasonable design that makes the two implementations a **portability contract**. The pure-TS branch is executed by no test (the export suite runs in Node, where `subtle` exists) and has no known-answer vector, so a one-byte divergence would produce backups that seal on HTTPS and refuse to open on the LAN. Every gate stays green; only a real user's disaster-recovery attempt fails. Any time a cipher primitive has two implementations selected by environment, the parity assertion *is* the test — not a nice-to-have alongside it.
+
+
+## 2026-09-20 — the route that compiled but never ran
+
+Jules' first cut registered `router.delete('/bulk')` *after* `router.delete('/:id')`. Express matches in order, so `/api/vault/bulk` bound `id="bulk"`, queried a pearl named "bulk", and 404'd — the entire bulk-delete feature was dead on arrival while every gate stayed green, because no test exercised the literal path. The fix is one block-move (bulk routes above the `:id` family). The lesson is not "read your routes" but "a route with no integration test is a hypothesis": the witness suite is what made the shadow visible, and it only exists because the review demanded a test file rather than a description.
+
+## 2026-09-20 — validateBody is the wrong shape for partial failure
+
+The roadmap said "per-record validation, invalid items skipped, 207 Multi-Status" — which is structurally impossible with a middleware schema gate, since `validateBody` 400s the whole payload on the first bad field. Resolution: middleware validates only the *container* (`items: 1..1000`), and the route calls `VaultSchemas.bulkImportItem.safeParse()` per record, accumulating `{index, reason}` while valid rows persist in one transaction. The outer schema therefore reads `z.array(z.any())` — which looks like a hole and is actually the mechanism. Recorded in `techContext`/`systemPatterns` precisely so a future reader doesn't "tighten" it back into an all-or-nothing 400.
+
+## 2026-09-20 — reviewing a PR from the working tree
+
+I reviewed the first PR and reported five blockers; Jules fixed all five — but left them **uncommitted**. `HEAD` still held the broken commit, so the PR as pushed would have shipped the route-shadowing P0 and the missing test. Nothing in a file-by-file read reveals that gap; only `git status --porcelain` (dirty), `git log origin/main..HEAD` (one commit), and `git show HEAD:<file>` (old content) expose it. Durable rule: verify the *commit*, not the checkout. A review that reads disk is reviewing an intention.
+
+## 2026-09-20 — the agent contract that lied in four places
+
+`skills/shellguard/SKILL.md` — the agent-facing contract — documented `200 OK` (code returns 201), `inserted` as a number (code returns an array of IDs), error entries `{index, id, title, reason}` (code returns `{index, reason}`), and `secret` as a nested object (schema requires a string). An agent built against it would have checked the wrong status, mis-typed the payload, and never seen `errors[]`. Fixed this cycle. The pattern generalizes: the closer a doc sits to an external consumer, the more expensive its drift — and the claim battery (grep the enforcing code first) catches all four in one pass.
+
+
 
 ## 2026-09-19 — Phase 20 release & 3-version sliding window
 
@@ -54,25 +84,4 @@ Wrote `open(rl,'w').write(entry + open(rl).read())` — Python opens `'w'` (trun
 
 ## 2026-09-16 — identity-file shape ≠ redaction lists
 The auditLogger redacts a `humanKey` *detail key*, which tempted a wrong inference about the identity-file schema. Truth lives in the producer (`crypto.ts:63-80`): filename is per-username (`shellguard_identity_<username>.json`), shape is `{username, displayName, uuid, token, createdAt}`. Never infer data shapes from redaction lists.
-
-## 2026-09-16 — neighbor numbers conflate easily
-authLimiter (10/15m, skip-success), adminAuthLimiter (5/10m), apiLimiter (100/min) — docs had conflated the admin and auth limiters. When documenting any tunable, cite its **env var** (`AUTH_RATE_LIMIT`) and its neighbor's name explicitly; neighbors drift independently.
-
-## 2026-09-16 — canMove taught me to enumerate, not recall
-Documented the permission model as four masks from memory; `schemas.ts:140` carries a fifth (`canMove`) and the wizard surfaces seven presets. Permission/security models must be **enumerated from the zod schema** every time, never recalled.
-
-## 2026-09-16 — heredoc emoji corruption
-A 🏛️ passed through a bash heredoc became 2×U+FFFD on disk. Emoji through heredocs are corrupted silently; caught only by a byte-level scan (`b'\xef\xbf\xbd'` count). Rule: emoji content goes through the editor tool; heredocs stay ASCII, and any heredoc write gets a U+FFFD scan after.
-
-## 2026-09-16 — assert-before-write is 5-for-5
-Every fail-closed assert this arc (missing `./` prefix, 2-element tuple, count mismatch 5-vs-4, wrong padding) prevented a partial multi-file write. The `swap(expected=N)` pattern costs seconds and has never cost a false stop. Keep it for all mechanical sweeps.
-
-## 2026-09-16 — decimal interlude pattern for non-phase work
-Unphased hotfixes broke the spine's `Stage N = Phase N−1` invariant until I adopted the TOTP's decimal pattern (Stage 18.5). Non-phase work slots at decimal positions *between* phases; stage numbering stays a pure phase ladder. (See `activeContext.md` § Recent Changes, chronology entry.)
-
-## 2026-09-16 — the bank can be the stale side
-The ROADMAP said next = Phase 18; the memory bank said Phase 22. I nearly "fixed" the roadmap. Docs-vs-bank contradictions cut either way — audit **both sides against the runtime** before deciding which is stale. (Here the doc was right.)
-
-## 2026-09-16 — non-greedy finditer truncates matches
-`re.finditer(r'^## .*?Stage \d', ...)` truncates each match at the first digit, so `m.group(0)` reads `"...Stage 1"` for Stage 19. Checker regexes must iterate full lines, not match objects. Third checker bug of the arc — checkers deserve the same scrutiny as edits.
 

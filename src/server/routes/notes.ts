@@ -26,7 +26,7 @@ router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthReque
 });
 
 router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSchemas.create), async (req: AuthRequest, res) => {
-  const { id, title, content, category, tags, custom_fields } = req.body;
+  const { id, title, content, category, tags, custom_fields, attachments } = req.body;
   try {
     const normalizedTags = normalizeTagsForDb(tags);
     const toStore = await prepareWrite('vault_secure_notes', {
@@ -36,9 +36,9 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
     }, fieldCipher);
 
     db.prepare(`
-      INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, tags, custom_fields, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, req.userUuid, toStore.title, content, toStore.category, toStore.tags, custom_fields || '', new Date().toISOString());
+      INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, tags, custom_fields, attachments, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, req.userUuid, toStore.title, content, toStore.category, toStore.tags, custom_fields || '', attachments || '[]', new Date().toISOString());
 
     audit.log('NOTE_CREATED', {
       action: 'note_created',
@@ -59,14 +59,15 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(NoteSc
 
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const { title, content, category, tags, custom_fields } = req.body;
+  const { title, content, category, tags, custom_fields, attachments } = req.body;
   try {
-    const existing = db.prepare('SELECT id, tags FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as { id: string; tags?: string } | undefined;
+    const existing = db.prepare('SELECT id, tags, attachments FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as { id: string; tags?: string; attachments?: string } | undefined;
     if (!existing) {
       return res.status(404).json({ success: false, error: 'Note not found.' });
     }
 
     const normalizedTags = tags !== undefined ? normalizeTagsForDb(tags) : (existing.tags || '[]');
+    const finalAttachments = attachments !== undefined ? attachments : (existing.attachments || '[]');
 
     const toStore = await prepareWrite('vault_secure_notes', {
       title: title.trim(),
@@ -74,8 +75,8 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
       tags: normalizedTags,
     }, fieldCipher);
 
-    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, tags = ?, custom_fields = ? WHERE id = ? AND owner_uuid = ?')
-      .run(toStore.title, content, toStore.category, toStore.tags, custom_fields || '', id, req.userUuid);
+    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, tags = ?, custom_fields = ?, attachments = ? WHERE id = ? AND owner_uuid = ?')
+      .run(toStore.title, content, toStore.category, toStore.tags, custom_fields || '', finalAttachments, id, req.userUuid);
 
     audit.log('NOTE_UPDATED', {
       action: 'note_updated',
@@ -94,12 +95,25 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
 router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: AuthRequest, res) => {
   const { id } = req.params;
   try {
-    const row = db.prepare('SELECT id, category FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
+    const row = db.prepare('SELECT id, category, attachments FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
     if (!row) {
       return res.status(404).json({ success: false, error: 'Note not found.' });
     }
 
     const decryptedRow = await prepareRead('vault_secure_notes', row, fieldCipher);
+
+    // Cascade delete any associated attachments
+    try {
+      const parsedAttachments = JSON.parse(row.attachments || '[]');
+      if (Array.isArray(parsedAttachments) && parsedAttachments.length > 0) {
+        const delAttachment = db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?');
+        for (const attId of parsedAttachments) {
+          if (typeof attId === 'string') {
+            delAttachment.run(attId, req.userUuid);
+          }
+        }
+      }
+    } catch { }
 
     db.prepare('DELETE FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
 

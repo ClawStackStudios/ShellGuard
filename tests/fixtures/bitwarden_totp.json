@@ -1,0 +1,70 @@
+{
+  "encrypted": false,
+  "folders": [],
+  "items": [
+    {
+      "type": 1,
+      "name": "Test Bitwarden Password",
+      "favorite": false,
+      "reprompt": 0,
+      "id": "2e6a78ba-a733-426b-8db3-b4cb0186b81a",
+      "collectionIds": null,
+      "notes": "This is a note",
+      "fields": [
+        {
+          "type": 0,
+          "name": "This is a text field title",
+          "value": "this is the text field content"
+        },
+        {
+          "type": 1,
+          "name": "This is a hidden field title",
+          "value": "this is the hidden field content"
+        }
+      ],
+      "login": {
+        "uris": [],
+        "fido2Credentials": [],
+        "username": "disperser",
+        "password": "Slain5-Nappy-Moonlight",
+        "totp": "JBSWY3DPEHPK3PXP"
+      },
+      "passwordHistory": [],
+      "creationDate": "2026-09-20T23:42:33.883Z",
+      "revisionDate": "2026-09-21T04:54:57.785Z"
+    },
+    {
+      "type": 2,
+      "name": "Test note",
+      "favorite": false,
+      "reprompt": 0,
+      "id": "1cbfe51f-48bd-41b5-891a-b4cb0186d97f",
+      "collectionIds": null,
+      "notes": "test note content",
+      "fields": [],
+      "secureNote": {
+        "type": 0
+      },
+      "passwordHistory": [],
+      "creationDate": "2026-09-20T23:43:02.383Z",
+      "revisionDate": "2026-09-20T23:43:02.383Z"
+    },
+    {
+      "type": 5,
+      "name": "test ssh key",
+      "favorite": false,
+      "reprompt": 0,
+      "id": "c88b9570-05cb-42aa-9b0f-b4cb0186c99a",
+      "collectionIds": null,
+      "fields": [],
+      "sshKey": {
+        "privateKey": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACAumE9p4Wix4Qi4WgRwT5zGmVO3YlcA/1Or+lggpHzxjwAAAIixIjrWsSI6\n1gAAAAtzc2gtZWQyNTUxOQAAACAumE9p4Wix4Qi4WgRwT5zGmVO3YlcA/1Or+lggpHzxjw\nAAAEDYdCSgeM4afJRhdssLmBqSxzVfR7UM5iibCjn+YkTwEC6YT2nhaLHhCLhaBHBPnMaZ\nU7diVwD/U6v6WCCkfPGPAAAAAAECAwQF\n-----END OPENSSH PRIVATE KEY-----\n",
+        "publicKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC6YT2nhaLHhCLhaBHBPnMaZU7diVwD/U6v6WCCkfPGP",
+        "keyFingerprint": "SHA256:0z7aATfaxMHVNFX9pRB3dpWTkeELwdZs2HZ+itOvxNY"
+      },
+      "passwordHistory": [],
+      "creationDate": "2026-09-20T23:42:48.820Z",
+      "revisionDate": "2026-09-20T23:42:48.820Z"
+    }
+  ]
+}

@@ -158,9 +158,9 @@ The HTTP verb determines which permission bit is required:
 | Endpoint group | `canRead` | `canWrite` | `canEdit` | `canDelete` |
 |----------------|:---------:|:----------:|:---------:|:-----------:|
 | `GET /api/vault`, `GET /api/vault/:id` | ✔ | — | — | — |
-| `POST /api/vault` | — | ✔ | — | — |
+| `POST /api/vault`, `POST /api/vault/bulk-import` | — | ✔ | — | — |
 | `PUT /api/vault/:id` | — | — | ✔ | — |
-| `DELETE /api/vault/:id` | — | — | — | ✔ |
+| `DELETE /api/vault/:id`, `DELETE /api/vault/bulk` | — | — | — | ✔ |
 | Notes (`GET`/`POST`/`PUT`/`DELETE /api/notes`) | ✔ | ✔ | ✔ | ✔ |
 | SSH Keys (`GET`/`POST`/`PUT`/`DELETE /api/keys`) | ✔ | ✔ | ✔ | ✔ |
 | Attachments (`GET`/`POST`/`PUT`/`DELETE /api/attachments`) | ✔ | ✔ | ✔ | ✔ |
@@ -248,6 +248,8 @@ Retrieve one pearl by ID. Returns `404 Not Found` if it does not exist **or belo
   type?: string            // "password" | "note" | "card" | ... (default "password")
   category?: string        // ≤64 characters (default "")
   tags?: string[] | string // array of tag strings or JSON array (default [])
+  uris?: string            // stringified JSON array of secondary login URIs (Layer 2 metadata-encrypted)
+  password_history?: string // stringified JSON array of password entries, client-side encrypted (Layer 1 ShellCryption)
   notes?: string           // ≤10000 characters, encrypted client-side
   totpSecret?: string      // encrypted client-side
   attachments?: string[]   // linked attachment IDs
@@ -276,6 +278,80 @@ Replace an existing pearl's mutable fields. Ownership-scoped: `404` if not yours
 
 **Error Responses:** `401 Unauthorized` · `403 Forbidden` (no `canDelete`) · `404 Not Found`
 
+### POST /api/vault/bulk-import — Batch Import Vault Items
+
+Batch insert up to 1,000 vault pearls in an atomic transaction with per-record validation.
+
+**Permissions Required:** `canWrite`  
+**Payload Limit:** 10MB scoped parser
+
+**Request Body:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid-v4",
+      "title": "Encrypted or Plain Title",
+      "secret": "<opaque ShellCryption envelope — a JSON string, never a nested object>",
+      "type": "password",
+      "tags": ["prod", "cloud"]
+    }
+  ]
+}
+```
+
+**Responses:**
+- `201 Created` — All items inserted successfully. `inserted` is an **array of the persisted IDs** (not a count):
+  ```json
+  { "success": true, "data": { "inserted": ["uuid-v4", "uuid-v5"] } }
+  ```
+- `207 Multi-Status` — Partial success (valid items persisted, invalid items reported). Each error carries the **zero-based source index** and a field-qualified reason:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "inserted": ["uuid-v4"],
+      "errors": [
+        { "index": 4, "reason": "title: Required" },
+        { "index": 12, "reason": "secret: String must contain at least 1 character(s)" }
+      ]
+    }
+  }
+  ```
+- `400 Bad Request` — Array missing, empty, or exceeds 1,000 items
+- `401 Unauthorized` · `403 Forbidden` (no `canWrite`)
+
+### DELETE /api/vault/bulk — Batch Delete Vault Items
+
+Delete multiple vault pearls by their IDs in a single operation. Automatically cascades to linked file attachments and records audit events.
+
+**Permissions Required:** `canDelete`
+
+**Request Body:**
+```json
+{
+  "ids": ["uuid-1", "uuid-2"]
+}
+```
+
+**Responses:**
+- `200 OK` — All requested IDs deleted. `deleted` is an **array of the removed IDs**:
+  ```json
+  { "success": true, "data": { "deleted": ["uuid-1", "uuid-2"] } }
+  ```
+- `207 Multi-Status` — Partial success (some IDs were not found or not owned). `errors[]` carries `{ id, reason }`:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "deleted": ["uuid-1"],
+      "errors": [{ "id": "uuid-2", "reason": "Not found" }]
+    }
+  }
+  ```
+- `400 Bad Request` — `ids` is not a non-empty array of strings
+- `401 Unauthorized` · `403 Forbidden` (no `canDelete`)
+
 ---
 
 ## Secure Notes API
@@ -290,6 +366,7 @@ Encrypted free-text notes at `/api/notes`.
   content: EncryptedBlob   // REQUIRED — ShellCryption blob, never plaintext
   category?: string        // ≤64 characters (default "")
   tags?: string[] | string // array of tag strings or JSON array (default [])
+  attachments?: string     // JSON array of child attachment IDs (default "[]")
 }
 ```
 
@@ -298,7 +375,7 @@ Encrypted free-text notes at `/api/notes`.
 - `GET /api/notes/:id` — fetch one (`canRead`, `404` if absent/not owned)
 - `POST /api/notes` — create, `201 Created` (`canWrite`)
 - `PUT /api/notes/:id` — replace (`canEdit`)
-- `DELETE /api/notes/:id` — delete (`canDelete`)
+- `DELETE /api/notes/:id` — delete (`canDelete`; automatically cascades linked file attachments)
 
 All responses use the `{success, data}` envelope.
 
@@ -424,8 +501,8 @@ Every sensitive field (`secret`, `content`, `keyValue`, `fileData`, …) holds a
 ```
 
 - **Encryption happens client-side** using a key derived (PBKDF2) from the human's master secret. That key and the raw `hu-` identity never leave the browser.
-- **AAD binding:** the `aad` field binds each ciphertext to its table and record ID (`table:recordId`), preventing ciphertext-swapping between rows.
-- **Server-side storage is opaque:** SQLite rows contain these blobs verbatim plus plaintext *metadata* (title/category/timestamps). If `DB_ENCRYPTION_KEY` (SQLCipher) is set, the metadata layer is encrypted at rest too — but that is defense-in-depth over metadata only, not a substitute for ShellCryption.
+- **AAD binding:** the `aad` field binds each ciphertext to its table and record ID (`table:recordId`), preventing ciphertext-swapping between rows. Primary password secrets bind to `vault_pearls:{id}`, while historical password revisions bind to `vault_pearls_history:{id}`.
+- **Server-side storage is opaque:** SQLite rows contain these blobs verbatim plus metadata. Secondary URIs (`uris`), tags, titles, and categories are protected under Layer 2 metadata encryption (`MetadataGuard`) at rest.
 - **Consequences for agents:**
   - You **MUST NOT expect plaintext** in `secret`, `content`, `keyValue` or `fileData`.
   - You **cannot decrypt** anything without the human's master secret — if you need readable values, ask the human to provide them out-of-band.

@@ -8,7 +8,7 @@
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
 - **Build**: Vite (strictPort :6464, /api proxy → :6565)
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + supertest, 20 suites / 248 tests (1 skipped), per-suite DATA_DIR isolation
+- **Testing**: Vitest + supertest, 24 suites / 282 tests (1 skipped), per-suite DATA_DIR isolation
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
 - **License**: AGPL-3.0-only
 
@@ -28,7 +28,7 @@ npm run scuttle:dev-start
 |---|---|---|
 | Development | :6464 (Vite) | :6565 (Express) |
 | Production | :6464 (served by Express) | :6464 (same port) |
-| Tests | N/A | 64641-64649 (per-suite) |
+| Tests | N/A | 64641-64650 (per-suite) |
 
 ## Technical Constraints
 
@@ -38,7 +38,9 @@ npm run scuttle:dev-start
 - `crypto.hkdfSync` for key derivation, `crypto.createCipheriv`/`createDecipheriv` for AES-256-GCM
 - Express 5 rejects `app.get("*")` — use regex literal for SPA catch-all
 - SQLite CURRENT_TIMESTAMP and JS ISO strings do NOT compare correctly — use JS ISO comparison
-- Body limit: 1mb global. Attachment POSTs are multipart (Busboy, streamed ciphertext BLOB); 500MB/file ceiling (ATTACHMENT_MAX_MB) + 1000MB/owner grotto quota (GROTTO_QUOTA_MB), 413 on breach mid-stream (Phase 20)
+- Body limit: 1mb global, **plus a scoped 10mb parser for `/api/vault/bulk-import`** (`app.use('/api/vault/bulk-import', express.json({limit:'10mb'}))` mounted ahead of the global one — Phase 21). Attachment POSTs are multipart (Busboy, streamed ciphertext BLOB); 500MB/file ceiling (ATTACHMENT_MAX_MB) + 1000MB/owner grotto quota (GROTTO_QUOTA_MB), 413 on breach mid-stream (Phase 20)
+- **Phase 21 crypto — dual-path PBKDF2**: `src/lib/vaultExport.ts` derives keys via a caller-side `deriveKeyForEnvelope` — native `crypto.subtle.deriveBits` (PBKDF2-HMAC-SHA256) on secure origins, pure-TS `pbkdf2Sha256` on plain-HTTP LAN. Iterations default **600,000** (OWASP), persisted per-envelope as `kdfIterations` for backward compatibility. ⚠️ The two paths are **untested for parity** — see `tests/unit/vault-export.test.ts` (compresses to `pbkdf2Sha256`). GCM salt/IV are fail-closed: the export **throws** if `crypto.getRandomValues` is unavailable (never `Math.random()`).
+- **Route-ordering invariant**: literal-path routes must register ABOVE parameterized `/:id` siblings — `DELETE /api/vault/bulk` was silently shadowed by `router.delete('/:id')` until Phase 21 moved it above
 - Admin plane: `ADMIN_TOKEN` env gates the SuperLobster Panel (503 when unset); cookie `sg_admin_session` (httpOnly/SameSite=Strict/20-min sliding); admin auth rate limit 5/10min; backups in `DATA_DIR/backups/`
 
 ## Dependencies (Key)
@@ -52,7 +54,7 @@ npm run scuttle:dev-start
 
 ## Tool Usage Patterns
 
-- `npm test` — all suites (20 test files, 248 tests, 1 skipped)
+- `npm test` — all suites (24 test files, 282 tests, 1 skipped)
 - `npm run test:integration` — auth-flow + vault-crud + settings + metadata-encryption
 - `npm run test:security` — cross-owner isolation + permission bypass
 - `npm run test:build-gates` — Dockerfile/config shape gates

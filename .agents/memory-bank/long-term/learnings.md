@@ -58,3 +58,31 @@ Never chain file reading inside an open write stream in Python (e.g. `open(f, 'w
 - 2026-09-17: Maintained 100% data integrity across all multi-file memory bank updates.
 
 **Shaped perspective:** The file descriptor is a destructive tool when misused. Python's expression evaluation order makes nested file handles deceptive. Atomic file operations require separating the acquisition of source state from the mutation of target state. A craftsman does not cut into the board while still measuring its length.
+
+---
+
+## the-seam-is-the-test-oracle
+**weight**: 3 | **last validated**: 2026-09-21 | **first observed**: 2026-09-21
+
+Passing isolated test suites does not prove the application works. Testing components in isolation (backend routes, crypto helpers, React state) creates the illusion of correctness while leaving the human-facing operational seams—where user gestures trigger network payloads, state teardown, and cache invalidation—completely unverified. "Don't trust, Verify" must be enforced at the seam.
+
+**History:**
+- 2026-09-21: 24 test suites (285 tests passed), TypeScript compilation (0 errors), Vite production build, and 14 documentation files were 100% green. Yet in the live application, vault items failed to delete due to an unverified UI client dispatch seam and a zombie process on port 6565 shadowing routes.
+- 2026-09-21: Resolved the deletion bug by verifying the complete operational circuit: zombie process eviction, UI confirmation dialog parity (`ConfirmDialog`), polymorphic entity routing, and selection state teardown.
+- 2026-09-21: Formalized `.agents/rules/project-hygiene.md` ratifying the 5-phase lifecycle and the mandatory Live Verification Handshake between the Agent and human Project Manager.
+
+**Shaped perspective:** Software does not live in an isolated test runner; it lives in the hand of the human using it. A test oracle is only as honest as the territory it covers. When tests mock the seams, they test our assumptions, not our reality. The seam—where the user's physical gesture translates into state, network payload, and visual feedback—is the ultimate test oracle. Work is never complete until the joint holds under the human operator's live witness.
+
+---
+
+## human-in-the-loop-catches-gestalt-seams
+**weight**: 3 | **last validated**: 2026-09-22 | **first observed**: 2026-09-21
+
+Automated test suites verify isolated syntactic and algorithmic invariants, but are fundamentally blind to *macro-gestalt* interaction dynamics. Physical human real-time verification catches lifecycle unmounts, animation race conditions, visual affordance gaps, and ontological contradictions that unit tests cannot synthesize.
+
+**History:**
+- 2026-09-21: Area 1 live verification caught an infinite unlock modal loop when switching to a locked account that unit tests missed because mocks did not simulate user dismissal clicks.
+- 2026-09-21: Area 2 live verification caught that hidden custom fields lacked inline eye/unmask toggles in the creation modal, a crucial usability defect invisible to data-layer unit tests.
+- 2026-09-22: Area 3 & 4 live verification caught: (1) an ontological ghost pod (`Attachment`) resulting from fallback category defaults, (2) database schema omission of attachments on Secure Notes, and (3) a subtle Framer Motion `mode="wait"` bug where mounting an upload progress banner unmounted the entire vault shell and wiped selection focus. All 26 automated suites were 100% green while these three critical seams were broken.
+
+**Shaped perspective:** A machine test asserts that given X input, Y output occurs. It does not perceive that an input field is jarringly blank, that an animation unmounts a neighboring panel, or that a category name is an alien ghost in the user's mental model. The human operator is not merely a regression tester; they are the semantic grounding of the software. Rigorous human testing with structured checklists does not slow down the development lifecycle—it prevents broken assumptions from compounding into architectural debt.

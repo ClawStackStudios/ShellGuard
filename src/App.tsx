@@ -66,7 +66,7 @@ import {
   encryptField, 
   decryptField 
 } from "./lib/shellCryption.ts";
-import { PendingAttachment, uploadAttachmentMultipart, fetchAttachmentEnvelope } from "./lib/attachmentUtils.ts";
+import { PendingAttachment, uploadAttachmentMultipart, fetchAttachmentEnvelope, parseAttachmentIds } from "./lib/attachmentUtils.ts";
 import { VaultItem, Agent, Lobster, VaultItemType } from "./types.ts";
 import { GeneratorConfig, getGlobalGeneratorConfig, setGlobalGeneratorConfig } from "./lib/generator.ts";
 import { GeneratorOptions } from "./components/Generator/GeneratorOptions.tsx";
@@ -91,6 +91,8 @@ export default function App() {
   const [activeLobsterId, setActiveLobsterIdState] = useState<string | null>(null);
   const [shellKey, setShellKey] = useState<CryptoKey | null>(null);
   const [authModalConfig, setAuthModalConfig] = useState<AuthModalConfig | null>(null);
+  const [pendingSwitchTarget, setPendingSwitchTarget] = useState<Lobster | null>(null);
+  const [isUnlockDismissed, setIsUnlockDismissed] = useState(false);
 
   const lobster = useMemo(() => {
     return lobsters.find(l => l.uuid === activeLobsterId) || null;
@@ -108,6 +110,7 @@ export default function App() {
   const isLocked = Boolean(lobster && !shellKey);
   const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export">("landing");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -293,29 +296,38 @@ export default function App() {
           if (p.totp_secret) {
             try { decryptedTotp = await decryptField(p.totp_secret, key, "vault_pearls_totp", p.id); } catch (e) { decryptedTotp = "⚠️ [Decryption Failed]"; }
           }
-          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: "password", category: p.category || "" };
+          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: p.type || "password", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: "password", category: p.category || "" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: p.type || "password", category: p.category || "" };
         }
       }));
 
-      // Decrypt custom_fields for each item type
+      // Decrypt custom_fields and password_history for each item
       const decryptedLoginsWithCustom = await Promise.all(decryptedLogins.map(async (p: any) => {
+        let updated = { ...p };
         if (p.custom_fields) {
           try {
             const decrypted = await decryptField(p.custom_fields, key, "vault_pearls_custom", p.id);
-            return { ...p, custom_fields: decrypted };
-          } catch { return { ...p, custom_fields: "" }; }
+            updated.custom_fields = decrypted;
+          } catch { updated.custom_fields = ""; }
         }
-        return p;
+        if (p.password_history) {
+          try {
+            const decryptedHist = await decryptField(p.password_history, key, "vault_pearls_history", p.id);
+            updated.password_history = decryptedHist;
+          } catch {
+            updated.password_history = p.password_history;
+          }
+        }
+        return updated;
       }));
 
       const decryptedNotes = await Promise.all(reefNotes.map(async (p: any) => {
         try {
           const content = await decryptField(p.content, key, "vault_secure_notes", p.id);
-          return { ...p, secret: content, type: "note", category: p.category || "" };
+          return { ...p, secret: content, type: "note", category: p.category || "", attachments: p.attachments || "[]" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "", attachments: p.attachments || "[]" };
         }
       }));
 
@@ -351,7 +363,8 @@ export default function App() {
       const decryptedAttachments = await Promise.all(reefAttachments.map(async (p: any) => {
         // Phase 19: the list endpoint is metadata-only — payload BLOBs stream
         // on demand from /api/attachments/:id/file (handleFetchAttachment).
-        return { ...p, secret: "", type: "attachment", category: p.category || "" };
+        const cleanCat = (p.category === "Attachment" || p.category === "attachment" || !p.category) ? "" : p.category;
+        return { ...p, secret: "", type: "attachment", category: cleanCat };
       }));
 
       setVaultItems([...decryptedLoginsWithCustom, ...decryptedNotesWithCustom, ...decryptedKeysWithCustom, ...decryptedAttachments]);
@@ -372,14 +385,16 @@ export default function App() {
   // 🐚 Reactive Vault & Agent loader: automatically loads and decrypts items
   // whenever shellKey is established, and purges in-memory plaintext when locked/null.
   useEffect(() => {
-    if (shellKey) {
+    if (shellKey && activeLobsterId) {
+      setIsUnlockDismissed(false);
       scuttleVault(shellKey);
       scuttleAgents();
     } else {
       setVaultItems([]);
+      setSelectedItemId(null);
       setAgents([]);
     }
-  }, [shellKey, scuttleVault, scuttleAgents]);
+  }, [shellKey, activeLobsterId, scuttleVault, scuttleAgents]);
 
   const handleLogout = useCallback(() => {
     if (activeLobsterId) {
@@ -388,6 +403,7 @@ export default function App() {
     setShellKey(null);
     setActiveLobsterId(null);
     setActiveLobsterIdState(null);
+    setSelectedItemId(null);
     setAuthModalConfig(null);
     setNavIntent("landing");
     setView("landing");
@@ -395,27 +411,44 @@ export default function App() {
 
 
   const handleSwitchAccount = async (uuid: string) => {
-    const session = activateUserSession(uuid);
-    setActiveLobsterIdState(uuid);
     const target = lobsters.find((l) => l.uuid === uuid) || null;
+    if (!target) return;
 
-    if (session) {
+    // Check if target user already has an active unlocked session in memory
+    const sessions = getSessions();
+    const targetSession = sessions[uuid];
+
+    if (targetSession) {
+      // Direct switch to unlocked session: synchronize token and reactive state immediately
+      activateUserSession(uuid);
+      setActiveLobsterIdState(uuid);
+      setPendingSwitchTarget(null);
+      setAuthModalConfig(null);
+      setIsUnlockDismissed(false);
+      // Immediately clear old user items so zero stale records display
+      setVaultItems([]);
+      setSelectedItemId(null);
+      setSelectedFolder("all");
+      setSelectedTags([]);
       try {
-        const sk = await deriveShellKey(session.rawKey, uuid);
+        const sk = await deriveShellKey(targetSession.rawKey, uuid);
         setShellKey(sk);
         setNavIntent("dashboard");
         setView("vault");
-        scuttleVault(sk);
+        await scuttleVault(sk);
+        await scuttleAgents();
       } catch {
         removeSessionForUser(uuid);
         setShellKey(null);
-        setNavIntent("dashboard");
+        setPendingSwitchTarget(target);
         setAuthModalConfig({ mode: "unlock", target });
         setView("vault");
       }
     } else {
-      setShellKey(null);
-      setNavIntent("dashboard");
+      // Target user is locked — do NOT switch activeLobsterId yet!
+      // Keep activeLobsterId as current user, stage target as pendingSwitchTarget
+      setIsUnlockDismissed(false);
+      setPendingSwitchTarget(target);
       setAuthModalConfig({ mode: "unlock", target });
       setView("vault");
     }
@@ -448,6 +481,7 @@ export default function App() {
     removeSessionForUser(uuid);
     if (activeLobsterId === uuid) {
       setShellKey(null);
+      setIsUnlockDismissed(false);
       setNavIntent("dashboard");
       const target = lobsters.find((l) => l.uuid === uuid) || lobster;
       if (target) {
@@ -526,16 +560,23 @@ export default function App() {
    * ShellCrypt + stream a staged attachment file to /api/attachments
    * (Phase 19 multipart contract — envelope bytes streamed, no base64 inflation).
    */
-  const uploadAttachmentRecord = async (key: CryptoKey, att: PendingAttachment): Promise<string> => {
+  const uploadAttachmentRecord = async (
+    key: CryptoKey, 
+    att: PendingAttachment,
+    overrides?: { title?: string; category?: string }
+  ): Promise<string> => {
     const encryptedFile = await encryptField(att.dataUrl, key, "vault_secure_attachments", att.id);
     const ciphertext = new TextEncoder().encode(encryptedFile);
     setUploadProgress({ name: att.file_name, percent: 0 });
+    const podCategory = (overrides?.category && overrides.category !== "all" && overrides.category.toLowerCase() !== "attachment")
+      ? overrides.category
+      : "";
     const handle = uploadAttachmentMultipart({
       id: att.id,
-      title: att.file_name,
+      title: overrides?.title || att.file_name,
       file_name: att.file_name,
-      mime_type: att.mime_type,
-      category: "Attachment",
+      mime_type: att.mime_type || "application/octet-stream",
+      category: podCategory,
     }, ciphertext, (percent) => setUploadProgress({ name: att.file_name, percent }));
     activeUploadRef.current = handle;
     try {
@@ -564,43 +605,85 @@ export default function App() {
     secret: string;
     username: string;
     url: string;
+    uris?: string;
     category: string;
     type: VaultItemType;
     tags?: string;
     notes?: string;
     totp_secret?: string;
+    password_history?: string;
     attachments?: string;
     custom_fields?: string;
     newAttachments?: PendingAttachment[];
-  }) => {
-    if (!shellKey || isLocked) return;
+  }): Promise<string | undefined> => {
+    if (!shellKey || isLocked) return undefined;
     try {
       const id = generateUUID();
       
       if (item.type === 'note') {
+        const existingIds = parseAttachmentIds(item.attachments);
+        const uploadedIds: string[] = [];
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, { category: item.category || "" }));
+          }
+        }
+        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
-        await restAdapter.POST("/api/notes", { id, title: item.title, content: encryptedContent, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
+        await restAdapter.POST("/api/notes", {
+          id,
+          title: item.title,
+          content: encryptedContent,
+          category: item.category,
+          tags: item.tags,
+          custom_fields: encryptedCustomFields,
+          attachments: attachmentIdsJson
+        });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
         await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
-        const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
-        await restAdapter.POST("/api/attachments", { id, title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
-      } else {
-        let attachmentIdsJson = item.attachments || "[]";
+        // Phase 19: Upload standalone attachment ciphertext stream via multipart contract
         if (item.newAttachments && item.newAttachments.length > 0) {
-          const uploadedIds: string[] = [];
           for (const att of item.newAttachments) {
-            uploadedIds.push(await uploadAttachmentRecord(shellKey, att));
+            await uploadAttachmentRecord(shellKey, att, {
+              title: item.title || att.file_name,
+              category: item.category || ""
+            });
           }
-          attachmentIdsJson = JSON.stringify(uploadedIds);
+        } else if (item.secret) {
+          await uploadAttachmentRecord(shellKey, {
+            id,
+            file_name: item.username || item.title || "attachment",
+            mime_type: "application/octet-stream",
+            size: item.secret.length,
+            dataUrl: item.secret
+          }, {
+            title: item.title,
+            category: item.category || ""
+          });
         }
+      } else {
+        const existingIds = parseAttachmentIds(item.attachments);
+        const uploadedIds: string[] = [];
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, { category: item.category || "" }));
+          }
+        }
+        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
         if (item.totp_secret) {
           encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
+        }
+        let encryptedHistory = "";
+        if (item.password_history) {
+          encryptedHistory = await encryptField(item.password_history, shellKey, "vault_pearls_history", id);
         }
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
         await restAdapter.POST("/api/vault", {
@@ -609,18 +692,22 @@ export default function App() {
           secret: encryptedSecret,
           username: item.username,
           url: item.url,
+          uris: item.uris,
           category: item.category,
           tags: item.tags,
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
+          password_history: encryptedHistory,
           attachments: attachmentIdsJson,
           custom_fields: encryptedCustomFields
         });
       }
-      scuttleVault(shellKey);
+      await scuttleVault(shellKey);
+      return id;
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to save item to vault.');
+      return undefined;
     }
   };
 
@@ -631,11 +718,13 @@ export default function App() {
       secret: string;
       username: string;
       url: string;
+      uris?: string;
       category: string;
       type: VaultItemType;
       tags?: string;
       notes?: string;
       totp_secret?: string;
+      password_history?: string;
       attachments?: string;
       custom_fields?: string;
       newAttachments?: PendingAttachment[];
@@ -646,31 +735,65 @@ export default function App() {
     if (!shellKey || isLocked) return;
     try {
       if (item.type === 'note') {
+        let combinedAttachmentIds: string[] = parseAttachmentIds(item.attachments);
+
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            const uploadedId = await uploadAttachmentRecord(shellKey, att, { category: item.category || "" });
+            combinedAttachmentIds.push(uploadedId);
+          }
+        }
+        if (item.removedAttachmentIds && item.removedAttachmentIds.length > 0) {
+          for (const attId of item.removedAttachmentIds) {
+            await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {});
+            combinedAttachmentIds = combinedAttachmentIds.filter(att_id => att_id !== attId);
+          }
+        }
+        combinedAttachmentIds = Array.from(new Set(combinedAttachmentIds));
+
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
-        await restAdapter.PUT(`/api/notes/${id}`, { title: item.title, content: encryptedContent, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
+        await restAdapter.PUT(`/api/notes/${id}`, {
+          title: item.title,
+          content: encryptedContent,
+          category: item.category,
+          tags: item.tags,
+          custom_fields: encryptedCustomFields,
+          attachments: JSON.stringify(combinedAttachmentIds)
+        });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
         await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
         // Phase 19: PUT is metadata-only — file replacement means re-upload.
-        await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_name: item.username, mime_type: "", category: item.category });
+        const cleanCat = (item.category === "Attachment" || item.category === "attachment" || item.category === "all") ? "" : item.category;
+        await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_name: item.username, mime_type: "", category: cleanCat });
       } else {
+        let combinedAttachmentIds: string[] = parseAttachmentIds(item.attachments);
+
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
-            await uploadAttachmentRecord(shellKey, att);
+            const uploadedId = await uploadAttachmentRecord(shellKey, att, { category: item.category || "" });
+            combinedAttachmentIds.push(uploadedId);
           }
         }
         if (item.removedAttachmentIds && item.removedAttachmentIds.length > 0) {
           for (const attId of item.removedAttachmentIds) {
             await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {});
+            combinedAttachmentIds = combinedAttachmentIds.filter(att_id => att_id !== attId);
           }
         }
+        combinedAttachmentIds = Array.from(new Set(combinedAttachmentIds));
+
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
         if (item.totp_secret) {
           encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
+        }
+        let encryptedHistory = "";
+        if (item.password_history) {
+          encryptedHistory = await encryptField(item.password_history, shellKey, "vault_pearls_history", id);
         }
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
         await restAdapter.PUT(`/api/vault/${id}`, {
@@ -678,20 +801,22 @@ export default function App() {
           secret: encryptedSecret,
           username: item.username,
           url: item.url,
+          uris: item.uris,
           category: item.category,
           tags: item.tags,
           type: item.type,
           notes: item.notes,
           totp_secret: encryptedTotp,
-          attachments: item.attachments || "[]",
+          password_history: encryptedHistory,
+          attachments: JSON.stringify(combinedAttachmentIds),
           custom_fields: encryptedCustomFields
         });
       }
       if (!skipScuttle) {
-        scuttleVault(shellKey);
+        await scuttleVault(shellKey);
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to update item in vault.');
     }
   };
 
@@ -701,99 +826,111 @@ export default function App() {
     const normNew = normalizePod(newPod);
     if (normOld === normNew) return;
 
-    const itemsToUpdate = vaultItems.filter((i) => {
-      const currentCat = normalizePod(i.category);
-      return currentCat === normOld || currentCat.startsWith(normOld + "/");
-    });
-    
-    // Optimistically update local state immediately so UI refreshes without delay
-    setVaultItems((prev) =>
-      prev.map((item) => {
-        const currentCat = normalizePod(item.category);
-        if (currentCat === normOld) {
-          return { ...item, category: normNew };
-        }
-        if (currentCat.startsWith(normOld + "/")) {
-          return { ...item, category: currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`) };
-        }
-        return item;
-      })
-    );
-
-    if (itemsToUpdate.length === 0) {
-      return;
-    }
-
-    for (const item of itemsToUpdate) {
-      const currentCat = normalizePod(item.category);
-      const updatedCat = currentCat === normOld ? normNew : currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`);
-      await updateTheClaw(
-        item.id, 
-        {
-          title: item.title,
-          secret: item.secret,
-          username: item.username || "",
-          url: item.url || "",
-          category: updatedCat,
-          type: item.type,
-          notes: item.notes,
-          totp_secret: item.totp_secret,
-          attachments: item.attachments,
-          custom_fields: item.custom_fields
-        },
-        true
+    try {
+      const itemsToUpdate = vaultItems.filter((i) => {
+        const currentCat = normalizePod(i.category);
+        return currentCat === normOld || currentCat.startsWith(normOld + "/");
+      });
+      
+      // Optimistically update local state immediately so UI refreshes without delay
+      setVaultItems((prev) =>
+        prev.map((item) => {
+          const currentCat = normalizePod(item.category);
+          if (currentCat === normOld) {
+            return { ...item, category: normNew };
+          }
+          if (currentCat.startsWith(normOld + "/")) {
+            return { ...item, category: currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`) };
+          }
+          return item;
+        })
       );
-    }
 
-    // Single server sync after all items are updated
-    await scuttleVault(shellKey);
+      if (itemsToUpdate.length > 0) {
+        for (const item of itemsToUpdate) {
+          const currentCat = normalizePod(item.category);
+          const updatedCat = currentCat === normOld ? normNew : currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`);
+          await updateTheClaw(
+            item.id, 
+            {
+              title: item.title,
+              secret: item.secret,
+              username: item.username || "",
+              url: item.url || "",
+              uris: item.uris,
+              category: updatedCat,
+              type: item.type,
+              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
+              notes: item.notes,
+              totp_secret: item.totp_secret,
+              password_history: item.password_history,
+              attachments: item.attachments,
+              custom_fields: item.custom_fields
+            },
+            true
+          );
+        }
+      }
+
+      // Single server sync after all items are updated
+      await scuttleVault(shellKey);
+    } catch (err: any) {
+      setError(err.message || 'Failed to rename pod.');
+      await scuttleVault(shellKey);
+    }
   };
 
   const handleDeletePod = async (podToDelete: string) => {
     if (!shellKey || isLocked) return;
     const targetPod = normalizePod(podToDelete);
 
-    const itemsToUpdate = vaultItems.filter((i) => {
-      const currentCat = normalizePod(i.category);
-      return currentCat === targetPod || currentCat.startsWith(targetPod + "/");
-    });
-    
-    // Optimistically update local state immediately so the pod disappears from the tree instantly
-    setVaultItems((prev) =>
-      prev.map((item) => {
-        const currentCat = normalizePod(item.category);
-        if (currentCat === targetPod || currentCat.startsWith(targetPod + "/")) {
-          return { ...item, category: "" };
-        }
-        return item;
-      })
-    );
-
-    if (itemsToUpdate.length === 0) {
-      return;
-    }
-
-    for (const item of itemsToUpdate) {
-      await updateTheClaw(
-        item.id, 
-        {
-          title: item.title,
-          secret: item.secret,
-          username: item.username || "",
-          url: item.url || "",
-          category: "",
-          type: item.type,
-          notes: item.notes,
-          totp_secret: item.totp_secret,
-          attachments: item.attachments,
-          custom_fields: item.custom_fields
-        },
-        true
+    try {
+      const itemsToUpdate = vaultItems.filter((i) => {
+        const currentCat = normalizePod(i.category);
+        return currentCat === targetPod || currentCat.startsWith(targetPod + "/");
+      });
+      
+      // Optimistically update local state immediately so the pod disappears from the tree instantly
+      setVaultItems((prev) =>
+        prev.map((item) => {
+          const currentCat = normalizePod(item.category);
+          if (currentCat === targetPod || currentCat.startsWith(targetPod + "/")) {
+            return { ...item, category: "" };
+          }
+          return item;
+        })
       );
-    }
 
-    // Single server sync after all items are updated
-    await scuttleVault(shellKey);
+      if (itemsToUpdate.length > 0) {
+        for (const item of itemsToUpdate) {
+          await updateTheClaw(
+            item.id, 
+            {
+              title: item.title,
+              secret: item.secret,
+              username: item.username || "",
+              url: item.url || "",
+              uris: item.uris,
+              category: "",
+              type: item.type,
+              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
+              notes: item.notes,
+              totp_secret: item.totp_secret,
+              password_history: item.password_history,
+              attachments: item.attachments,
+              custom_fields: item.custom_fields
+            },
+            true
+          );
+        }
+      }
+
+      // Single server sync after all items are updated
+      await scuttleVault(shellKey);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete pod.');
+      await scuttleVault(shellKey);
+    }
   };
 
   const handleLoginSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
@@ -837,17 +974,23 @@ export default function App() {
     );
   }
 
-  const isModalOpen = Boolean(authModalConfig || isLocked);
-  const activeModalConfig = authModalConfig || (isLocked && lobster ? { mode: "unlock" as const, target: lobster } : null);
+  const isModalOpen = Boolean(authModalConfig || (!isUnlockDismissed && isLocked));
+  const activeModalConfig = authModalConfig || (!isUnlockDismissed && isLocked && lobster ? { mode: "unlock" as const, target: lobster } : null);
 
   const handleAuthModalSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
+    setPendingSwitchTarget(null);
+    setIsUnlockDismissed(false);
+    setVaultItems([]);
+    setSelectedFolder("all");
+    setSelectedTags([]);
     handleLoginSuccess(l, t, sk, rk);
     setAuthModalConfig(null);
   };
 
   const handleAuthModalClose = () => {
-    // We intentionally stay on the dashboard even if locked, so they can use the Header dropdown
     setAuthModalConfig(null);
+    setPendingSwitchTarget(null);
+    setIsUnlockDismissed(true);
   };
 
   if (view === "landing") {
@@ -1010,7 +1153,8 @@ export default function App() {
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar relative">
           <div className="max-w-5xl mx-auto">
-            <AnimatePresence mode="wait">
+            {/* Banner notifications (isolated from view mode="wait" to prevent remounting VaultShell) */}
+            <AnimatePresence>
               {error && (
                 <motion.div 
                   key="error"
@@ -1028,6 +1172,7 @@ export default function App() {
               {/* Phase 19: streamed attachment upload progress + cancel */}
               {uploadProgress && (
                 <motion.div
+                  key="uploadProgress"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
@@ -1054,11 +1199,15 @@ export default function App() {
                   </div>
                 </motion.div>
               )}
+            </AnimatePresence>
 
+            <AnimatePresence mode="wait">
               {view === "vault" && (
                 <motion.div key="vault" className="w-full h-[calc(100vh-140px)]">
                   <VaultShell
                     items={vaultItems}
+                    selectedItemId={selectedItemId}
+                    onSelectItemId={setSelectedItemId}
                     selectedFolder={selectedFolder}
                     activeTypeFilter={activeTypeFilter}
                     selectedTags={selectedTags}
@@ -1070,11 +1219,110 @@ export default function App() {
                     onEdit={(item) => setEditingVaultItem(item)}
                     onDelete={async (item) => {
                       if (!shellKey || isLocked) return;
-                      const endpoint = item.type === 'password' ? '/api/vault' : 
-                                       item.type === 'note' ? '/api/notes' : 
-                                       item.type === 'key' ? '/api/keys' : '/api/attachments';
-                      await restAdapter.DELETE(`${endpoint}/${item.id}`); 
-                      if (shellKey) scuttleVault(shellKey);
+                      try {
+                        if (selectedItemId === item.id) {
+                          setSelectedItemId(null);
+                        }
+                        const endpoint = item.type === 'note' ? '/api/notes' : 
+                                         item.type === 'key' ? '/api/keys' : 
+                                         item.type === 'attachment' ? '/api/attachments' : '/api/vault';
+                        await restAdapter.DELETE(`${endpoint}/${item.id}`); 
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to delete item from vault.');
+                      }
+                    }}
+                    onBulkDelete={async (ids) => {
+                      if (!shellKey || isLocked) return;
+                      try {
+                        if (selectedItemId && ids.includes(selectedItemId)) {
+                          setSelectedItemId(null);
+                        }
+                        const itemsToDelete = vaultItems.filter(i => ids.includes(i.id));
+                        const pearlIds = itemsToDelete.filter(i => i.type !== 'note' && i.type !== 'key' && i.type !== 'attachment').map(i => i.id);
+                        const noteIds = itemsToDelete.filter(i => i.type === 'note').map(i => i.id);
+                        const keyIds = itemsToDelete.filter(i => i.type === 'key').map(i => i.id);
+                        const attIds = itemsToDelete.filter(i => i.type === 'attachment').map(i => i.id);
+
+                        if (pearlIds.length > 0) {
+                          await restAdapter.DELETE('/api/vault/bulk', { ids: pearlIds });
+                        }
+                        for (const id of noteIds) {
+                          await restAdapter.DELETE(`/api/notes/${id}`).catch(() => {});
+                        }
+                        for (const id of keyIds) {
+                          await restAdapter.DELETE(`/api/keys/${id}`).catch(() => {});
+                        }
+                        for (const id of attIds) {
+                          await restAdapter.DELETE(`/api/attachments/${id}`).catch(() => {});
+                        }
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to delete items from vault.');
+                      }
+                    }}
+                    onBulkMoveToPod={async (ids, category) => {
+                      if (!shellKey || isLocked) return;
+                      try {
+                        const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
+                        for (const item of itemsToUpdate) {
+                          await updateTheClaw(
+                            item.id,
+                            {
+                              title: item.title,
+                              secret: item.secret,
+                              username: item.username || "",
+                              url: item.url || "",
+                              uris: item.uris,
+                              category: category,
+                              type: item.type as VaultItemType,
+                              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
+                              notes: item.notes,
+                              totp_secret: item.totp_secret,
+                              password_history: item.password_history,
+                              attachments: item.attachments,
+                              custom_fields: item.custom_fields
+                            },
+                            true
+                          );
+                        }
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to move items to pod.');
+                      }
+                    }}
+                    onBulkAssignTags={async (ids, tags) => {
+                      if (!shellKey || isLocked) return;
+                      try {
+                        const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
+                        for (const item of itemsToUpdate) {
+                          const currentTags = typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : (item.tags || []);
+                          const newTags = Array.from(new Set([...currentTags, ...tags]));
+
+                          await updateTheClaw(
+                            item.id,
+                            {
+                              title: item.title,
+                              secret: item.secret,
+                              username: item.username || "",
+                              url: item.url || "",
+                              uris: item.uris,
+                              category: item.category || "",
+                              type: item.type as VaultItemType,
+                              tags: JSON.stringify(newTags),
+                              notes: item.notes,
+                              totp_secret: item.totp_secret,
+                              password_history: item.password_history,
+                              attachments: item.attachments,
+                              custom_fields: item.custom_fields
+                            },
+                            true
+                          );
+                        }
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to assign tags.');
+                      }
                     }}
                   />
                   <ItemFormModal
@@ -1087,12 +1335,18 @@ export default function App() {
                     initialItem={editingVaultItem}
                     initialType={activeTypeFilter === "all" ? "password" : activeTypeFilter as VaultItemType}
                     onSave={async (data) => {
-                      if (editingVaultItem) {
-                        await updateTheClaw(editingVaultItem.id, data);
-                      } else {
-                        await lockTheClaw(data);
+                      try {
+                        if (editingVaultItem) {
+                          const targetId = editingVaultItem.id;
+                          await updateTheClaw(targetId, data);
+                          setSelectedItemId(targetId);
+                        } else {
+                          const newId = await lockTheClaw(data);
+                          if (newId) setSelectedItemId(newId);
+                        }
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to save item to vault.');
                       }
-                      if (shellKey) scuttleVault(shellKey);
                     }}
                   />
                 </motion.div>
@@ -1104,7 +1358,7 @@ export default function App() {
               )}
               {view === "generator" && (
                 <motion.div key="generator" className="w-full">
-                  <GeneratorToolView onSaveToVault={lockTheClaw} currentUser={lobster} />
+                  <GeneratorToolView onSaveToVault={async (item) => { await lockTheClaw(item); }} currentUser={lobster} />
                 </motion.div>
               )}
               {(view === "settings" || view === "settings_generator") && (
@@ -1130,21 +1384,94 @@ export default function App() {
                     items={vaultItems} 
                     lobster={lobster} 
                     onImportItems={async (imported) => {
+                      if (!shellKey || isLocked) return;
+
+                      const itemsToInsert = [];
                       for (const item of imported) {
-                        await lockTheClaw({
+                        const id = generateUUID();
+                        let encryptedSecret = "";
+                        let encryptedTotp = "";
+                        let encryptedContent = "";
+                        let encryptedKey = "";
+                        let encryptedCustomFields = "";
+
+                        const itemType = (item.type as VaultItemType) || "password";
+                        let encryptedHistory = "";
+                        if (itemType === 'note') {
+                          encryptedContent = await encryptField(item.secret || "", shellKey, "vault_secure_notes", id);
+                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
+                        } else if (itemType === 'key') {
+                          encryptedKey = await encryptField(item.secret || "", shellKey, "vault_ssh_keys", id);
+                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
+                        } else {
+                          encryptedSecret = await encryptField(item.secret || "", shellKey, "vault_pearls", id);
+                          if (item.totp_secret) {
+                            encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
+                          }
+                          if (item.password_history) {
+                            encryptedHistory = await encryptField(item.password_history, shellKey, "vault_pearls_history", id);
+                          }
+                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
+                        }
+
+                        itemsToInsert.push({
+                          id,
                           title: item.title || "Imported Record",
-                          secret: item.secret || "",
+                          secret: itemType === 'note' ? encryptedContent : itemType === 'key' ? encryptedKey : encryptedSecret,
                           username: item.username || "",
                           url: item.url || "",
+                          uris: item.uris || "[]",
                           category: item.category || "",
-                          type: (item.type as VaultItemType) || "password",
+                          type: itemType,
+                          tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
                           notes: item.notes || "",
-                          totp_secret: item.totp_secret || "",
+                          totp_secret: encryptedTotp,
+                          password_history: encryptedHistory,
                           attachments: item.attachments || "[]",
-                          custom_fields: item.custom_fields || ""
+                          custom_fields: encryptedCustomFields
                         });
                       }
+
+                      const pearlsToInsert = itemsToInsert.filter(i => i.type === 'password' || !i.type);
+                      const others = itemsToInsert.filter(i => i.type !== 'password' && Boolean(i.type));
+
+                      const result: { inserted: string[]; errors: { index: number; reason: string }[] } = {
+                        inserted: [],
+                        errors: [],
+                      };
+
+                      if (pearlsToInsert.length > 0) {
+                        try {
+                          const bulkRes = await restAdapter.POST<{ inserted: string[]; errors?: { index: number; reason: string }[] }>('/api/vault/bulk-import', { items: pearlsToInsert });
+                          if (bulkRes) {
+                            result.inserted.push(...(bulkRes.inserted || []));
+                            if (bulkRes.errors && bulkRes.errors.length > 0) {
+                              result.errors.push(...bulkRes.errors);
+                            }
+                          }
+                        } catch (e: any) {
+                          console.error("Bulk import failed", e);
+                          throw e;
+                        }
+                      }
+
+                      for (let idx = 0; idx < others.length; idx++) {
+                        const item = others[idx];
+                        try {
+                          if (item.type === 'note') {
+                            await restAdapter.POST("/api/notes", { id: item.id, title: item.title, content: item.secret, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
+                            result.inserted.push(item.id);
+                          } else if (item.type === 'key') {
+                            await restAdapter.POST("/api/keys", { id: item.id, title: item.title, key_value: item.secret, username: item.username, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
+                            result.inserted.push(item.id);
+                          }
+                        } catch (err: any) {
+                          result.errors.push({ index: pearlsToInsert.length + idx, reason: err.message || 'Insert failed' });
+                        }
+                      }
+
                       if (shellKey) await scuttleVault(shellKey);
+                      return result;
                     }}
                   />
                 </motion.div>

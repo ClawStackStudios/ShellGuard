@@ -27,6 +27,9 @@ ShellGuard is a privacy-first, self-hostable **secrets vault** built for the Hum
 
 - Vault CRUD: pearls (logins), secure notes, SSH keys, attachments
 - **Vault tagging system** with granular filter bar (AND/OR), shared pod/tag color engine, and `?tags=a,b` intersection filtering (Phase 20)
+- **Bulk operations** — transactional `POST /api/vault/bulk-import` (up to 1,000 items, HTTP 207 Multi-Status per-record error reporting) and `DELETE /api/vault/bulk` with attachment cascade; tri-state multi-select with a floating action bar (Move to Pod / Assign Tag / Delete) and a batch import wizard with preview + error-resolution chips (Phase 21)
+- **Bitwarden interoperability** — native ingestion of Bitwarden JSON and CSV exports (folders→pods via `normalizePod`, compound SSH keypairs, custom fields, `otpauth://` TOTP extraction), with encrypted-export detection that guides rather than importing ciphertext (Phase 21 Sub-Phase)
+- **Sovereign export suite** — zero-knowledge AES-256-GCM encrypted backup envelopes (ClawKey via HKDF, or passphrase via PBKDF2-SHA256 @600k) plus RFC 4180 CSV with a password-sanitization audit toggle (Phase 21 Sub-Phase)
 - LobsterKeys (agent keys) with granular permissions, expiry, rate limits
 - Password generator with complexity scoring
 - Segregated append-only audit trail

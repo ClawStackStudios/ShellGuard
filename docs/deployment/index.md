@@ -65,7 +65,7 @@ curl http://localhost:6464/api/health
 {
   "success": true,
   "service": "ShellGuard API",
-  "version": "0.0.2.2",
+  "version": "0.0.2.3",
   "mode": "sqlite",
   "uptime": 3612.45,
   "counts": {

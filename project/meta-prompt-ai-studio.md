@@ -69,17 +69,17 @@ flowchart TD
     Phase18 --> Phase19
     Phase19 --> Phase20
     Phase20 --> Phase21
-    Phase21 --> Stage23
-    Stage23 --> Stage24
-    Stage24 --> Phase24
+    Phase21 --> Phase22
+    Phase22 --> Phase23
+    Phase23 --> Phase24
     Phase24 --> Summit
 ```
 
-> **Transcription state**: **21 phases transcribed** (Stage 0 → 21, `v0.0.0.0`
-> void → `v0.0.2.2` parity) — the walk and the codebase occupy the same commit
-> through the summit tag. **Phases 17–20 (`v0.0.1.9` → `v0.0.2.2`) are SHIPPED.**
+> **Transcription state**: **22 phases transcribed** (Stage 0 → 22, `v0.0.0.0`
+> void → `v0.0.2.3` parity) — the walk and the codebase occupy the same commit
+> through the summit tag. **Phases 17–21 (`v0.0.1.9` → `v0.0.2.3`) are SHIPPED.**
 > **Stage 18.5** records the post-summit hotfix receipt (`07ccd61`).
-> **Stages 22–25 (Phases 21–24) are QUEUED** in the
+> **Stages 23–25 (Phases 22–24) are QUEUED** in the
 > active forward queue; each stage prompt is transcribed when its phase becomes
 > the next molt. Execution order is strictly chronological:
 > Phase 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
@@ -1212,12 +1212,11 @@ build stay clean!
 
 ---
 
-## 📥 Stage 22 (Queued): Phase 21 Prompt — Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)]
+## 📥 Stage 22: Phase 21 Prompt — Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)] ✅
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-21-bulk-import-endpoint--batch-operations-v0023-build-25)
 > for complete specifications on **Task 41** and **Task 42**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 21; green-light from
-> Lucas still required.
+> **✅ Execution state**: SHIPPED — released & live in `v0.0.2.3 (Build 25)`.
 > 📚 **Documentation Impact**: ARCHITECTURE.md API routes table · docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract) · docs/vault-features
 > **📖 Required Context Files for Phase 21**:
 > 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map).

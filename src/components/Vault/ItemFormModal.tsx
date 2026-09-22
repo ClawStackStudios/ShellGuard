@@ -877,7 +877,7 @@ export function ItemFormModal({
                 )}
                 {showAttachmentField && (
                   <div className="col-span-1 md:col-span-2 relative">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachments (max 500MB)</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachments (max 500MB per attachment)</label>
                     {linkedAttachmentIds.length === 0 && pendingAttachments.length === 0 && (
                       <button type="button" onClick={() => setShowAttachmentField(false)} className="absolute -top-1 right-0 text-slate-400 hover:text-red-500"><X size={16}/></button>
                     )}

@@ -3,7 +3,7 @@ import { VaultItem, VaultItemType } from '../../types.ts';
 import { ItemListPane } from './ItemListPane.tsx';
 import { ItemDetailPane } from './ItemDetailPane.tsx';
 import { isItemInPod } from '../../lib/podUtils.ts';
-import { filterItemsByTags } from '../../lib/tagUtils.ts';
+import { filterItemsByTags, extractAllTags } from '../../lib/tagUtils.ts';
 import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
 
 interface VaultShellProps {
@@ -22,6 +22,8 @@ interface VaultShellProps {
   onBulkMoveToPod?: (ids: string[], category: string) => void;
   onBulkAssignTags?: (ids: string[], tags: string[]) => void;
   onBulkDelete?: (ids: string[]) => Promise<void> | void;
+  selectedItemId?: string | null;
+  onSelectItemId?: (id: string | null) => void;
 }
 
 export function VaultShell({
@@ -38,9 +40,20 @@ export function VaultShell({
   onDelete,
   onBulkMoveToPod,
   onBulkAssignTags,
-  onBulkDelete
+  onBulkDelete,
+  selectedItemId: controlledSelectedItemId,
+  onSelectItemId
 }: VaultShellProps) {
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [internalSelectedItemId, setInternalSelectedItemId] = useState<string | null>(null);
+  const selectedItemId = controlledSelectedItemId !== undefined ? controlledSelectedItemId : internalSelectedItemId;
+  const handleSelectItemId = (id: string | null) => {
+    if (onSelectItemId) {
+      onSelectItemId(id);
+    } else {
+      setInternalSelectedItemId(id);
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [tagFilterMode, setTagFilterMode] = useState<'AND' | 'OR'>('AND');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -53,6 +66,39 @@ export function VaultShell({
       setBulkModalType(null);
     }
   }, [isLocked]);
+
+  // Teardown stale selections if items change or are deleted (only when items list is populated)
+  useEffect(() => {
+    if (selectedItemId && items.length > 0 && !items.some(i => i.id === selectedItemId)) {
+      handleSelectItemId(null);
+    }
+  }, [items, selectedItemId]);
+
+  useEffect(() => {
+    setSelectedItems(prev => {
+      if (prev.size === 0) return prev;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (items.some(i => i.id === id)) next.add(id);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [items]);
+
+  // Extract existing pods and tags for bulk selectors (filtering out ghost Attachment pod)
+  const availablePods = useMemo(() => {
+    const pods = new Set<string>();
+    for (const item of items) {
+      if (item.category && item.category.trim() && item.category !== 'all' && item.category.toLowerCase() !== 'attachment') {
+        pods.add(item.category.trim());
+      }
+    }
+    return Array.from(pods).sort((a, b) => a.localeCompare(b));
+  }, [items]);
+
+  const availableTags = useMemo(() => {
+    return extractAllTags(items);
+  }, [items]);
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -125,7 +171,7 @@ export function VaultShell({
         <ItemListPane 
           items={filteredItems}
           selectedItemId={selectedItemId}
-          onSelectItem={(id) => setSelectedItemId(id)}
+          onSelectItem={(id) => handleSelectItemId(id)}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           activeTypeFilter={activeTypeFilter}
@@ -191,7 +237,7 @@ export function VaultShell({
           if (onBulkDelete) {
             const idsToDelete: string[] = Array.from(selectedItems);
             if (selectedItemId && selectedItems.has(selectedItemId)) {
-              setSelectedItemId(null);
+              handleSelectItemId(null);
             }
             setSelectedItems(new Set());
             setBulkModalType(null);
@@ -206,16 +252,100 @@ export function VaultShell({
       {/* Bulk Move / Tag Modal */}
       {bulkModalType && bulkModalType !== 'delete' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-theme-surface border border-theme-subtle rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
-            <h2 className="text-lg font-bold text-theme-main">
-              {bulkModalType === 'movePod' ? 'Move to Pod' : 'Assign Tags'}
-            </h2>
-            <p className="mt-2 text-sm text-theme-muted">
-              {bulkModalType === 'movePod'
-                ? `Enter the destination pod name for the ${selectedItems.size} selected item(s):`
-                : `Enter comma-separated tags to assign to the ${selectedItems.size} selected item(s):`}
-            </p>
-            <div className="mt-4">
+          <div className="bg-theme-surface border border-theme-subtle rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-theme-main">
+                {bulkModalType === 'movePod' ? 'Move to Pod' : 'Assign Tags'}
+              </h2>
+              <p className="mt-1 text-xs text-theme-muted">
+                {bulkModalType === 'movePod'
+                  ? `Select an existing pod or type a new destination for the ${selectedItems.size} selected item(s):`
+                  : `Select existing tags or type comma-separated tags to assign to the ${selectedItems.size} selected item(s):`}
+              </p>
+            </div>
+
+            {/* Existing Pods Selector */}
+            {bulkModalType === 'movePod' && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-theme-muted block">
+                  Existing Pods (Click to Pick)
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-2 bg-theme-base/50 rounded-xl border border-theme-subtle">
+                  <button
+                    type="button"
+                    onClick={() => setBulkModalInput('')}
+                    className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                      bulkModalInput === ''
+                        ? 'bg-claw-cyan text-ocean-dark font-bold border-claw-cyan shadow-sm'
+                        : 'bg-theme-surface text-theme-muted hover:text-theme-main border-theme-subtle'
+                    }`}
+                  >
+                    (None / Root)
+                  </button>
+                  {availablePods.map(pod => (
+                    <button
+                      key={pod}
+                      type="button"
+                      onClick={() => setBulkModalInput(pod)}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        bulkModalInput === pod
+                          ? 'bg-claw-cyan text-ocean-dark font-bold border-claw-cyan shadow-sm'
+                          : 'bg-theme-surface text-theme-main hover:border-claw-cyan/50 border-theme-subtle'
+                      }`}
+                    >
+                      📁 {pod}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Existing Tags Selector */}
+            {bulkModalType === 'assignTag' && availableTags.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-theme-muted block">
+                  Existing Tags (Click to Toggle)
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-2 bg-theme-base/50 rounded-xl border border-theme-subtle">
+                  {availableTags.map(tag => {
+                    const currentTags = bulkModalInput.split(',').map(t => t.trim()).filter(Boolean);
+                    const isSelected = currentTags.some(t => t.toLowerCase() === tag.name.toLowerCase());
+                    return (
+                      <button
+                        key={tag.name}
+                        type="button"
+                        onClick={() => {
+                          let updated: string[];
+                          if (isSelected) {
+                            updated = currentTags.filter(t => t.toLowerCase() !== tag.name.toLowerCase());
+                          } else {
+                            updated = [...currentTags, tag.name];
+                          }
+                          setBulkModalInput(updated.join(', '));
+                        }}
+                        className={`text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-claw-cyan text-ocean-dark font-bold border-claw-cyan shadow-sm'
+                            : 'bg-theme-surface text-theme-main hover:border-claw-cyan/50 border-theme-subtle'
+                        }`}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        {tag.name}
+                        <span className="text-[10px] opacity-60">({tag.count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-theme-muted block mb-1">
+                {bulkModalType === 'movePod' ? 'Pod Name' : 'Tags (Comma-Separated)'}
+              </label>
               <input
                 type="text"
                 autoFocus
@@ -240,18 +370,19 @@ export function VaultShell({
                     setBulkModalInput('');
                   }
                 }}
-                placeholder={bulkModalType === 'movePod' ? 'e.g. Work, Personal, Finance' : 'e.g. urgent, vpn, server'}
-                className="w-full bg-theme-base border border-theme-subtle rounded-xl p-3 text-sm text-theme-main placeholder:text-slate-500 outline-none focus:border-claw-cyan focus:ring-1 focus:ring-claw-cyan transition-all"
+                placeholder={bulkModalType === 'movePod' ? 'e.g. Work, Personal, Infrastructure/Cloud' : 'e.g. urgent, vpn, server'}
+                className="w-full bg-theme-base border border-theme-subtle rounded-xl p-3 text-xs text-theme-main placeholder:text-slate-500 outline-none focus:border-claw-cyan focus:ring-1 focus:ring-claw-cyan transition-all"
               />
             </div>
-            <div className="mt-6 flex justify-end gap-3">
+
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   setBulkModalType(null);
                   setBulkModalInput('');
                 }}
-                className="px-4 py-2 text-sm font-medium border border-theme-subtle text-theme-main rounded-xl hover:bg-theme-base transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold border border-theme-subtle text-theme-main rounded-xl hover:bg-theme-base transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -273,9 +404,9 @@ export function VaultShell({
                   setBulkModalType(null);
                   setBulkModalInput('');
                 }}
-                className="px-4 py-2 text-sm font-bold bg-claw-cyan hover:bg-cyan-500 text-ocean-dark rounded-xl shadow-lg shadow-claw-cyan/20 transition-all cursor-pointer"
+                className="px-4 py-2 text-xs font-bold bg-claw-cyan hover:bg-cyan-500 text-ocean-dark rounded-xl shadow-lg shadow-claw-cyan/20 transition-all cursor-pointer"
               >
-                {bulkModalType === 'movePod' ? 'Move' : 'Assign'}
+                {bulkModalType === 'movePod' ? 'Move to Pod' : 'Assign Tags'}
               </button>
             </div>
           </div>
@@ -286,11 +417,11 @@ export function VaultShell({
       <div className="flex-1 min-w-0 h-full">
         <ItemDetailPane
           item={selectedItem}
-          onClose={() => setSelectedItemId(null)}
+          onClose={() => handleSelectItemId(null)}
           onEdit={onEdit}
           onDelete={async (item) => {
             if (selectedItemId === item.id) {
-              setSelectedItemId(null);
+              handleSelectItemId(null);
             }
             await onDelete(item);
           }}

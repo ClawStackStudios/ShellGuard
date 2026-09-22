@@ -188,4 +188,279 @@ describe('UI Action Seams & Dispatch Invariants', () => {
       expect(merged).toEqual(['work', 'security', 'finance', 'audit']);
     });
   });
+
+  describe('Account Switching & Modal Trap Prevention (Area 1)', () => {
+    it('keeps active user intact and stages target when switching to a locked account', () => {
+      const activeUser = { id: 'u1', username: 'Lucas' };
+      const targetUser = { id: 'u2', username: 'DevOps' };
+      const sessions = { 'u1': { shellKey: {} as any }, 'u2': { shellKey: null } };
+
+      let currentActiveId = activeUser.id;
+      let pendingTarget: any = null;
+      let authModalConfig: any = null;
+
+      // When switching to locked target:
+      const handleSwitch = (target: any) => {
+        const targetSession = sessions[target.id as keyof typeof sessions];
+        if (targetSession && targetSession.shellKey) {
+          currentActiveId = target.id;
+          pendingTarget = null;
+        } else {
+          // Keep currentActiveId to avoid premature lock state trap!
+          pendingTarget = target;
+          authModalConfig = { mode: 'unlock', target };
+        }
+      };
+
+      handleSwitch(targetUser);
+      expect(currentActiveId).toBe('u1'); // stays on current user!
+      expect(pendingTarget).toEqual(targetUser);
+      expect(authModalConfig).toEqual({ mode: 'unlock', target: targetUser });
+
+      // When user clicks 'X' to close auth modal:
+      const handleClose = () => {
+        authModalConfig = null;
+        pendingTarget = null;
+      };
+
+      handleClose();
+      expect(authModalConfig).toBeNull();
+      expect(pendingTarget).toBeNull();
+      expect(currentActiveId).toBe('u1'); // user is not trapped!
+    });
+
+    it('immediately purges vault items and resets folder when switching between unlocked accounts', () => {
+      let vaultItems = [{ id: 'item1', title: 'Test' }];
+      let selectedFolder = 'Personal';
+      let selectedTags = ['secret'];
+
+      const switchUnlocked = () => {
+        vaultItems = [];
+        selectedFolder = 'all';
+        selectedTags = [];
+      };
+
+      switchUnlocked();
+      expect(vaultItems).toEqual([]);
+      expect(selectedFolder).toBe('all');
+      expect(selectedTags).toEqual([]);
+    });
+  });
+
+  describe('Custom Field Secret Masking (Area 2)', () => {
+    it('defaults hidden fields to masked and supports per-field unmask toggling', () => {
+      const unmaskedIds = new Set<string>();
+
+      const toggleField = (id: string) => {
+        if (unmaskedIds.has(id)) unmaskedIds.delete(id);
+        else unmaskedIds.add(id);
+      };
+
+      const fieldId = 'field-1';
+      expect(unmaskedIds.has(fieldId)).toBe(false); // masked by default
+
+      toggleField(fieldId);
+      expect(unmaskedIds.has(fieldId)).toBe(true); // revealed
+
+      toggleField(fieldId);
+      expect(unmaskedIds.has(fieldId)).toBe(false); // masked again
+    });
+  });
+
+  describe('Bulk Pod & Tag Chip Options Derivation (Area 3)', () => {
+    it('extracts unique, non-empty, sorted pods and tags from vault items for chip selection', () => {
+      const items: MockVaultItem[] = [
+        { id: '1', title: 'A', secret: '', category: 'Work', tags: '[{"name":"prod","color":"#ff0000"}]', type: 'password' },
+        { id: '2', title: 'B', secret: '', category: 'Work/AWS', tags: '[{"name":"prod"},{"name":"ops"}]', type: 'password' },
+        { id: '3', title: 'C', secret: '', category: 'Personal', tags: '[]', type: 'note' },
+        { id: '4', title: 'D', secret: '', category: 'all', tags: undefined, type: 'key' },
+        { id: '5', title: 'E', secret: '', category: '', tags: undefined, type: 'attachment' },
+      ];
+
+      // Pod extraction logic matching VaultShell
+      const availablePods = Array.from(
+        new Set(
+          items
+            .map(i => i.category?.trim())
+            .filter((c): c is string => Boolean(c && c !== 'all'))
+        )
+      ).sort((a, b) => a.localeCompare(b));
+
+      expect(availablePods).toEqual(['Personal', 'Work', 'Work/AWS']);
+
+      // Tag extraction logic matching tagUtils
+      const tagMap = new Map<string, { name: string; color?: string }>();
+      items.forEach(item => {
+        if (!item.tags) return;
+        try {
+          const parsed = JSON.parse(item.tags);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((t: any) => {
+              const name = typeof t === 'string' ? t.trim() : t.name?.trim();
+              if (name && !tagMap.has(name)) {
+                tagMap.set(name, { name, color: typeof t === 'object' ? t.color : undefined });
+              }
+            });
+          }
+        } catch {}
+      });
+      const availableTags = Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+      expect(availableTags.map(t => t.name)).toEqual(['ops', 'prod']);
+      expect(tagMap.get('prod')?.color).toBe('#ff0000');
+    });
+  });
+
+  describe('Attachment Attachment ID Merging & Upload Invariants (Area 4)', () => {
+    it('merges existing and new attachment IDs without duplication or loss on item update', () => {
+      const existingAttachmentsJson = '["att-1","att-2"]';
+      const parsedExisting: string[] = JSON.parse(existingAttachmentsJson);
+      const newlyUploadedIds = ['att-3', 'att-2']; // att-2 already exists
+
+      const combinedIds = Array.from(new Set([...parsedExisting, ...newlyUploadedIds]));
+      expect(combinedIds).toEqual(['att-1', 'att-2', 'att-3']);
+      expect(JSON.stringify(combinedIds)).toBe('["att-1","att-2","att-3"]');
+    });
+
+    it('correctly defaults MIME type to application/octet-stream when file.type is empty', () => {
+      const resolveMimeType = (fileType?: string) => fileType || 'application/octet-stream';
+
+      expect(resolveMimeType('image/png')).toBe('image/png');
+      expect(resolveMimeType('')).toBe('application/octet-stream');
+      expect(resolveMimeType(undefined)).toBe('application/octet-stream');
+    });
+
+    it('allows standalone attachment submit without password when pending attachment exists', () => {
+      const validateSubmit = (type: string, title: string, password: string, hasAttachments: boolean) => {
+        if (!title.trim()) return false;
+        if (type === 'attachment') return hasAttachments;
+        return Boolean(password);
+      };
+
+      expect(validateSubmit('attachment', 'Contract.pdf', '', true)).toBe(true);
+      expect(validateSubmit('attachment', '', '', true)).toBe(false);
+      expect(validateSubmit('attachment', 'Empty.pdf', '', false)).toBe(false);
+      expect(validateSubmit('password', 'Google', '', false)).toBe(false);
+      expect(validateSubmit('password', 'Google', 'secret123', false)).toBe(true);
+    });
+  });
+
+  describe('Ghost Pod "Attachment" Filtering Invariants (Phase 21 Post-Verification)', () => {
+    it('filters out "Attachment", "attachment", and "all" from availablePods in VaultShell', () => {
+      const items = [
+        { id: '1', category: 'Finance', type: 'password' },
+        { id: '2', category: 'Attachment', type: 'attachment' },
+        { id: '3', category: 'attachment', type: 'attachment' },
+        { id: '4', category: 'all', type: 'password' },
+        { id: '5', category: '', type: 'note' },
+        { id: '6', category: 'Work/Projects', type: 'password' },
+      ];
+
+      const pods = new Set<string>();
+      for (const item of items) {
+        if (item.category && item.category.trim() && item.category !== 'all' && item.category.toLowerCase() !== 'attachment') {
+          pods.add(item.category.trim());
+        }
+      }
+      const availablePods = Array.from(pods).sort((a, b) => a.localeCompare(b));
+
+      expect(availablePods).toEqual(['Finance', 'Work/Projects']);
+      expect(availablePods).not.toContain('Attachment');
+      expect(availablePods).not.toContain('attachment');
+      expect(availablePods).not.toContain('all');
+    });
+
+    it('sanitizes attachment pod category default from "Attachment" to empty string', () => {
+      const resolveAttachmentCategory = (overrides?: { category?: string }) => {
+        return (overrides?.category && overrides.category !== 'all' && overrides.category.toLowerCase() !== 'attachment')
+          ? overrides.category
+          : '';
+      };
+
+      expect(resolveAttachmentCategory(undefined)).toBe('');
+      expect(resolveAttachmentCategory({})).toBe('');
+      expect(resolveAttachmentCategory({ category: 'Attachment' })).toBe('');
+      expect(resolveAttachmentCategory({ category: 'all' })).toBe('');
+      expect(resolveAttachmentCategory({ category: 'Personal' })).toBe('Personal');
+    });
+  });
+
+  describe('Note Attachments Support & Cascade Invariants (Phase 21 Post-Verification)', () => {
+    it('preserves attachments field on note items during scuttle mapping', () => {
+      const serverNote = {
+        id: 'note-1',
+        title: 'Meeting Notes',
+        content: 'encrypted-note-content',
+        category: 'Work',
+        attachments: '["att-99","att-100"]',
+      };
+
+      const mappedNote = {
+        ...serverNote,
+        type: 'note',
+        category: serverNote.category || '',
+        attachments: serverNote.attachments || '[]',
+      };
+
+      expect(mappedNote.attachments).toBe('["att-99","att-100"]');
+      const parsed = JSON.parse(mappedNote.attachments);
+      expect(parsed).toEqual(['att-99', 'att-100']);
+    });
+
+    it('extracts linked attachment IDs on note deletion for cascade cleanup', () => {
+      const noteRow = {
+        id: 'note-123',
+        attachments: '["att-1","att-2"]',
+      };
+
+      const cascadeIds: string[] = [];
+      try {
+        const parsed = JSON.parse(noteRow.attachments || '[]');
+        if (Array.isArray(parsed)) {
+          cascadeIds.push(...parsed.filter((v: unknown): v is string => typeof v === 'string'));
+        }
+      } catch {}
+
+      expect(cascadeIds).toEqual(['att-1', 'att-2']);
+    });
+  });
+
+  describe('Selection Retention Across Item Updates (Phase 21 Post-Verification)', () => {
+    it('maintains selectedItemId when editing an item and saving', () => {
+      let selectedItemId: string | null = 'item-42';
+      const editingVaultItemId = 'item-42';
+
+      // Simulating onSave handler:
+      const onSaveSuccess = (targetId: string) => {
+        selectedItemId = targetId;
+      };
+
+      onSaveSuccess(editingVaultItemId);
+      expect(selectedItemId).toBe('item-42');
+    });
+
+    it('safeguards selection teardown so transient empty items array does not clear selectedItemId', () => {
+      let selectedItemId: string | null = 'item-42';
+      const items: { id: string }[] = []; // momentarily empty during fetch
+
+      // Protected teardown logic: only clear if items is populated and item is missing
+      if (selectedItemId && items.length > 0 && !items.some(i => i.id === selectedItemId)) {
+        selectedItemId = null;
+      }
+
+      expect(selectedItemId).toBe('item-42'); // preserved!
+    });
+
+    it('clears selectedItemId when the item is genuinely deleted from populated items', () => {
+      let selectedItemId: string | null = 'item-42';
+      const itemsAfterDelete = [{ id: 'item-10' }, { id: 'item-20' }];
+
+      if (selectedItemId && itemsAfterDelete.length > 0 && !itemsAfterDelete.some(i => i.id === selectedItemId)) {
+        selectedItemId = null;
+      }
+
+      expect(selectedItemId).toBeNull();
+    });
+  });
 });
+

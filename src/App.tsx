@@ -66,7 +66,7 @@ import {
   encryptField, 
   decryptField 
 } from "./lib/shellCryption.ts";
-import { PendingAttachment, uploadAttachmentMultipart, fetchAttachmentEnvelope } from "./lib/attachmentUtils.ts";
+import { PendingAttachment, uploadAttachmentMultipart, fetchAttachmentEnvelope, parseAttachmentIds } from "./lib/attachmentUtils.ts";
 import { VaultItem, Agent, Lobster, VaultItemType } from "./types.ts";
 import { GeneratorConfig, getGlobalGeneratorConfig, setGlobalGeneratorConfig } from "./lib/generator.ts";
 import { GeneratorOptions } from "./components/Generator/GeneratorOptions.tsx";
@@ -91,6 +91,8 @@ export default function App() {
   const [activeLobsterId, setActiveLobsterIdState] = useState<string | null>(null);
   const [shellKey, setShellKey] = useState<CryptoKey | null>(null);
   const [authModalConfig, setAuthModalConfig] = useState<AuthModalConfig | null>(null);
+  const [pendingSwitchTarget, setPendingSwitchTarget] = useState<Lobster | null>(null);
+  const [isUnlockDismissed, setIsUnlockDismissed] = useState(false);
 
   const lobster = useMemo(() => {
     return lobsters.find(l => l.uuid === activeLobsterId) || null;
@@ -108,6 +110,7 @@ export default function App() {
   const isLocked = Boolean(lobster && !shellKey);
   const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export">("landing");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -322,9 +325,9 @@ export default function App() {
       const decryptedNotes = await Promise.all(reefNotes.map(async (p: any) => {
         try {
           const content = await decryptField(p.content, key, "vault_secure_notes", p.id);
-          return { ...p, secret: content, type: "note", category: p.category || "" };
+          return { ...p, secret: content, type: "note", category: p.category || "", attachments: p.attachments || "[]" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "", attachments: p.attachments || "[]" };
         }
       }));
 
@@ -360,7 +363,8 @@ export default function App() {
       const decryptedAttachments = await Promise.all(reefAttachments.map(async (p: any) => {
         // Phase 19: the list endpoint is metadata-only — payload BLOBs stream
         // on demand from /api/attachments/:id/file (handleFetchAttachment).
-        return { ...p, secret: "", type: "attachment", category: p.category || "" };
+        const cleanCat = (p.category === "Attachment" || p.category === "attachment" || !p.category) ? "" : p.category;
+        return { ...p, secret: "", type: "attachment", category: cleanCat };
       }));
 
       setVaultItems([...decryptedLoginsWithCustom, ...decryptedNotesWithCustom, ...decryptedKeysWithCustom, ...decryptedAttachments]);
@@ -381,14 +385,16 @@ export default function App() {
   // 🐚 Reactive Vault & Agent loader: automatically loads and decrypts items
   // whenever shellKey is established, and purges in-memory plaintext when locked/null.
   useEffect(() => {
-    if (shellKey) {
+    if (shellKey && activeLobsterId) {
+      setIsUnlockDismissed(false);
       scuttleVault(shellKey);
       scuttleAgents();
     } else {
       setVaultItems([]);
+      setSelectedItemId(null);
       setAgents([]);
     }
-  }, [shellKey, scuttleVault, scuttleAgents]);
+  }, [shellKey, activeLobsterId, scuttleVault, scuttleAgents]);
 
   const handleLogout = useCallback(() => {
     if (activeLobsterId) {
@@ -397,6 +403,7 @@ export default function App() {
     setShellKey(null);
     setActiveLobsterId(null);
     setActiveLobsterIdState(null);
+    setSelectedItemId(null);
     setAuthModalConfig(null);
     setNavIntent("landing");
     setView("landing");
@@ -404,27 +411,44 @@ export default function App() {
 
 
   const handleSwitchAccount = async (uuid: string) => {
-    const session = activateUserSession(uuid);
-    setActiveLobsterIdState(uuid);
     const target = lobsters.find((l) => l.uuid === uuid) || null;
+    if (!target) return;
 
-    if (session) {
+    // Check if target user already has an active unlocked session in memory
+    const sessions = getSessions();
+    const targetSession = sessions[uuid];
+
+    if (targetSession) {
+      // Direct switch to unlocked session: synchronize token and reactive state immediately
+      activateUserSession(uuid);
+      setActiveLobsterIdState(uuid);
+      setPendingSwitchTarget(null);
+      setAuthModalConfig(null);
+      setIsUnlockDismissed(false);
+      // Immediately clear old user items so zero stale records display
+      setVaultItems([]);
+      setSelectedItemId(null);
+      setSelectedFolder("all");
+      setSelectedTags([]);
       try {
-        const sk = await deriveShellKey(session.rawKey, uuid);
+        const sk = await deriveShellKey(targetSession.rawKey, uuid);
         setShellKey(sk);
         setNavIntent("dashboard");
         setView("vault");
-        scuttleVault(sk);
+        await scuttleVault(sk);
+        await scuttleAgents();
       } catch {
         removeSessionForUser(uuid);
         setShellKey(null);
-        setNavIntent("dashboard");
+        setPendingSwitchTarget(target);
         setAuthModalConfig({ mode: "unlock", target });
         setView("vault");
       }
     } else {
-      setShellKey(null);
-      setNavIntent("dashboard");
+      // Target user is locked — do NOT switch activeLobsterId yet!
+      // Keep activeLobsterId as current user, stage target as pendingSwitchTarget
+      setIsUnlockDismissed(false);
+      setPendingSwitchTarget(target);
       setAuthModalConfig({ mode: "unlock", target });
       setView("vault");
     }
@@ -457,6 +481,7 @@ export default function App() {
     removeSessionForUser(uuid);
     if (activeLobsterId === uuid) {
       setShellKey(null);
+      setIsUnlockDismissed(false);
       setNavIntent("dashboard");
       const target = lobsters.find((l) => l.uuid === uuid) || lobster;
       if (target) {
@@ -535,16 +560,23 @@ export default function App() {
    * ShellCrypt + stream a staged attachment file to /api/attachments
    * (Phase 19 multipart contract — envelope bytes streamed, no base64 inflation).
    */
-  const uploadAttachmentRecord = async (key: CryptoKey, att: PendingAttachment): Promise<string> => {
+  const uploadAttachmentRecord = async (
+    key: CryptoKey, 
+    att: PendingAttachment,
+    overrides?: { title?: string; category?: string }
+  ): Promise<string> => {
     const encryptedFile = await encryptField(att.dataUrl, key, "vault_secure_attachments", att.id);
     const ciphertext = new TextEncoder().encode(encryptedFile);
     setUploadProgress({ name: att.file_name, percent: 0 });
+    const podCategory = (overrides?.category && overrides.category !== "all" && overrides.category.toLowerCase() !== "attachment")
+      ? overrides.category
+      : "";
     const handle = uploadAttachmentMultipart({
       id: att.id,
-      title: att.file_name,
+      title: overrides?.title || att.file_name,
       file_name: att.file_name,
-      mime_type: att.mime_type,
-      category: "Attachment",
+      mime_type: att.mime_type || "application/octet-stream",
+      category: podCategory,
     }, ciphertext, (percent) => setUploadProgress({ name: att.file_name, percent }));
     activeUploadRef.current = handle;
     try {
@@ -583,31 +615,67 @@ export default function App() {
     attachments?: string;
     custom_fields?: string;
     newAttachments?: PendingAttachment[];
-  }) => {
-    if (!shellKey || isLocked) return;
+  }): Promise<string | undefined> => {
+    if (!shellKey || isLocked) return undefined;
     try {
       const id = generateUUID();
       
       if (item.type === 'note') {
+        const existingIds = parseAttachmentIds(item.attachments);
+        const uploadedIds: string[] = [];
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, { category: item.category || "" }));
+          }
+        }
+        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
-        await restAdapter.POST("/api/notes", { id, title: item.title, content: encryptedContent, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
+        await restAdapter.POST("/api/notes", {
+          id,
+          title: item.title,
+          content: encryptedContent,
+          category: item.category,
+          tags: item.tags,
+          custom_fields: encryptedCustomFields,
+          attachments: attachmentIdsJson
+        });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
         await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
-        const encryptedFile = await encryptField(item.secret, shellKey, "vault_secure_attachments", id);
-        await restAdapter.POST("/api/attachments", { id, title: item.title, file_data: encryptedFile, file_name: item.username, mime_type: "", category: item.category });
-      } else {
-        let attachmentIdsJson = item.attachments || "[]";
+        // Phase 19: Upload standalone attachment ciphertext stream via multipart contract
         if (item.newAttachments && item.newAttachments.length > 0) {
-          const uploadedIds: string[] = [];
           for (const att of item.newAttachments) {
-            uploadedIds.push(await uploadAttachmentRecord(shellKey, att));
+            await uploadAttachmentRecord(shellKey, att, {
+              title: item.title || att.file_name,
+              category: item.category || ""
+            });
           }
-          attachmentIdsJson = JSON.stringify(uploadedIds);
+        } else if (item.secret) {
+          await uploadAttachmentRecord(shellKey, {
+            id,
+            file_name: item.username || item.title || "attachment",
+            mime_type: "application/octet-stream",
+            size: item.secret.length,
+            dataUrl: item.secret
+          }, {
+            title: item.title,
+            category: item.category || ""
+          });
         }
+      } else {
+        const existingIds = parseAttachmentIds(item.attachments);
+        const uploadedIds: string[] = [];
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, { category: item.category || "" }));
+          }
+        }
+        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
         if (item.totp_secret) {
@@ -636,8 +704,10 @@ export default function App() {
         });
       }
       await scuttleVault(shellKey);
+      return id;
     } catch (err: any) {
       setError(err.message || 'Failed to save item to vault.');
+      return undefined;
     }
   };
 
@@ -665,27 +735,57 @@ export default function App() {
     if (!shellKey || isLocked) return;
     try {
       if (item.type === 'note') {
+        let combinedAttachmentIds: string[] = parseAttachmentIds(item.attachments);
+
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            const uploadedId = await uploadAttachmentRecord(shellKey, att, { category: item.category || "" });
+            combinedAttachmentIds.push(uploadedId);
+          }
+        }
+        if (item.removedAttachmentIds && item.removedAttachmentIds.length > 0) {
+          for (const attId of item.removedAttachmentIds) {
+            await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {});
+            combinedAttachmentIds = combinedAttachmentIds.filter(att_id => att_id !== attId);
+          }
+        }
+        combinedAttachmentIds = Array.from(new Set(combinedAttachmentIds));
+
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
-        await restAdapter.PUT(`/api/notes/${id}`, { title: item.title, content: encryptedContent, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
+        await restAdapter.PUT(`/api/notes/${id}`, {
+          title: item.title,
+          content: encryptedContent,
+          category: item.category,
+          tags: item.tags,
+          custom_fields: encryptedCustomFields,
+          attachments: JSON.stringify(combinedAttachmentIds)
+        });
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
         await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
       } else if (item.type === 'attachment') {
         // Phase 19: PUT is metadata-only — file replacement means re-upload.
-        await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_name: item.username, mime_type: "", category: item.category });
+        const cleanCat = (item.category === "Attachment" || item.category === "attachment" || item.category === "all") ? "" : item.category;
+        await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_name: item.username, mime_type: "", category: cleanCat });
       } else {
+        let combinedAttachmentIds: string[] = parseAttachmentIds(item.attachments);
+
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
-            await uploadAttachmentRecord(shellKey, att);
+            const uploadedId = await uploadAttachmentRecord(shellKey, att, { category: item.category || "" });
+            combinedAttachmentIds.push(uploadedId);
           }
         }
         if (item.removedAttachmentIds && item.removedAttachmentIds.length > 0) {
           for (const attId of item.removedAttachmentIds) {
             await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {});
+            combinedAttachmentIds = combinedAttachmentIds.filter(att_id => att_id !== attId);
           }
         }
+        combinedAttachmentIds = Array.from(new Set(combinedAttachmentIds));
+
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
         if (item.totp_secret) {
@@ -708,7 +808,7 @@ export default function App() {
           notes: item.notes,
           totp_secret: encryptedTotp,
           password_history: encryptedHistory,
-          attachments: item.attachments || "[]",
+          attachments: JSON.stringify(combinedAttachmentIds),
           custom_fields: encryptedCustomFields
         });
       }
@@ -874,17 +974,23 @@ export default function App() {
     );
   }
 
-  const isModalOpen = Boolean(authModalConfig || isLocked);
-  const activeModalConfig = authModalConfig || (isLocked && lobster ? { mode: "unlock" as const, target: lobster } : null);
+  const isModalOpen = Boolean(authModalConfig || (!isUnlockDismissed && isLocked));
+  const activeModalConfig = authModalConfig || (!isUnlockDismissed && isLocked && lobster ? { mode: "unlock" as const, target: lobster } : null);
 
   const handleAuthModalSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
+    setPendingSwitchTarget(null);
+    setIsUnlockDismissed(false);
+    setVaultItems([]);
+    setSelectedFolder("all");
+    setSelectedTags([]);
     handleLoginSuccess(l, t, sk, rk);
     setAuthModalConfig(null);
   };
 
   const handleAuthModalClose = () => {
-    // We intentionally stay on the dashboard even if locked, so they can use the Header dropdown
     setAuthModalConfig(null);
+    setPendingSwitchTarget(null);
+    setIsUnlockDismissed(true);
   };
 
   if (view === "landing") {
@@ -1047,7 +1153,8 @@ export default function App() {
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar relative">
           <div className="max-w-5xl mx-auto">
-            <AnimatePresence mode="wait">
+            {/* Banner notifications (isolated from view mode="wait" to prevent remounting VaultShell) */}
+            <AnimatePresence>
               {error && (
                 <motion.div 
                   key="error"
@@ -1065,6 +1172,7 @@ export default function App() {
               {/* Phase 19: streamed attachment upload progress + cancel */}
               {uploadProgress && (
                 <motion.div
+                  key="uploadProgress"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
@@ -1091,11 +1199,15 @@ export default function App() {
                   </div>
                 </motion.div>
               )}
+            </AnimatePresence>
 
+            <AnimatePresence mode="wait">
               {view === "vault" && (
                 <motion.div key="vault" className="w-full h-[calc(100vh-140px)]">
                   <VaultShell
                     items={vaultItems}
+                    selectedItemId={selectedItemId}
+                    onSelectItemId={setSelectedItemId}
                     selectedFolder={selectedFolder}
                     activeTypeFilter={activeTypeFilter}
                     selectedTags={selectedTags}
@@ -1108,6 +1220,9 @@ export default function App() {
                     onDelete={async (item) => {
                       if (!shellKey || isLocked) return;
                       try {
+                        if (selectedItemId === item.id) {
+                          setSelectedItemId(null);
+                        }
                         const endpoint = item.type === 'note' ? '/api/notes' : 
                                          item.type === 'key' ? '/api/keys' : 
                                          item.type === 'attachment' ? '/api/attachments' : '/api/vault';
@@ -1120,6 +1235,9 @@ export default function App() {
                     onBulkDelete={async (ids) => {
                       if (!shellKey || isLocked) return;
                       try {
+                        if (selectedItemId && ids.includes(selectedItemId)) {
+                          setSelectedItemId(null);
+                        }
                         const itemsToDelete = vaultItems.filter(i => ids.includes(i.id));
                         const pearlIds = itemsToDelete.filter(i => i.type !== 'note' && i.type !== 'key' && i.type !== 'attachment').map(i => i.id);
                         const noteIds = itemsToDelete.filter(i => i.type === 'note').map(i => i.id);
@@ -1219,11 +1337,13 @@ export default function App() {
                     onSave={async (data) => {
                       try {
                         if (editingVaultItem) {
-                          await updateTheClaw(editingVaultItem.id, data);
+                          const targetId = editingVaultItem.id;
+                          await updateTheClaw(targetId, data);
+                          setSelectedItemId(targetId);
                         } else {
-                          await lockTheClaw(data);
+                          const newId = await lockTheClaw(data);
+                          if (newId) setSelectedItemId(newId);
                         }
-                        if (shellKey) await scuttleVault(shellKey);
                       } catch (err: any) {
                         setError(err.message || 'Failed to save item to vault.');
                       }
@@ -1238,7 +1358,7 @@ export default function App() {
               )}
               {view === "generator" && (
                 <motion.div key="generator" className="w-full">
-                  <GeneratorToolView onSaveToVault={lockTheClaw} currentUser={lobster} />
+                  <GeneratorToolView onSaveToVault={async (item) => { await lockTheClaw(item); }} currentUser={lobster} />
                 </motion.div>
               )}
               {(view === "settings" || view === "settings_generator") && (

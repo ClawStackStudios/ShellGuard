@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-09-22 — Note attachments parity, ghost pod purging & detail pane selection preservation
+Physical verification of Areas 3 & 4 surfaced 3 friction points: standalone attachments defaulting to category 'Attachment' created ghost pods in bulk modals; notes lacked binary attachment support across db schema and routes; and saving an item unmounted VaultShell because uploadProgress was rendered inside mode="wait", dropping selectedItemId. Resolved by pruning ghost pods in podUtils and VaultShell, executing Migration 0008 to add attachments to vault_secure_notes with cascade deletion in notes.ts, lifting selectedItemId to App.tsx, and decoupling progress/error banners into their own non-blocking container.
+
+## 2026-09-21 — Live verification friction points & decoupling preview complexity
+Lucas's physical verification surfaced 4 critical joints: switching accounts to a locked user trapped the modal in a re-render loop if `activeLobsterId` changed prematurely, while switching between unlocked accounts required an un-reactive page reload; hidden custom fields gave zero visual feedback before saving; bulk modals lacked pod/tag chips; and binary attachments suffered 415 errors and preview bloat. Decoupled preview complexity in favor of pure encrypted BLOB storage with direct download and delete, staged switch targets safely, added eye toggles to custom fields, and derived chip pickers directly from vault items.
+
 ## 2026-09-21 — UI action seams & pod metadata defense
 Direct inspection of `App.tsx` handlers revealed that pod renames and bulk updates were sending payloads missing `tags`, `uris`, and `password_history`, risking silent data loss if the backend handler does not defensively read `existing` values. Hardened `handleRenamePod`, `handleDeletePod`, `onBulkMoveToPod`, and `onBulkAssignTags` to pass complete data models, wrapped operations in `try/catch` with reactive error reporting and `scuttleVault` recovery, and built `tests/unit/uiSeams.test.ts` (11 tests) verifying glue logic and endpoint dispatch.
 
@@ -58,17 +64,3 @@ Lucas noticed the prior steampunk lobster had awkward asymmetry and claws emergi
 ## 2026-09-16 — first governance release (v0.0.1.10)
 Lucas chose the honest PATCH (v0.0.1.10/Build 19) over consuming Phase 18's reserved v0.0.2.0 milestone for a docs-only release — label-inflation prevention in action; queue Build labels swept +1 (including spine anchor hrefs) so no two releases share a build. 34 commits of documentation-governance work shipped as a release. The version was decided by asking, per the semantic-versioning rule, not by guessing.
 
-## 2026-09-16 — the cryptographer's lens formalized
-The auditor-confidence conversation (would a 30-year cryptologist be satisfied?) surfaced three gaps — the skipped webCryptoFallback test, the unmechanized constant-time claim, the undocumented limiter/LRU/redaction semantics. Lucas chose to formalize them as Phase 24 (queue tail, provisional v0.0.2.6) instead of leaving them as open observations, and the lens itself entered the bank as declarative truth (projectBrief standard + systemPatterns invariants). The corpus started being built for an audience we could not name. Also: the queue crawl embedded Documentation Impact lines into every queued phase (18-24) — docs-hygiene now rides in the schedule itself.
-
-## 2026-09-16 — docs bow to code (governance ruling)
-The bidirectional audit (L1–L8) found docs contradicting shipped, verified, secure behavior. Lucas ruled: **docs bow to code** — the application works, so stale prose is the defect, never an excuse to retune a limiter or drop a permission flag. Verify against enforcing code first; only then assert the doc.
-
-## 2026-09-16 — test oracle beats literal grep
-No code contained the documented custom-field AAD pattern `${table}:${recordId}:custom_fields`. Lesson: when a crypto claim has zero literal code hits, don't conclude "wrong docs or wrong code" — go read the **test fixtures** (`tests/unit/customFields.test.ts`) which revealed the truth (`<table>_custom:{id}`). Tests are the oracle for behavioral details.
-
-## 2026-09-16 — truncate-before-read data loss
-Wrote `open(rl,'w').write(entry + open(rl).read())` — Python opens `'w'` (truncating) *before* evaluating the read, destroying ~488 lines of reflection history. Git recovered it (`a640e09`), but the pattern is banned: **read first into a variable, then write.** Also learned the commit stat is the tripwire — `488 deletions` in a "log entry" commit is an alarm.
-
-## 2026-09-16 — identity-file shape ≠ redaction lists
-The auditLogger redacts a `humanKey` *detail key*, which tempted a wrong inference about the identity-file schema. Truth lives in the producer (`crypto.ts:63-80`): filename is per-username (`shellguard_identity_<username>.json`), shape is `{username, displayName, uuid, token, createdAt}`. Never infer data shapes from redaction lists.

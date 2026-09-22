@@ -98,6 +98,8 @@ export function ItemFormModal({
   const [newFieldType, setNewFieldType] = useState<CustomFieldType>("text");
   const [newFieldLinkedProperty, setNewFieldLinkedProperty] = useState<CustomFieldLinkedProperty>("username");
   const [newFieldValue, setNewFieldValue] = useState("");
+  const [isNewFieldMasked, setIsNewFieldMasked] = useState(true);
+  const [unmaskedFieldIds, setUnmaskedFieldIds] = useState<Set<string>>(new Set());
 
   // SSH Key Public Key state
   const [sshPublicKey, setSshPublicKey] = useState("");
@@ -142,7 +144,7 @@ export function ItemFormModal({
           setPasswordHistory([]);
         }
 
-        setCategory(initialItem.category || "all");
+        setCategory(initialItem.category === "all" || initialItem.category?.toLowerCase() === "attachment" ? "" : (initialItem.category || ""));
         
         if (initialItem.notes) {
           setNotes(initialItem.notes);
@@ -240,6 +242,8 @@ export function ItemFormModal({
         setNewFieldType("text");
         setNewFieldLinkedProperty("username");
       }
+      setIsNewFieldMasked(true);
+      setUnmaskedFieldIds(new Set());
       setPendingAttachments([]);
       setRemovedAttachmentIds([]);
       setAttachmentError(null);
@@ -253,11 +257,20 @@ export function ItemFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !password) return;
+    if (!title.trim()) return;
+    if (type === 'attachment') {
+      if (!isEdit && pendingAttachments.length === 0 && linkedAttachmentIds.length === 0) return;
+    } else {
+      if (!password) return;
+    }
 
     setIsSaving(true);
     try {
-      const finalSecret = type === 'key' ? serializeSshKeySecret(password, sshPublicKey) : password;
+      const finalSecret = type === 'key' 
+        ? serializeSshKeySecret(password, sshPublicKey) 
+        : type === 'attachment'
+          ? (pendingAttachments[0]?.file_name || "")
+          : password;
       
       let finalTotp = "";
       if (showTotpField && totpSecret.trim()) {
@@ -274,7 +287,7 @@ export function ItemFormModal({
       await onSave({
         title,
         secret: finalSecret,
-        username,
+        username: type === 'attachment' ? (pendingAttachments[0]?.file_name || username) : username,
         url,
         uris: validUris.length > 0 ? JSON.stringify(validUris) : undefined,
         category,
@@ -348,10 +361,14 @@ export function ItemFormModal({
           {
             id: generateUUID(),
             file_name: file.name,
+            mime_type: file.type || 'application/octet-stream',
             size: file.size,
             dataUrl: e.target!.result!.toString()
           }
         ]);
+        if (!title.trim()) {
+          setTitle(file.name);
+        }
       }
     };
     reader.readAsDataURL(file);
@@ -447,6 +464,47 @@ export function ItemFormModal({
                 availableTags={availableVaultTags}
               />
             </div>
+
+            {/* Standalone Attachment Dropzone */}
+            {type === 'attachment' && (
+              <div className="col-span-1 md:col-span-2 space-y-3">
+                <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">
+                  Attachment File (Encrypted Storage, max 500MB) {!isEdit && <span className="text-red-500">*</span>}
+                </label>
+                <div 
+                  onClick={openAttachmentPicker} 
+                  className="w-full border-2 border-dashed border-claw-cyan/50 rounded-2xl p-8 flex flex-col items-center justify-center bg-claw-cyan/5 hover:bg-claw-cyan/10 transition-colors cursor-pointer text-center"
+                >
+                  <Upload size={32} className="text-claw-cyan/70 mb-2" />
+                  <p className="text-theme-main font-bold text-sm">Click to select file</p>
+                  <p className="text-xs text-theme-muted mt-1">Single-file encrypted BLOB storage (up to 500MB)</p>
+                </div>
+                {attachmentError && <p className="text-xs text-red-500">{attachmentError}</p>}
+
+                {/* Staged pending attachment */}
+                {pendingAttachments.length > 0 && (
+                  <ul className="space-y-2">
+                    {pendingAttachments.map(att => (
+                      <li key={att.id} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3.5 py-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Paperclip size={16} className="text-claw-cyan flex-shrink-0" />
+                          <span className="text-sm font-medium text-theme-main truncate">{att.file_name}</span>
+                          <span className="text-xs text-theme-muted font-mono shrink-0">({formatBytes(att.size)})</span>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => setPendingAttachments(prev => prev.filter(a => a.id !== att.id))} 
+                          className="text-slate-400 hover:text-red-500 p-1 rounded-lg transition-colors cursor-pointer"
+                          title="Remove file"
+                        >
+                          <X size={15}/>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {/* Password/Login specifics */}
             {type === 'password' && (
@@ -820,7 +878,9 @@ export function ItemFormModal({
                 {showAttachmentField && (
                   <div className="col-span-1 md:col-span-2 relative">
                     <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Attachments (max 500MB)</label>
-                    <button type="button" onClick={() => setShowAttachmentField(false)} className="absolute -top-1 right-0 text-slate-400 hover:text-red-500"><X size={16}/></button>
+                    {linkedAttachmentIds.length === 0 && pendingAttachments.length === 0 && (
+                      <button type="button" onClick={() => setShowAttachmentField(false)} className="absolute -top-1 right-0 text-slate-400 hover:text-red-500"><X size={16}/></button>
+                    )}
                     <div onClick={openAttachmentPicker} className="w-full border-2 border-dashed border-claw-cyan/50 rounded-xl p-6 flex flex-col items-center justify-center bg-claw-cyan/5 hover:bg-claw-cyan/10 transition-colors cursor-pointer text-center">
                       <Upload size={28} className="text-claw-cyan/60 mb-2" />
                       <p className="text-theme-main font-bold">Click to browse file</p>
@@ -861,24 +921,49 @@ export function ItemFormModal({
                   <div className="col-span-1 md:col-span-2">
                     <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">Custom Fields</label>
                     <div className="space-y-2">
-                      {customFieldsState.map((cf) => (
-                        <div key={cf.id} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3 py-2">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <span className="text-xs font-bold uppercase tracking-wider text-theme-muted shrink-0 w-16 truncate">{cf.type === "checkbox" ? "☑" : cf.type === "hidden" ? "🔒" : cf.type === "linked" ? "🔗" : "📝"}</span>
-                            <span className="text-sm font-semibold text-theme-main truncate">{cf.name}</span>
-                            {cf.type === "checkbox" && (
-                              <span className={`text-xs font-bold ${cf.value === "true" ? "text-green-600" : "text-slate-500"}`}>{cf.value === "true" ? "ON" : "OFF"}</span>
-                            )}
-                            {cf.type === "linked" && (
-                              <span className="text-xs text-claw-cyan italic">→ {cf.linkedProperty}</span>
-                            )}
-                            {(cf.type === "text" || cf.type === "hidden") && (
-                              <span className="text-xs text-theme-muted font-mono truncate max-w-[120px]">{cf.type === "hidden" ? "••••••••" : cf.value}</span>
-                            )}
+                      {customFieldsState.map((cf) => {
+                        const isFieldUnmasked = unmaskedFieldIds.has(cf.id);
+                        return (
+                          <div key={cf.id} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className="text-xs font-bold uppercase tracking-wider text-theme-muted shrink-0 w-16 truncate">{cf.type === "checkbox" ? "☑" : cf.type === "hidden" ? "🔒" : cf.type === "linked" ? "🔗" : "📝"}</span>
+                              <span className="text-sm font-semibold text-theme-main truncate">{cf.name}</span>
+                              {cf.type === "checkbox" && (
+                                <span className={`text-xs font-bold ${cf.value === "true" ? "text-green-600" : "text-slate-500"}`}>{cf.value === "true" ? "ON" : "OFF"}</span>
+                              )}
+                              {cf.type === "linked" && (
+                                <span className="text-xs text-claw-cyan italic">→ {cf.linkedProperty}</span>
+                              )}
+                              {cf.type === "text" && (
+                                <span className="text-xs text-theme-muted font-mono truncate max-w-[140px]">{cf.value}</span>
+                              )}
+                              {cf.type === "hidden" && (
+                                <span className="text-xs text-theme-muted font-mono truncate max-w-[160px]">{isFieldUnmasked ? cf.value : "••••••••"}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {cf.type === "hidden" && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setUnmaskedFieldIds(prev => {
+                                      const next = new Set(prev);
+                                      if (next.has(cf.id)) next.delete(cf.id);
+                                      else next.add(cf.id);
+                                      return next;
+                                    });
+                                  }}
+                                  className="text-slate-400 hover:text-theme-main p-1 rounded transition-colors cursor-pointer"
+                                  title={isFieldUnmasked ? "Mask secret" : "Unmask secret"}
+                                >
+                                  {isFieldUnmasked ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                              )}
+                              <button type="button" onClick={() => setCustomFieldsState(prev => prev.filter(f => f.id !== cf.id))} className="text-slate-400 hover:text-red-500 p-1 rounded transition-colors shrink-0 cursor-pointer" title="Remove custom field"><X size={14}/></button>
+                            </div>
                           </div>
-                          <button type="button" onClick={() => setCustomFieldsState(prev => prev.filter(f => f.id !== cf.id))} className="text-slate-400 hover:text-red-500 shrink-0"><X size={14}/></button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -909,8 +994,32 @@ export function ItemFormModal({
                             {newFieldValue === "true" ? "ON" : "OFF"}
                           </button>
                         </div>
+                      ) : newFieldType === "hidden" ? (
+                        <div className="relative flex items-center">
+                          <input
+                            type={isNewFieldMasked ? "password" : "text"}
+                            value={newFieldValue}
+                            onChange={(e) => setNewFieldValue(e.target.value)}
+                            placeholder="Secret field value"
+                            className="w-full bg-theme-base border border-theme-subtle rounded-lg pl-3 pr-8 py-2 text-xs focus:border-claw-cyan outline-none text-theme-main font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setIsNewFieldMasked(prev => !prev)}
+                            className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
+                            title={isNewFieldMasked ? "Reveal secret" : "Mask secret"}
+                          >
+                            {isNewFieldMasked ? <Eye size={13} /> : <EyeOff size={13} />}
+                          </button>
+                        </div>
                       ) : (
-                        <input type={newFieldType === "hidden" ? "password" : "text"} value={newFieldValue} onChange={(e) => setNewFieldValue(e.target.value)} placeholder="Field value" className="bg-theme-base border border-theme-subtle rounded-lg px-3 py-2 text-xs focus:border-claw-cyan outline-none text-theme-main" />
+                        <input
+                          type="text"
+                          value={newFieldValue}
+                          onChange={(e) => setNewFieldValue(e.target.value)}
+                          placeholder="Field value"
+                          className="bg-theme-base border border-theme-subtle rounded-lg px-3 py-2 text-xs focus:border-claw-cyan outline-none text-theme-main"
+                        />
                       )}
                     </div>
                     <div className="flex gap-2 justify-end pt-1">
@@ -927,6 +1036,7 @@ export function ItemFormModal({
                           setNewFieldName("");
                           setNewFieldValue("");
                           setNewFieldType("text");
+                          setIsNewFieldMasked(true);
                           setIsAddFieldOpen(false);
                         }
                       }} className="px-3 py-1.5 text-xs font-bold bg-claw-cyan text-white rounded-lg hover:bg-cyan-600 transition-colors disabled:opacity-50 cursor-pointer">Add Field</button>
@@ -980,9 +1090,13 @@ export function ItemFormModal({
             <button type="button" onClick={onClose} className="px-5 py-2.5 text-theme-muted hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium text-sm transition-colors cursor-pointer">
               Cancel
             </button>
-            <button type="submit" disabled={!title.trim() || !password || isSaving} className="px-6 py-2.5 bg-gradient-to-r from-claw-cyan to-deep-teal hover:from-cyan-500 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all flex items-center gap-2 text-sm cursor-pointer">
+            <button 
+              type="submit" 
+              disabled={isSaving || !title.trim() || (type === 'attachment' ? (!isEdit && pendingAttachments.length === 0 && linkedAttachmentIds.length === 0) : !password)} 
+              className="px-6 py-2.5 bg-gradient-to-r from-claw-cyan to-deep-teal hover:from-cyan-500 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all flex items-center gap-2 text-sm cursor-pointer"
+            >
               {isSaving ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
-              {isSaving ? (isEdit ? "Updating..." : "Saving...") : (isEdit ? "Save Changes" : "Save Item")}
+              {isSaving ? (isEdit ? "Updating..." : "Saving...") : (isEdit ? "Save Changes" : (type === 'attachment' ? "Save Attachment" : "Save Item"))}
             </button>
           </div>
         </form>

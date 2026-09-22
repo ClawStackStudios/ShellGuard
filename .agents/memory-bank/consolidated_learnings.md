@@ -56,6 +56,16 @@
 - Both modes must pass — passthrough is the default, encryption is opt-in.
 - *Rationale:* Ensures backward compatibility and that encryption is truly optional.
 
+**Pattern: The Dual-Lock Protocol (Automated Oracle + Physical Human Live Handshake)**
+- Automated test suites verify isolated syntactic and algorithmic correctness, but are blind to *macro-gestalt* friction (animation layout unmounts, visual affordance gaps, ontological ghost categories).
+- Work is never marked complete until both automated pre-flight gates (types, tests, build) AND the physical human live verification handshake pass.
+- *Rationale:* Green test suites provide false confidence when operational glue and interaction seams remain unexercised in reality.
+
+**Pattern: Template-Scaffolded Verification Canvases**
+- Structure verification using formal templates (`verificationChecklist-basic.md`, `verificationChecklist-advanced`) and write them to an active file canvas (`.agents/scratch/verificationChecklist.md`).
+- The scratchpad serves as an asynchronous, persistent collaboration workbench between the human operator and the agent across context compactions and sessions.
+- *Rationale:* Chat prompts vanish in scrollback and token pruning; a dedicated checklist file tracks exact testing notes, reproduction cases, and pass/fail states until 100% verified.
+
 ---
 
 ## Git & Workflow

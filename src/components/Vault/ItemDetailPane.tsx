@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Loader2, Terminal, History } from 'lucide-react';
+import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Terminal, History, Paperclip } from 'lucide-react';
 import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty, PasswordHistoryEntry } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
@@ -8,7 +8,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
 import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
 import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
-import { downloadAttachment, dataUrlToBlob } from '../../lib/attachmentUtils.ts';
+import { downloadAttachment, formatBytes } from '../../lib/attachmentUtils.ts';
 import { parseSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 
 interface ItemDetailPaneProps {
@@ -36,11 +36,6 @@ export function ItemDetailPane({
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [revealedHiddenFields, setRevealedHiddenFields] = useState<Set<string>>(new Set());
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  // Phase 19: on-demand attachment fetch + encrypted object-URL preview modal.
-  const [previewState, setPreviewState] = useState<
-    { loading: boolean; name: string; mime: string; dataUrl?: string; error?: string } | null
-  >(null);
-  const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
 
   // Reset state when item changes
   useEffect(() => {
@@ -51,46 +46,13 @@ export function ItemDetailPane({
     setIsConfirmingDelete(false);
   }, [item?.id]);
 
-  // Revoke the preview object URL when the modal closes or unmounts.
-  useEffect(() => {
-    return () => {
-      if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
-    };
-  }, [previewObjectUrl]);
-
-  const closePreview = () => {
-    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
-    setPreviewObjectUrl(null);
-    setPreviewState(null);
-  };
-
-  const openPreview = async (att: VaultItem) => {
-    if (!onFetchAttachment) return;
-    setPreviewState({ loading: true, name: att.title || 'attachment', mime: att.mime_type || '' });
-    setPreviewObjectUrl(null);
-    try {
-      const dataUrl = await onFetchAttachment(att.id);
-      const mime = att.mime_type || '';
-      if (mime === 'application/pdf') {
-        const blob = dataUrlToBlob(dataUrl);
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          setPreviewObjectUrl(url);
-        }
-      }
-      setPreviewState({ loading: false, name: att.title || 'attachment', mime, dataUrl });
-    } catch (e: any) {
-      setPreviewState({ loading: false, name: att.title || 'attachment', mime: att.mime_type || '', error: e?.message || 'Preview failed.' });
-    }
-  };
-
   const downloadWithFetch = async (att: VaultItem) => {
     if (!onFetchAttachment) return;
     try {
       const dataUrl = await onFetchAttachment(att.id);
       downloadAttachment(dataUrl, att.title || 'attachment');
-    } catch {
-      // fetch/decrypt failures surface through the preview path; downloads stay silent here
+    } catch (e) {
+      console.error('Download failed:', e);
     }
   };
 
@@ -136,6 +98,7 @@ export function ItemDetailPane({
     switch (type) {
       case "note": return <FileText size={16} className="text-emerald-500" />;
       case "key": return <Binary size={16} className="text-purple-500" />;
+      case "attachment": return <Paperclip size={16} className="text-claw-cyan" />;
       default: return <KeyIcon size={16} className="text-claw-cyan" />;
     }
   };
@@ -252,8 +215,30 @@ export function ItemDetailPane({
                 </div>
               )}
 
-              {/* SSH Key or Password / Secret */}
-              {item.type === "key" ? (
+              {/* Standalone Attachment or SSH Key or Password / Secret */}
+              {item.type === "attachment" ? (
+                <div className="p-4 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Paperclip size={20} className="text-claw-cyan flex-shrink-0" />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-theme-main truncate">{item.title}</span>
+                        <span className="text-xs text-theme-muted font-mono">
+                          {typeof (item as any).size_bytes === 'number' ? formatBytes((item as any).size_bytes) : ''}
+                          {item.mime_type ? ` • ${item.mime_type}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => downloadWithFetch(item)}
+                      className="px-3.5 py-2 rounded-xl bg-claw-cyan/10 hover:bg-claw-cyan/20 text-claw-cyan font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                      title="Download Attachment"
+                    >
+                      <Download size={15} /> Download
+                    </button>
+                  </div>
+                </div>
+              ) : item.type === "key" ? (
                 <div className="space-y-3 pt-1">
                   {/* Public Key Card (if present) */}
                   {sshPayload?.publicKey && (
@@ -649,24 +634,6 @@ export function ItemDetailPane({
                             </div>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
-                            {onFetchAttachment && /^image\//.test(att.mime_type || '') && (
-                              <button
-                                onClick={() => openPreview(att)}
-                                className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                                title="Preview"
-                              >
-                                <Eye size={16} />
-                              </button>
-                            )}
-                            {onFetchAttachment && att.mime_type === 'application/pdf' && (
-                              <button
-                                onClick={() => openPreview(att)}
-                                className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                                title="Preview"
-                              >
-                                <Eye size={16} />
-                              </button>
-                            )}
                             <button
                               onClick={() => downloadWithFetch(att)}
                               className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
@@ -721,56 +688,6 @@ export function ItemDetailPane({
               </div>
               <div className="flex-1 min-h-0">
                 {content}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Phase 19: encrypted object-URL preview modal (images + PDFs).
-          The payload is decrypted client-side only; PDFs render from a Blob
-          object URL (never a data: URI — insecure-origin invariant). */}
-      <AnimatePresence>
-        {previewState && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closePreview}
-              className="fixed inset-0 bg-black/60 z-[60]"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-x-4 inset-y-10 md:inset-x-16 lg:inset-x-32 z-[70] bg-theme-base border border-theme-subtle rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-            >
-              <div className="flex items-center justify-between p-4 border-b border-theme-subtle bg-theme-surface flex-shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText size={16} className="text-slate-400 flex-shrink-0" />
-                  <span className="text-sm font-semibold text-theme-main truncate">{previewState.name}</span>
-                  {previewState.loading && <Loader2 size={16} className="animate-spin text-claw-cyan" />}
-                </div>
-                <button
-                  onClick={closePreview}
-                  className="p-2 text-slate-400 hover:text-theme-main hover:bg-theme-surface rounded-lg transition-colors cursor-pointer"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar bg-slate-950/5 dark:bg-black/20 flex items-center justify-center">
-                {previewState.loading ? (
-                  <p className="text-sm text-theme-muted">Decrypting…</p>
-                ) : previewState.error ? (
-                  <p className="text-sm text-lobster-red">{previewState.error}</p>
-                ) : previewState.dataUrl && previewState.mime === 'application/pdf' && previewObjectUrl ? (
-                  <iframe src={previewObjectUrl} title={previewState.name} className="w-full h-full border-0" />
-                ) : previewState.dataUrl && /^image\//.test(previewState.mime) ? (
-                  <img src={previewState.dataUrl} alt={previewState.name} className="max-w-full max-h-full object-contain" />
-                ) : (
-                  <p className="text-sm text-theme-muted">No inline preview available for this type.</p>
-                )}
               </div>
             </motion.div>
           </>

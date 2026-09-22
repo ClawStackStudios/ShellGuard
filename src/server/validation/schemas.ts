@@ -101,6 +101,7 @@ export const NoteSchemas = {
     content: z.string().min(1).max(10000), // opaque
     category: itemCategory,
     tags: itemTags,
+    attachments: z.string().max(2000000).optional(), // opaque JSON string
     custom_fields: z.string().max(500000).optional(), // opaque
   }),
   update: z.object({
@@ -108,6 +109,7 @@ export const NoteSchemas = {
     content: z.string().min(1).max(10000), // opaque
     category: itemCategory,
     tags: itemTags,
+    attachments: z.string().max(2000000).optional(), // opaque JSON string
     custom_fields: z.string().max(500000).optional(), // opaque
   }),
 };

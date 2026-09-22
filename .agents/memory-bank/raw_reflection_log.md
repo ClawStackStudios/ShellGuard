@@ -1,4 +1,27 @@
 ---
+Date: 2026-09-22
+TaskRef: "Note Attachments Parity, Ghost Pod Purging & Detail Pane Selection Preservation"
+
+Learnings:
+- Standalone attachments uploaded with category defaulting to "Attachment" caused the unique pod derivation logic (`items.map(i => i.category)`) to produce an unintended pod named 'Attachment' in bulk move chips and pod trees. In `src/lib/podUtils.ts` and `VaultShell.tsx`, filtering out case-insensitive 'attachment' and 'all' across `getAllUniquePods`, `setPodColor`, and `getStoredPodColors` permanently prevents phantom pods.
+- Secure notes (`vault_secure_notes`) lacked an `attachments` column in the database schema. Added `migrations/0008_note_attachments.up.sql` (`ALTER TABLE vault_secure_notes ADD COLUMN attachments TEXT DEFAULT '[]';`), updated `NoteSchemas` create/update Zod validation, updated `POST /api/notes` and `PUT /api/notes/:id` to accept attachments, and added cascade deletion in `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
+- Client-side note attachment uploading required handling `newAttachments` and `removedAttachmentIds` inside `lockTheClaw` and `updateTheClaw` in `src/App.tsx`, mirroring password attachment behavior and sending the updated attachments JSON array.
+- Detail pane blanking on save was caused by rendering `uploadProgress` inside `<AnimatePresence mode="wait">` that wrapped the main views (`view === "vault"`). When upload started, `uploadProgress` mounted and unmounted `VaultShell`. When upload finished, `VaultShell` remounted with default `selectedItemId = null`. Decoupling `uploadProgress` and `error` banners into their own non-blocking container and lifting `selectedItemId` to `App.tsx` guarantees selection stickiness across item saves.
+
+Difficulties:
+- Diagnosing the root cause of detail pane blanking required tracing the lifecycle of `VaultShell` mounts across Framer Motion `mode="wait"` triggers during file upload.
+
+Successes:
+- Added 7 new unit tests in `tests/unit/uiSeams.test.ts` (bringing the total to 25 unit tests) covering ghost pod filtering, note attachment scuttle mapping, note deletion cascade extraction, and selection retention across updates.
+- All 26 test suites passed 100% green (313 passed, 1 skipped).
+- Clean `npm run lint` (0 errors) and clean `npm run build`.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Decouple transient overlay/progress banners from view-routing AnimatePresence to prevent accidental component unmounting.
+- General pattern: Schema parity across primary vault record types for composite features (attachments, tags).
+---
+
+---
 Date: 2026-09-21
 TaskRef: "Vault Item Deletion Fix & Single-Item Confirmation Dialog"
 

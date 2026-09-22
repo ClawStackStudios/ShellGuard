@@ -293,9 +293,9 @@ export default function App() {
           if (p.totp_secret) {
             try { decryptedTotp = await decryptField(p.totp_secret, key, "vault_pearls_totp", p.id); } catch (e) { decryptedTotp = "⚠️ [Decryption Failed]"; }
           }
-          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: "password", category: p.category || "" };
+          return { ...p, secret: decryptedSecret, totp_secret: decryptedTotp, type: p.type || "password", category: p.category || "" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: "password", category: p.category || "" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", totp_secret: "⚠️ [Decryption Failed]", type: p.type || "password", category: p.category || "" };
         }
       }));
 
@@ -635,9 +635,9 @@ export default function App() {
           custom_fields: encryptedCustomFields
         });
       }
-      scuttleVault(shellKey);
+      await scuttleVault(shellKey);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to save item to vault.');
     }
   };
 
@@ -713,10 +713,10 @@ export default function App() {
         });
       }
       if (!skipScuttle) {
-        scuttleVault(shellKey);
+        await scuttleVault(shellKey);
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to update item in vault.');
     }
   };
 
@@ -726,99 +726,111 @@ export default function App() {
     const normNew = normalizePod(newPod);
     if (normOld === normNew) return;
 
-    const itemsToUpdate = vaultItems.filter((i) => {
-      const currentCat = normalizePod(i.category);
-      return currentCat === normOld || currentCat.startsWith(normOld + "/");
-    });
-    
-    // Optimistically update local state immediately so UI refreshes without delay
-    setVaultItems((prev) =>
-      prev.map((item) => {
-        const currentCat = normalizePod(item.category);
-        if (currentCat === normOld) {
-          return { ...item, category: normNew };
-        }
-        if (currentCat.startsWith(normOld + "/")) {
-          return { ...item, category: currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`) };
-        }
-        return item;
-      })
-    );
-
-    if (itemsToUpdate.length === 0) {
-      return;
-    }
-
-    for (const item of itemsToUpdate) {
-      const currentCat = normalizePod(item.category);
-      const updatedCat = currentCat === normOld ? normNew : currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`);
-      await updateTheClaw(
-        item.id, 
-        {
-          title: item.title,
-          secret: item.secret,
-          username: item.username || "",
-          url: item.url || "",
-          category: updatedCat,
-          type: item.type,
-          notes: item.notes,
-          totp_secret: item.totp_secret,
-          attachments: item.attachments,
-          custom_fields: item.custom_fields
-        },
-        true
+    try {
+      const itemsToUpdate = vaultItems.filter((i) => {
+        const currentCat = normalizePod(i.category);
+        return currentCat === normOld || currentCat.startsWith(normOld + "/");
+      });
+      
+      // Optimistically update local state immediately so UI refreshes without delay
+      setVaultItems((prev) =>
+        prev.map((item) => {
+          const currentCat = normalizePod(item.category);
+          if (currentCat === normOld) {
+            return { ...item, category: normNew };
+          }
+          if (currentCat.startsWith(normOld + "/")) {
+            return { ...item, category: currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`) };
+          }
+          return item;
+        })
       );
-    }
 
-    // Single server sync after all items are updated
-    await scuttleVault(shellKey);
+      if (itemsToUpdate.length > 0) {
+        for (const item of itemsToUpdate) {
+          const currentCat = normalizePod(item.category);
+          const updatedCat = currentCat === normOld ? normNew : currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`);
+          await updateTheClaw(
+            item.id, 
+            {
+              title: item.title,
+              secret: item.secret,
+              username: item.username || "",
+              url: item.url || "",
+              uris: item.uris,
+              category: updatedCat,
+              type: item.type,
+              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
+              notes: item.notes,
+              totp_secret: item.totp_secret,
+              password_history: item.password_history,
+              attachments: item.attachments,
+              custom_fields: item.custom_fields
+            },
+            true
+          );
+        }
+      }
+
+      // Single server sync after all items are updated
+      await scuttleVault(shellKey);
+    } catch (err: any) {
+      setError(err.message || 'Failed to rename pod.');
+      await scuttleVault(shellKey);
+    }
   };
 
   const handleDeletePod = async (podToDelete: string) => {
     if (!shellKey || isLocked) return;
     const targetPod = normalizePod(podToDelete);
 
-    const itemsToUpdate = vaultItems.filter((i) => {
-      const currentCat = normalizePod(i.category);
-      return currentCat === targetPod || currentCat.startsWith(targetPod + "/");
-    });
-    
-    // Optimistically update local state immediately so the pod disappears from the tree instantly
-    setVaultItems((prev) =>
-      prev.map((item) => {
-        const currentCat = normalizePod(item.category);
-        if (currentCat === targetPod || currentCat.startsWith(targetPod + "/")) {
-          return { ...item, category: "" };
-        }
-        return item;
-      })
-    );
-
-    if (itemsToUpdate.length === 0) {
-      return;
-    }
-
-    for (const item of itemsToUpdate) {
-      await updateTheClaw(
-        item.id, 
-        {
-          title: item.title,
-          secret: item.secret,
-          username: item.username || "",
-          url: item.url || "",
-          category: "",
-          type: item.type,
-          notes: item.notes,
-          totp_secret: item.totp_secret,
-          attachments: item.attachments,
-          custom_fields: item.custom_fields
-        },
-        true
+    try {
+      const itemsToUpdate = vaultItems.filter((i) => {
+        const currentCat = normalizePod(i.category);
+        return currentCat === targetPod || currentCat.startsWith(targetPod + "/");
+      });
+      
+      // Optimistically update local state immediately so the pod disappears from the tree instantly
+      setVaultItems((prev) =>
+        prev.map((item) => {
+          const currentCat = normalizePod(item.category);
+          if (currentCat === targetPod || currentCat.startsWith(targetPod + "/")) {
+            return { ...item, category: "" };
+          }
+          return item;
+        })
       );
-    }
 
-    // Single server sync after all items are updated
-    await scuttleVault(shellKey);
+      if (itemsToUpdate.length > 0) {
+        for (const item of itemsToUpdate) {
+          await updateTheClaw(
+            item.id, 
+            {
+              title: item.title,
+              secret: item.secret,
+              username: item.username || "",
+              url: item.url || "",
+              uris: item.uris,
+              category: "",
+              type: item.type,
+              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
+              notes: item.notes,
+              totp_secret: item.totp_secret,
+              password_history: item.password_history,
+              attachments: item.attachments,
+              custom_fields: item.custom_fields
+            },
+            true
+          );
+        }
+      }
+
+      // Single server sync after all items are updated
+      await scuttleVault(shellKey);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete pod.');
+      await scuttleVault(shellKey);
+    }
   };
 
   const handleLoginSuccess = (l: Lobster, t: string, sk: CryptoKey, rk: string) => {
@@ -1133,56 +1145,66 @@ export default function App() {
                     }}
                     onBulkMoveToPod={async (ids, category) => {
                       if (!shellKey || isLocked) return;
-
-                      const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
-                      for (const item of itemsToUpdate) {
-                        await updateTheClaw(
-                          item.id,
-                          {
-                            title: item.title,
-                            secret: item.secret,
-                            username: item.username || "",
-                            url: item.url || "",
-                            category: category,
-                            type: item.type as VaultItemType,
-                            tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
-                            notes: item.notes,
-                            totp_secret: item.totp_secret,
-                            attachments: item.attachments,
-                            custom_fields: item.custom_fields
-                          },
-                          true
-                        );
+                      try {
+                        const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
+                        for (const item of itemsToUpdate) {
+                          await updateTheClaw(
+                            item.id,
+                            {
+                              title: item.title,
+                              secret: item.secret,
+                              username: item.username || "",
+                              url: item.url || "",
+                              uris: item.uris,
+                              category: category,
+                              type: item.type as VaultItemType,
+                              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
+                              notes: item.notes,
+                              totp_secret: item.totp_secret,
+                              password_history: item.password_history,
+                              attachments: item.attachments,
+                              custom_fields: item.custom_fields
+                            },
+                            true
+                          );
+                        }
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to move items to pod.');
                       }
-                      if (shellKey) scuttleVault(shellKey);
                     }}
                     onBulkAssignTags={async (ids, tags) => {
                       if (!shellKey || isLocked) return;
+                      try {
+                        const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
+                        for (const item of itemsToUpdate) {
+                          const currentTags = typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : (item.tags || []);
+                          const newTags = Array.from(new Set([...currentTags, ...tags]));
 
-                      const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
-                      for (const item of itemsToUpdate) {
-                        const currentTags = typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : (item.tags || []);
-                        const newTags = Array.from(new Set([...currentTags, ...tags]));
-
-                        await updateTheClaw(
-                          item.id,
-                          {
-                            title: item.title,
-                            secret: item.secret,
-                            username: item.username || "",
-                            url: item.url || "",
-                            category: item.category || "",
-                            type: item.type as VaultItemType,
-                            tags: JSON.stringify(newTags),
-                            notes: item.notes,
-                            totp_secret: item.totp_secret,
-                            attachments: item.attachments,
-                            custom_fields: item.custom_fields
-                          },
-                          true
-                        );
+                          await updateTheClaw(
+                            item.id,
+                            {
+                              title: item.title,
+                              secret: item.secret,
+                              username: item.username || "",
+                              url: item.url || "",
+                              uris: item.uris,
+                              category: item.category || "",
+                              type: item.type as VaultItemType,
+                              tags: JSON.stringify(newTags),
+                              notes: item.notes,
+                              totp_secret: item.totp_secret,
+                              password_history: item.password_history,
+                              attachments: item.attachments,
+                              custom_fields: item.custom_fields
+                            },
+                            true
+                          );
+                        }
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to assign tags.');
                       }
-                      if (shellKey) scuttleVault(shellKey);
                     }}
                   />
                   <ItemFormModal
@@ -1195,12 +1217,16 @@ export default function App() {
                     initialItem={editingVaultItem}
                     initialType={activeTypeFilter === "all" ? "password" : activeTypeFilter as VaultItemType}
                     onSave={async (data) => {
-                      if (editingVaultItem) {
-                        await updateTheClaw(editingVaultItem.id, data);
-                      } else {
-                        await lockTheClaw(data);
+                      try {
+                        if (editingVaultItem) {
+                          await updateTheClaw(editingVaultItem.id, data);
+                        } else {
+                          await lockTheClaw(data);
+                        }
+                        if (shellKey) await scuttleVault(shellKey);
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to save item to vault.');
                       }
-                      if (shellKey) scuttleVault(shellKey);
                     }}
                   />
                 </motion.div>

@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-21 — UI action seams & pod metadata defense
+Direct inspection of `App.tsx` handlers revealed that pod renames and bulk updates were sending payloads missing `tags`, `uris`, and `password_history`, risking silent data loss if the backend handler does not defensively read `existing` values. Hardened `handleRenamePod`, `handleDeletePod`, `onBulkMoveToPod`, and `onBulkAssignTags` to pass complete data models, wrapped operations in `try/catch` with reactive error reporting and `scuttleVault` recovery, and built `tests/unit/uiSeams.test.ts` (11 tests) verifying glue logic and endpoint dispatch.
+
 ## 2026-09-21 — Project hygiene & the live verification handshake
 Discovered that passing 285 isolated tests masked a broken delete function in the UI due to an untested client seam. Solidified `.agents/rules/project-hygiene.md` ratifying the 5-phase development lifecycle: Cartography, Seam-Aware Planning, Layered Stroke Commits, Automated Gates, and the mandatory Live Verification Handshake with Lucas. Tests verify logic; only human live verification proves the joint holds.
 

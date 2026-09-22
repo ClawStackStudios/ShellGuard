@@ -1271,6 +1271,14 @@ Execute Phase 21 adhering to the Functionality + UI Component pairing:
   - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.
   - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
   - Dedicated unit tests in `tests/unit/vault-export.test.ts`.
+- **Sub-Phase 21.4: [Hardening & UI Seams] Post-Verification Hardening, Note Attachments Parity & Sticky Detail Selection**
+  - Migration `0008_note_attachments.{up,down}.sql` adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`.
+  - Cascading deletion parity on `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
+  - Background lifecycle cleanups (`cleanupOrphanedFiles`, `deleteExpiredSharePods`) to purge temporary artifacts.
+  - Detail pane sticky selection preserving `selectedType` and `selectedId` during item edit/save.
+  - UI label polish: explicit `Attachments (max 500MB per attachment)` guidance in `ItemFormModal.tsx`.
+  - Established formal tiered verification templates in `.agents/templates/verification/`.
+  - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
 
 Verify importing 100 items with 2 malformed records persists 98 and returns
 an informative 207 Multi-Status with a detailed error array, deletes cascade
@@ -1376,7 +1384,7 @@ Bitwarden model (verified): attachments are never standalone vault items.
 - attachments.ts POST requires a parent item reference (zod + route guard);
   standalone creation rejected; parent's attachments JSON ID array gains the
   child id in the same transaction.
-- migrations/0006_attachment_integrity.{up,down}.sql + backfill: relink
+- migrations/0009_attachment_integrity.{up,down}.sql + backfill: relink
   orphans where a parent is determinable, otherwise QUARANTINE (hidden from
   lists, never deleted); audit quarantine events.
 - schemas.ts: Secure Notes CANNOT carry password credentials (no `secret`

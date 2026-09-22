@@ -35,9 +35,13 @@ All ShellGuard endpoints return standard `{ success: boolean, data?: any, error?
 | Method | Path | Required Permission | Description |
 |---|---|---|---|
 | `GET` | `/api/notes` | `canRead` | List all secure notes (supports `?tags=a,b` intersection filter) |
-| `POST` | `/api/notes` | `canWrite` | Create a secure note (supports `tags` array) |
-| `GET` | `/api/ssh-keys` | `canRead` | List all SSH keys (supports `?tags=a,b` intersection filter) |
-| `POST` | `/api/ssh-keys` | `canWrite` | Create an SSH key (supports `tags` array) |
+| `POST` | `/api/notes` | `canWrite` | Create a secure note (supports `tags` and `attachments` JSON array) |
+| `PUT` | `/api/notes/:id` | `canEdit` | Update an existing secure note |
+| `DELETE` | `/api/notes/:id` | `canDelete` | Delete secure note (cascades linked attachments) |
+| `GET` | `/api/keys` | `canRead` | List all SSH keys (supports `?tags=a,b` intersection filter) |
+| `POST` | `/api/keys` | `canWrite` | Create an SSH key (supports `tags` array) |
+| `PUT` | `/api/keys/:id` | `canEdit` | Update an existing SSH key |
+| `DELETE` | `/api/keys/:id` | `canDelete` | Delete an SSH key |
 
 ---
 

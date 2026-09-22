@@ -11,7 +11,9 @@ ShellGuard adheres to the principle of absolute data sovereignty. Your secrets a
 
 Navigate to **Settings &rarr; Import & Export** to manage data portability.
 
---## 📤 Sovereign Export Formats
+---
+
+## 📤 Sovereign Export Formats
 
 ### 1. Dual Vault Export Suite
 - **Identity Re-Authentication**: Requires re-entering your `hu-` sovereign master key to authorize decryption of in-memory items before export.

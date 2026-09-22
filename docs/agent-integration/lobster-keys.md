@@ -84,7 +84,7 @@ Content-Type: application/json
 
 | Permission | Permitted Actions | Denied Actions |
 |---|---|---|
-| `canRead` | `GET /api/vault`, `GET /api/notes`, `GET /api/ssh-keys` | Creating, editing, or deleting items |
-| `canWrite` | `POST /api/vault`, `POST /api/notes` | Editing existing items or deleting items |
-| `canEdit` | `PUT /api/vault/:id`, `PUT /api/notes/:id` | Deleting items |
-| `canDelete` | `DELETE /api/vault/:id`, `DELETE /api/notes/:id` | Modifying settings or agent keys |
+| `canRead` | `GET /api/vault`, `GET /api/notes`, `GET /api/keys`, `GET /api/attachments` | Creating, editing, or deleting items |
+| `canWrite` | `POST /api/vault`, `POST /api/vault/bulk-import`, `POST /api/notes`, `POST /api/keys`, `POST /api/attachments` | Editing existing items or deleting items |
+| `canEdit` | `PUT /api/vault/:id`, `PUT /api/notes/:id`, `PUT /api/keys/:id`, `PUT /api/attachments/:id` | Deleting items |
+| `canDelete` | `DELETE /api/vault/:id`, `DELETE /api/vault/bulk`, `DELETE /api/notes/:id`, `DELETE /api/keys/:id`, `DELETE /api/attachments/:id` | Modifying settings or agent keys |

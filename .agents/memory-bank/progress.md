@@ -15,7 +15,7 @@
 - [x] **Lobster Keys CaraBase Parity & Rate Limiter Hardening** — full 4-step wizard, key cards, toast provider, and fixed auth-order rate-limiter bug
 - [x] **Multi-user architecture** — Bitwarden-style locked dashboard, QuickLoginModal overlay, background account locking, robust routing
 - [x] **Triple-layer encryption** — ShellCryption + Per-Row + SQLCipher, all documented
-- [x] **Test harness** — 24 suites, 285 tests passing (1 skipped), per-suite DATA_DIR isolation
+- [x] **Test harness** — 26 suites, 313 tests passing (1 skipped), per-suite DATA_DIR isolation
 - [x] **Containerization** — multi-stage node:20-alpine, PUID/PGID, healthcheck, compose stacks
 - [x] **CI** — docker-publish workflow → ghcr.io/clawstackstudios/shellguard
 - [x] **Unraid template** — Community Applications XML
@@ -51,7 +51,7 @@
 
 ## Current Status
 
-**v0.0.2.3 (Build 25 — Bulk Operations & Bitwarden Parity / Dual Export Suite)** — implemented on `feature/phase-21-bulk-operations-11309179680338905330`. 100% green test oracle (25 test suites, 288 tests passed, 1 skipped). Build (`vite build`) and documentation portal (`docs:build`) 100% clean. Next milestone: **Phase 22 (provisional v0.0.2.4 / Build 26)**.
+**v0.0.2.3 (Build 25 — Bulk Operations & Bitwarden Parity / Dual Export Suite / Post-Verification Hardening)** — implemented on `feature/phase-21-bulk-operations-11309179680338905330`. 100% green test oracle (26 test suites, 313 tests passed, 1 skipped). Build (`vite build`) and documentation portal (`docs:build`) 100% clean. Next milestone: **Phase 22 (provisional v0.0.2.4 / Build 26)**.
 
 ## Known Issues
 

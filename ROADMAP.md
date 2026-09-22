@@ -86,6 +86,15 @@ and dedicated Import wizard with preview table and error resolution chips.
   - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
   - Unit test suite: `tests/unit/vault-export.test.ts` verifying round-trip encryption, decryption, and CSV formatting.
 
+- [x] **Sub-Phase 21.4: [Hardening & UI Seams] Post-Verification Hardening, Note Attachments Parity & Sticky Detail Selection**
+  - Migration `0008_note_attachments.{up,down}.sql` adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`.
+  - Cascading deletion parity on `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
+  - Background lifecycle cleanups (`cleanupOrphanedFiles`, `deleteExpiredSharePods`) to purge temporary artifacts.
+  - Detail pane sticky selection preserving `selectedType` and `selectedId` during item edit/save.
+  - UI label polish: explicit `Attachments (max 500MB per attachment)` guidance in `ItemFormModal.tsx`.
+  - Established formal tiered verification templates in `.agents/templates/verification/`.
+  - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
+
 
 ---
 
@@ -185,7 +194,7 @@ the POST route requires a parent item reference — reject standalone
 attachment creation with a validation error (zod schema gains a required
 parent linkage; keep the reference model: the parent's `attachments` JSON ID
 array gains the child id in the same transaction). PUT/DELETE unchanged.
-(2) Migration `0005_attachment_integrity.{up,down}.sql` + backfill: resolve
+(2) Migration `0009_attachment_integrity.{up,down}.sql` + backfill: resolve
 orphan standalone attachment rows (the `category: 'Attachment'` rows written
 by `uploadAttachmentRecord` without a parent) — relink where a parent can be
 determined, otherwise QUARANTINE (flagged hidden from lists, never deleted;

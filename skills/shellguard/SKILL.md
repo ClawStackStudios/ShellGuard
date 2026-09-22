@@ -366,6 +366,7 @@ Encrypted free-text notes at `/api/notes`.
   content: EncryptedBlob   // REQUIRED — ShellCryption blob, never plaintext
   category?: string        // ≤64 characters (default "")
   tags?: string[] | string // array of tag strings or JSON array (default [])
+  attachments?: string     // JSON array of child attachment IDs (default "[]")
 }
 ```
 
@@ -374,7 +375,7 @@ Encrypted free-text notes at `/api/notes`.
 - `GET /api/notes/:id` — fetch one (`canRead`, `404` if absent/not owned)
 - `POST /api/notes` — create, `201 Created` (`canWrite`)
 - `PUT /api/notes/:id` — replace (`canEdit`)
-- `DELETE /api/notes/:id` — delete (`canDelete`)
+- `DELETE /api/notes/:id` — delete (`canDelete`; automatically cascades linked file attachments)
 
 All responses use the `{success, data}` envelope.
 

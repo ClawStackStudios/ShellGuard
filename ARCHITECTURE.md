@@ -84,14 +84,16 @@ ShellGuard/
 │   ├── 0006_vault_tags.up.sql         # Phase 20 (v0.0.2.2): vault item tags column and indexing
 │   ├── 0006_vault_tags.down.sql       # Rollback vault tags column
 │   ├── 0007_composite_item_features.up.sql   # Phase 21 (v0.0.2.3): secondary uris & password_history columns
-│   └── 0007_composite_item_features.down.sql # Rollback composite item features (safe no-op)
+│   ├── 0007_composite_item_features.down.sql # Rollback composite item features (safe no-op)
+│   ├── 0008_note_attachments.up.sql          # Phase 21 Post-Verification: note attachments column
+│   └── 0008_note_attachments.down.sql        # Rollback note attachments (safe no-op)
 │
 ├── 🔧 scripts/
 │   ├── scuttle-reset.ts               # Scuttles data-dev/ or data/ (--env production|development)
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # 24 Vitest + supertest suites, per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 26 Vitest + supertest suites, per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
@@ -106,12 +108,17 @@ ShellGuard/
 │   ├── tls.test.ts                    # Native LAN TLS generation & redirect checks
 │   ├── build-gates.test.ts            # Asserts Dockerfile/config shape before CI does
 │   └── unit/                          # Isolated unit test suites
+│       ├── bitwarden-import.test.ts   # Phase 21 Bitwarden JSON/CSV parser & folder-to-pod sniffer
 │       ├── customFields.test.ts       # 4 custom field types & client AAD namespaces
 │       ├── docsLinks.test.ts          # Documentation link validation CI gate
 │       ├── keyGen.test.ts             # In-browser Ed25519 & RSA-4096 SSH keypair generator
 │       ├── mermaidDiagrams.test.ts    # Mermaid diagram syntax integrity CI gate
 │       ├── sessionManager.test.ts     # Multi-account session & reload navigation intent
 │       ├── sgtotpBackup.test.ts       # ShellGuard-TOTP backup decryption & pod mapping
+│       ├── totpUtils.test.ts          # RFC 6238 published test vectors & dynamic OTP URI engine
+│       ├── uiSeams.test.ts            # 25 unit tests covering UI action seams & ghost pod filtering
+│       ├── vault-export.test.ts       # Encrypted backup envelopes & sanitized CSV export
+│       ├── vaultDelete.test.ts        # Single & bulk item deletion routing parity
 │       ├── version.test.ts            # Ground-truth version resolver test
 │       ├── webCryptoFallback.test.ts  # Pure TS WebCrypto primitives for plain-HTTP LAN
 │       └── middleware/errorHandler.test.ts # Zod, UNIQUE, FK, and prod masking gates
@@ -789,6 +796,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 23 | Vault Tagging System & Granular Filter Bar + SSH Key Dual-Key Management (multi-dimensional `tags` column, metadata encryption in `metadataGuard.ts`, `?tags=a,b` intersection queries across pearls/notes/keys, `TagSelectorInput` chip autocomplete, unified pod/tag bioluminescent color engine in `podUtils.ts`, migration 0006, dual-key `{ publicKey, privateKey }` serialization in `keyGen.ts` with clean PKCS#8 PEM display, `.pem` download, and `authorized_keys` command generation) | Rich multi-dimensional categorization and instant filtering across vault items (Phase 20, v0.0.2.2), decoupling discovery from hierarchical pods while maintaining Layer 2 AES-256-GCM encryption, paired with terminal-ergonomic SSH key management |
 | 24 | Bulk Operations & 207 Multi-Status Import (`POST /api/vault/bulk-import` with up to 1000 items, scoped 10MB parser, per-record Zod validation, HTTP 207 Multi-Status partial success envelope `{ inserted, errors }`, `DELETE /api/vault/bulk` with cascade attachment deletion and audit logging, floating action bar in `VaultShell.tsx` guarded by `!isLocked`, multi-select batch pod/tag operations, and import error resolution chips) | High-volume vault migration and mass item management without single-record HTTP request roundtrips or silent tag loss (Phase 21, v0.0.2.3, Tasks 41 & 42) |
 | 25 | Bitwarden Universal Ingestion, Composite Item Ergonomics & Dual Export Suite (Bitwarden JSON/CSV parser with folder-to-pod normalization, dynamic RFC 6238 TOTP engine, secondary login URIs with Layer 2 metadata encryption, client-side password generation history sealed with `vault_pearls_history` AAD, migration 0007, zero-knowledge AES-256-GCM encrypted backup envelopes via HKDF/PBKDF2, and RFC 4180 CSV export with password sanitization audit controls) | Enterprise-grade interoperability, credential migration fidelity, and sovereign backup archival (Phase 21 Sub-Phase, v0.0.2.3) |
+| 26 | Note Attachments Parity, Ghost Pod Purging & Post-Verification Seam Hardening (Migration 0008 adding `attachments TEXT DEFAULT '[]'` to `vault_secure_notes`, `NoteSchemas` validation with cascade child deletion in `notes.ts`, `podUtils.ts` case-insensitive pod sanitization eliminating ghost `Attachment` pod, lifted `selectedItemId` and decoupled progress/error banners from view-routing `<AnimatePresence mode="wait">` preserving item selection focus, tiered verification templates `verificationChecklist-basic.md`/`verificationChecklist-advanced`, and 25-test `uiSeams.test.ts` suite) | Closes operational seams discovered during physical human verification, establishing 1:1 attachment parity across notes and logins while solidifying the live verification handshake protocol (Phase 21 Post-Verification Hardening, v0.0.2.3) |
 
 ---
 

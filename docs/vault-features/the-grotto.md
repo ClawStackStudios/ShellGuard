@@ -16,7 +16,7 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 | Item Type | Icon | Encrypted Payload Fields | Metadata Fields (Layer 2 Encrypted) |
 | :--- | :--- | :--- | :--- |
 | **Vault Pearl (Login)** | 🔑 | `secret` (Password), `totp_secret` (Seed), `attachments` (File IDs), `custom_fields` | `title`, `username`, `url`, `category`, `notes`, `tags` |
-| **Secure Note** | 📝 | `content` (Markdown body), `custom_fields` | `title`, `category`, `notes`, `tags` |
+| **Secure Note** | 📝 | `content` (Markdown body), `attachments` (File IDs), `custom_fields` | `title`, `category`, `notes`, `tags` |
 | **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields` | `title`, `username`, `category`, `notes`, `tags` |
 | **Encrypted Attachment**| 📎 | Encrypted file BLOB (AES-GCM up to 500 MB streaming, 1000 MB quota) | `title`, `file_name`, `mime_type`, `category` |
 

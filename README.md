@@ -383,16 +383,16 @@ npm run start:api
 | `POST` | `/api/vault/bulk-import` | canWrite | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, returns HTTP 207 Multi-Status with `{ inserted, errors }`) |
 | `PUT` | `/api/vault/:id` | canEdit | Update a login |
 | `DELETE` | `/api/vault/bulk` | canDelete | Batch delete pearls by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
-| `DELETE` | `/api/vault/:id` | canDelete | Delete a login |
+| `DELETE` | `/api/vault/:id` | canDelete | Delete a login (cascades linked attachments) |
 
 ### Secure Notes
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
 | `GET` | `/api/notes` | canRead | List secure notes (supports `?tags=a,b`) |
-| `POST` | `/api/notes` | canWrite | Create a secure note |
+| `POST` | `/api/notes` | canWrite | Create a secure note (supports `tags` and `attachments`) |
 | `PUT` | `/api/notes/:id` | canEdit | Update a secure note |
-| `DELETE` | `/api/notes/:id` | canDelete | Delete a secure note |
+| `DELETE` | `/api/notes/:id` | canDelete | Delete a secure note (cascades linked attachments) |
 
 ### SSH Keys
 
@@ -409,11 +409,11 @@ npm run start:api
 |---|---|---|---|
 | `GET` | `/api/attachments` | canRead | List encrypted attachments metadata |
 | `GET` | `/api/attachments/:id/file` | canRead | Stream / download encrypted attachment BLOB |
-| `POST` | `/api/attachments` | canWrite | Upload attachment (multipart/form-data streaming, 500 MB per-file ceiling, 1000 MB quota) |
+| `POST` | `/api/attachments` | canWrite | Upload attachment (multipart/form-data streaming, 500 MB per-attachment ceiling, 1000 MB quota) |
 | `PUT` | `/api/attachments/:id` | canEdit | Update attachment metadata |
 | `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment and release quota |
 
-Password entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the login's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 500 MB max per file, 1000 MB grotto quota). Deleting a login cascade-deletes its linked attachments.
+Password and Secure Note entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the parent's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 500 MB max per attachment, 1000 MB grotto quota). Deleting a login or secure note cascade-deletes its linked attachments.
 
 ### Agent Keys (LobsterKeys©™)
 

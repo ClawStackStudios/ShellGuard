@@ -24,6 +24,7 @@ tests/data-*/
 # .claude/
 # .clinerules/
 .clinerules/scratch/
+.agents/scratch/
 .crustagent/
 
 # Local export fixtures & test data

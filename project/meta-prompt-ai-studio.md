@@ -40,10 +40,11 @@ flowchart TD
     Phase18["🎨 Stage 19: Phase 18 — Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation ✅<br/>(Task 35: Composite Items, Decoupling & Keypair Engine · Task 36: Master Form, Live TOTP & Count Reconciliation)"]
     Phase19["📦 Stage 20: Phase 19 — Attachment SQLite BLOB Migration & Streaming Architecture ✅<br/>(Task 37: BLOB Storage, Streaming Handlers & Quotas · Task 38: Progress Uploads & File Previewers)"]
     Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ✅<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Filter State · Sub-tasks: 500MB Ceiling & SSH Key Ergonomics)"]
-    Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ⬜<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
-    Stage23["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ⬜<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
-    Stage24["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
+    Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ✅<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
+    Phase22["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ⬜<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
+    Phase23["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
     Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ⬜<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
+    Phase25["📦 Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock ⬜<br/>(Task 49: Habitat ZIP Archive Engine & Streamed Packaging · Task 50: Two-Stage Ingestion & Reactive Dock)"]
     Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
 
     Step0 --> UploadContext
@@ -72,17 +73,18 @@ flowchart TD
     Phase21 --> Phase22
     Phase22 --> Phase23
     Phase23 --> Phase24
-    Phase24 --> Summit
+    Phase24 --> Phase25
+    Phase25 --> Summit
 ```
 
 > **Transcription state**: **22 phases transcribed** (Stage 0 → 22, `v0.0.0.0`
 > void → `v0.0.2.3` parity) — the walk and the codebase occupy the same commit
 > through the summit tag. **Phases 17–21 (`v0.0.1.9` → `v0.0.2.3`) are SHIPPED.**
 > **Stage 18.5** records the post-summit hotfix receipt (`07ccd61`).
-> **Stages 23–25 (Phases 22–24) are QUEUED** in the
+> **Stages 23–26 (Phases 22–25) are QUEUED** in the
 > active forward queue; each stage prompt is transcribed when its phase becomes
 > the next molt. Execution order is strictly chronological:
-> Phase 21 → 22 → 23 → 24 — the `Stage N = Phase N−1` invariant
+> Phase 21 → 22 → 23 → 24 → 25 — the `Stage N = Phase N−1` invariant
 > holds across the whole spine, with the unphased hotfix at the decimal slot. Each
 > queued stage's **Documentation Impact** line is part of that phase's definition
 > of done (docs-hygiene): the executing agent syncs every listed doc before the
@@ -1464,6 +1466,64 @@ full test oracle + tsc + build stay clean!
 
 ---
 
+## 📦 Stage 26 (Queued): Phase 25 Prompt — Habitat Full-Archive Mobility & Reactive Ingestion Dock [work-driven — provisional v0.0.2.7 (Build 29)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-25-habitat-full-archive-mobility--reactive-ingestion-dock-work-driven-version--provisional-v0027-build-29)
+> for complete specifications on **Task 49** and **Task 50**.
+> **⚠️ Execution state**: QUEUED — executes after Phase 24; green-light from
+> Lucas still required.
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP spec & dock) · docs/vault-features/attachments.md · ARCHITECTURE.md (Delta #27) · BLUEPRINT.md · README.md
+> **📖 Required Context Files for Phase 25**:
+> 1. [`import-export-spec.md`](./import-export-spec.md) — §1 (Export formats), §2 (Archive wire format), §3 (Import security invariants).
+> 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1 (The firewall), §6 (Invariants — server never reads decrypted attachments).
+> 3. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §8 (Reef Modernist Ingestion Dock & progress tokens).
+> 4. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 25 (Tasks 49 & 50)** once green-lit:
+
+```markdown
+# PHASE 25 EXECUTION: Habitat Full-Archive Mobility & Reactive Ingestion Dock [work-driven — provisional v0.0.2.7 (Build 29)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 25 (Task 49: Habitat ZIP Packaging Engine & Streamed Attachment Decryption · Task 50: Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock).
+- `import-export-spec.md`: §1–§3 (export formats, archive wire format, import invariants).
+- `shellcryption-spec.md`: §1, §6 (firewall, zero-knowledge invariants).
+- `ui-ux-design-system.md`: §8 (ingestion dock tokens, progress rings).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Execute Phase 25 adhering to the Functionality + UI Component pairing:
+
+### Task 49: [Functionality] Habitat ZIP Packaging Engine & Streamed Attachment Decryption
+- Client-side streaming ZIP archive generator (`src/lib/habitatExport.ts`): fetch
+  encrypted attachment BLOBs via `GET /api/attachments/:id/file` (streamed chunks);
+  decrypt in-memory using active `shellKey`; stream files into client ZIP writer
+  with constant bounded memory overhead (O(largest single file), never O(total archive)).
+- Deterministic, collision-free folder hierarchy:
+  `attachments/<pod>/<item_title>__[<id_short>]/<file_name>` with path-traversal
+  sanitization (`../`).
+- Embed `attachment_manifest` inside the root `shellguard_vault_export.json`
+  mapping attachment ID, file name, parent item ID, size, and checksum.
+- Gated behind ClawKey challenge authorization.
+- Unit tests in `tests/unit/habitat-export.test.ts`.
+
+### Task 50: [UI Component] Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock
+- Universal Dropzone in `ImportExportView.tsx`: accepts `.zip` or unzipped directory.
+- Stage 1 (Instant Vault Ingestion): parse root JSON, preview breakdown in modal,
+  persist primary items via `POST /api/vault/bulk-import` (<2s), close modal.
+- Stage 2 (Reactive Ingestion Dock): floating Reef Modernist dock in `VaultShell.tsx`
+  streaming background multipart uploads with pause, cancel, and per-item retry.
+- Reactive Item State: `ItemDetailPane.tsx` displays glowing pulsing indicator chips
+  (`📎 filename (Uploading 45%...)`) transitioning to verified ready state upon upload
+  completion.
+- `beforeunload` warning during active background ingestion.
+
+Verify exporting a habitat with multiple attachments packages cleanly with zero
+collision overwrites, dropping a Habitat ZIP restores primary vault items in under
+2s, background dock processes queued attachments smoothly with live item badge
+updates, and the full test oracle + tsc + build stay clean!
+```
+
 ---
 
 ## 🏔️ The Summit
@@ -1474,7 +1534,7 @@ at Stage 18** with its security-hardening receipts (`7faf51d`, `027506a`,
 merge `9b5ec31`), followed by the post-summit hotfix recorded at **Stage 18.5**
 (`07ccd61`).
 
-The walk does not end at the summit — it molts. **Stages 21–25 (Phases 20–24)
+The walk does not end at the summit — it molts. **Stages 21–26 (Phases 20–25)
 are queued** in the active forward queue of [`../ROADMAP.md`](../ROADMAP.md);
 each stage prompt is transcribed when its phase becomes the next molt. Receipts
 accrue per phase, the sliding window keeps the roadmap honest, and this spine

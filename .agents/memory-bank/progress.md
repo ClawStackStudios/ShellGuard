@@ -49,6 +49,7 @@
 - [ ] **Phase 22: Reef Polish Pass — Unified Search [provisional v0.0.2.4 (Build 26)]** — Tasks 43 & 44: One search bar to rule the reef (client-side, zero-knowledge over already-decrypted in-memory corpus matching titles, keywords, attachment names, note contents, custom fields); header/sidebar search removal; verify Eye-beside-Copy ergonomics.
 - [ ] **Phase 23: Bitwarden-Model Item Integrity [provisional v0.0.2.5 (Build 27)]** — Tasks 45 & 46: Attachment parent enforcement at bedrock (reject standalone attachments; orphan quarantine), notes reject password payloads, type-truthful dashboard display.
 - [ ] **Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [provisional v0.0.2.6 (Build 28)]** — Tasks 47 & 48: WebCrypto fallback vector parity against NIST/RFC/SP vectors (unskip test), mechanized constant-time sweep in CI, claim battery gate script, threat-model addendum.
+- [ ] **Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [provisional v0.0.2.7 (Build 29)]** — Tasks 49 & 50: Collision-proof client-side streaming ZIP export with decrypted attachments and embedded manifest; Two-Stage Ingestion Pipeline (<2s instant vault bulk-import + non-blocking reactive background Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
 
 ## Current Status
 

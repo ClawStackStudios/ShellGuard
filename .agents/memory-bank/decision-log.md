@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-23 — Phase 25 formalization & full-archive mobility architecture
+Recognized that client-side attachment archive export and non-blocking ingestion is an industry-wide blindspot (Bitwarden produces export ZIPs but cannot import them, forcing manual item-by-item uploads). Elevated from a sub-task into dedicated Phase 25 ("Habitat Full-Archive Mobility & Reactive Ingestion Dock") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 49 establishes collision-proof streaming ZIP packaging with decrypted attachments, and Task 50 delivers a Two-Stage Ingestion Pipeline (<2s instant bulk-import + floating non-blocking reactive Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
+
 ## 2026-09-22 — Release v0.0.2.3 (Build 25) & ClawStack release protocol execution
 Executed release protocol for v0.0.2.3 ("The Deep Ingestion & Vault Parity Molt"). Maintained Single Active Release Draft invariant by drafting RELEASE-v0.0.2.3.md and purging RELEASE-v0.0.2.2.md. Archived Phase 18 to ROADMAP-HISTORY.md preserving the 3-completed-phases sliding window in ROADMAP.md. Synchronized version anchors across package.json, README badge, CHANGELOG.md, and ARCHITECTURE.md with 100% green test oracle.
 
@@ -60,7 +63,4 @@ Adopted `long-term-memory-bank` rule into `.agents/memory-bank/long-term/`. Crys
 
 ## 2026-09-17 — agent bank separation (.agents vs .clinerules)
 Lucas clarified hard bank boundary: Antigravity's memory bank is strictly `.agents/memory-bank/`; Cline's is `.clinerules/memory-bank/`. No cross-mirroring between agent banks — stay in your own bank. Reverted any accidental touch to `.clinerules/` to keep Cline's state pure.
-
-## 2026-09-17 — carabase brand asset alignment & web server favicon distinction
-Lucas noticed the prior steampunk lobster had awkward asymmetry and claws emerging from the rear. Re-anchored to the CaraBase woodcut engraving style: forward/downward crab gaze, pincers clasping the safe door, and 3D 'S' crest. For the favicon, Lucas directed dropping the inner vault arch and using the notched carapace crest shield with a glowing cyan Web Globe in the center to cleanly distinguish the self-hosted Web Server from the TOTP mobile companion.
 

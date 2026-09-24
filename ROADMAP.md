@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-09-22
-current_position: "v0.0.2.3 (Build 25) — released & live; next Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics (provisional v0.0.2.4 / Build 26) — queue 22 → 23 → 24"
+last_updated: 2026-09-23
+current_position: "v0.0.2.3 (Build 25) — released & live; next Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics (provisional v0.0.2.4 / Build 26) — queue 22 → 23 → 24 → 25"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "████████████████████ 83% (20 of 24 formalized phases)"
+  features_completed: "████████████████████ 80% (20 of 25 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -230,6 +230,73 @@ mentions it.
 > addendum names in-process limiter semantics, LRU eviction, and redaction
 > coverage explicitly; SECURITY.md and the portal threat-model agree; the full
 > test oracle + `tsc` + build stay clean.
+
+---
+
+### Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [work-driven version — provisional v0.0.2.7 (Build 29)]
+
+> Phase Feature Set Overview:
+> Elevates vault portability and user sovereignty to first-class status, 1-upping industry standards
+> (such as Bitwarden's write-only attachment zip). Solves both halves of the attachment archive challenge:
+> (1) **Habitat Archive Packaging (Task 49)**: A client-side, zero-knowledge streamed export engine that
+> packages unencrypted or encrypted vault records alongside all decrypted binary attachments inside a
+> single `.zip` archive. Prevents filename collision bugs via deterministic, human-readable directory
+> structures (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`) backed by an embedded manifest
+> in the JSON export.
+> (2) **Two-Stage Ingestion Pipeline & Reactive Ingestion Dock (Task 50)**: Ingesting an archive splits
+> into two phases to completely eliminate browser freezing and chore-like upload modal traps:
+>   - **Stage 1 (Instant Vault Ingestion, <2s)**: Reads the ZIP's central directory, extracts the primary
+>     vault JSON, and bulk-inserts all records atomically via `POST /api/vault/bulk-import`. Items immediately
+>     appear in the user's dashboard and folder tree.
+>   - **Stage 2 (Non-Blocking Reactive Ingestion Dock)**: Hands off attachment payloads to a persistent,
+>     floating "Abyssal Ingestion Dock" in `VaultShell.tsx` that streams encrypted multipart uploads in the
+>     background. Items with in-flight uploads render bioluminescent pulsing chips (`📎 Uploading 45%...`) that
+>     transition to `📎 Verified` upon completion, with pause, cancel, and per-item retry ergonomics.
+> *(Source: Lucas & Antigravity, 2026-09-23 — archive mobility & non-blocking ingestion architectural pass.)*
+
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP specification & ingestion dock) - docs/vault-features/attachments.md (archive mobility) - ARCHITECTURE.md (Two-Stage Ingestion Pipeline, Delta #27) - BLUEPRINT.md - README.md
+
+- [ ] **Task 49: [Functionality] Habitat ZIP Packaging Engine & Streamed Attachment Decryption**
+
+Description: Implement client-side ZIP archive creation and attachment decryption in
+`src/lib/habitatExport.ts`. When the user initiates a Habitat export, iterate through all
+vault items with linked attachments; fetch encrypted BLOBs via `GET /api/attachments/:id/file`
+using streamed chunking; decrypt each file in-memory using active session `shellKey`; stream
+files into a browser ZIP writer (e.g. `client-zip` / `fflate` streaming reader/writer) with
+constant bounded memory overhead (O(largest single file), never O(total archive)).
+Establish a deterministic collision-proof directory layout:
+`attachments/<pod>/<item_title>__[<id_short>]/<file_name>` with path-sanitization against path
+traversal (`../`). Generate an embedded `attachment_manifest` inside the root
+`shellguard_vault_export.json` mapping each attachment ID, file name, parent item ID, size,
+and checksum. Auth-gated behind ClawKey verification.
+
+> Success Criteria: Exporting a habitat with multiple attachments (including items sharing identical
+> filenames) packages cleanly into a valid ZIP; memory footprint stays bounded; server never sees
+> decrypted bytes (zero-knowledge); manifest accurately links every file to its parent; tests in
+> `tests/unit/habitat-export.test.ts` verify round-trip packaging and zero collision overwrites;
+> full test oracle + `tsc` + build stay clean.
+
+- [ ] **Task 50: [UI Component] Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock**
+
+Description: Deliver the universal archive ingestion interface in `ImportExportView.tsx` and
+`VaultShell.tsx`.
+(1) **Universal Zip Sniffer & Stage 1 Unpacker**: Dropzone accepts `.zip` or unzipped folders
+(via `webkitdirectory`). Detects Habitat ZIP, extracts root JSON, displays breakdown in Batch
+Import Preview modal (passwords, notes, keys, detected attachments count & total MB), and
+immediately commits primary items via `POST /api/vault/bulk-import` (<2s), closing the modal.
+(2) **Abyssal Ingestion Dock**: Minimized, floating Reef Modernist dock in `VaultShell.tsx`
+(bottom-right viewport) displaying real-time background ingestion queue (`Ingesting Attachments • 3 of 12 completed (28%) [████░░░░]`).
+Supports expand/collapse, pause, resume, cancel, and per-item retry.
+(3) **Reactive Item State Synchronization**: In `ItemDetailPane.tsx` and `ItemListPane.tsx`,
+items with attachments currently in the ingestion pipeline render glowing pulsing indicator
+chips (`📎 filename (Uploading 45%...)`). Once an attachment's multipart upload completes and
+links to the parent item, state updates reactively to verified ready state without page reload.
+(4) `beforeunload` guard warns user if navigating away while background ingestion is active.
+
+> Success Criteria: Dropping a Habitat ZIP restores primary vault items in under 2 seconds; background
+> dock smoothly processes queued attachment uploads without freezing the UI or blocking vault browsing;
+> in-flight attachment chips render real-time progress and transition to ready state; pause/cancel
+> controls function reliably; full test oracle + `tsc` + build pass 100% green.
 
 ---
 

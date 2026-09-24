@@ -188,6 +188,14 @@
 - When updating a subset of item attributes across multiple items (e.g. bulk moving items to a pod or assigning tags), ensure existing metadata fields (such as `tags: item.tags`) are explicitly preserved in the payload sent to the update endpoint.
 - *Rationale:* Endpoints that update records by overwriting column values will silently clear unmentioned fields if not preserved by the client adapter.
 
+**Pattern: Thoughtful Systems & User Interface Symbiosis (Two-Stage Ingestion & Ambient Docking)**
+- When architecting heavy, multi-resource client-side workflows (e.g. multi-gigabyte vault mobility with binary attachments up to 500MB):
+  - Decouple the operation into a fast transactional phase and an ambient streaming phase.
+  - **Stage 1 (Transactional Core)**: Persist lightweight relational metadata immediately (<2s) to liberate the UI and fulfill human intent without delay.
+  - **Stage 2 (Non-Blocking Ingestion Dock)**: Offload heavy streaming I/O to a persistent, minimized ambient tray/dock with explicit pause/cancel/retry controls.
+  - **Reactive Visual Grounding**: Reflect in-flight background state directly within the primary workspace (e.g. pulsing status chips on item detail cards) so the UI remains dynamic and truthful, never static or detached.
+- *Rationale:* Eliminates the false dilemma between blocking modal progress traps (which freeze the user) and disconnected background tasks (which cause stale/ghost state confusion). Architecture and interface must be co-designed as a single grain.
+
 ---
 
 ## React & Frontend

@@ -685,5 +685,21 @@ Learnings:
 Successes:
 - Clean 100% verification pass across all test assertions, compilation, and security contracts.
 ---
+Date: 2026-09-23
+TaskRef: "Thoughtful Systems & User Interface Design Relationship — Phase 25 Formalization"
+
+Learnings:
+- The user interface is not an aesthetic coat of paint applied after backend architecture is locked; it is the physical expression of the system's operational grain.
+- When evaluating industry precedents (e.g. Bitwarden's attachment export), identified why other tools fail: Bitwarden implemented a backend export ZIP with attachments, but completely failed to build an import interface, forcing users to manually open every single vault item and re-upload files one by one.
+- Ingestion bottlenecks for heavy binary payloads (up to 500MB per file) cannot be solved by a monolithic modal progress bar (which traps the user in a chore-like freeze) nor by an invisible detached background task (which leads to stale UI and phantom state confusion).
+- Co-designed the Two-Stage Ingestion Pipeline: Stage 1 delivers instant (<2s) transactional bulk-import of core JSON records to immediately unblock vault navigation, while Stage 2 offloads streaming attachment encryption and uploads to an ambient floating Abyssal Ingestion Dock in VaultShell with live in-flight status badges on individual vault items.
+- Recognized the necessity of respecting feature gravity: rather than cramming this architecture into a sub-task of a search polish phase, elevated it into dedicated Phase 25 ("Habitat Full-Archive Mobility & Reactive Ingestion Dock").
+
+Difficulties:
+- Resolving the tension between browser memory constraints (heap exhaustion when unpacking multi-gigabyte ZIPs) and zero-knowledge client encryption invariants. Resolved by mandating bounded streaming chunk readers/writers (O(single file) memory footprint).
+
+Successes:
+- Synthesized and formalized Phase 25 across ROADMAP.md, meta-prompt-ai-studio.md, and cognitive memory bank with 100% green lint check.
+---
 
 

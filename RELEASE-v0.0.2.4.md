@@ -54,6 +54,10 @@ Welcome to **v0.0.2.4 (Build 26)** of **ShellGuard**! This release delivers a st
 ### 🧪 5. Comprehensive Unit Testing
 - **10 Dedicated Test Cases (`tests/unit/vaultSearch.test.ts`)**: Covers empty/whitespace queries, title matches, username matches, multi-URI array parsing, decrypted note content, custom fields, attachment filenames, tags (JSON array and comma-separated), and resilient malformed JSON handling.
 
+### 📚 6. Dedicated VitePress Search Documentation Portal
+- **Unified Vault & Pod Search Guide (`docs/vault-features/search.md`)**: Comprehensive documentation detailing client-side zero-knowledge search mechanics (`vaultSearch.ts`), deep multi-field matching, in-memory lifecycle with lock purge, and the separation of concerns between Item List Pane search and Scoped Pod Tree filtering (`SidebarFolderTree.tsx`).
+- **Portal Integration**: Fully integrated into `docs/.vitepress/config.ts`, `docs/vault-features/index.md`, `docs/vault-features/the-grotto.md`, and `docs/reference/design-system.md`.
+
 ---
 
 ## 🏗️ Architectural Topology Map

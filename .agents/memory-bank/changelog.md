@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.0.2.4] - 2026-09-23
+
+### Added
+- **Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics (Tasks 43 & 44)**:
+  - **Robust Unified Vault Search Engine (`src/lib/vaultSearch.ts`)**: Pure client-side zero-knowledge search matching across already-decrypted in-memory items (`vaultItems`): item titles, usernames, primary URLs, secondary URIs, login notes, decrypted Secure Note markdown content, custom field names and values (across text, hidden, checkbox, and linked types), attachment filenames, and assigned tag names.
+  - **Zero-Knowledge Lock Purge**: Search terms and result state execute in browser RAM only (never sent across the network) and automatically purge when `isLocked` flips to `true` or upon logout.
+  - **Search Surface Consolidation**: Pruned 358 lines of redundant search markup and state by removing the top-right search bar and dropdown from `Header.tsx` and the top search bar from `Sidebar.tsx`.
+  - **Ergonomic Pod-Scoped Search**: Retained the dedicated "Search Pods..." input in `SidebarFolderTree.tsx` for high-speed local filtering of large pod hierarchies directly where the user looks.
+  - **Eye-beside-Copy Ergonomics Verified**: Verified unmask toggle (Eye/EyeOff) remains strictly positioned immediately to the left of Copy across all masked rows (password, SSH private key, hidden custom fields) with full `••••••••••••••••` masking invariants.
+  - **Unit Test Suite (`tests/unit/vaultSearch.test.ts`)**: 10 dedicated unit tests covering multi-field querying, case-insensitivity, secondary URIs, decrypted notes, custom fields, attachment filenames, tags, and malformed JSON resilience.
+
+## [0.0.2.3] - 2026-09-22
+
 ### Added
 - **Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite (Sub-Phases 21.1, 21.2, 21.3)**:
   - **Universal Bitwarden Ingestion Pipeline (`src/lib/bitwarden.ts`)**: Supports both unencrypted Bitwarden JSON and CSV exports; normalizes folders to pods (`normalizePod`); translates custom fields (text, hidden, checkbox, linked); serializes compound SSH keypairs; sniffs encrypted Bitwarden exports to provide clear user guidance to export unencrypted or use CLI.

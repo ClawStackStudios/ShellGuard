@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
 last_updated: 2026-09-23
-current_position: "v0.0.2.3 (Build 25) — released & live; next Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics (provisional v0.0.2.4 / Build 26) — queue 22 → 23 → 24 → 25"
+current_position: "v0.0.2.4 (Build 26) — released & live; next Phase 23: Bitwarden-Model Item Integrity (provisional v0.0.2.5 / Build 27) — queue 23 → 24 → 25"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "████████████████████ 80% (20 of 25 formalized phases)"
+  features_completed: "█████████████████████ 84% (21 of 25 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,89 +13,22 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 22+) and the 3 most recent completed phases (Phases 19, 20, and 21).*
-> *Historical Phases 1 through 18 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 23+) and the 3 most recent completed phases (Phases 20, 21, and 22).*
+> *Historical Phases 1 through 19 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.3 (Build 25)`
-- **Next Planned Milestone**: `v0.0.2.4 (Build 26)` (Phase 22)
+- **Current Production Release**: `v0.0.2.4 (Build 26)`
+- **Next Planned Milestone**: `v0.0.2.5 (Build 27)` (Phase 23)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 22 completes, Phase 19 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 23 completes, Phase 20 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
-
-### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [work-driven version — provisional v0.0.2.4 (Build 26)]
-
-> Phase Feature Set Overview:
-> A polish-and-ergonomics bracket in two movements: (1) **one search bar to
-> rule the reef** — the sidebar search and the top-right header search are
-> removed, the search above the password list becomes the single search
-> surface, and the engine behind it becomes robust (titles, keywords,
-> attachment file names, note contents — all client-side, zero-knowledge
-> preserved); (2) **control ergonomics verify-only** — the Eye-beside-Copy
-> relocation was FOLDED INTO Phase 19 Task 38 (2026-09-18); this phase only
-> re-verifies it after the search consolidation. No schema, no API contract changes; the server
-> NEVER receives a search query. The version digit is decided by the
-> completed work (No Forced Targets); the queue position after Phase 21 makes
-> the provisional label `v0.0.2.4 (Build 26)`. *(Source: Lucas, 2026-09-13 —
-> post-v0.0.1.9 hands-on pass; expanded with the search consolidation.)*
-
-> 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only
-
-- [x] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
-
-Description: Implement the unified search engine in the client over the
-**already-decrypted in-memory corpus** (`vaultItems` state — `App.tsx` decrypts
-pearls, note `content`, custom fields and attachment rows into state after
-every fetch; no new decryption path is required). One shared `searchQuery`
-single-source-of-truth (lifted from `ItemListPane` to `App.tsx`/`VaultShell`)
-drives matching across, case-insensitively: item **titles**, **keywords**
-(usernames, URLs, note text), **attachment file names**
-(`vault_secure_attachments.file_name` metadata), **note contents** (decrypted
-plaintext held in memory), and custom-field values. Substring matching on a
-decrypt-once corpus (O(n) per keystroke is acceptable at vault scale; memoize
-the corpus so it is not rebuilt per keystroke). 🛡️ Zero-knowledge
-invariants: the query NEVER leaves the browser (no `?q=` params, no server
-search endpoint — the server cannot search what it cannot read); the search
-state and any result cache live in memory only and are purged on lock/logout
-with the shellKey. Update `VaultShell`'s filter chain to consume the unified
-query; keep type-filter and pod-scope filters composing with it (AND).
-
-> Success Criteria: Searching from the single search bar surfaces matches by
-> title, keyword (username/url), attachment file name, and note content; the
-> network tab shows zero search requests (query never transmitted); results
-> compose with pod/type filters; lock purges the query; the full test oracle
-> + `tsc` + build stay clean.
-
-- [x] **Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics**
-
-Description: Reduce the vault to **one master search bar** (above the
-password list) while retaining dedicated pod-scoped search. (1) Remove the
-**top-right header search** from `Layout/Header.tsx` (input, dropdown,
-`searchInputRef`/`searchDropdownRef` props and their consumers in `App.tsx`).
-(2) Remove the **sidebar top search bar** from `Layout/Sidebar.tsx` (duplicate
-`headerSearchQuery` state, keydown bindings, and dropdown). (3) **Retain
-sidebar pod-search input** in `Vault/SidebarFolderTree.tsx` (`podSearch` state)
-for rapid filtering of large pod hierarchies directly where the user looks.
-(4) `ItemListPane`'s search becomes the single master vault search surface,
-wired to the unified engine. (5) **Control ergonomics — FOLDED INTO PHASE 19
-Task 38** (Lucas, 2026-09-18): the Eye-beside-Copy relocation ships earlier
-with the BLOB/preview pass, extended to every masked field row (password, SSH
-private key, hidden custom fields); this task verifies it still holds after the
-search consolidation.
-
-> Success Criteria: Exactly one search input renders in the vault UI (above
-> the list); sidebar and header contain no search controls; the Eye-beside-Copy
-> ergonomics delivered by Phase 19 still holds on every masked field row; the
-> full test oracle + `tsc` + build stay clean.
-
----
 
 ### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [work-driven version — provisional v0.0.2.5 (Build 27)]
 
@@ -255,7 +188,7 @@ mentions it.
 >     transition to `📎 Verified` upon completion, with pause, cancel, and per-item retry ergonomics.
 > *(Source: Lucas & Antigravity, 2026-09-23 — archive mobility & non-blocking ingestion architectural pass.)*
 
-> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP specification & ingestion dock) - docs/vault-features/attachments.md (archive mobility) - ARCHITECTURE.md (Two-Stage Ingestion Pipeline, Delta #27) - BLUEPRINT.md - README.md
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP specification & ingestion dock) - docs/vault-features/attachments.md (archive mobility) - ARCHITECTURE.md (Two-Stage Ingestion Pipeline, Delta #30) - BLUEPRINT.md - README.md
 
 - [ ] **Task 49: [Functionality] Habitat ZIP Packaging Engine & Streamed Attachment Decryption**
 
@@ -314,6 +247,71 @@ links to the parent item, state updates reactively to verified ready state witho
 ---
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
+
+### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [v0.0.2.4 (Build 26)] ✅
+
+> Phase Feature Set Overview:
+> A polish-and-ergonomics bracket in two movements: (1) **one search bar to
+> rule the reef** — the sidebar search and the top-right header search are
+> removed, the search above the password list becomes the single search
+> surface, and the engine behind it becomes robust (titles, keywords,
+> attachment file names, note contents — all client-side, zero-knowledge
+> preserved); (2) **control ergonomics verify-only** — the Eye-beside-Copy
+> relocation was FOLDED INTO Phase 19 Task 38 (2026-09-18); this phase only
+> re-verifies it after the search consolidation. No schema, no API contract changes; the server
+> NEVER receives a search query.
+> *(Receipts: Phase 22 Tasks 43 & 44, 2026-09-23. Released & live.)*
+
+> 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only — ✅ synced.
+
+- [x] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
+
+Description: Implement the unified search engine in the client over the
+**already-decrypted in-memory corpus** (`vaultItems` state — `App.tsx` decrypts
+pearls, note `content`, custom fields and attachment rows into state after
+every fetch; no new decryption path is required). One shared `searchQuery`
+single-source-of-truth (lifted from `ItemListPane` to `App.tsx`/`VaultShell`)
+drives matching across, case-insensitively: item **titles**, **keywords**
+(usernames, URLs, note text), **attachment file names**
+(`vault_secure_attachments.file_name` metadata), **note contents** (decrypted
+plaintext held in memory), and custom-field values. Substring matching on a
+decrypt-once corpus (O(n) per keystroke is acceptable at vault scale; memoize
+the corpus so it is not rebuilt per keystroke). 🛡️ Zero-knowledge
+invariants: the query NEVER leaves the browser (no `?q=` params, no server
+search endpoint — the server cannot search what it cannot read); the search
+state and any result cache live in memory only and are purged on lock/logout
+with the shellKey. Update `VaultShell`'s filter chain to consume the unified
+query; keep type-filter and pod-scope filters composing with it (AND).
+
+> Success Criteria: Searching from the single search bar surfaces matches by
+> title, keyword (username/url), attachment file name, and note content; the
+> network tab shows zero search requests (query never transmitted); results
+> compose with pod/type filters; lock purges the query; the full test oracle
+> + `tsc` + build stay clean.
+
+- [x] **Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics**
+
+Description: Reduce the vault to **one master search bar** (above the
+password list) while retaining dedicated pod-scoped search. (1) Remove the
+**top-right header search** from `Layout/Header.tsx` (input, dropdown,
+`searchInputRef`/`searchDropdownRef` props and their consumers in `App.tsx`).
+(2) Remove the **sidebar top search bar** from `Layout/Sidebar.tsx` (duplicate
+`headerSearchQuery` state, keydown bindings, and dropdown). (3) **Retain
+sidebar pod-search input** in `Vault/SidebarFolderTree.tsx` (`podSearch` state)
+for rapid filtering of large pod hierarchies directly where the user looks.
+(4) `ItemListPane`'s search becomes the single master vault search surface,
+wired to the unified engine. (5) **Control ergonomics — FOLDED INTO PHASE 19
+Task 38** (Lucas, 2026-09-18): the Eye-beside-Copy relocation ships earlier
+with the BLOB/preview pass, extended to every masked field row (password, SSH
+private key, hidden custom fields); this task verifies it still holds after the
+search consolidation.
+
+> Success Criteria: Exactly one search input renders in the vault UI (above
+> the list); sidebar and header contain no search controls; the Eye-beside-Copy
+> ergonomics delivered by Phase 19 still holds on every masked field row; the
+> full test oracle + `tsc` + build stay clean.
+
+---
 
 ### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)] ✅
 
@@ -427,60 +425,9 @@ state alongside search keywords and pod selection.
 
 ---
 
-### Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)] ✅
+## 🏛️ Historical Archive (Phases 1 through 19)
 
-> Phase Feature Set Overview:
-> Migrates binary attachment payloads from base64 text strings into native SQLite BLOB
-> storage with a streamed wire contract: multipart (Busboy) uploads of already-encrypted
-> bytes, metadata-only list responses, and chunked 1MB BLOB downloads via
-> `GET /api/attachments/:id/file`. Enforces a 50MB per-file ceiling and a 500MB per-owner
-> grotto quota (both `413` fail-closed). The vault UI gains real-time upload progress with
-> cancel, on-demand streamed decryption, encrypted inline previews for images/PDFs, and the
-> Eye-beside-Copy ergonomics folded forward from Phase 22.
-> *(Receipts: `f4f6073` — Task 37 BLOB storage + streaming + quota,
-> `27df54b` — Task 38 streaming UI + previews + ergonomics fold-in,
-> `dee897f` — documentation impact sync, 2026-09-18. Released & live.)*
-
-> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB file_data, size_bytes) - ARCHITECTURE.md (streaming wire contract, quota enforcement, Delta 21 & 22) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (chunked GET /file, multipart POST, metadata-only PUT) - docs/vault-features/attachments.md (BLOB architecture, limits) — ✅ synced.
-
-- [x] **Task 37: [Functionality] Native BLOB Storage Migration, Streaming Wire Contract & Strict Quotas**
-
-Description: Create `migrations/0005_attachment_blobs.up.sql` rebuilding `vault_secure_attachments`
-with `file_data BLOB NOT NULL` and `size_bytes INTEGER NOT NULL`. Implement idempotent in-code
-backfill (`attachmentBlobs.ts`) re-encoding legacy base64 TEXT rows into raw binary ShellCryption
-envelopes. Refactor `attachments.ts`: replace base64 JSON parser with `busboy` multipart streaming,
-reject uploads exceeding 50MB (`ATTACHMENT_MAX_MB`) or 500MB per-owner quota (`GROTTO_QUOTA_MB`) with
-`413` mid-stream; strip `file_data` from list responses; implement `GET /api/attachments/:id/file`
-streaming 1MB chunks. Add comprehensive integration suite in `tests/attachments-blob.test.ts`.
-
-> Success Criteria: Base64 JSON parser removed; 50MB files upload and download via streaming
-> with constant memory overhead; over-quota uploads reject with 413; 100% test oracle passes.
-
-- [x] **Task 38: [UI Component] Streaming Attachment Manager, In-Memory Decryption & Inline Previews**
-
-Description: Update client attachment handling in `ItemFormModal.tsx` and `ItemDetailPane.tsx`:
-stream encrypted payloads via `FormData` with live progress bars and cancel support; download
-and decrypt BLOB chunks on-demand using active `shellKey`; render encrypted inline image/PDF previews
-(Blob object URL). **Eye-beside-Copy fold-in delivered**: Unmask immediately LEFT of Copy
-on hidden custom-field rows (the password/SSH secret row already shipped the cluster);
-masked value stays in the value column; full-value mask invariant intact.
-
-> Success Criteria: Uploads display smooth percentage progress with cancel ✅; downloads
-> decrypt on demand with the server never seeing plaintext ✅; image/PDF previews render
-> in the encrypted object-URL modal ✅; the Eye-beside-Copy cluster holds on every masked
-> field row ✅; the full test oracle (230 tests) + `tsc` + `vite build` + `docs:build`
-> stay clean ✅.
-
----
-
-
-
----
-
-
-## 🏛️ Historical Archive (Phases 1 through 18)
-
-Earlier development phases (`v0.0.0.0` void through `v0.0.2.0` Build 20) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.2.1` Build 22) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -503,5 +450,6 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.2.0` Build 20) are per
 | **Phase 16** | `v0.0.1.8 (Build 17)` | Docs Bridge Parity, Agentic Infrastructure & Version Resolver — Summit | Tasks 31 & 32 |
 | **Phase 17** | `v0.0.1.9 (Build 20)` | Key Ledger Hardening & Pod Purity — Security Hotfix | Tasks 33 & 34 |
 | **Phase 18** | `v0.0.2.0 (Build 20)` | Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation | Tasks 35 & 36 |
+| **Phase 19** | `v0.0.2.1 (Build 22)` | Attachment SQLite BLOB Migration & Streaming Architecture | Tasks 37 & 38 |
 
 ---

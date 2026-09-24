@@ -54,7 +54,7 @@
 
 ## Current Status
 
-**v0.0.2.3 (Build 25 — The Deep Ingestion & Vault Parity Molt)** — released & live; Phase 22 implemented on `feat/phase-22-unified-search`. 100% green test oracle (27 test suites, 323 tests passed, 1 skipped). Build (`vite build`) and documentation portal (`docs:build`) 100% clean. Next milestone in queue: **Phase 23 (provisional v0.0.2.5 / Build 27)**.
+**v0.0.2.4 (Build 26 — Reef Polish Pass: Unified Search & Control Ergonomics)** — released & live; next milestone in queue: **Phase 23 (provisional v0.0.2.5 / Build 27)**.
 
 ## Known Issues
 

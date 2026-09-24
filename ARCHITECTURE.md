@@ -760,8 +760,12 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `unit/bitwarden-import.test.ts` | Universal Bitwarden JSON and CSV ingestion engine, folder-to-pod normalization, and custom field conversion |
 | `unit/vault-export.test.ts` | Dual export suite: RFC 4180 CSV with password sanitization audit controls, and AES-256-GCM encrypted backup envelopes via HKDF/PBKDF2 |
 | `unit/totpUtils.test.ts` | RFC 6238 published reference test vectors (SHA1/SHA256/SHA512, 6/8 digits), dynamic period calculations, and otpauth URI parser |
+| `vault-bulk-import.test.ts` | High-volume multi-record JSON ingestion, scoped 10MB parser, 207 Multi-Status partial error arrays, and transactional rollback |
+| `unit/vaultDelete.test.ts` | Bulk item deletion API, ownership filtering, linked attachment cascading, and audit log generation |
+| `unit/uiSeams.test.ts` | Post-verification seam hardening: note attachment arrays, ghost pod purging, decoupled banner persistence, and view selection focus |
+| `unit/vaultSearch.test.ts` | Pure client-side zero-knowledge search engine matching titles, usernames, URLs, secondary URIs, decrypted notes, custom fields, attachment filenames, and tags |
 
-Run them: `npm test` (all 24 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 27 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 

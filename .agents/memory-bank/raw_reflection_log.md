@@ -1,5 +1,27 @@
 ---
 Date: 2026-09-23
+TaskRef: "Walk the Docs Protocol — Phase 22 Search Documentation & VitePress Portal Parity"
+
+Learnings:
+- Added dedicated VitePress documentation portal page `docs/vault-features/search.md` ("Unified Vault & Pod Search") detailing client-side zero-knowledge search mechanics (`vaultSearch.ts`), deep multi-field matching, in-memory lifecycle with lock purge, and the separation of concerns between Item List Pane search and Scoped Pod Tree filtering (`SidebarFolderTree.tsx`).
+- Updated `docs/.vitepress/config.ts` to include Vault & Pod Search in the `/vault-features/` sidebar.
+- Added cross-references in `docs/vault-features/index.md` (CardGrid + bottom nav), `docs/vault-features/the-grotto.md`, and `docs/reference/design-system.md`.
+- Discovered and corrected documentation drift in `ARCHITECTURE.md` test suite table (missing `vault-bulk-import.test.ts`, `unit/uiSeams.test.ts`, `unit/vaultDelete.test.ts`, and `unit/vaultSearch.test.ts`), updating from 23/24 suites to all 27 test suites sequential.
+- Verified link integrity and markdown syntax via automated test suites: `tests/unit/docsLinks.test.ts` (5/5 passed) and `tests/unit/mermaidDiagrams.test.ts` (5/5 passed).
+
+Difficulties:
+- None; existing test harnesses (`docsLinks.test.ts` and `mermaidDiagrams.test.ts`) caught link parity immediately.
+
+Successes:
+- `npm run docs:build` built cleanly in 93.93s with 0 broken links and 0 errors.
+- `tsc --noEmit` and Vitest suites pass 100% green.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Automated link and mermaid oracles (`docsLinks.test.ts`, `mermaidDiagrams.test.ts`) provide rapid, deterministic verification of VitePress portal documentation before running full static site builds.
+---
+
+---
+Date: 2026-09-23
 TaskRef: "Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics (Tasks 43 & 44)"
 
 Learnings:

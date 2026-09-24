@@ -15,7 +15,7 @@
 - [x] **Lobster Keys CaraBase Parity & Rate Limiter Hardening** — full 4-step wizard, key cards, toast provider, and fixed auth-order rate-limiter bug
 - [x] **Multi-user architecture** — Bitwarden-style locked dashboard, QuickLoginModal overlay, background account locking, robust routing
 - [x] **Triple-layer encryption** — ShellCryption + Per-Row + SQLCipher, all documented
-- [x] **Test harness** — 26 suites, 313 tests passing (1 skipped), per-suite DATA_DIR isolation
+- [x] **Test harness** — 27 suites, 323 tests passing (1 skipped), per-suite DATA_DIR isolation
 - [x] **Containerization** — multi-stage node:20-alpine, PUID/PGID, healthcheck, compose stacks
 - [x] **CI** — docker-publish workflow → ghcr.io/clawstackstudios/shellguard
 - [x] **Unraid template** — Community Applications XML

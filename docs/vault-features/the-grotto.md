@@ -102,20 +102,14 @@ ShellGuard supports multi-dimensional tagging alongside hierarchical pods:
 
 ---
 
-## 🔍 Robust Unified Vault Search Engine (Client-Side & Zero-Knowledge)
+## 🔍 Robust Unified Vault & Pod Search Engine
 
-ShellGuard unifies all vault item search into a single consolidated search bar positioned prominently above the item list in the `ItemListPane`:
+ShellGuard separates search into two purpose-built, zero-knowledge search bars tailored to user focus:
 
-- **Decrypted In-Memory Corpus**: Searches across the already-decrypted in-memory vault items in real time without making additional network calls or requiring re-decryption.
-- **Deep Multi-Field Matching**: Case-insensitively queries:
-  - **Item Titles & Usernames**: Instant primary credential filtering.
-  - **URLs & Multi-URIs**: Matches primary domain URLs and all secondary URIs stored in composite logins.
-  - **Notes & Content**: Searches login notes and decrypted markdown content of Secure Notes.
-  - **Custom Fields**: Matches both custom field names and decrypted values across text, hidden, checkbox, and linked types.
-  - **Attachment File Names**: Matches linked and standalone attachment filenames.
-  - **Tags**: Matches assigned tag names.
-- **🛡️ Strict Zero-Knowledge**: The search query NEVER leaves the browser. No search parameters are sent over HTTP, no server endpoints index secret contents, and all search state is automatically purged from memory upon vault lock or logout.
-- **Ergonomic Surface Consolidation**: Vault item search is anchored exclusively to the item list pane, while pod navigation in the sidebar retains a dedicated scoped filter for rapid pod discovery.
+1. **Item Search Bar (`ItemListPane`)**: Consolidated directly above the credential list, querying in-memory decrypted titles, usernames, URLs, secondary URIs, notes, custom fields, attachment filenames, and tags in real time.
+2. **Pod Search Bar (`SidebarFolderTree`)**: Anchored above the Pod tree in the navigation sidebar, providing high-speed scoped path filtering across 50+ pods without polluting credential search queries.
+
+> 📖 **Deep Dive**: See the dedicated [Unified Vault & Pod Search](/vault-features/search) guide for full architectural specifications, security invariants, and surface consolidation rationale.
 
 ---
 

@@ -31,6 +31,9 @@ The ShellGuard aesthetic, dubbed **"Bioluminescent Defense"**, marries deep abys
 ## 👁️ Control Ergonomics — The Eye-beside-Copy Rule
 
 On **every masked field row** (password, SSH private key, hidden custom field), the **Unmask (Eye/EyeOff) toggle sits in the right-hand action cluster, immediately LEFT of Copy** — matching the eye-cluster the eye is already drawn to. The masked value stays in the value column; the full-value mask invariant holds (every character → `•`, no partial masks — NEVER-list). Introduced for hidden custom fields in Phase 19 (v0.0.2.1, folded forward from the Phase 22 ergonomics pass); the password/secret row already shipped this cluster.
+ 
+### Search Surface Ergonomics & Unified Focus
+To eliminate visual clutter and cognitive overhead, vault search is consolidated to a single dedicated search bar directly above the vault list stream in `ItemListPane`. In contrast to fragmented header or floating search bars, this places the query field in immediate spatial proximity to the list being filtered. Pod hierarchies retain an independent, pod-scoped filter within `SidebarFolderTree`, maintaining fast navigational filtering without conflating folder filtering with secret content searching (see [Unified Vault & Pod Search](/vault-features/search)).
 
 ---
 

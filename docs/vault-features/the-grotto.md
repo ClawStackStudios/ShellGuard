@@ -102,6 +102,17 @@ ShellGuard supports multi-dimensional tagging alongside hierarchical pods:
 
 ---
 
+## 🔍 Robust Unified Vault & Pod Search Engine
+
+ShellGuard separates search into two purpose-built, zero-knowledge search bars tailored to user focus:
+
+1. **Item Search Bar (`ItemListPane`)**: Consolidated directly above the credential list, querying in-memory decrypted titles, usernames, URLs, secondary URIs, notes, custom fields, attachment filenames, and tags in real time.
+2. **Pod Search Bar (`SidebarFolderTree`)**: Anchored above the Pod tree in the navigation sidebar, providing high-speed scoped path filtering across 50+ pods without polluting credential search queries.
+
+> 📖 **Deep Dive**: See the dedicated [Unified Vault & Pod Search](/vault-features/search) guide for full architectural specifications, security invariants, and surface consolidation rationale.
+
+---
+
 ## ⏱️ Dynamic RFC 6238 TOTP Authenticator Engine
 
 ShellGuard includes a zero-knowledge, client-side dynamic TOTP engine (`totpUtils.ts`):

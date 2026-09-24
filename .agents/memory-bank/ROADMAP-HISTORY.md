@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 18 (`v0.0.0.0` → `v0.0.2.0`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 19 (`v0.0.0.0` → `v0.0.2.1`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 19, 20, and 21), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 20, 21, and 22), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -991,3 +991,50 @@ action modal inside `SshKeyVaultView.tsx`. Update documentation in `docs/vault-f
 > Success Criteria: Vault view renders rich composite cards with embedded TOTP
 > countdowns and attachment action chips; folder badges accurately reflect primary
 > items; SSH key generator modal copies public keys and stores private keys in one click.
+
+---
+
+## Phase 19: Attachment SQLite BLOB Migration & Streaming Architecture [v0.0.2.1 (Build 22)]
+
+> Phase Feature Set Overview:
+> Migrates binary attachment payloads from base64 text strings into native SQLite BLOB
+> storage with a streamed wire contract: multipart (Busboy) uploads of already-encrypted
+> bytes, metadata-only list responses, and chunked 1MB BLOB downloads via
+> `GET /api/attachments/:id/file`. Enforces a 50MB per-file ceiling and a 500MB per-owner
+> grotto quota (both `413` fail-closed). The vault UI gains real-time upload progress with
+> cancel, on-demand streamed decryption, encrypted inline previews for images/PDFs, and the
+> Eye-beside-Copy ergonomics folded forward from Phase 22.
+> *(Receipts: `f4f6073` — Task 37 BLOB storage + streaming + quota,
+> `27df54b` — Task 38 streaming UI + previews + ergonomics fold-in,
+> `dee897f` — documentation impact sync, 2026-09-18. Released & live.)*
+
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (BLOB file_data, size_bytes) - ARCHITECTURE.md (streaming wire contract, quota enforcement, Delta 21 & 22) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (chunked GET /file, multipart POST, metadata-only PUT) - docs/vault-features/attachments.md (BLOB architecture, limits) — ✅ synced.
+
+- [x] **Task 37: [Functionality] Native BLOB Storage Migration, Streaming Wire Contract & Strict Quotas**
+
+Description: Create `migrations/0005_attachment_blobs.up.sql` rebuilding `vault_secure_attachments`
+with `file_data BLOB NOT NULL` and `size_bytes INTEGER NOT NULL`. Implement idempotent in-code
+backfill (`attachmentBlobs.ts`) re-encoding legacy base64 TEXT rows into raw binary ShellCryption
+envelopes. Refactor `attachments.ts`: replace base64 JSON parser with `busboy` multipart streaming,
+reject uploads exceeding 50MB (`ATTACHMENT_MAX_MB`) or 500MB per-owner quota (`GROTTO_QUOTA_MB`) with
+`413` mid-stream; strip `file_data` from list responses; implement `GET /api/attachments/:id/file`
+streaming 1MB chunks. Add comprehensive integration suite in `tests/attachments-blob.test.ts`.
+
+> Success Criteria: Base64 JSON parser removed; 50MB files upload and download via streaming
+> with constant memory overhead; over-quota uploads reject with 413; 100% test oracle passes.
+
+- [x] **Task 38: [UI Component] Streaming Attachment Manager, In-Memory Decryption & Inline Previews**
+
+Description: Update client attachment handling in `ItemFormModal.tsx` and `ItemDetailPane.tsx`:
+stream encrypted payloads via `FormData` with live progress bars and cancel support; download
+and decrypt BLOB chunks on-demand using active `shellKey`; render encrypted inline image/PDF previews
+(Blob object URL). **Eye-beside-Copy fold-in delivered**: Unmask immediately LEFT of Copy
+on hidden custom-field rows (the password/SSH secret row already shipped the cluster);
+masked value stays in the value column; full-value mask invariant intact.
+
+> Success Criteria: Uploads display smooth percentage progress with cancel ✅; downloads
+> decrypt on demand with the server never seeing plaintext ✅; image/PDF previews render
+> in the encrypted object-URL modal ✅; the Eye-beside-Copy cluster holds on every masked
+> field row ✅; the full test oracle (230 tests) + `tsc` + `vite build` + `docs:build`
+> stay clean ✅.
+

@@ -32,6 +32,9 @@ The ShellGuard vault is an offline-capable, sovereign secrets engine engineered 
   <Card title="Built-In TOTP Authenticator" href="/vault-features/the-grotto#built-in-totp-authenticator-engine" icon="⏱️" tag="2FA">
     Generate RFC 6238 two-factor authentication codes in-memory with real-time rolling countdown tickers.
   </Card>
+  <Card title="Unified Vault & Pod Search" href="/vault-features/search" icon="🔍" tag="Ergonomics">
+    Client-side, zero-knowledge search across in-memory decrypted items with dedicated scoped pod tree filtering.
+  </Card>
 </CardGrid>
 
 ---
@@ -71,6 +74,7 @@ flowchart TD
 ## 🧭 Navigating Vault Documentation
 
 - **[The Grotto & Pods](/vault-features/the-grotto)**: Deep dive into login credentials, secure notes, SSH keys, custom fields, and hierarchical pod categorization.
+- **[Unified Vault & Pod Search](/vault-features/search)**: Zero-knowledge client-side search across decrypted credentials and dedicated scoped pod tree filtering.
 - **[Password Attachments](/vault-features/attachments)**: Learn how the reference-model file attachment engine isolates encrypted binary files without bloating login queries.
 - **[Pearl Password Generator](/vault-features/pearl-generator)**: Explore entropy scoring, CSPRNG character sets, and ephemeral memory management.
 - **[Import & Export](/vault-features/import-export)**: Understand sovereign JSON vault backups, CSV metadata export, and client-side `.sgtotp.bak` Android companion decryption.

@@ -9,14 +9,12 @@ import {
   Unlock, 
   AlertTriangle, 
   X,
-  Search,
-  Shield,
   PanelLeftClose,
   PanelLeftOpen
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ThemeToggle } from "../Theme/ThemeToggle.tsx";
-import { Lobster, VaultItem, VaultItemType } from "../../types.ts";
+import { Lobster, VaultItemType } from "../../types.ts";
 
 interface HeaderProps {
   user: Lobster | null;
@@ -30,16 +28,6 @@ interface HeaderProps {
   onAddAccount?: () => void;
   onRemoveAccount?: (uuid: string) => void;
   onLockAccount?: (uuid: string) => void;
-  // Search
-  searchQuery?: string;
-  onSearchQueryChange?: (q: string) => void;
-  isSearchFocused?: boolean;
-  onSearchFocusChange?: (f: boolean) => void;
-  matchingVaultItems?: VaultItem[];
-  onSelectSearchResult?: (item: VaultItem) => void;
-  onSearchSubmit?: (e: React.FormEvent) => void;
-  searchInputRef?: React.RefObject<HTMLInputElement>;
-  searchDropdownRef?: React.RefObject<HTMLDivElement>;
   // Add menu
   isHeaderAddMenuOpen?: boolean;
   onHeaderAddMenuToggle?: () => void;
@@ -60,15 +48,6 @@ export function Header({
   onAddAccount,
   onRemoveAccount,
   onLockAccount,
-  searchQuery = "",
-  onSearchQueryChange,
-  isSearchFocused = false,
-  onSearchFocusChange,
-  matchingVaultItems = [],
-  onSelectSearchResult,
-  onSearchSubmit,
-  searchInputRef,
-  searchDropdownRef,
   isHeaderAddMenuOpen = false,
   onHeaderAddMenuToggle,
   onOpenAdd,
@@ -153,24 +132,8 @@ export function Header({
           </div>
         </div>
 
-        {/* Right Side: Search, Add, Account Switcher & Actions */}
+        {/* Right Side: Add, Account Switcher & Actions */}
         <div className="flex items-center gap-2 md:gap-3">
-
-          {/* Search bar */}
-          {user && !isLocked && (
-            <form onSubmit={onSearchSubmit} className="relative hidden md:flex items-center">
-              <Search className="w-3.5 h-3.5 absolute left-3 text-theme-muted pointer-events-none" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchQueryChange?.(e.target.value)}
-                onFocus={() => onSearchFocusChange?.(true)}
-                placeholder="Search vault… (/ or ⌘K)"
-                className="h-8 w-40 lg:w-56 pl-8 pr-3 text-xs rounded-xl bg-slate-100 dark:bg-white/5 border border-theme-subtle focus:outline-none focus:ring-2 focus:ring-claw-cyan text-theme-main placeholder:text-theme-subtle transition-all"
-              />
-            </form>
-          )}
 
           {/* Add button */}
           {user && !isLocked && onOpenAdd && (
@@ -346,29 +309,6 @@ export function Header({
           <ThemeToggle />
         </div>
       </div>
-
-      {/* ── Search Dropdown ── */}
-      {isSearchFocused && matchingVaultItems.length > 0 && onSelectSearchResult && (
-        <div
-          ref={searchDropdownRef}
-          className="absolute left-0 right-0 top-full z-50 mx-4 mt-1 bg-white dark:bg-[#1a0c12] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
-        >
-          {matchingVaultItems.slice(0, 6).map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelectSearchResult(item)}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 text-left transition-colors cursor-pointer border-b border-slate-100 dark:border-white/5 last:border-none"
-            >
-              <Shield className="w-4 h-4 text-claw-cyan shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-theme-main truncate">{item.title}</p>
-                <p className="text-[10px] text-theme-muted truncate">{item.username || item.type}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* ── Custom Removal Confirmation Modal (Reef Modernist) ── */}
       <AnimatePresence>

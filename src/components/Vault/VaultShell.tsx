@@ -4,6 +4,7 @@ import { ItemListPane } from './ItemListPane.tsx';
 import { ItemDetailPane } from './ItemDetailPane.tsx';
 import { isItemInPod } from '../../lib/podUtils.ts';
 import { filterItemsByTags, extractAllTags } from '../../lib/tagUtils.ts';
+import { searchVaultItems } from '../../lib/vaultSearch.ts';
 import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
 
 interface VaultShellProps {
@@ -64,6 +65,7 @@ export function VaultShell({
     if (isLocked) {
       setSelectedItems(new Set());
       setBulkModalType(null);
+      setSearchQuery("");
     }
   }, [isLocked]);
 
@@ -119,12 +121,7 @@ export function VaultShell({
     }
 
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(i => 
-        (i.title || "").toLowerCase().includes(q) ||
-        (i.username || "").toLowerCase().includes(q) ||
-        (i.url || "").toLowerCase().includes(q)
-      );
+      result = searchVaultItems(result, searchQuery);
     }
 
     // Sort by recency (created_at desc)

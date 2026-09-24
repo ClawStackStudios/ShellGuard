@@ -15,7 +15,7 @@
 - [x] **Lobster Keys CaraBase Parity & Rate Limiter Hardening** — full 4-step wizard, key cards, toast provider, and fixed auth-order rate-limiter bug
 - [x] **Multi-user architecture** — Bitwarden-style locked dashboard, QuickLoginModal overlay, background account locking, robust routing
 - [x] **Triple-layer encryption** — ShellCryption + Per-Row + SQLCipher, all documented
-- [x] **Test harness** — 26 suites, 313 tests passing (1 skipped), per-suite DATA_DIR isolation
+- [x] **Test harness** — 27 suites, 323 tests passing (1 skipped), per-suite DATA_DIR isolation
 - [x] **Containerization** — multi-stage node:20-alpine, PUID/PGID, healthcheck, compose stacks
 - [x] **CI** — docker-publish workflow → ghcr.io/clawstackstudios/shellguard
 - [x] **Unraid template** — Community Applications XML
@@ -44,16 +44,17 @@
 - [x] **AGPL-3.0 license** — added and npm audit vulnerabilities fixed.
 - [x] **Port migration** — settled on :6464 (web) / :6565 (API) development topology, disentangled from CaraBase port range.
 
+- [x] **Phase 22 Implemented — Unified Search & Control Ergonomics (provisional v0.0.2.4, Build 26)** — Tasks 43 & 44: Pure client-side zero-knowledge unified search engine in `src/lib/vaultSearch.ts` querying across decrypted in-memory items (title, username, url, uris, notes, decrypted note secret content, custom fields, attachment filenames, tags); search state purged on lock; consolidated search surfaces by removing redundant global search bars and dropdowns from `Header.tsx` and `Sidebar.tsx` while retaining pod-scoped search in `SidebarFolderTree.tsx`; verified Eye-beside-Copy unmask ergonomics across all masked field rows. Proven by `tests/unit/vaultSearch.test.ts` (10 tests) and all 27 test files (323 tests passed, 1 skipped).
+
 ## What's Left to Build
 
-- [ ] **Phase 22: Reef Polish Pass — Unified Search [provisional v0.0.2.4 (Build 26)]** — Tasks 43 & 44: One search bar to rule the reef (client-side, zero-knowledge over already-decrypted in-memory corpus matching titles, keywords, attachment names, note contents, custom fields); header/sidebar search removal; verify Eye-beside-Copy ergonomics.
 - [ ] **Phase 23: Bitwarden-Model Item Integrity [provisional v0.0.2.5 (Build 27)]** — Tasks 45 & 46: Attachment parent enforcement at bedrock (reject standalone attachments; orphan quarantine), notes reject password payloads, type-truthful dashboard display.
 - [ ] **Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [provisional v0.0.2.6 (Build 28)]** — Tasks 47 & 48: WebCrypto fallback vector parity against NIST/RFC/SP vectors (unskip test), mechanized constant-time sweep in CI, claim battery gate script, threat-model addendum.
 - [ ] **Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [provisional v0.0.2.7 (Build 29)]** — Tasks 49 & 50: Collision-proof client-side streaming ZIP export with decrypted attachments and embedded manifest; Two-Stage Ingestion Pipeline (<2s instant vault bulk-import + non-blocking reactive background Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
 
 ## Current Status
 
-**v0.0.2.3 (Build 25 — The Deep Ingestion & Vault Parity Molt)** — released & live on `feature/phase-21-bulk-operations-11309179680338905330`. 100% green test oracle (26 test suites, 313 tests passed, 1 skipped). Build (`vite build`) and documentation portal (`docs:build`) 100% clean. Next milestone: **Phase 22 (provisional v0.0.2.4 / Build 26)**.
+**v0.0.2.4 (Build 26 — Reef Polish Pass: Unified Search & Control Ergonomics)** — released & live; next milestone in queue: **Phase 23 (provisional v0.0.2.5 / Build 27)**.
 
 ## Known Issues
 

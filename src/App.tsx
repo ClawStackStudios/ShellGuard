@@ -25,7 +25,6 @@ import {
   Zap,
   Settings,
   Menu,
-  Search,
   Database,
   Save,
   CheckCircle2,
@@ -132,15 +131,10 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Global Header Search & Vault Tab sync
-  const [headerSearchQuery, setHeaderSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [activeTypeFilter, setActiveTypeFilter] = useState<VaultItemType | "all">("all");
   const [isAddingVaultItem, setIsAddingVaultItem] = useState(false);
   const [editingVaultItem, setEditingVaultItem] = useState<VaultItem | null>(null);
   const [isHeaderAddMenuOpen, setIsHeaderAddMenuOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchDropdownRef = useRef<HTMLDivElement>(null);
   const headerAddMenuRef = useRef<HTMLDivElement>(null);
   // Phase 19: streaming upload progress + cancel handle for in-flight attachments.
   const [uploadProgress, setUploadProgress] = useState<{ name: string; percent: number } | null>(null);
@@ -185,21 +179,11 @@ export default function App() {
     };
   }, []);
 
-  // Global keyboard shortcuts for quick search
+  // Global keyboard shortcuts (Escape closes header add menu)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setIsSearchFocused(true);
-      } else if (e.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setIsSearchFocused(true);
-      } else if (e.key === "Escape") {
-        setIsSearchFocused(false);
+      if (e.key === "Escape") {
         setIsHeaderAddMenuOpen(false);
-        searchInputRef.current?.blur();
       }
     };
 
@@ -220,17 +204,9 @@ export default function App() {
     };
   }, []);
 
-  // Click outside to dismiss search results dropdown and header add menu
+  // Click outside to dismiss header add menu
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        searchDropdownRef.current && 
-        !searchDropdownRef.current.contains(e.target as Node) &&
-        searchInputRef.current &&
-        !searchInputRef.current.contains(e.target as Node)
-      ) {
-        setIsSearchFocused(false);
-      }
       if (
         headerAddMenuRef.current &&
         !headerAddMenuRef.current.contains(e.target as Node)
@@ -242,37 +218,6 @@ export default function App() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Filter vault items in real time for global search
-  const matchingVaultItems = useMemo(() => {
-    if (!headerSearchQuery.trim()) return [];
-    const q = headerSearchQuery.toLowerCase();
-    return vaultItems.filter((item) => {
-      const matchTitle = item.title?.toLowerCase().includes(q);
-      const matchUser = item.username?.toLowerCase().includes(q);
-      const matchUrl = item.url?.toLowerCase().includes(q);
-      const matchCategory = item.category?.toLowerCase().includes(q);
-      const matchNotes = item.notes?.toLowerCase().includes(q);
-      const matchSecret = item.type === "note" && item.secret?.toLowerCase().includes(q);
-      return Boolean(matchTitle || matchUser || matchUrl || matchCategory || matchNotes || matchSecret);
-    });
-  }, [vaultItems, headerSearchQuery]);
-
-  const handleSelectSearchResult = (item: VaultItem) => {
-    const itemType = (item.type as VaultItemType) || "password";
-    setActiveTypeFilter(itemType);
-    setHeaderSearchQuery(item.title);
-    setView("vault");
-    setIsSearchFocused(false);
-    searchInputRef.current?.blur();
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setView("vault");
-    setIsSearchFocused(false);
-    searchInputRef.current?.blur();
-  };
 
   // Inactivity timeout in minutes. 0 means disabled.
   const [inactivityTimeout, setInactivityTimeout] = useState<number>(() => {
@@ -1133,16 +1078,6 @@ export default function App() {
           onAddAccount={handleAddAccount}
           onRemoveAccount={handleRemoveAccount}
           onLockAccount={handleLockAccount}
-          // Search props
-          searchQuery={headerSearchQuery}
-          onSearchQueryChange={setHeaderSearchQuery}
-          isSearchFocused={isSearchFocused}
-          onSearchFocusChange={setIsSearchFocused}
-          matchingVaultItems={matchingVaultItems}
-          onSelectSearchResult={handleSelectSearchResult}
-          onSearchSubmit={handleSearchSubmit}
-          searchInputRef={searchInputRef}
-          searchDropdownRef={searchDropdownRef}
           // Add menu props
           isHeaderAddMenuOpen={isHeaderAddMenuOpen}
           onHeaderAddMenuToggle={() => setIsHeaderAddMenuOpen(!isHeaderAddMenuOpen)}

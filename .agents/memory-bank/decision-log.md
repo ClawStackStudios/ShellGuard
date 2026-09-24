@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-23 — Phase 22: Search surface consolidation & pod search retention
+Lucas's ergonomic intuition refined Phase 22: while header search and sidebar top search duplicate the master vault item search, the dedicated pod search in SidebarFolderTree.tsx pays its rent by allowing rapid filtering of large pod hierarchies directly where the user looks. Retained podSearch in the tree while purging redundant global search bars from Header.tsx and Sidebar.tsx, unifying vault item search into ItemListPane.tsx via vaultSearch.ts.
+
 ## 2026-09-23 — Phase 25 formalization & full-archive mobility architecture
 Recognized that client-side attachment archive export and non-blocking ingestion is an industry-wide blindspot (Bitwarden produces export ZIPs but cannot import them, forcing manual item-by-item uploads). Elevated from a sub-task into dedicated Phase 25 ("Habitat Full-Archive Mobility & Reactive Ingestion Dock") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 49 establishes collision-proof streaming ZIP packaging with decrypted attachments, and Task 50 delivers a Two-Stage Ingestion Pipeline (<2s instant bulk-import + floating non-blocking reactive Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
 

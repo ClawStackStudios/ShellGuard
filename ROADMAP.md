@@ -48,7 +48,7 @@ statistics:
 
 > 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only
 
-- [ ] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
+- [x] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
 
 Description: Implement the unified search engine in the client over the
 **already-decrypted in-memory corpus** (`vaultItems` state — `App.tsx` decrypts
@@ -73,21 +73,22 @@ query; keep type-filter and pod-scope filters composing with it (AND).
 > compose with pod/type filters; lock purges the query; the full test oracle
 > + `tsc` + build stay clean.
 
-- [ ] **Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics**
+- [x] **Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics**
 
-Description: Reduce the vault to **one search bar** — the one above the
-password list. (1) Remove the **top-right header search** from
-`Layout/Header.tsx` (input, dropdown, `searchInputRef`/`searchDropdownRef`
-props and their consumers in `App.tsx` — lines ~160–170). (2) Remove the
-**sidebar pod-search input** from `Vault/SidebarFolderTree.tsx`
-(`podSearch` state, `~lines 49, 62–65, 264`) — the pod tree renders
-unfiltered (pod-name filtering folds into future backlog if wanted). (3)
-`ItemListPane`'s search becomes the single surface, wired to the unified
-engine. (4) **Control ergonomics — FOLDED INTO PHASE 19 Task 38** (Lucas,
-2026-09-18): the Eye-beside-Copy relocation ships earlier with the BLOB/preview
-pass, extended to every masked field row (password, SSH private key, hidden
-custom fields); this task verifies it still holds after the search
-consolidation.
+Description: Reduce the vault to **one master search bar** (above the
+password list) while retaining dedicated pod-scoped search. (1) Remove the
+**top-right header search** from `Layout/Header.tsx` (input, dropdown,
+`searchInputRef`/`searchDropdownRef` props and their consumers in `App.tsx`).
+(2) Remove the **sidebar top search bar** from `Layout/Sidebar.tsx` (duplicate
+`headerSearchQuery` state, keydown bindings, and dropdown). (3) **Retain
+sidebar pod-search input** in `Vault/SidebarFolderTree.tsx` (`podSearch` state)
+for rapid filtering of large pod hierarchies directly where the user looks.
+(4) `ItemListPane`'s search becomes the single master vault search surface,
+wired to the unified engine. (5) **Control ergonomics — FOLDED INTO PHASE 19
+Task 38** (Lucas, 2026-09-18): the Eye-beside-Copy relocation ships earlier
+with the BLOB/preview pass, extended to every masked field row (password, SSH
+private key, hidden custom fields); this task verifies it still holds after the
+search consolidation.
 
 > Success Criteria: Exactly one search input renders in the vault UI (above
 > the list); sidebar and header contain no search controls; the Eye-beside-Copy

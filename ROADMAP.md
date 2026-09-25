@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
 last_updated: 2026-09-23
-current_position: "v0.0.2.4 (Build 26) — released & live; next Phase 23: Bitwarden-Model Item Integrity (provisional v0.0.2.5 / Build 27) — queue 23 → 24 → 25"
+current_position: "v0.0.2.4 (Build 26) — released & live; next Phase 23: Bitwarden-Model Item Integrity (provisional v0.0.2.5 / Build 27) — queue 23 → 24 → 25 → 26"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "█████████████████████ 84% (21 of 25 formalized phases)"
+  features_completed: "█████████████████████ 81% (21 of 26 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -231,6 +231,74 @@ links to the parent item, state updates reactively to verified ready state witho
 > dock smoothly processes queued attachment uploads without freezing the UI or blocking vault browsing;
 > in-flight attachment chips render real-time progress and transition to ready state; pause/cancel
 > controls function reliably; full test oracle + `tsc` + build pass 100% green.
+
+---
+
+### Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [work-driven version — provisional v0.0.2.8 (Build 30)]
+
+> Phase Feature Set Overview:
+> Introduces an underlying organizational lifecycle and ephemeral tracking system for imported records
+> across all vault types (passwords, notes, and SSH keys). Solves import remorse, accidental migrations, and
+> foreign schema clutter by stamping records with an ephemeral `imported_at` timestamp and unique `import_batch_id`.
+> Governed by a configurable Time-To-Live (TTL) retention window (30m, 60m, 90m, or manual), items maintain
+> temporary imported status that automatically self-destructs into standard permanent records upon timer expiry.
+> Implements "Auto-Graduate on Edit" (editing any imported item immediately adopts it and drops the ephemeral tag),
+> cross-type parity, and progressive disclosure: the UI remains completely silent and visually clean with ZERO
+> imported controls or banners visible unless active imported records are present in the vault. When active, surfaces
+> bioluminescent countdown chips, quick filter toggles, a post-import action hatch in the import view, and one-click
+> atomic batch revert/purge backed by Reef Modernist `ConfirmDialog` controls. Configurable via a dedicated "Config"
+> settings surface.
+> *(Source: Lucas & Antigravity, 2026-09-23 — import lifecycle & ephemeral quarantine pass.)*
+
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (import lifecycle, batch fingerprinting & TTL self-destruct) - docs/vault-features/the-grotto.md (progressive disclosure & batch purge) - ARCHITECTURE.md (Import Ledger & Delta #31) - BLUEPRINT.md - reference/blueprint-schema.md - README.md
+
+- [ ] **Task 51: [Functionality] Ephemeral Import Ledger, Time-to-Live (TTL) Engine & Multi-Batch Tracking**
+
+Description: Establish the Bedrock data layer and lifecycle engine for imported items.
+(1) Database Migration `0010_import_lifecycle.{up,down}.sql`: add `imported_at TEXT` (ISO timestamp) and
+`import_batch_id TEXT` (indexed UUID or prefixed hash `imp_<uuid>`) across `vault_pearls`, `vault_secure_notes`,
+and `vault_ssh_keys`. Backfill defaults to NULL (existing items are permanently graduated).
+(2) Import Ledger & Batch Stamping: Update `POST /api/vault/bulk-import` and individual note/key creation loops
+to generate an atomic `import_batch_id` per ingestion event and stamp `imported_at = new Date().toISOString()`.
+Ensure Layer 2 metadata encryption preserves these fields securely.
+(3) TTL Expiration & Auto-Graduation Engine: Implement lazy and scheduled graduation logic. Items where
+`now - imported_at > retention_minutes` have their imported status dropped seamlessly on retrieval and periodic
+cleanup sweeps.
+(4) "Auto-Graduate on Edit" Adoption Semantics: Updating an item (via `PUT /api/vault/:id`, `PUT /api/notes/:id`,
+`PUT /api/keys/:id`) resets `imported_at = NULL` and `import_batch_id = NULL`, recognizing user adoption.
+(5) Batch Operations API: Implement `POST /api/vault/import-batches/:id/graduate` (promotes all items in batch to
+permanent) and `DELETE /api/vault/import-batches/:id` (atomic batch rollback purging items and cascading linked
+attachments with audit logging).
+(6) Prove zero-knowledge preservation, multi-type parity, and TTL self-destruct in `tests/vault-imported-tracking.test.ts`.
+
+> Success Criteria: Bulk imports across pearls, notes, and SSH keys atomically receive matching `import_batch_id`
+> and timestamps; items past the retention TTL automatically graduate to normal items; editing an item immediately
+> clears its imported status; batch revert completely purges all batch records and linked attachments in a single
+> transaction; full test oracle + `tsc` + build stay clean.
+
+- [ ] **Task 52: [UI Component] "Config" Settings Surface, Ephemeral Import Badges & Rapid Batch Purge**
+
+Description: Deliver the progressive-disclosure UI layer across Settings, VaultShell, and ImportExportView.
+(1) Progressive Disclosure Invariant: The UI is strictly silent with ZERO import-related filter chips, banners,
+or batch options rendered UNLESS active items with unexpired `imported_at` flags exist in state.
+(2) New "Config" Settings Surface: In `Sidebar.tsx` under settings mode, add a dedicated "Config" navigation tab
+leading to `ConfigSettingsView.tsx`. Provide a Reef Modernist segmented button selector for Import Retention Window
+(`[30 min | 60 min | 90 min | Manual / Never]`), an "Auto-Graduate on Edit" toggle, and local encrypted preference
+persistence.
+(3) Dynamic "Imported" Filter & Bioluminescent Badges: When active imported items exist, dynamically display an
+"Imported" filter chip in `ItemListPane.tsx` showing active count and live countdown (`📥 Imported (42) • 58m left`).
+In item list and detail panes, active records display pulsing bioluminescent chips (`📥 Imported`) with individual
+"Graduate" and "Delete" actions.
+(4) Post-Import Action Hatch & Rapid Batch Purge: In `ImportExportView.tsx` upon successful import (and in a floating
+banner in `VaultShell.tsx` while viewing imported items), render an actionable hatch: direct button to "Review Items",
+live TTL countdown, "Graduate All", and "Revert Import" (triggering an atomic batch rollback guarded by `ConfirmDialog`).
+(5) Tri-state multi-select integration: selecting all under the "Imported" filter targets the batch for instant bulk
+deletion or graduation.
+
+> Success Criteria: No import-related badges or filters appear when no imported items exist (100% silent and clean);
+> completing an import immediately surfaces the "Imported" filter, countdown chip, and action hatch; Config settings
+> allow adjusting retention between 30/60/90m and manual; graduation and batch deletion function reliably with
+> ConfirmDialog confirmation; full test oracle + `tsc` + build pass 100% green.
 
 ---
 

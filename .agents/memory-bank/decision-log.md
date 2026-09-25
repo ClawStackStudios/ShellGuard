@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-09-23 — Phase 26 formalization: Import lifecycle, ephemeral TTL & progressive disclosure
+Lucas conceived an underlying organizational system for imported items to combat import remorse and accidental bulk migrations. Formulated Phase 26 ("Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 51 establishes multi-batch fingerprinting (import_batch_id), cross-type parity (pearls, notes, SSH keys), and configurable TTL self-destruct (30m/60m/90m/manual) with auto-graduation upon item edit; Task 52 delivers the "Config" settings surface, dynamic bioluminescent countdown chips, and an atomic batch revert action hatch adhering strictly to Lucas's progressive disclosure invariant (the UI remains 100% silent unless active imported items exist).
+
 ## 2026-09-23 — Phase 22: Search surface consolidation & pod search retention
 Lucas's ergonomic intuition refined Phase 22: while header search and sidebar top search duplicate the master vault item search, the dedicated pod search in SidebarFolderTree.tsx pays its rent by allowing rapid filtering of large pod hierarchies directly where the user looks. Retained podSearch in the tree while purging redundant global search bars from Header.tsx and Sidebar.tsx, unifying vault item search into ItemListPane.tsx via vaultSearch.ts.
 
@@ -60,10 +63,4 @@ Migration 0005 moved attachment payloads from base64 text to native BLOBs. Disco
 
 ## 2026-09-17 — Phase 18: composite items & in-browser ssh keypairs
 Consolidated vault logins into primary rich composite records adhering to Bitwarden's model (passwords embed notes, live TOTP countdown ring, attachments, custom fields). Decoupled child attachments from Pod counts so files never inflate folder badges. Implemented in-browser WebCrypto SSH keypair engine (`src/lib/keyGen.ts` — Ed25519 + RSA-4096).
-
-## 2026-09-17 — long-term memory bank established
-Adopted `long-term-memory-bank` rule into `.agents/memory-bank/long-term/`. Crystallized 16 high-weight ratified entries across `patterns.md`, `decisions.md`, `learnings.md`, and `constraints.md` that held under pressure across multiple releases.
-
-## 2026-09-17 — agent bank separation (.agents vs .clinerules)
-Lucas clarified hard bank boundary: Antigravity's memory bank is strictly `.agents/memory-bank/`; Cline's is `.clinerules/memory-bank/`. No cross-mirroring between agent banks — stay in your own bank. Reverted any accidental touch to `.clinerules/` to keep Cline's state pure.
 

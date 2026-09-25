@@ -41,10 +41,11 @@ flowchart TD
     Phase19["📦 Stage 20: Phase 19 — Attachment SQLite BLOB Migration & Streaming Architecture ✅<br/>(Task 37: BLOB Storage, Streaming Handlers & Quotas · Task 38: Progress Uploads & File Previewers)"]
     Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ✅<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Filter State · Sub-tasks: 500MB Ceiling & SSH Key Ergonomics)"]
     Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ✅<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
-    Phase22["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ⬜<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
+    Phase22["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ✅<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
     Phase23["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
     Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ⬜<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
     Phase25["📦 Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock ⬜<br/>(Task 49: Habitat ZIP Archive Engine & Streamed Packaging · Task 50: Two-Stage Ingestion & Reactive Dock)"]
+    Phase26["⏱️ Stage 27: Phase 26 — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine ⬜<br/>(Task 51: Ephemeral Import Ledger & TTL Engine · Task 52: Config Settings Surface & Rapid Batch Purge)"]
     Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
 
     Step0 --> UploadContext
@@ -74,17 +75,18 @@ flowchart TD
     Phase22 --> Phase23
     Phase23 --> Phase24
     Phase24 --> Phase25
-    Phase25 --> Summit
+    Phase25 --> Phase26
+    Phase26 --> Summit
 ```
 
-> **Transcription state**: **22 phases transcribed** (Stage 0 → 22, `v0.0.0.0`
-> void → `v0.0.2.3` parity) — the walk and the codebase occupy the same commit
-> through the summit tag. **Phases 17–21 (`v0.0.1.9` → `v0.0.2.3`) are SHIPPED.**
+> **Transcription state**: **23 phases transcribed** (Stage 0 → 23, `v0.0.0.0`
+> void → `v0.0.2.4` parity) — the walk and the codebase occupy the same commit
+> through the summit tag. **Phases 17–22 (`v0.0.1.9` → `v0.0.2.4`) are SHIPPED.**
 > **Stage 18.5** records the post-summit hotfix receipt (`07ccd61`).
-> **Stages 23–26 (Phases 22–25) are QUEUED** in the
+> **Stages 24–27 (Phases 23–26) are QUEUED** in the
 > active forward queue; each stage prompt is transcribed when its phase becomes
 > the next molt. Execution order is strictly chronological:
-> Phase 21 → 22 → 23 → 24 → 25 — the `Stage N = Phase N−1` invariant
+> Phase 21 → 22 → 23 → 24 → 25 → 26 — the `Stage N = Phase N−1` invariant
 > holds across the whole spine, with the unphased hotfix at the decimal slot. Each
 > queued stage's **Documentation Impact** line is part of that phase's definition
 > of done (docs-hygiene): the executing agent syncs every listed doc before the
@@ -1526,6 +1528,83 @@ updates, and the full test oracle + tsc + build stay clean!
 
 ---
 
+## ⏱️ Stage 27 (Queued): Phase 26 Prompt — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [work-driven — provisional v0.0.2.8 (Build 30)]
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-26-import-lifecycle-tracking-ephemeral-retention-window--batch-ingestion-quarantine-work-driven-version--provisional-v0028-build-30)
+> for complete specifications on **Task 51** and **Task 52**.
+> **⚠️ Execution state**: QUEUED — executes after Phase 25; green-light from
+> Lucas still required.
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (import lifecycle, batch fingerprinting & TTL self-destruct) · docs/vault-features/the-grotto.md (progressive disclosure & batch purge) · ARCHITECTURE.md (Import Ledger & Delta #31) · BLUEPRINT.md · reference/blueprint-schema.md · README.md
+> **📖 Required Context Files for Phase 26**:
+> 1. [`database-schema.md`](./database-schema.md) — §3 (separated item tables; pearls, notes, SSH keys).
+> 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (bulk import contract, batch operations routes).
+> 3. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1, §6 (zero-knowledge invariants).
+> 4. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §8 (Reef Modernist progressive disclosure, bioluminescent badges, segmented buttons).
+> 5. [`verification-gates.md`](./verification-gates.md) — §2–§3 (Suites, gates).
+
+Copy and paste this prompt to execute **Phase 26 (Tasks 51 & 52)** once green-lit:
+
+```markdown
+# PHASE 26 EXECUTION: Import Lifecycle Tracking & Ephemeral Quarantine [work-driven — provisional v0.0.2.8 (Build 30)]
+
+## 📖 Reference Documentation & Roadmap
+Before writing code, inspect:
+- `../ROADMAP.md`: Phase 26 (Task 51: Ephemeral Import Ledger, Time-to-Live (TTL) Engine & Multi-Batch Tracking · Task 52: "Config" Settings Surface, Ephemeral Import Badges & Rapid Batch Purge).
+- `database-schema.md`: §3 (separated tables: pearls, notes, keys).
+- `routes-and-contracts.md`: §3 (bulk import contract, batch operations).
+- `shellcryption-spec.md`: §1, §6 (zero-knowledge invariants).
+- `ui-ux-design-system.md`: §8 (progressive disclosure, bioluminescent badges, segmented buttons).
+- `verification-gates.md`: §2–§3 (suites, build gates).
+
+Domain rules (locked by Lucas):
+1. Progressive disclosure invariant: The UI MUST be completely silent and visually
+   clean with ZERO import-related filter chips, action bars, or countdown badges rendered
+   UNLESS active items with unexpired imported flags exist in vault state.
+2. Auto-Graduate on Edit: Modifying any imported item (password, note, key, or pod)
+   immediately graduates the item, stripping its ephemeral status permanently.
+3. Multi-type parity: Imported tracking applies uniformly across Passwords (`vault_pearls`),
+   Secure Notes (`vault_secure_notes`), and SSH Keys (`vault_ssh_keys`).
+4. Ephemeral TTL self-destruct: When the configured retention timer expires (30m, 60m, 90m,
+   or manual), items automatically shed the imported flag and become normal vault items.
+
+### Task 51: [Functionality] Ephemeral Import Ledger, Time-to-Live (TTL) Engine & Multi-Batch Tracking
+- Migration `0010_import_lifecycle.{up,down}.sql`: add `imported_at TEXT` (ISO timestamp)
+  and `import_batch_id TEXT` across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`
+  (defaults NULL).
+- Update `POST /api/vault/bulk-import` and note/key creation to generate an atomic batch ID
+  (`imp_<uuid>`) and stamp `imported_at = new Date().toISOString()`.
+- Implement lazy and background graduation logic: items where `now - imported_at > retention_minutes`
+  automatically drop their imported status upon fetch and periodic sweep.
+- Wire "Auto-Graduate on Edit" into `PUT /api/vault/:id`, `PUT /api/notes/:id`, and
+  `PUT /api/keys/:id` (resets `imported_at = NULL` and `import_batch_id = NULL`).
+- Implement batch API endpoints: `POST /api/vault/import-batches/:id/graduate` (promotes all
+  batch items) and `DELETE /api/vault/import-batches/:id` (atomic batch rollback with cascade
+  attachment deletion and audit logging).
+- Unit and integration tests in `tests/vault-imported-tracking.test.ts`.
+
+### Task 52: [UI Component] "Config" Settings Surface, Ephemeral Import Badges & Rapid Batch Purge
+- Progressive disclosure: verify all imported controls fail to render if no active imported
+  items exist in state.
+- Add "Config" tab in `Sidebar.tsx` under settings mode; build `ConfigSettingsView.tsx` with
+  Reef Modernist segmented button selector for retention window (`[30 min | 60 min | 90 min | Manual]`),
+  "Auto-Graduate on Edit" toggle, and encrypted local preference storage.
+- Dynamic "Imported" filter in `ItemListPane.tsx` with active counter and live countdown chip
+  (`📥 Imported (42) • 58m left`); pulsing badges in list and detail panes with quick Graduate /
+  Delete buttons.
+- Post-Import Action Hatch in `ImportExportView.tsx` and floating action bar in `VaultShell.tsx`
+  offering "Review Items", live countdown, "Graduate All", and "Revert Import" (guarded by
+  `ConfirmDialog`).
+- Multi-select integration: tri-state select-all under "Imported" filter targets the batch for
+  instant bulk deletion or graduation.
+
+Verify no import UI appears when vault has zero imported items, importing items surfaces the
+dynamic filter and countdown chips across pearls/notes/keys, editing an item immediately graduates
+it, batch revert purges the batch cleanly with ConfirmDialog, timer expiry drops the status,
+and full test oracle + tsc + build stay clean!
+```
+
+---
+
 ## 🏔️ The Summit
 
 **v0.0.1.8 parity was reached at Stage 17** — the walk and the codebase occupied
@@ -1534,7 +1613,7 @@ at Stage 18** with its security-hardening receipts (`7faf51d`, `027506a`,
 merge `9b5ec31`), followed by the post-summit hotfix recorded at **Stage 18.5**
 (`07ccd61`).
 
-The walk does not end at the summit — it molts. **Stages 21–26 (Phases 20–25)
+The walk does not end at the summit — it molts. **Stages 24–27 (Phases 23–26)
 are queued** in the active forward queue of [`../ROADMAP.md`](../ROADMAP.md);
 each stage prompt is transcribed when its phase becomes the next molt. Receipts
 accrue per phase, the sliding window keeps the roadmap honest, and this spine

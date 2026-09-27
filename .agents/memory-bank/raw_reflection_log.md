@@ -1,4 +1,44 @@
 ---
+Date: 2026-09-26
+TaskRef: "Stage 23.5 Sub-Phase 23.5.1: Zero-Loss Bitwarden Ingestion Engine & Residual Field Harvester"
+
+Learnings:
+- Discovered Bitwarden exports encode linked custom fields with `type: 3` and numeric `linkedId` (100: username, 101: password, 102: url, 103: notes, 104: totp). ShellGuard expects `linkedProperty`. Without mapping, `resolveLinkedValue` rendered empty values.
+- Bitwarden identity records include `identity.username` (e.g. "TesterGuy") along with `address2` and `address3` which were previously dropped. Built an automated `harvestResidualFields` sweeper with formatFieldLabel to ensure zero loss across any arbitrary or future fields.
+- Refined residual harvester to ignore empty arrays and objects (`[]`, `{}`), and included `fido2Credentials` in `handledLoginKeys` so empty passkey arrays don't inject empty residual fields.
+- Ground-truth testing fixture `tests/fixtures/bitwarden_full_forms.json` created from real export, and comprehensive Completeness Oracle added to `tests/unit/bitwarden-import.test.ts` asserting 100% of critical export values appear in mapped items.
+
+Difficulties:
+- TypeScript compiler error on `field.type` narrowing due to `type: number` in `BitwardenField` interface. Resolved by typing `type: number | string` and adding `linkedProperty?: string`.
+
+Successes:
+- All 10 tests in `bitwarden-import.test.ts` pass, all 27 project test suites pass (327 tests), `tsc --noEmit` is clean, and `npm run build` succeeds.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Automated residual field harvesting with key exclusion sets guarantees backward/forward compatibility and zero data loss on complex third-party vault migrations.
+---
+
+---
+Date: 2026-09-25
+TaskRef: "Align Android Companion Architecture with Application-Scoped Lazy DI Pattern"
+
+Learnings:
+- Reconciled ShellGuard-TOTP Android companion architecture against the Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`).
+- Evaluated placement: Internal engineering specifications (`.agents/memory-bank/android/` and `di-container.md`) are the rightful home for frameworkless manual DI specifications, keeping public `/docs/companion/` focused cleanly on zero-knowledge protocols, hardware KeyStore enclaves, and compliance.
+- Application-Scoped Lazy DI ensures sub-100ms cold start for OTP generation, zero reflection attack surface, and deterministic RAM zeroization on auto-lock without opaque framework singleton leaks.
+- Replaced outdated `Hilt / Koin` table row in `.agents/memory-bank/android/README.md` and added `di-container.md` specification with `AppContainer`, `DefaultAppContainer`, and ViewModel Factory integrations.
+
+Difficulties:
+- None; the distinction between public-facing user/cryptographic documentation and internal engineering specifications was clearly aligned with Lucas.
+
+Successes:
+- Updated `.agents/memory-bank/android/README.md`, authored `.agents/memory-bank/android/di-container.md`, updated `techContext.md`, `activeContext.md`, and `decision-log.md` with sliding window invariants preserved.
+
+Improvements_Identified_For_Consolidation:
+- Architectural principle: Distinguish user-facing protocol guarantees (in `/docs`) from client-side software construction patterns (in `.agents/memory-bank/android/`).
+---
+
+---
 Date: 2026-09-23
 TaskRef: "Walk the Docs Protocol — Phase 22 Search Documentation & VitePress Portal Parity"
 

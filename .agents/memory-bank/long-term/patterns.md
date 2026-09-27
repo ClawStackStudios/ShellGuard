@@ -88,3 +88,20 @@ Standardized verification templates (`verificationChecklist-basic.md`, `verifica
 - 2026-09-22: The scratchpad persisted across context window compactions, preserving test notes, reproduction steps, and pass/fail statuses seamlessly until 100% verification was achieved.
 
 **Shaped perspective:** An ad-hoc verification prompt in chat vanishes into conversational scrollback and token compaction. A file-backed verification canvas, structured by a formal template, creates an immutable audit artifact. It forces the agent to formulate unambiguous, numbered operational steps, and empowers the human to record experiential feedback in place. The template is the scaffold; the scratchpad is the shared workbench.
+
+---
+
+## eye-beside-copy-control-ergonomics
+**weight**: 4 | **last validated**: 2026-09-23 | **first observed**: 2026-09-18
+**pinned**: false
+
+Every masked secret field (passwords, SSH private keys, hidden custom fields, API tokens) must place the unmask toggle (Eye/EyeOff) immediately to the left of the Copy action, and enforce full-value bullet masking (`••••••••••••••••`) by default with zero partial character leakage.
+
+**History:**
+- 2026-09-18: Established during Phase 19 (folded forward from Phase 22) across primary login cards and detail panes to prevent accidental visual exposure during copy gestures.
+- 2026-09-19: Applied in Phase 20 to the SSH Key dual-key manager, replacing raw JSON unmasking with formatted PKCS#8 PEM blocks paired with Eye/EyeOff toggles and copy feedback.
+- 2026-09-21: Lucas's physical live verification of Area 2 surfaced that staged custom fields in `ItemFormModal` lacked eye toggles; rectified by embedding identical Eye-beside-Copy clusters on custom hidden inputs.
+- 2026-09-23: Ratified during Phase 22 Reef Polish pass across all dashboard rows and master-detail views, ensuring unified zero-leakage masking invariants.
+
+**Shaped perspective:** The copy gesture and the reveal gesture serve opposite human intents. Copying is for transferring secrets into an external application; revealing is for human cognitive verification. Placing the unmask toggle adjacent to Copy gives the user complete intentional control: they can copy without ever exposing plaintext on screen (crucial in shared workspaces or screen shares), or unmask deliberately before copying. Full-value masking preserves the invariant that secret length or entropy is never visually leaked until explicit interaction.
+

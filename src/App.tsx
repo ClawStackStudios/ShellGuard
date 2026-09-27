@@ -270,9 +270,9 @@ export default function App() {
       const decryptedNotes = await Promise.all(reefNotes.map(async (p: any) => {
         try {
           const content = await decryptField(p.content, key, "vault_secure_notes", p.id);
-          return { ...p, secret: content, type: "note", category: p.category || "", attachments: p.attachments || "[]" };
+          return { ...p, secret: content, notes: content, type: "note", category: p.category || "", attachments: p.attachments || "[]" };
         } catch (e) {
-          return { ...p, secret: "⚠️ [Decryption Failed]", type: "note", category: p.category || "", attachments: p.attachments || "[]" };
+          return { ...p, secret: "⚠️ [Decryption Failed]", notes: "", type: "note", category: p.category || "", attachments: p.attachments || "[]" };
         }
       }));
 
@@ -1333,7 +1333,8 @@ export default function App() {
                         const itemType = (item.type as VaultItemType) || "password";
                         let encryptedHistory = "";
                         if (itemType === 'note') {
-                          encryptedContent = await encryptField(item.secret || "", shellKey, "vault_secure_notes", id);
+                          const notePayload = item.secret || item.notes || "Note";
+                          encryptedContent = await encryptField(notePayload, shellKey, "vault_secure_notes", id);
                           encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
                         } else if (itemType === 'key') {
                           encryptedKey = await encryptField(item.secret || "", shellKey, "vault_ssh_keys", id);

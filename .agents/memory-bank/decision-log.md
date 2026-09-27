@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-09-26 — Bitwarden linked ID mapping & residual field harvesting
+Discovered Bitwarden exports linked custom fields via numeric `linkedId` (100–104) without property names; mapped these directly to ShellGuard's `linkedProperty` so linked fields resolve cleanly in `ItemDetailPane`. Created an automated `harvestResidualFields` sweeper with key exclusion sets and empty collection filtering (`[]`/`{}`) to capture unmapped identity fields (`username`, `address2`, `address3`, etc.) and ensure zero data loss on future exports.
+
+## 2026-09-25 — Android companion dependency injection: Application-Scoped Lazy DI
+Aligned Android companion architecture with Lucas to formalize the Application-Scoped Lazy DI pattern (`AppContainer` with thread-safe `by lazy` properties) over Hilt or Koin. Confirmed this belongs strictly in internal specifications (`.agents/memory-bank/android/` and `di-container.md`) rather than public `/docs/companion/`, preserving VitePress clarity while guaranteeing sub-100ms cold start, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
+
 ## 2026-09-23 — Phase 26 formalization: Import lifecycle, ephemeral TTL & progressive disclosure
 Lucas conceived an underlying organizational system for imported items to combat import remorse and accidental bulk migrations. Formulated Phase 26 ("Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 51 establishes multi-batch fingerprinting (import_batch_id), cross-type parity (pearls, notes, SSH keys), and configurable TTL self-destruct (30m/60m/90m/manual) with auto-graduation upon item edit; Task 52 delivers the "Config" settings surface, dynamic bioluminescent countdown chips, and an atomic batch revert action hatch adhering strictly to Lucas's progressive disclosure invariant (the UI remains 100% silent unless active imported items exist).
 
@@ -57,10 +63,4 @@ Unified Pod and Tag color mechanics into a shared deterministic color engine in 
 
 ## 2026-09-19 — docs bow to code: Phase 19 ripple alignment & Phase 20 500MB sub-task
 Walked the complete codebase and documentation surface to audit production readiness. Found and resolved 12 contradictions: purged 8 obsolete "10 MB" base64 references in favor of the active 50MB Busboy streaming BLOB reality, unfroze ARCHITECTURE.md to v0.0.2.1 (added migration 0005, middleware/utils, 19 test suites, Deltas #21 & #22), fixed conflated auth limiter numbers in architecture docs, and added the 500MB attachment ceiling sub-task to Phase 20 in ROADMAP.md and meta-prompt-ai-studio.md.
-
-## 2026-09-18 — Phase 19: attachment BLOB migration & openBlob limitation
-Migration 0005 moved attachment payloads from base64 text to native BLOBs. Discovered better-sqlite3 exposes no `openBlob()` streaming handle, so upload write path buffers ciphertext chunk up to the 50MB mid-stream ceiling, while downloads stream cleanly in 1MB chunks via SQLite `substr()`.
-
-## 2026-09-17 — Phase 18: composite items & in-browser ssh keypairs
-Consolidated vault logins into primary rich composite records adhering to Bitwarden's model (passwords embed notes, live TOTP countdown ring, attachments, custom fields). Decoupled child attachments from Pod counts so files never inflate folder badges. Implemented in-browser WebCrypto SSH keypair engine (`src/lib/keyGen.ts` — Ed25519 + RSA-4096).
 

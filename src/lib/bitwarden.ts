@@ -1,14 +1,15 @@
 // src/lib/bitwarden.ts — Universal Bitwarden JSON & CSV parser & mapper for ShellGuard.
-import { VaultItem, VaultItemType, CustomField, PasswordHistoryEntry } from '../types.ts';
+import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty, PasswordHistoryEntry } from '../types.ts';
 import { normalizePod } from './podUtils.ts';
 import { serializeSshKeySecret } from './keyGen.ts';
 import { parseTotpSecret, formatTotpSecret } from './totpUtils.ts';
 
 export interface BitwardenField {
-  type: number; // 0: text, 1: hidden, 2: boolean, 3: linked
+  type: number | string; // 0: text, 1: hidden, 2: boolean, 3: linked
   name?: string;
   value?: any;
   linkedId?: number;
+  linkedProperty?: string;
 }
 
 export interface BitwardenLoginUri {
@@ -157,6 +158,46 @@ export function isBitwardenCsv(csvText: string): boolean {
 }
 
 /**
+ * Human-readable label formatter for object keys.
+ * e.g. "passportNumber" -> "Passport Number", "address1" -> "Address 1"
+ */
+function formatFieldLabel(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+/**
+ * Sweeps any unmapped primitive properties on an object into typed CustomFields.
+ * Guarantees the Zero-Drop Invariant so no foreign or future fields are ever discarded.
+ */
+function harvestResidualFields(
+  source: Record<string, any> | undefined | null,
+  handledKeys: Set<string>,
+  generateId: () => string
+): CustomField[] {
+  if (!source || typeof source !== 'object') return [];
+  const harvested: CustomField[] = [];
+  for (const [key, val] of Object.entries(source)) {
+    if (handledKeys.has(key)) continue;
+    if (val === null || val === undefined) continue;
+    if (Array.isArray(val) && val.length === 0) continue;
+    if (typeof val === 'object' && Object.keys(val).length === 0) continue;
+    const strVal = typeof val === 'object' ? JSON.stringify(val) : String(val).trim();
+    if (!strVal) continue;
+    harvested.push({
+      id: generateId(),
+      name: formatFieldLabel(key),
+      type: 'text',
+      value: strVal,
+    });
+  }
+  return harvested;
+}
+
+/**
  * Maps a Bitwarden JSON export structure to ShellGuard VaultItems.
  */
 export function mapBitwardenToVaultItems(
@@ -183,34 +224,47 @@ export function mapBitwardenToVaultItems(
   for (const item of exportData.items) {
     if (!item || typeof item !== 'object') continue;
 
-    const id = generateId();
+    // Preserve authentic Bitwarden UUID if present and valid; fallback to safe generator
+    const id = (item.id && typeof item.id === 'string' && item.id.trim()) ? item.id.trim() : generateId();
     const title = (item.name || 'Untitled').trim();
     const folderCategory = item.folderId ? folderMap.get(item.folderId) : undefined;
     const category = folderCategory !== undefined ? folderCategory : '';
     const notes = item.notes || '';
     const createdAt = item.creationDate ? new Date(item.creationDate).toISOString() : now;
 
-    // Convert custom fields
+    // Convert custom fields with resilient type coercion and linkedId mapping
     const customFields: CustomField[] = [];
     if (Array.isArray(item.fields)) {
       for (const field of item.fields) {
         if (!field || !field.name) continue;
+        const rawType = typeof field.type === 'string' ? field.type.trim().toLowerCase() : field.type;
         let cfType: CustomField['type'] = 'text';
         let cfValue = String(field.value ?? '');
-        if (field.type === 1) {
+        let linkedProp: CustomFieldLinkedProperty | undefined;
+
+        if (rawType === 1 || rawType === '1' || rawType === 'hidden') {
           cfType = 'hidden';
-        } else if (field.type === 2) {
+        } else if (rawType === 2 || rawType === '2' || rawType === 'boolean' || rawType === 'checkbox') {
           cfType = 'checkbox';
-          cfValue = String(Boolean(field.value));
-        } else if (field.type === 3) {
+          cfValue = String(Boolean(field.value === true || field.value === 'true' || field.value === 1 || field.value === '1'));
+        } else if (rawType === 3 || rawType === '3' || rawType === 'linked') {
           cfType = 'linked';
           cfValue = '';
+          const lid = field.linkedId;
+          if (lid === 100 || field.linkedProperty === 'username') linkedProp = 'username';
+          else if (lid === 101 || field.linkedProperty === 'password') linkedProp = 'password';
+          else if (lid === 102 || field.linkedProperty === 'url') linkedProp = 'url';
+          else if (lid === 103 || field.linkedProperty === 'notes') linkedProp = 'notes';
+          else if (lid === 104 || field.linkedProperty === 'totp') linkedProp = 'totp';
+          else linkedProp = 'username';
         }
+
         customFields.push({
           id: generateId(),
           name: field.name.trim(),
           type: cfType,
           value: cfValue,
+          ...(linkedProp ? { linkedProperty: linkedProp } : {}),
         });
       }
     }
@@ -248,6 +302,21 @@ export function mapBitwardenToVaultItems(
           }
         }
 
+        const handledLoginKeys = new Set(['username', 'password', 'uris', 'totp', 'fido2Credentials']);
+        // If passkeys / fido2Credentials present, preserve in custom fields
+        if (Array.isArray(login.fido2Credentials) && login.fido2Credentials.length > 0) {
+          customFields.push({
+            id: generateId(),
+            name: 'Passkey (FIDO2)',
+            type: 'hidden',
+            value: JSON.stringify(login.fido2Credentials),
+          });
+        }
+
+        // Residual harvester for login
+        const loginResiduals = harvestResidualFields(login, handledLoginKeys, generateId);
+        const finalCustomFields = [...customFields, ...loginResiduals];
+
         results.push({
           id,
           type: 'password',
@@ -260,7 +329,7 @@ export function mapBitwardenToVaultItems(
           notes,
           totp_secret: totpSecret || undefined,
           password_history: passwordHistory.length > 0 ? JSON.stringify(passwordHistory) : undefined,
-          custom_fields: customFields.length > 0 ? JSON.stringify(customFields) : undefined,
+          custom_fields: finalCustomFields.length > 0 ? JSON.stringify(finalCustomFields) : undefined,
           attachments: '[]',
           tags: item.favorite ? JSON.stringify(['Favorite']) : '[]',
           created_at: createdAt,
@@ -270,14 +339,19 @@ export function mapBitwardenToVaultItems(
 
       case 2: {
         // Secure Note
+        const secureNoteBody = notes.trim() || item.name || 'Secure Note';
+        const handledNoteKeys = new Set(['type']);
+        const noteResiduals = harvestResidualFields(item.secureNote, handledNoteKeys, generateId);
+        const finalCustomFields = [...customFields, ...noteResiduals];
+
         results.push({
           id,
           type: 'note',
           title,
-          secret: notes, // For secure notes, secret holds the note body
-          notes,
+          secret: secureNoteBody, // For secure notes, secret holds note content in DB
+          notes: secureNoteBody,  // In memory, notes holds note body so detail pane displays it
           category,
-          custom_fields: customFields.length > 0 ? JSON.stringify(customFields) : undefined,
+          custom_fields: finalCustomFields.length > 0 ? JSON.stringify(finalCustomFields) : undefined,
           attachments: '[]',
           tags: item.favorite ? JSON.stringify(['Favorite']) : '[]',
           created_at: createdAt,
@@ -291,6 +365,23 @@ export function mapBitwardenToVaultItems(
         const pubKey = item.sshKey?.publicKey || '';
         const compoundSecret = serializeSshKeySecret(privKey, pubKey);
 
+        const sshCustomFields = [...customFields];
+        // If an SSH key has notes in Bitwarden, preserve in custom fields since vault_ssh_keys has no notes column
+        if (notes.trim()) {
+          sshCustomFields.push({
+            id: generateId(),
+            name: 'Notes',
+            type: 'text',
+            value: notes.trim(),
+          });
+        }
+
+        const handledSshKeys = new Set(['privateKey', 'publicKey', 'keyFingerprint']);
+        const sshResiduals = harvestResidualFields(item.sshKey, handledSshKeys, generateId);
+        const finalCustomFields = [...sshCustomFields, ...sshResiduals];
+
+        const sshTags = item.favorite ? ['Favorite', 'SSH Key'] : ['SSH Key'];
+
         results.push({
           id,
           type: 'key',
@@ -299,9 +390,9 @@ export function mapBitwardenToVaultItems(
           username: item.sshKey?.keyFingerprint || '',
           category,
           notes,
-          custom_fields: customFields.length > 0 ? JSON.stringify(customFields) : undefined,
+          custom_fields: finalCustomFields.length > 0 ? JSON.stringify(finalCustomFields) : undefined,
           attachments: '[]',
-          tags: item.favorite ? JSON.stringify(['Favorite']) : '[]',
+          tags: JSON.stringify(sshTags),
           created_at: createdAt,
         });
         break;
@@ -311,9 +402,28 @@ export function mapBitwardenToVaultItems(
         // Credit Card -> Map to password-type item with cardholder as username, number as secret
         const card = item.card || {};
         const cardFields: CustomField[] = [...customFields];
-        if (card.brand) cardFields.push({ id: generateId(), name: 'Card Brand', type: 'text', value: card.brand });
-        if (card.expMonth && card.expYear) cardFields.push({ id: generateId(), name: 'Expiration', type: 'text', value: `${card.expMonth}/${card.expYear}` });
-        if (card.code) cardFields.push({ id: generateId(), name: 'Security Code (CVV)', type: 'hidden', value: card.code });
+        const handledCardKeys = new Set(['cardholderName', 'number', 'brand', 'expMonth', 'expYear', 'code']);
+
+        if (card.brand) {
+          cardFields.push({ id: generateId(), name: 'Card Brand', type: 'text', value: card.brand });
+        }
+        if (card.expMonth && card.expYear) {
+          const expPadded = `${String(card.expMonth).padStart(2, '0')}/${card.expYear}`;
+          cardFields.push({ id: generateId(), name: 'Expiration', type: 'text', value: expPadded });
+        } else if (card.expMonth) {
+          cardFields.push({ id: generateId(), name: 'Expiration Month', type: 'text', value: String(card.expMonth) });
+        } else if (card.expYear) {
+          cardFields.push({ id: generateId(), name: 'Expiration Year', type: 'text', value: String(card.expYear) });
+        }
+        if (card.code) {
+          cardFields.push({ id: generateId(), name: 'Security Code (CVV)', type: 'hidden', value: String(card.code) });
+        }
+
+        // Harvest any unmapped card properties
+        const cardResiduals = harvestResidualFields(card, handledCardKeys, generateId);
+        cardFields.push(...cardResiduals);
+
+        const cardTags = item.favorite ? ['Credit Card', 'Favorite'] : ['Credit Card'];
 
         results.push({
           id,
@@ -325,48 +435,83 @@ export function mapBitwardenToVaultItems(
           notes,
           custom_fields: cardFields.length > 0 ? JSON.stringify(cardFields) : undefined,
           attachments: '[]',
-          tags: item.favorite ? JSON.stringify(['Favorite']) : '[]',
+          tags: JSON.stringify(cardTags),
           created_at: createdAt,
         });
         break;
       }
 
       case 4: {
-        // Identity -> Map to note-type item with address & personal fields in customFields
+        // Identity -> Map to note-type item with all personal, address, and document fields in customFields
         const iden = item.identity || {};
         const idenFields: CustomField[] = [...customFields];
+        const handledIdenKeys = new Set([
+          'title', 'firstName', 'middleName', 'lastName', 'username',
+          'company', 'email', 'phone', 'address1', 'address2', 'address3',
+          'city', 'state', 'postalCode', 'country', 'ssn', 'passportNumber', 'licenseNumber'
+        ]);
+
         if (iden.title) idenFields.push({ id: generateId(), name: 'Title', type: 'text', value: iden.title });
+        if (iden.firstName) idenFields.push({ id: generateId(), name: 'First Name', type: 'text', value: iden.firstName });
+        if (iden.middleName) idenFields.push({ id: generateId(), name: 'Middle Name', type: 'text', value: iden.middleName });
+        if (iden.lastName) idenFields.push({ id: generateId(), name: 'Last Name', type: 'text', value: iden.lastName });
+
         const fullName = [iden.firstName, iden.middleName, iden.lastName].filter(Boolean).join(' ');
         if (fullName) idenFields.push({ id: generateId(), name: 'Full Name', type: 'text', value: fullName });
+
+        if (iden.username) idenFields.push({ id: generateId(), name: 'Username', type: 'text', value: iden.username });
         if (iden.company) idenFields.push({ id: generateId(), name: 'Company', type: 'text', value: iden.company });
         if (iden.email) idenFields.push({ id: generateId(), name: 'Email', type: 'text', value: iden.email });
         if (iden.phone) idenFields.push({ id: generateId(), name: 'Phone', type: 'text', value: iden.phone });
+
         if (iden.address1) idenFields.push({ id: generateId(), name: 'Address 1', type: 'text', value: iden.address1 });
-        if (iden.city || iden.state || iden.postalCode) {
+        if (iden.address2) idenFields.push({ id: generateId(), name: 'Address 2', type: 'text', value: iden.address2 });
+        if (iden.address3) idenFields.push({ id: generateId(), name: 'Address 3', type: 'text', value: iden.address3 });
+
+        if (iden.city) idenFields.push({ id: generateId(), name: 'City', type: 'text', value: iden.city });
+        if (iden.state) idenFields.push({ id: generateId(), name: 'State / Province', type: 'text', value: iden.state });
+        if (iden.postalCode) idenFields.push({ id: generateId(), name: 'Postal Code', type: 'text', value: iden.postalCode });
+        if (iden.country) idenFields.push({ id: generateId(), name: 'Country', type: 'text', value: iden.country });
+
+        if (iden.city || iden.state || iden.postalCode || iden.country) {
           const loc = [iden.city, iden.state, iden.postalCode, iden.country].filter(Boolean).join(', ');
           idenFields.push({ id: generateId(), name: 'Location', type: 'text', value: loc });
         }
+
         if (iden.ssn) idenFields.push({ id: generateId(), name: 'SSN', type: 'hidden', value: iden.ssn });
         if (iden.passportNumber) idenFields.push({ id: generateId(), name: 'Passport Number', type: 'hidden', value: iden.passportNumber });
         if (iden.licenseNumber) idenFields.push({ id: generateId(), name: 'License Number', type: 'hidden', value: iden.licenseNumber });
+
+        // Harvest any unmapped identity properties
+        const idenResiduals = harvestResidualFields(iden, handledIdenKeys, generateId);
+        idenFields.push(...idenResiduals);
+
+        const idenTags = item.favorite ? ['Identity', 'Favorite'] : ['Identity'];
+        const idenNoteContent = notes.trim() || `Identity profile for ${fullName || title}`;
 
         results.push({
           id,
           type: 'note',
           title,
-          secret: notes,
-          notes,
+          username: iden.username || '',
+          secret: idenNoteContent,
+          notes: idenNoteContent,
           category,
           custom_fields: idenFields.length > 0 ? JSON.stringify(idenFields) : undefined,
           attachments: '[]',
-          tags: item.favorite ? JSON.stringify(['Favorite']) : '[]',
+          tags: JSON.stringify(idenTags),
           created_at: createdAt,
         });
         break;
       }
 
       default: {
-        // Fallback for unrecognized types: map as password item
+        // Fallback for unrecognized types: map as password item with all properties preserved
+        const itemObj = item as Record<string, any>;
+        const handledDefaultKeys = new Set(['id', 'type', 'name', 'notes', 'favorite', 'folderId', 'collectionIds', 'fields']);
+        const residualFields = harvestResidualFields(itemObj, handledDefaultKeys, generateId);
+        const finalCustomFields = [...customFields, ...residualFields];
+
         results.push({
           id,
           type: 'password',
@@ -374,6 +519,7 @@ export function mapBitwardenToVaultItems(
           secret: item.notes || '',
           category,
           notes,
+          custom_fields: finalCustomFields.length > 0 ? JSON.stringify(finalCustomFields) : undefined,
           attachments: '[]',
           tags: '[]',
           created_at: createdAt,
@@ -452,6 +598,7 @@ export function parseBitwardenCsv(
   const usernameIdx = headers.indexOf('login_username');
   const passwordIdx = headers.indexOf('login_password');
   const totpIdx = headers.indexOf('login_totp');
+  const customFieldsIdx = headers.findIndex(h => h === 'customfields' || h === 'custom_fields' || h === 'fields');
 
   const now = new Date().toISOString();
   const results: VaultItem[] = [];
@@ -466,6 +613,27 @@ export function parseBitwardenCsv(
 
     const id = generateId();
 
+    // Parse custom fields if present in CSV
+    let customFieldsStr: string | undefined;
+    if (customFieldsIdx !== -1 && row[customFieldsIdx]?.trim()) {
+      const rawCf = row[customFieldsIdx].trim();
+      if (rawCf.startsWith('[') && rawCf.endsWith(']')) {
+        customFieldsStr = rawCf;
+      } else {
+        const parts = rawCf.split('|').map(p => p.trim()).filter(Boolean);
+        const parsedCf: CustomField[] = [];
+        for (const part of parts) {
+          const colonIdx = part.indexOf(':');
+          if (colonIdx !== -1) {
+            const fName = part.slice(0, colonIdx).trim();
+            const fVal = part.slice(colonIdx + 1).trim();
+            parsedCf.push({ id: generateId(), name: fName, type: 'text', value: fVal });
+          }
+        }
+        if (parsedCf.length > 0) customFieldsStr = JSON.stringify(parsedCf);
+      }
+    }
+
     if (rawType === 'note') {
       results.push({
         id,
@@ -475,6 +643,7 @@ export function parseBitwardenCsv(
         notes,
         category: folder,
         tags: isFav ? JSON.stringify(['Favorite']) : '[]',
+        custom_fields: customFieldsStr,
         attachments: '[]',
         created_at: now,
       });
@@ -504,6 +673,7 @@ export function parseBitwardenCsv(
         notes,
         totp_secret: totpSecret || undefined,
         tags: isFav ? JSON.stringify(['Favorite']) : '[]',
+        custom_fields: customFieldsStr,
         attachments: '[]',
         created_at: now,
       });

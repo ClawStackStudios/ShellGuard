@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- **Android Companion Architecture Alignment**: Formalized Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`) in `.agents/memory-bank/android/di-container.md` and updated `README.md`. Provides sub-100ms cold start for OTP lookups, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
+
 ## [0.0.2.4] - 2026-09-23
 
 ### Added

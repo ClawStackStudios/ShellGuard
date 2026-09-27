@@ -49,6 +49,7 @@ Every mutation follows this gauntlet (no shortcuts):
 - **Online Backup API backups**: `db.backup()` from better-sqlite3-multiple-ciphers — WAL-safe, live-consistent; SQLCipher copies stay encrypted with the same key.
 - **Audit on mutation**: Every write emits to segregated `audit.sqlite` with extended redaction.
 - **Envelope contract**: All responses use `{success, data}`. RestAdapter unwraps centrally.
+- **Android Application-Scoped Lazy DI**: Native companion (`ShellGuard-TOTP`) utilizes a pure-Kotlin `AppContainer` with thread-safe `by lazy` property instantiation. Eliminates annotation processors (Hilt/Dagger) and reflection (Koin) to achieve sub-100ms cold start for OTP retrieval, zero-reflection attack surface, and deterministic RAM zeroization of sensitive crypto objects upon vault auto-lock.
 
 ## Critical Implementation Paths
 
@@ -112,8 +113,7 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 
 ## Eye-beside-Copy Control Ergonomics (Folded Forward from Phase 22 — 2026-09-18)
 
-- **Right-Hand Action Cluster**: Unmask toggle (Eye/EyeOff) is located immediately LEFT of the Copy button on every masked field row (password, SSH private key, hidden custom fields).
-- **Full-Value Mask Invariant**: Every character is represented by a masking bullet (`•`); no partial leakage; unmasking flips to clear text with 2s copy feedback.
+→ Consolidated to `long-term/patterns.md § eye-beside-copy-control-ergonomics` (weight: 4, 2026-09-23)
 
 ## Vault Tagging System & Unified Color Engine (Phase 20 — 2026-09-19)
 

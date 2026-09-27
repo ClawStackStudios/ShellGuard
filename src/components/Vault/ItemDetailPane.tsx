@@ -347,14 +347,14 @@ export function ItemDetailPane({
                     )}
                   </div>
                 </div>
-              ) : (
-                /* Standard Password / Secure Note Row */
+              ) : item.type === "note" ? null : (
+                /* Standard Password Row */
                 <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <Lock size={16} className="text-slate-400" />
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                        {item.type === "note" ? "Secure Content" : "Password"}
+                        Password
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-mono text-theme-main truncate max-w-full">
@@ -499,11 +499,27 @@ export function ItemDetailPane({
             )}
 
             {/* Notes */}
-            {item.notes && (
+            {(item.notes || (item.type === "note" && item.secret)) && (
               <div className="pt-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block ml-1">Notes</span>
-                <div className="bg-theme-surface border border-theme-subtle rounded-xl p-4 text-sm whitespace-pre-wrap leading-relaxed text-theme-main shadow-sm">
-                  {item.notes}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block ml-1">
+                    {item.type === "note" ? "Secure Note Content" : "Notes"}
+                  </span>
+                  <button
+                    onClick={() => handleCopy(item.notes || item.secret || "", "note-content")}
+                    className={`p-1 rounded-md text-xs flex items-center gap-1 transition-colors cursor-pointer ${
+                      copyFeedback === "note-content"
+                        ? "text-green-500 bg-green-500/10"
+                        : "text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10"
+                    }`}
+                    title="Copy note content"
+                  >
+                    {copyFeedback === "note-content" ? <Check size={13} /> : <Copy size={13} />}
+                    <span className="text-[10px] font-semibold">Copy</span>
+                  </button>
+                </div>
+                <div className="bg-theme-surface border border-theme-subtle rounded-xl p-4 text-sm whitespace-pre-wrap leading-relaxed text-theme-main shadow-sm font-mono">
+                  {item.notes || item.secret}
                 </div>
               </div>
             )}

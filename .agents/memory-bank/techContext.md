@@ -11,7 +11,7 @@
 - **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 24 suites / 285 passed (1 skipped, 286 total), per-suite DATA_DIR isolation
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
 - **License**: AGPL-3.0-only
-- **Mobile Stack (Native Android)**: Kotlin 2.0+, Jetpack Compose, Room (SQLCipher), Android Keystore Biometrics, Retrofit/Ktor, WorkManager
+- **Mobile Stack (Native Android)**: Kotlin 2.0+, Jetpack Compose, Room (SQLCipher), Android Keystore Biometrics, Retrofit/Ktor, WorkManager, Application-Scoped Lazy DI (`AppContainer`)
 
 
 ## Development Setup

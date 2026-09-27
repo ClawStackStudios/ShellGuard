@@ -52,7 +52,7 @@ graph TD
 | **Language** | Kotlin | 2.0+ (Strict Null Safety, Coroutines, Serialization) |
 | **UI Framework** | Jetpack Compose | Material 3 + Custom Reef Modernist Design System |
 | **Local Database** | Room | SQLite + SQLCipher (`net.zetetic:sqlcipher-android`) |
-| **Dependency Injection** | Hilt / Koin | AndroidX Lifecycle Scoping |
+| **Dependency Injection** | Application-Scoped Lazy DI (`AppContainer`) | Pure Kotlin `by lazy`, zero reflection, RAM zeroization on lock |
 | **Networking** | Retrofit or Ktor Client | OkHttp3 / Ktor CIO + Kotlinx Serialization |
 | **Cryptography** | `javax.crypto` & `java.security` | Android Keystore, AES-GCM-256, HKDF-SHA256, BiometricPrompt |
 | **TOTP Engine** | Native Kotlin | Custom RFC 6238 Implementation with Base32 decoding |
@@ -68,3 +68,4 @@ graph TD
 3. [**API Client & Sync Engine (`api-client.md`)**](./api-client.md) — Retrofit/Ktor service contracts, DTO envelopes, token interceptors (`hu-`/`api-`), and WorkManager sync repository.
 4. [**TOTP Engine & Authenticator Protocol (`totp-engine.md`)**](./totp-engine.md) — RFC 6238 algorithmic token generator, time-window countdown flows, and Authenticator app synchronization.
 5. [**Jetpack Compose UI & Design System (`ui-compose-models.md`)**](./ui-compose-models.md) — Navigation graphs, ViewModels, Reef Modernist color palette, and component states.
+6. [**Dependency Injection & AppContainer (`di-container.md`)**](./di-container.md) — Application-scoped lazy dependency container, ViewModel factory integration, and RAM zeroization on vault lock.

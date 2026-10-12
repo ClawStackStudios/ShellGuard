@@ -1,7 +1,7 @@
 import React from 'react';
 import { VaultItem, VaultItemType } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
-import { Key, FileText, Binary, Search, ArrowUpDown, X, Tag as TagIcon } from 'lucide-react';
+import { Key, CreditCard, Contact, FileText, Binary, Search, ArrowUpDown, X, Tag as TagIcon } from 'lucide-react';
 import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
 import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
@@ -42,6 +42,8 @@ export function ItemListPane({
   
   const getTypeIcon = (type?: VaultItemType) => {
     switch (type) {
+      case "card": return <CreditCard size={12} className="text-amber-500" />;
+      case "identity": return <Contact size={12} className="text-blue-500" />;
       case "note": return <FileText size={12} className="text-emerald-500" />;
       case "key": return <Binary size={12} className="text-purple-500" />;
       default: return <Key size={12} className="text-claw-cyan" />;

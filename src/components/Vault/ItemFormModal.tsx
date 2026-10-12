@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Lock, Eye, EyeOff, Globe, Sparkles, Paperclip, Upload, Plus, AlertTriangle, RefreshCw, Check, Zap, Terminal, History, Copy, Trash2 } from 'lucide-react';
+import { X, Lock, Eye, EyeOff, Globe, Sparkles, Paperclip, Upload, Plus, AlertTriangle, RefreshCw, Check, Zap, Terminal, History, Copy, Trash2, CreditCard, Contact } from 'lucide-react';
 import { VaultItem, VaultItemType, CustomField, CustomFieldType, CustomFieldLinkedProperty, Tag, PasswordHistoryEntry } from '../../types.ts';
 import { FolderInputGroup } from './FolderInputGroup.tsx';
 import { TagSelectorInput } from './TagSelectorInput.tsx';
@@ -11,6 +11,7 @@ import { extractDomain } from '../../lib/urlUtils.ts';
 import { generatePassword, getGlobalGeneratorConfig, GeneratorConfig } from '../../lib/generator.ts';
 import { generateSshKeyPair, keypairGenerationSupported, GeneratedSshKeyPair, SshKeyAlgorithm, parseSshKeySecret, serializeSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 import { parseTotpSecret, formatTotpSecret, TotpAlgorithm } from '../../lib/totpUtils.ts';
+import { formatCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
 
 // We inline Favicon and PasswordStrengthIndicator here for simplicity if needed, 
 // or import them if they are exported.
@@ -104,6 +105,35 @@ export function ItemFormModal({
   // SSH Key Public Key state
   const [sshPublicKey, setSshPublicKey] = useState("");
 
+  // Card-specific state
+  const [cardBrand, setCardBrand] = useState("");
+  const [cardExpMonth, setCardExpMonth] = useState("");
+  const [cardExpYear, setCardExpYear] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [showCardCvv, setShowCardCvv] = useState(false);
+
+  // Identity-specific state
+  const [idenTitle, setIdenTitle] = useState("");
+  const [idenFirstName, setIdenFirstName] = useState("");
+  const [idenMiddleName, setIdenMiddleName] = useState("");
+  const [idenLastName, setIdenLastName] = useState("");
+  const [idenCompany, setIdenCompany] = useState("");
+  const [idenEmail, setIdenEmail] = useState("");
+  const [idenPhone, setIdenPhone] = useState("");
+  const [idenAddress1, setIdenAddress1] = useState("");
+  const [idenAddress2, setIdenAddress2] = useState("");
+  const [idenAddress3, setIdenAddress3] = useState("");
+  const [idenCity, setIdenCity] = useState("");
+  const [idenState, setIdenState] = useState("");
+  const [idenPostalCode, setIdenPostalCode] = useState("");
+  const [idenCountry, setIdenCountry] = useState("");
+  const [idenSsn, setIdenSsn] = useState("");
+  const [idenPassport, setIdenPassport] = useState("");
+  const [idenLicense, setIdenLicense] = useState("");
+  const [showIdenSsn, setShowIdenSsn] = useState(false);
+  const [showIdenPassport, setShowIdenPassport] = useState(false);
+  const [showIdenLicense, setShowIdenLicense] = useState(false);
+
   // UI State
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,6 +149,9 @@ export function ItemFormModal({
           const parsedSsh = parseSshKeySecret(initialItem.secret || "");
           setPassword(parsedSsh.privateKey);
           setSshPublicKey(parsedSsh.publicKey || "");
+        } else if (initialItem.type === 'card') {
+          setPassword(formatCardNumber(initialItem.secret || ""));
+          setSshPublicKey("");
         } else {
           setPassword(initialItem.secret || "");
           setSshPublicKey("");
@@ -202,10 +235,69 @@ export function ItemFormModal({
         if (initialItem.custom_fields) {
           try {
             const parsed = JSON.parse(initialItem.custom_fields);
-            if (Array.isArray(parsed)) setCustomFieldsState(parsed);
+            if (Array.isArray(parsed)) {
+              setCustomFieldsState(parsed);
+              const getField = (name: string) => parsed.find(f => f.name.toLowerCase() === name.toLowerCase())?.value || "";
+              if (initialItem.type === 'card') {
+                const detectedBrand = detectCardBrand(initialItem.secret || "");
+                setCardBrand(getField('Card Brand') || getField('Brand') || (detectedBrand !== 'Payment Card' ? detectedBrand : ""));
+                const exp = getField('Expiration');
+                if (exp && exp.includes('/')) {
+                  const [m, y] = exp.split('/');
+                  setCardExpMonth(m);
+                  setCardExpYear(y);
+                } else {
+                  setCardExpMonth(getField('Expiration Month'));
+                  setCardExpYear(getField('Expiration Year'));
+                }
+                setCardCvv(getField('Security Code (CVV)') || getField('CVV') || getField('Code'));
+              } else if (initialItem.type === 'identity') {
+                const getField = (name: string) => parsed.find(f => f.name.toLowerCase() === name.toLowerCase())?.value || "";
+                setIdenTitle(getField('Title'));
+                setIdenFirstName(getField('First Name'));
+                setIdenMiddleName(getField('Middle Name'));
+                setIdenLastName(getField('Last Name'));
+                setIdenCompany(getField('Company'));
+                setIdenEmail(getField('Email'));
+                setIdenPhone(getField('Phone'));
+                setIdenAddress1(getField('Address 1'));
+                setIdenAddress2(getField('Address 2'));
+                setIdenAddress3(getField('Address 3'));
+                setIdenCity(getField('City'));
+                setIdenState(getField('State / Province') || getField('State'));
+                setIdenPostalCode(getField('Postal Code'));
+                setIdenCountry(getField('Country'));
+                setIdenSsn(getField('SSN'));
+                setIdenPassport(getField('Passport Number') || getField('Passport'));
+                setIdenLicense(getField('License Number') || getField('License'));
+              }
+            } else {
+              setCustomFieldsState([]);
+            }
           } catch { setCustomFieldsState([]); }
         } else {
           setCustomFieldsState([]);
+          setCardBrand("");
+          setCardExpMonth("");
+          setCardExpYear("");
+          setCardCvv("");
+          setIdenTitle("");
+          setIdenFirstName("");
+          setIdenMiddleName("");
+          setIdenLastName("");
+          setIdenCompany("");
+          setIdenEmail("");
+          setIdenPhone("");
+          setIdenAddress1("");
+          setIdenAddress2("");
+          setIdenAddress3("");
+          setIdenCity("");
+          setIdenState("");
+          setIdenPostalCode("");
+          setIdenCountry("");
+          setIdenSsn("");
+          setIdenPassport("");
+          setIdenLicense("");
         }
       } else {
         // Reset for Add
@@ -214,6 +306,31 @@ export function ItemFormModal({
         setUsername("");
         setPassword("");
         setSshPublicKey("");
+        setCardBrand("");
+        setCardExpMonth("");
+        setCardExpYear("");
+        setCardCvv("");
+        setShowCardCvv(false);
+        setIdenTitle("");
+        setIdenFirstName("");
+        setIdenMiddleName("");
+        setIdenLastName("");
+        setIdenCompany("");
+        setIdenEmail("");
+        setIdenPhone("");
+        setIdenAddress1("");
+        setIdenAddress2("");
+        setIdenAddress3("");
+        setIdenCity("");
+        setIdenState("");
+        setIdenPostalCode("");
+        setIdenCountry("");
+        setIdenSsn("");
+        setIdenPassport("");
+        setIdenLicense("");
+        setShowIdenSsn(false);
+        setShowIdenPassport(false);
+        setShowIdenLicense(false);
         setUrl("");
         setExtraUris([]);
         setPasswordHistory([]);
@@ -260,17 +377,72 @@ export function ItemFormModal({
     if (!title.trim()) return;
     if (type === 'attachment') {
       if (!isEdit && pendingAttachments.length === 0 && linkedAttachmentIds.length === 0) return;
+    } else if (type === 'identity') {
+      // Identity secret is optional; defaults to notes or full name or title
     } else {
       if (!password) return;
     }
 
     setIsSaving(true);
     try {
-      const finalSecret = type === 'key' 
-        ? serializeSshKeySecret(password, sshPublicKey) 
-        : type === 'attachment'
-          ? (pendingAttachments[0]?.file_name || "")
-          : password;
+      let finalSecret = password;
+      let finalUsername = username;
+      let finalCustomFields = [...customFieldsState];
+
+      if (type === 'key') {
+        finalSecret = serializeSshKeySecret(password, sshPublicKey);
+      } else if (type === 'attachment') {
+        finalSecret = pendingAttachments[0]?.file_name || "";
+        finalUsername = pendingAttachments[0]?.file_name || username;
+      } else if (type === 'card') {
+        finalSecret = cleanCardNumber(password);
+        finalUsername = username;
+        // Clean out existing card keys to avoid duplicate fields
+        finalCustomFields = finalCustomFields.filter(f => !['card brand', 'brand', 'expiration', 'expiration month', 'expiration year', 'security code (cvv)', 'cvv', 'code'].includes(f.name.toLowerCase()));
+        if (cardBrand.trim()) {
+          finalCustomFields.push({ id: generateUUID(), name: 'Card Brand', type: 'text', value: cardBrand.trim() });
+        }
+        if (cardExpMonth.trim() || cardExpYear.trim()) {
+          const expVal = cardExpMonth.trim() && cardExpYear.trim() 
+            ? `${cardExpMonth.trim().padStart(2, '0')}/${cardExpYear.trim()}` 
+            : cardExpMonth.trim() || cardExpYear.trim();
+          finalCustomFields.push({ id: generateUUID(), name: 'Expiration', type: 'text', value: expVal });
+        }
+        if (cardCvv.trim()) {
+          finalCustomFields.push({ id: generateUUID(), name: 'Security Code (CVV)', type: 'hidden', value: cardCvv.trim() });
+        }
+      } else if (type === 'identity') {
+        const fullName = [idenFirstName.trim(), idenMiddleName.trim(), idenLastName.trim()].filter(Boolean).join(' ');
+        finalSecret = notes.trim() || fullName || username.trim() || title.trim();
+        finalUsername = username.trim() || fullName || "";
+
+        // Clean out existing identity keys
+        const idenKeyNames = ['title', 'first name', 'middle name', 'last name', 'full name', 'company', 'email', 'phone', 'address 1', 'address 2', 'address 3', 'city', 'state / province', 'state', 'postal code', 'country', 'location', 'ssn', 'passport number', 'passport', 'license number', 'license'];
+        finalCustomFields = finalCustomFields.filter(f => !idenKeyNames.includes(f.name.toLowerCase()));
+
+        if (idenTitle.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Title', type: 'text', value: idenTitle.trim() });
+        if (idenFirstName.trim()) finalCustomFields.push({ id: generateUUID(), name: 'First Name', type: 'text', value: idenFirstName.trim() });
+        if (idenMiddleName.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Middle Name', type: 'text', value: idenMiddleName.trim() });
+        if (idenLastName.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Last Name', type: 'text', value: idenLastName.trim() });
+        if (fullName) finalCustomFields.push({ id: generateUUID(), name: 'Full Name', type: 'text', value: fullName });
+        if (idenCompany.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Company', type: 'text', value: idenCompany.trim() });
+        if (idenEmail.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Email', type: 'text', value: idenEmail.trim() });
+        if (idenPhone.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Phone', type: 'text', value: idenPhone.trim() });
+        if (idenAddress1.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Address 1', type: 'text', value: idenAddress1.trim() });
+        if (idenAddress2.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Address 2', type: 'text', value: idenAddress2.trim() });
+        if (idenAddress3.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Address 3', type: 'text', value: idenAddress3.trim() });
+        if (idenCity.trim()) finalCustomFields.push({ id: generateUUID(), name: 'City', type: 'text', value: idenCity.trim() });
+        if (idenState.trim()) finalCustomFields.push({ id: generateUUID(), name: 'State / Province', type: 'text', value: idenState.trim() });
+        if (idenPostalCode.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Postal Code', type: 'text', value: idenPostalCode.trim() });
+        if (idenCountry.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Country', type: 'text', value: idenCountry.trim() });
+        if (idenCity.trim() || idenState.trim() || idenPostalCode.trim() || idenCountry.trim()) {
+          const loc = [idenCity.trim(), idenState.trim(), idenPostalCode.trim(), idenCountry.trim()].filter(Boolean).join(', ');
+          finalCustomFields.push({ id: generateUUID(), name: 'Location', type: 'text', value: loc });
+        }
+        if (idenSsn.trim()) finalCustomFields.push({ id: generateUUID(), name: 'SSN', type: 'hidden', value: idenSsn.trim() });
+        if (idenPassport.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Passport Number', type: 'hidden', value: idenPassport.trim() });
+        if (idenLicense.trim()) finalCustomFields.push({ id: generateUUID(), name: 'License Number', type: 'hidden', value: idenLicense.trim() });
+      }
       
       let finalTotp = "";
       if (showTotpField && totpSecret.trim()) {
@@ -287,17 +459,17 @@ export function ItemFormModal({
       await onSave({
         title,
         secret: finalSecret,
-        username: type === 'attachment' ? (pendingAttachments[0]?.file_name || username) : username,
+        username: finalUsername,
         url,
         uris: validUris.length > 0 ? JSON.stringify(validUris) : undefined,
         category,
         type,
         tags: JSON.stringify(tags),
-        notes: showNoteField ? notes : "",
+        notes: showNoteField ? notes : (type === 'identity' ? notes : ""),
         totp_secret: finalTotp,
         password_history: passwordHistory.length > 0 ? JSON.stringify(passwordHistory) : undefined,
         attachments: JSON.stringify(linkedAttachmentIds),
-        custom_fields: customFieldsState.length > 0 ? JSON.stringify(customFieldsState) : "",
+        custom_fields: finalCustomFields.length > 0 ? JSON.stringify(finalCustomFields) : "",
         newAttachments: pendingAttachments,
         removedAttachmentIds
       });
@@ -503,6 +675,371 @@ export function ItemFormModal({
                     ))}
                   </ul>
                 )}
+              </div>
+            )}
+
+            {/* Credit Card specifics */}
+            {type === 'card' && (
+              <div className="col-span-1 md:col-span-2 p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-4">
+                <div className="flex items-center gap-2 text-amber-500 font-bold text-xs uppercase tracking-wider">
+                  <CreditCard size={16} />
+                  <span>Credit Card Details</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Cardholder Name */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">Cardholder Name</label>
+                    <input 
+                      type="text" 
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="e.g. JANE DOE"
+                      className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-2.5 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main font-mono"
+                    />
+                  </div>
+
+                  {/* Card Brand */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">Brand</label>
+                    <select
+                      value={cardBrand}
+                      onChange={(e) => setCardBrand(e.target.value)}
+                      className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-2.5 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main cursor-pointer"
+                    >
+                      <option value="">Select Brand (or Auto-detect)</option>
+                      <option value="Visa">Visa</option>
+                      <option value="Mastercard">Mastercard</option>
+                      <option value="American Express">American Express</option>
+                      <option value="Discover">Discover</option>
+                      <option value="Diners Club">Diners Club</option>
+                      <option value="JCB">JCB</option>
+                      <option value="UnionPay">UnionPay</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Card Number */}
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                      Card Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex items-center">
+                      <input 
+                        type={showPassword ? "text" : "password"}
+                        required
+                        maxLength={19}
+                        value={password}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const formatted = formatCardNumber(val);
+                          setPassword(formatted);
+                          const detected = detectCardBrand(formatted);
+                          if (detected && detected !== 'Payment Card') {
+                            setCardBrand(detected);
+                          }
+                        }}
+                        placeholder="•••• •••• •••• ••••"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-4 pr-12 py-2.5 text-sm focus:border-claw-cyan outline-none transition-all text-theme-main font-mono tracking-wider"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expiration Month & Year */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">Expiration (MM / YYYY)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        maxLength={2}
+                        value={cardExpMonth}
+                        onChange={(e) => setCardExpMonth(e.target.value.replace(/\D/g, ''))}
+                        placeholder="MM"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm text-center focus:border-claw-cyan outline-none text-theme-main font-mono"
+                      />
+                      <input
+                        type="text"
+                        maxLength={4}
+                        value={cardExpYear}
+                        onChange={(e) => setCardExpYear(e.target.value.replace(/\D/g, ''))}
+                        placeholder="YYYY"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm text-center focus:border-claw-cyan outline-none text-theme-main font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Security Code (CVV) */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">Security Code (CVV)</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showCardCvv ? "text" : "password"}
+                        maxLength={4}
+                        value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
+                        placeholder="•••"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-3 pr-10 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono tracking-widest"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCardCvv(!showCardCvv)}
+                        className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
+                      >
+                        {showCardCvv ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Identity Specifics */}
+            {type === 'identity' && (
+              <div className="col-span-1 md:col-span-2 space-y-5">
+                {/* 1. Personal Names */}
+                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 space-y-3">
+                  <div className="flex items-center gap-2 text-blue-500 font-bold text-xs uppercase tracking-wider">
+                    <Contact size={16} />
+                    <span>Personal Details</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Title</label>
+                      <input 
+                        type="text" 
+                        value={idenTitle}
+                        onChange={(e) => setIdenTitle(e.target.value)}
+                        placeholder="Mr / Mrs / Dr"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">First Name</label>
+                      <input 
+                        type="text" 
+                        value={idenFirstName}
+                        onChange={(e) => setIdenFirstName(e.target.value)}
+                        placeholder="First"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Middle Name</label>
+                      <input 
+                        type="text" 
+                        value={idenMiddleName}
+                        onChange={(e) => setIdenMiddleName(e.target.value)}
+                        placeholder="Middle"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Last Name</label>
+                      <input 
+                        type="text" 
+                        value={idenLastName}
+                        onChange={(e) => setIdenLastName(e.target.value)}
+                        placeholder="Last"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Username / Handle</label>
+                    <input 
+                      type="text" 
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="e.g. captain_reef"
+                      className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Contact Information */}
+                <div className="p-4 rounded-2xl bg-slate-900/30 dark:bg-black/20 border border-theme-subtle space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-theme-muted block">Contact Information</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Company</label>
+                      <input 
+                        type="text" 
+                        value={idenCompany}
+                        onChange={(e) => setIdenCompany(e.target.value)}
+                        placeholder="Company Ltd."
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Email</label>
+                      <input 
+                        type="email" 
+                        value={idenEmail}
+                        onChange={(e) => setIdenEmail(e.target.value)}
+                        placeholder="user@example.com"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Phone</label>
+                      <input 
+                        type="tel" 
+                        value={idenPhone}
+                        onChange={(e) => setIdenPhone(e.target.value)}
+                        placeholder="+1 (555) 000-0000"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Address Information */}
+                <div className="p-4 rounded-2xl bg-slate-900/30 dark:bg-black/20 border border-theme-subtle space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-theme-muted block">Address Details</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="md:col-span-3">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Address Line 1</label>
+                      <input 
+                        type="text" 
+                        value={idenAddress1}
+                        onChange={(e) => setIdenAddress1(e.target.value)}
+                        placeholder="123 Ocean Way"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Address Line 2</label>
+                      <input 
+                        type="text" 
+                        value={idenAddress2}
+                        onChange={(e) => setIdenAddress2(e.target.value)}
+                        placeholder="Suite / Apt"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Address Line 3</label>
+                      <input 
+                        type="text" 
+                        value={idenAddress3}
+                        onChange={(e) => setIdenAddress3(e.target.value)}
+                        placeholder="Building / Floor"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">City</label>
+                      <input 
+                        type="text" 
+                        value={idenCity}
+                        onChange={(e) => setIdenCity(e.target.value)}
+                        placeholder="City"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">State / Province</label>
+                      <input 
+                        type="text" 
+                        value={idenState}
+                        onChange={(e) => setIdenState(e.target.value)}
+                        placeholder="State / Region"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Postal Code</label>
+                      <input 
+                        type="text" 
+                        value={idenPostalCode}
+                        onChange={(e) => setIdenPostalCode(e.target.value)}
+                        placeholder="Postal Code"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Country</label>
+                      <input 
+                        type="text" 
+                        value={idenCountry}
+                        onChange={(e) => setIdenCountry(e.target.value)}
+                        placeholder="Country"
+                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Identification Documents */}
+                <div className="p-4 rounded-2xl bg-slate-900/30 dark:bg-black/20 border border-theme-subtle space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-theme-muted block">Identification Documents (Encrypted & Masked)</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">SSN / National ID</label>
+                      <div className="relative flex items-center">
+                        <input 
+                          type={showIdenSsn ? "text" : "password"}
+                          value={idenSsn}
+                          onChange={(e) => setIdenSsn(e.target.value)}
+                          placeholder="•••-••-••••"
+                          className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-3 pr-10 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowIdenSsn(!showIdenSsn)}
+                          className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
+                        >
+                          {showIdenSsn ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Passport Number</label>
+                      <div className="relative flex items-center">
+                        <input 
+                          type={showIdenPassport ? "text" : "password"}
+                          value={idenPassport}
+                          onChange={(e) => setIdenPassport(e.target.value)}
+                          placeholder="Passport Number"
+                          className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-3 pr-10 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowIdenPassport(!showIdenPassport)}
+                          className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
+                        >
+                          {showIdenPassport ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Driver's License</label>
+                      <div className="relative flex items-center">
+                        <input 
+                          type={showIdenLicense ? "text" : "password"}
+                          value={idenLicense}
+                          onChange={(e) => setIdenLicense(e.target.value)}
+                          placeholder="License Number"
+                          className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-3 pr-10 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowIdenLicense(!showIdenLicense)}
+                          className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
+                        >
+                          {showIdenLicense ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

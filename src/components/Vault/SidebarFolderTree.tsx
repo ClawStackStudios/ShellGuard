@@ -6,6 +6,8 @@ import {
   X, 
   Layers,
   Key,
+  CreditCard,
+  Contact,
   FileText,
   Binary,
   Tag as TagIcon,
@@ -75,9 +77,11 @@ export function SidebarFolderTree({
   }, [rootNodes, podSearch]);
 
   const passwordsCount = useMemo(() => items.filter(i => (i.type || "password") === "password").length, [items]);
+  const cardsCount = useMemo(() => items.filter(i => i.type === "card").length, [items]);
+  const identitiesCount = useMemo(() => items.filter(i => i.type === "identity").length, [items]);
   const notesCount = useMemo(() => items.filter(i => i.type === "note").length, [items]);
   const keysCount = useMemo(() => items.filter(i => i.type === "key").length, [items]);
-  const totalPrimaryCount = passwordsCount + notesCount + keysCount;
+  const totalPrimaryCount = passwordsCount + cardsCount + identitiesCount + notesCount + keysCount;
   const allTags = useMemo(() => extractAllTags(items), [items]);
 
   const handleOpenCreateModal = () => {
@@ -207,6 +211,48 @@ export function SidebarFolderTree({
               : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
           }`}>
             {passwordsCount}
+          </span>
+        </div>
+
+        <div
+          onClick={() => onActiveTypeFilterChange?.("card")}
+          className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+            activeTypeFilter === "card"
+              ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-sm border border-claw-cyan/20"
+              : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <CreditCard size={14} className={activeTypeFilter === "card" ? "text-claw-cyan" : "text-slate-400"} />
+            <span className="truncate">Cards</span>
+          </div>
+          <span className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded-full ${
+            activeTypeFilter === "card"
+              ? "bg-slate-700/80 text-white"
+              : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+          }`}>
+            {cardsCount}
+          </span>
+        </div>
+
+        <div
+          onClick={() => onActiveTypeFilterChange?.("identity")}
+          className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+            activeTypeFilter === "identity"
+              ? "bg-slate-800/90 dark:bg-[#15233b] text-white font-bold shadow-sm border border-claw-cyan/20"
+              : "text-slate-600 dark:text-slate-300 hover:text-theme-main hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Contact size={14} className={activeTypeFilter === "identity" ? "text-claw-cyan" : "text-slate-400"} />
+            <span className="truncate">Identities</span>
+          </div>
+          <span className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded-full ${
+            activeTypeFilter === "identity"
+              ? "bg-slate-700/80 text-white"
+              : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+          }`}>
+            {identitiesCount}
           </span>
         </div>
 

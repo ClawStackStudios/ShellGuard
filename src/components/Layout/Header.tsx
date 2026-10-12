@@ -155,14 +155,18 @@ export function Header({
                     transition={{ duration: 0.12 }}
                     className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-[#1a0c12] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 p-1.5"
                   >
-                    {(["password", "note", "key", "attachment"] as const).map((type) => (
+                    {(["password", "card", "identity", "note", "key", "attachment"] as const).map((type) => (
                       <button
                         key={type}
                         type="button"
                         onClick={() => onOpenAdd(type)}
                         className="w-full text-left px-3 py-2 text-xs font-semibold capitalize text-theme-main hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
                       >
-                        {type === "password" ? "🔑 Password" : type === "note" ? "📝 Secure Note" : type === "key" ? "🗝 SSH Key" : "📎 Attachment"}
+                        {type === "password" ? "🔑 Password" :
+                         type === "card" ? "💳 Credit Card" :
+                         type === "identity" ? "🪪 Identity" :
+                         type === "note" ? "📝 Secure Note" :
+                         type === "key" ? "🗝 SSH Key" : "📎 Attachment"}
                       </button>
                     ))}
                   </motion.div>

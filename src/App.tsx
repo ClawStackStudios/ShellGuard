@@ -1368,8 +1368,8 @@ export default function App() {
                         });
                       }
 
-                      const pearlsToInsert = itemsToInsert.filter(i => i.type === 'password' || !i.type);
-                      const others = itemsToInsert.filter(i => i.type !== 'password' && Boolean(i.type));
+                      const pearlsToInsert = itemsToInsert.filter(i => i.type === 'password' || i.type === 'card' || i.type === 'identity' || !i.type);
+                      const others = itemsToInsert.filter(i => i.type === 'note' || i.type === 'key');
 
                       const result: { inserted: string[]; errors: { index: number; reason: string }[] } = {
                         inserted: [],

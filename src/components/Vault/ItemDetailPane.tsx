@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Terminal, History, Paperclip } from 'lucide-react';
+import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Terminal, History, Paperclip, CreditCard, Contact, Shield, MapPin, Phone, Mail } from 'lucide-react';
 import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty, PasswordHistoryEntry } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
@@ -10,6 +10,7 @@ import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
 import { downloadAttachment, formatBytes } from '../../lib/attachmentUtils.ts';
 import { parseSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
+import { formatCardNumber, maskCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
 
 interface ItemDetailPaneProps {
   item: VaultItem | null;
@@ -32,6 +33,7 @@ export function ItemDetailPane({
   onFetchAttachment
 }: ItemDetailPaneProps) {
   const [revealed, setRevealed] = useState(false);
+  const [revealedCvv, setRevealedCvv] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [revealedHiddenFields, setRevealedHiddenFields] = useState<Set<string>>(new Set());
@@ -40,6 +42,7 @@ export function ItemDetailPane({
   // Reset state when item changes
   useEffect(() => {
     setRevealed(false);
+    setRevealedCvv(false);
     setShowHistory(false);
     setCopyFeedback(null);
     setRevealedHiddenFields(new Set());
@@ -73,6 +76,107 @@ export function ItemDetailPane({
     return parseSshKeySecret(item.secret);
   }, [item?.type, item?.secret]);
 
+  const cardDetails = useMemo(() => {
+    if (!item || item.type !== 'card') return null;
+    let customFields: CustomField[] = [];
+    try {
+      if (item.custom_fields) {
+        const parsed = JSON.parse(item.custom_fields);
+        if (Array.isArray(parsed)) customFields = parsed;
+      }
+    } catch {}
+
+    const findField = (names: string[]) => {
+      return customFields.find(f => names.includes(f.name.toLowerCase()))?.value || '';
+    };
+
+    const rawNumber = item.secret || '';
+    const storedBrand = findField(['card brand', 'brand']);
+    const detectedBrand = detectCardBrand(rawNumber);
+    const brand = storedBrand || detectedBrand;
+    const exp = findField(['expiration']);
+    const expMonth = findField(['expiration month']);
+    const expYear = findField(['expiration year']);
+    const expiration = exp || (expMonth && expYear ? `${expMonth.padStart(2, '0')}/${expYear}` : expMonth || expYear || '••/••');
+    const cvv = findField(['security code (cvv)', 'cvv', 'code']);
+
+    const formattedNumber = formatCardNumber(rawNumber);
+    const maskedNumber = maskCardNumber(rawNumber);
+    const cleanNumber = cleanCardNumber(rawNumber);
+
+    return {
+      cardholder: item.username || 'Cardholder',
+      number: rawNumber,
+      formattedNumber: formattedNumber || rawNumber,
+      maskedNumber,
+      copyNumber: cleanNumber || rawNumber,
+      brand,
+      expiration,
+      cvv,
+    };
+  }, [item?.type, item?.secret, item?.username, item?.custom_fields]);
+
+  const identityDetails = useMemo(() => {
+    if (!item || item.type !== 'identity') return null;
+    let customFields: CustomField[] = [];
+    try {
+      if (item.custom_fields) {
+        const parsed = JSON.parse(item.custom_fields);
+        if (Array.isArray(parsed)) customFields = parsed;
+      }
+    } catch {}
+
+    const getVal = (names: string[]) => {
+      const match = customFields.find(f => names.includes(f.name.toLowerCase()));
+      return match ? match.value : '';
+    };
+
+    const title = getVal(['title']);
+    const firstName = getVal(['first name']);
+    const middleName = getVal(['middle name']);
+    const lastName = getVal(['last name']);
+    const fullName = getVal(['full name']) || [firstName, middleName, lastName].filter(Boolean).join(' ') || item.username || item.title;
+    const username = getVal(['username']) || (item.username !== fullName ? item.username : '');
+    const company = getVal(['company']);
+    const email = getVal(['email']);
+    const phone = getVal(['phone']);
+
+    const address1 = getVal(['address 1', 'address1']);
+    const address2 = getVal(['address 2', 'address2']);
+    const address3 = getVal(['address 3', 'address3']);
+    const city = getVal(['city']);
+    const state = getVal(['state / province', 'state']);
+    const postalCode = getVal(['postal code', 'zip']);
+    const country = getVal(['country']);
+    const location = getVal(['location']) || [city, state, postalCode, country].filter(Boolean).join(', ');
+    const fullAddress = [address1, address2, address3, location].filter(Boolean).join('\n');
+
+    const ssn = getVal(['ssn']);
+    const passport = getVal(['passport number', 'passport']);
+    const license = getVal(['license number', 'license']);
+
+    return {
+      title,
+      fullName,
+      username,
+      company,
+      email,
+      phone,
+      address1,
+      address2,
+      address3,
+      city,
+      state,
+      postalCode,
+      country,
+      location,
+      fullAddress,
+      ssn,
+      passport,
+      license,
+    };
+  }, [item?.type, item?.title, item?.username, item?.custom_fields]);
+
   if (isLocked) {
     return (
       <div className="flex-1 h-full flex items-center justify-center bg-theme-base p-8 text-center text-slate-500">
@@ -96,6 +200,8 @@ export function ItemDetailPane({
 
   const getTypeIcon = (type?: VaultItemType) => {
     switch (type) {
+      case "card": return <CreditCard size={16} className="text-amber-500" />;
+      case "identity": return <Contact size={16} className="text-blue-500" />;
       case "note": return <FileText size={16} className="text-emerald-500" />;
       case "key": return <Binary size={16} className="text-purple-500" />;
       case "attachment": return <Paperclip size={16} className="text-claw-cyan" />;
@@ -197,7 +303,7 @@ export function ItemDetailPane({
             <div className="space-y-3 bg-theme-surface p-1 rounded-2xl border border-theme-subtle shadow-sm">
               
               {/* Username */}
-              {item.username && (
+              {item.username && item.type !== 'card' && item.type !== 'identity' && (
                 <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                   <div className="flex items-center gap-3 min-w-0">
                     <User size={16} className="text-slate-400" />
@@ -215,7 +321,7 @@ export function ItemDetailPane({
                 </div>
               )}
 
-              {/* Standalone Attachment or SSH Key or Password / Secret */}
+              {/* Standalone Attachment, SSH Key, Credit Card, Identity, or Password / Secret */}
               {item.type === "attachment" ? (
                 <div className="p-4 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-3">
                   <div className="flex items-center justify-between gap-3">
@@ -346,6 +452,407 @@ export function ItemDetailPane({
                       </div>
                     )}
                   </div>
+                </div>
+              ) : item.type === "card" && cardDetails ? (
+                <div className="space-y-3 pt-1">
+                  {/* Reef Modernist Credit Card Visual Card */}
+                  <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-white shadow-xl">
+                    <div className="absolute -top-12 -right-12 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-claw-cyan/10 rounded-full blur-2xl pointer-events-none" />
+
+                    {/* Card Header: Chip and Brand */}
+                    <div className="relative z-10 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-7 rounded-md bg-amber-400/20 border border-amber-400/50 flex items-center justify-center p-1">
+                          <div className="w-full h-full border border-amber-300/40 rounded-sm grid grid-cols-2 gap-0.5 opacity-80" />
+                        </div>
+                        <span className="text-xs font-bold tracking-wider uppercase text-amber-300/90 font-mono">
+                          {cardDetails.brand}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-amber-400/80">
+                        <CreditCard size={20} />
+                      </div>
+                    </div>
+
+                    {/* Card Number */}
+                    <div className="relative z-10 my-5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Card Number
+                        </span>
+                        {/* Eye-beside-Copy Invariant */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setRevealed(!revealed)}
+                            title={revealed ? "Mask card number" : "Reveal card number"}
+                            className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                          >
+                            {revealed ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(cardDetails.copyNumber || cardDetails.number, "card-number")}
+                            title="Copy clean card number"
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              copyFeedback === "card-number"
+                                ? "text-green-400 bg-green-500/20"
+                                : "text-slate-400 hover:text-amber-400 hover:bg-white/10"
+                            }`}
+                          >
+                            {copyFeedback === "card-number" ? <Check size={15} /> : <Copy size={15} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-1 font-mono text-base sm:text-lg md:text-xl font-bold tracking-wider sm:tracking-widest text-slate-100 select-all whitespace-nowrap overflow-x-auto custom-scrollbar">
+                        {revealed ? cardDetails.formattedNumber : cardDetails.maskedNumber}
+                      </div>
+                    </div>
+
+                    {/* Card Footer: Cardholder, Expiration, CVV */}
+                    <div className="relative z-10 grid grid-cols-3 gap-3 pt-2 border-t border-slate-700/60 text-xs">
+                      {/* Cardholder */}
+                      <div className="col-span-1 min-w-0">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+                          Cardholder
+                        </span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="font-semibold text-slate-200 truncate select-all">
+                            {cardDetails.cardholder}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(cardDetails.cardholder, "cardholder")}
+                            title="Copy cardholder"
+                            className={`p-1 rounded transition-colors cursor-pointer ${
+                              copyFeedback === "cardholder" ? "text-green-400" : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            {copyFeedback === "cardholder" ? <Check size={12} /> : <Copy size={12} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expiration */}
+                      <div className="col-span-1 text-center min-w-0">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">
+                          Expires
+                        </span>
+                        <span className="font-mono font-bold text-slate-200 mt-0.5 block">
+                          {cardDetails.expiration}
+                        </span>
+                      </div>
+
+                      {/* CVV */}
+                      <div className="col-span-1 text-right min-w-0">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">
+                          CVV / CVC
+                        </span>
+                        <div className="flex items-center justify-end gap-1 mt-0.5">
+                          <span className="font-mono font-bold text-slate-200 select-all">
+                            {revealedCvv ? (cardDetails.cvv || '—') : (cardDetails.cvv ? '•••' : '—')}
+                          </span>
+                          {cardDetails.cvv && (
+                            <div className="flex items-center gap-0.5">
+                              {/* Eye-beside-Copy Invariant */}
+                              <button
+                                type="button"
+                                onClick={() => setRevealedCvv(!revealedCvv)}
+                                title={revealedCvv ? "Mask CVV" : "Reveal CVV"}
+                                className="p-1 text-slate-400 hover:text-amber-400 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                              >
+                                {revealedCvv ? <EyeOff size={12} /> : <Eye size={12} />}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(cardDetails.cvv, "card-cvv")}
+                                title="Copy CVV"
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  copyFeedback === "card-cvv" ? "text-green-400" : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                {copyFeedback === "card-cvv" ? <Check size={12} /> : <Copy size={12} />}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : item.type === "identity" && identityDetails ? (
+                <div className="space-y-3 pt-1">
+                  {/* Profile Banner */}
+                  <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-950/20 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
+                        <Contact size={20} />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {identityDetails.title && (
+                            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+                              {identityDetails.title}
+                            </span>
+                          )}
+                          <h4 className="text-base font-bold text-theme-main truncate">
+                            {identityDetails.fullName}
+                          </h4>
+                        </div>
+                        {(identityDetails.company || identityDetails.username) && (
+                          <span className="text-xs text-theme-muted truncate">
+                            {identityDetails.company ? identityDetails.company : ''}
+                            {identityDetails.company && identityDetails.username ? ' • ' : ''}
+                            {identityDetails.username ? `@${identityDetails.username}` : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(identityDetails.fullName, "iden-fullname")}
+                      title="Copy Full Name"
+                      className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                        copyFeedback === "iden-fullname" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-blue-500"
+                      }`}
+                    >
+                      {copyFeedback === "iden-fullname" ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+
+                  {/* Contact Information (Email, Phone, Username) */}
+                  {(identityDetails.email || identityDetails.phone || identityDetails.username) && (
+                    <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Contact Details
+                      </span>
+
+                      {identityDetails.email && (
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Mail size={15} className="text-slate-400 flex-shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Email</span>
+                              <a href={`mailto:${identityDetails.email}`} className="text-xs font-mono text-claw-cyan hover:underline truncate">
+                                {identityDetails.email}
+                              </a>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(identityDetails.email, "iden-email")}
+                            title="Copy Email"
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              copyFeedback === "iden-email" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                            }`}
+                          >
+                            {copyFeedback === "iden-email" ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      )}
+
+                      {identityDetails.phone && (
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Phone size={15} className="text-slate-400 flex-shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Phone</span>
+                              <a href={`tel:${identityDetails.phone}`} className="text-xs font-mono text-theme-main hover:text-claw-cyan truncate">
+                                {identityDetails.phone}
+                              </a>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(identityDetails.phone, "iden-phone")}
+                            title="Copy Phone"
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              copyFeedback === "iden-phone" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                            }`}
+                          >
+                            {copyFeedback === "iden-phone" ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      )}
+
+                      {identityDetails.username && (
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <User size={15} className="text-slate-400 flex-shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Username</span>
+                              <span className="text-xs font-mono text-theme-main truncate">{identityDetails.username}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(identityDetails.username, "iden-uname")}
+                            title="Copy Username"
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              copyFeedback === "iden-uname" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                            }`}
+                          >
+                            {copyFeedback === "iden-uname" ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Address Block */}
+                  {identityDetails.fullAddress && (
+                    <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <MapPin size={15} className="text-slate-400 flex-shrink-0" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Address & Location
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(identityDetails.fullAddress, "iden-address")}
+                          title="Copy Full Address"
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            copyFeedback === "iden-address" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                          }`}
+                        >
+                          {copyFeedback === "iden-address" ? <Check size={14} /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-theme-surface border border-theme-subtle text-xs font-mono text-theme-main whitespace-pre-line leading-relaxed select-all">
+                        {identityDetails.fullAddress}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Identification Documents (SSN, Passport, License) with Eye-beside-Copy */}
+                  {(identityDetails.ssn || identityDetails.passport || identityDetails.license) && (
+                    <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <Shield size={15} className="text-amber-400 flex-shrink-0" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Identification Documents
+                        </span>
+                      </div>
+
+                      {identityDetails.ssn && (
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                              Social Security Number (SSN)
+                            </span>
+                            <span className="text-xs font-mono text-theme-main truncate mt-0.5">
+                              {revealedHiddenFields.has('iden_ssn') ? identityDetails.ssn : '•••••••••'}
+                            </span>
+                          </div>
+                          {/* Eye-beside-Copy Invariant */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setRevealedHiddenFields(prev => {
+                                const next = new Set(prev);
+                                if (next.has('iden_ssn')) next.delete('iden_ssn'); else next.add('iden_ssn');
+                                return next;
+                              })}
+                              title={revealedHiddenFields.has('iden_ssn') ? "Mask SSN" : "Reveal SSN"}
+                              className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                            >
+                              {revealedHiddenFields.has('iden_ssn') ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(identityDetails.ssn, "iden-ssn")}
+                              title="Copy SSN"
+                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                copyFeedback === "iden-ssn" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                              }`}
+                            >
+                              {copyFeedback === "iden-ssn" ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {identityDetails.passport && (
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                              Passport Number
+                            </span>
+                            <span className="text-xs font-mono text-theme-main truncate mt-0.5">
+                              {revealedHiddenFields.has('iden_passport') ? identityDetails.passport : '•••••••••'}
+                            </span>
+                          </div>
+                          {/* Eye-beside-Copy Invariant */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setRevealedHiddenFields(prev => {
+                                const next = new Set(prev);
+                                if (next.has('iden_passport')) next.delete('iden_passport'); else next.add('iden_passport');
+                                return next;
+                              })}
+                              title={revealedHiddenFields.has('iden_passport') ? "Mask Passport" : "Reveal Passport"}
+                              className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                            >
+                              {revealedHiddenFields.has('iden_passport') ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(identityDetails.passport, "iden-passport")}
+                              title="Copy Passport Number"
+                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                copyFeedback === "iden-passport" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                              }`}
+                            >
+                              {copyFeedback === "iden-passport" ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {identityDetails.license && (
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                              Driver's License Number
+                            </span>
+                            <span className="text-xs font-mono text-theme-main truncate mt-0.5">
+                              {revealedHiddenFields.has('iden_license') ? identityDetails.license : '•••••••••'}
+                            </span>
+                          </div>
+                          {/* Eye-beside-Copy Invariant */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setRevealedHiddenFields(prev => {
+                                const next = new Set(prev);
+                                if (next.has('iden_license')) next.delete('iden_license'); else next.add('iden_license');
+                                return next;
+                              })}
+                              title={revealedHiddenFields.has('iden_license') ? "Mask Driver's License" : "Reveal Driver's License"}
+                              className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                            >
+                              {revealedHiddenFields.has('iden_license') ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(identityDetails.license, "iden-license")}
+                              title="Copy Driver's License Number"
+                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                copyFeedback === "iden-license" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
+                              }`}
+                            >
+                              {copyFeedback === "iden-license" ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : item.type === "note" ? null : (
                 /* Standard Password Row */
@@ -531,6 +1038,22 @@ export function ItemDetailPane({
                 const parsed = JSON.parse(item.custom_fields);
                 if (Array.isArray(parsed)) customFields = parsed;
               } catch {}
+
+              // Filter out handled fields for card and identity to avoid duplication
+              if (item.type === 'card') {
+                const cardHandled = new Set(['card brand', 'brand', 'expiration', 'expiration month', 'expiration year', 'security code (cvv)', 'cvv', 'code']);
+                customFields = customFields.filter(f => !cardHandled.has(f.name.toLowerCase()));
+              } else if (item.type === 'identity') {
+                const idenHandled = new Set([
+                  'title', 'first name', 'middle name', 'last name', 'full name',
+                  'username', 'company', 'email', 'phone', 'address 1', 'address 2',
+                  'address 3', 'city', 'state / province', 'state', 'postal code',
+                  'country', 'location', 'ssn', 'passport number', 'passport',
+                  'license number', 'license'
+                ]);
+                customFields = customFields.filter(f => !idenHandled.has(f.name.toLowerCase()));
+              }
+
               if (customFields.length === 0) return null;
 
               const resolveLinkedValue = (cf: CustomField): string => {

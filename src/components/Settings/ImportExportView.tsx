@@ -488,6 +488,8 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
 
   // Breakdown statistics for preview
   const passwordCount = importPreviewList?.filter(i => i.type === 'password' || !i.type).length || 0;
+  const cardCount = importPreviewList?.filter(i => i.type === 'card').length || 0;
+  const identityCount = importPreviewList?.filter(i => i.type === 'identity').length || 0;
   const noteCount = importPreviewList?.filter(i => i.type === 'note').length || 0;
   const keyCount = importPreviewList?.filter(i => i.type === 'key').length || 0;
 
@@ -1274,6 +1276,16 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
                 {passwordCount > 0 && (
                   <span className="px-2.5 py-1 bg-theme-base border border-theme-subtle rounded-lg text-theme-main font-medium">
                     🔑 {passwordCount} Passwords
+                  </span>
+                )}
+                {cardCount > 0 && (
+                  <span className="px-2.5 py-1 bg-theme-base border border-theme-subtle rounded-lg text-theme-main font-medium">
+                    💳 {cardCount} Cards
+                  </span>
+                )}
+                {identityCount > 0 && (
+                  <span className="px-2.5 py-1 bg-theme-base border border-theme-subtle rounded-lg text-theme-main font-medium">
+                    🪪 {identityCount} Identities
                   </span>
                 )}
                 {noteCount > 0 && (

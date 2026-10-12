@@ -186,7 +186,7 @@ describe('Bitwarden Ingestion Engine', () => {
     const cardItem = items.find(i => i.title === 'Test Card');
     expect(cardItem).toBeDefined();
     expect(cardItem?.id).toBe('b7ab5afb-ed72-4879-add3-b4d20012a164');
-    expect(cardItem?.type).toBe('password');
+    expect(cardItem?.type).toBe('card');
     expect(cardItem?.username).toBe('Tester');
     expect(cardItem?.secret).toBe('1234567890');
     expect(cardItem?.notes).toBe('Note');
@@ -220,7 +220,7 @@ describe('Bitwarden Ingestion Engine', () => {
     const idenItem = items.find(i => i.title === 'Tester');
     expect(idenItem).toBeDefined();
     expect(idenItem?.id).toBe('f64656ba-c644-42a4-b67c-b4d20012749e');
-    expect(idenItem?.type).toBe('note');
+    expect(idenItem?.type).toBe('identity');
     expect(idenItem?.username).toBe('TesterGuy');
     expect(idenItem?.notes).toBe('Note');
     expect(idenItem?.tags).toContain('Identity');

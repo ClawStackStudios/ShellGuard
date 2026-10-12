@@ -1,4 +1,4 @@
-export type VaultItemType = "password" | "note" | "totp" | "key" | "attachment";
+export type VaultItemType = "password" | "note" | "totp" | "key" | "attachment" | "card" | "identity";
 
 export type CustomFieldType = "text" | "hidden" | "checkbox" | "linked";
 export type CustomFieldLinkedProperty = "username" | "password" | "url" | "notes" | "totp";

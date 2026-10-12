@@ -46,7 +46,7 @@ export const VaultSchemas = {
     username: z.string().max(255).optional(),
     url: z.string().max(2048).optional(),
     uris: z.string().max(100000).optional(),
-    type: z.enum(['password', 'pearl']).optional(),
+    type: z.enum(['password', 'pearl', 'card', 'identity', 'note', 'key']).optional(),
     category: itemCategory,
     tags: itemTags,
     notes: z.string().max(10000).optional(),

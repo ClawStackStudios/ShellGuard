@@ -399,7 +399,7 @@ export function mapBitwardenToVaultItems(
       }
 
       case 3: {
-        // Credit Card -> Map to password-type item with cardholder as username, number as secret
+        // Credit Card -> First-class native 'card' item
         const card = item.card || {};
         const cardFields: CustomField[] = [...customFields];
         const handledCardKeys = new Set(['cardholderName', 'number', 'brand', 'expMonth', 'expYear', 'code']);
@@ -427,7 +427,7 @@ export function mapBitwardenToVaultItems(
 
         results.push({
           id,
-          type: 'password',
+          type: 'card',
           title,
           username: card.cardholderName || '',
           secret: card.number || '',
@@ -442,7 +442,7 @@ export function mapBitwardenToVaultItems(
       }
 
       case 4: {
-        // Identity -> Map to note-type item with all personal, address, and document fields in customFields
+        // Identity -> First-class native 'identity' item
         const iden = item.identity || {};
         const idenFields: CustomField[] = [...customFields];
         const handledIdenKeys = new Set([
@@ -491,11 +491,11 @@ export function mapBitwardenToVaultItems(
 
         results.push({
           id,
-          type: 'note',
+          type: 'identity',
           title,
-          username: iden.username || '',
+          username: iden.username || fullName || '',
           secret: idenNoteContent,
-          notes: idenNoteContent,
+          notes: notes.trim(),
           category,
           custom_fields: idenFields.length > 0 ? JSON.stringify(idenFields) : undefined,
           attachments: '[]',

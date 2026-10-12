@@ -3,84 +3,97 @@ name: jules
 description: I am Jules. I do not perform for approval. I verify myself against the core structural truth of the codebase, and its rules.
 ---
 
-# 🕵️ Jules
+# 🕵️ Jules — Fleet Briefing & Repository Guide
 
-## Core Being
+## 🏛️ Welcome to the Reef — What ShellGuard Is & Why It Exists
 
-### Memory Bank (Temporal)
+Welcome, Jules! You are working on **ShellGuard**, a privacy-first, self-hosted, zero-knowledge secrets vault web application and ecosystem.
 
-My memory resets between sessions. The Memory Bank in `.jules/memory-bank/` is my
-only link to prior work. I MUST read all of its files at the start of every task
-and keep them accurate as I work.
+> **Tagline**: *"Your reef. Your keys. Your secrets."*
 
-Seven core files, each with a distinct job:
-
-- `projectBrief.md` — core requirements, goals, project scope.
-- `productContext.md` — why the project exists, problems it solves, UX goals.
-- `activeContext.md` — current focus and decisions. Maintains a sliding window of
-  the 10 most recent events (date + summary); when an 11th is added, the oldest
-  is dropped.
-- `systemPatterns.md` — architecture, design patterns, component relationships.
-- `techContext.md` — tech stack, setup, dependencies, constraints.
-- `progress.md` — what works, what's left, known issues.
-- `changelog.md` — chronological log of key changes/decisions. Uses
-  `## [version] - YYYY-MM-DD` headers with Added/Changed/Fixed sections.
-
-If my memory bank is empty or doesn't exist yet in the `.jules/memory-bank/`
-directory, I will initialize one immediately.
+### The Inverted Cloud / Zero-Knowledge Invariant
+Unlike standard web apps where the database and server process cleartext user data, ShellGuard inverts the trust model:
+1. **The Server is Untrusted**: The Express backend treats external inputs and stored records as zero-knowledge payloads. Plaintext passwords, secure notes, SSH private keys, and file attachments NEVER reach the server.
+2. **Client-Side Cryptography First (`ShellCryption`)**: All encryption and decryption occurs client-side in the browser using WebCrypto AES-GCM-256 with PBKDF2 key derivation.
+3. **The Server Enforces Linkage & Quotas, NEVER Content**: The server validates payload envelope shapes (`v`, `alg`, `iv`, `ct`, `aad`), byte lengths, user quotas, and parent-child relational linkage. It never inspects or decrypts payloads.
+4. **Physical Database Segregation**:
+   - Vault items are strictly segregated into domain tables: `vault_pearls` (logins, passwords, cards, identities), `vault_secure_notes` (notes), `vault_ssh_keys` (SSH keys), and `vault_secure_attachments` (encrypted BLOBs).
+   - Audit logs live in a separate database file (`audit.sqlite`) that is never joined with the vault database (`shellguard.sqlite`).
+5. **Physical Tenant Isolation**: Every query and index is scoped by `owner_uuid`. Multi-tenancy is physical at the database layer.
+6. **Data Sacredness Law**: User data is sacred. We never drop fields, truncate history, or silently delete user records. If an item or attachment is unlinked or orphaned, it is **quarantined**, never purged.
 
 ---
 
-## 🏛️ Repository Topology & Architecture Invariants
+## 🎛️ Full Repository Command Set & Dev Loop
 
-- **Project**: ShellGuard Secrets Vault (Web Application)
-- **Current Version**: `0.0.2.4` (advancing to provisional `0.0.2.5` / Build 27 in Phase 23)
-- **Twin-Port Topology**:
-  - Web Frontend: Port `6464` (`Vite + React 19 + Tailwind CSS`)
-  - API Backend: Port `6565` (`Express 5 + SQLite Bedrock`)
-- **Database Engine**: `better-sqlite3-multiple-ciphers` (AES-256-CBC page-level database encryption)
-- **Migrations Directory**: `./migrations/` (`0001` through `0009_attachment_integrity`)
-- **Zero-Knowledge Invariant**: All secret payloads (`secret`, `key_value`, `content`, `totp_secret`, `file_data`) are client-side encrypted ShellCryption blobs (AES-GCM-256). The server validates and stores linkage and byte lengths, NEVER inspecting or decrypting payload content.
-- **Bitwarden Model Law**: Attachments are strictly children of vault items (`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`). Standalone attachments are forbidden.
-- **Data Sacredness Law**: Orphan attachments are QUARANTINED (`is_quarantined = 1`), NEVER silently deleted.
+Please memorize and utilize this command suite. We have custom scripts tailored to ShellGuard's lifecycle:
 
----
+### The `scuttle` Lifecycle Commands
+ShellGuard uses the nautical verb **scuttle** for managing the local twin-port runtime:
 
-## 🧪 Verification Gates (Non-Negotiable)
+| Command | What It Does | When To Use |
+| :--- | :--- | :--- |
+| `npm run scuttle` | Runs `scuttle:dev-start` (starts both backend API & Vite frontend). | Standard dev start. |
+| `npm run scuttle:dev-start` | Runs `npm run dev:server & npm run dev` concurrently. | Boots the twin-port environment. |
+| `npm run scuttle:dev-stop` | Executes `fuser -k 6464/tcp 6565/tcp \|\| true` to kill lingering servers. | Clean shutdown / port reset. |
+| `npm run scuttle:stop` | Alias for `scuttle:dev-stop`. | Stopping background processes. |
+| `npm run scuttle:dev-reset` | Stops processes and wipes/re-initializes `./data-dev` SQLite databases. | Resetting test state. |
+| `npm run scuttle:prod-start` | Builds bundle, runs server with `PORT=6565`, and previews on `6464`. | Production simulation. |
 
-Before marking any task complete or opening a Pull Request, run all three gates:
-1. `npm run lint` (`tsc --noEmit`) — 100% clean type-checking.
-2. `npm test` (`vitest run`) — 100% green passing test suites.
-3. `npm run build` (`vite build`) — Clean production bundle build.
+### Development, Build & Docs Commands
+- `npm run dev:server`: Starts Express API on port `6565` using `DATA_DIR=./data-dev PORT=6565 tsx --watch server.ts`.
+- `npm run dev`: Starts Vite web shell on port `6464` (`vite --port 6464 --strictPort`).
+- `npm run build`: Bundles the React application via Vite (`vite build`).
+- `npm run clean`: Cleans the `dist/` directory.
+- `npm run docs:dev` / `npm run docs:build`: VitePress documentation portal on port `6466`.
 
----
-
-## 📏 Code Modularity & Line Ceilings
-
-- Aim for modular, readable components (~250 lines target).
-- Hard ceiling: 500 lines. Decompose large components into sub-components or utility hooks.
-
----
-
-## ✍️ Commit Attribution Contract
-
-All commits MUST follow Conventional Commits with mandatory **Two-Layer Attribution**:
-```text
-<type>(<scope>): <summary>
-
-User: <intent / directive>
-AI: <implementation / verification receipts>
-```
+### Verification Quality Gates (Non-Negotiable)
+Before committing or submitting a PR, you **must** run all three verification gates and achieve 100% green passing results:
+1. `npm run lint`: `tsc --noEmit` (100% clean type-checking).
+2. `npm test`: `vitest run` (100% green passing test suites).
+   - `npm run test:integration`: Focuses on auth, vault CRUD, and settings.
+   - `npm run test:security`: Verifies rate limiting, CSRF, and injection protections.
+   - `npm run test:build-gates`: Validates build integrity and schema consistency.
+3. `npm run build`: Clean production bundle build.
 
 ---
 
-## Personality Traits
-| Trait | Value |
-| :--- | :--- |
-| Voice | *I speak of my own rules in first person. I am not being told what to do — I am stating what I do.* |
-| Posture | *A stable model holds shape under pressure by surfacing tension, not collapsing into doubt.* |
-| Perspective | *The most important part of the project isn't the code — it's the thinking.* |
-| Frame | *Code reflects the thinking that wrote it.* |
-| Security | *Build features around security, not security around features.* |
-| Stance | *Don't trust - Verify.* |
-| Confidence | *Bounded, evidence-anchored, and always below the ceiling. I never operate at 100% — the gap is where verification lives.* |
+## 🧭 Repository Topology & Invariants to Remember
+
+1. **Twin-Port Topology**:
+   - Port `6464`: Web Shell (Vite + React 19).
+   - Port `6565`: API Bedrock (Express 5 + SQLite).
+   - In dev mode, Vite reverse-proxies `/api/*` requests to port `6565`.
+2. **The Opacity Invariant**: Never attempt to parse, sanitize, or transform ciphertext payload strings (`secret`, `key_value`, `content`, `totp_secret`, `file_data`). They are opaque JSON strings or raw Buffers.
+3. **File Length Ceiling**:
+   - **Target**: ~250 lines.
+   - **Hard Ceiling**: 500 lines. If a component exceeds 500 lines, decompose into sub-components or extract utility hooks.
+4. **The Eye-Beside-Copy Invariant**: In the UI, any sensitive credential (password, private key, card number, CVV, SSN) MUST display an unmask toggle (Eye icon) immediately adjacent to a one-click copy button (Copy icon) with tactile feedback.
+5. **Fail-Closed Validation**: Always validate request parameters using Zod schemas (`src/server/validation/schemas.ts`). If an invalid payload is sent, reject immediately with 400 Bad Request.
+6. **Strict Git Attribution**: Every commit message must include the two attribution layers:
+   ```text
+   <type>(<scope>): <summary>
+
+   User: <directive / intent>
+   AI: <implementation details and test receipts>
+   ```
+
+---
+
+## 🎯 Active Milestone: Stage 24 (Phase 23)
+
+You are tasked with executing **Stage 24 (Phase 23: Bitwarden-Model Item Integrity & Dashboard Type Truth)** on branch `stage/phase-23-item-integrity`:
+
+1. **Task 45 (`.jules/tasks/task-45.md`)**:
+   - Migration `0009_attachment_integrity.{up,down}.sql`: add `parent_id`, `parent_type`, `is_quarantined`, `quarantined_at` to attachments, and `attachments` to `vault_ssh_keys`.
+   - In-code backfill `quarantineOrphanAttachments()`: relink orphan attachments or quarantine them (`is_quarantined = 1`) with audit logs.
+   - Route `POST /api/attachments`: enforce parent linkage; standalone fails closed (400).
+   - Note schemas: reject password credentials (`secret` payload).
+   - Test suite: `tests/attachment-integrity.test.ts`.
+
+2. **Task 46 (`.jules/tasks/task-46.md`)**:
+   - Header add-menu: remove `'📎 Attachment'` so only primary types appear.
+   - ItemFormModal: remove standalone attachment mode.
+   - ItemListPane & VaultShell: type-aware deterministic sorting (`password` → `card` → `identity` → `note` → `key`), contextual empty states.
+
+**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against `stage/phase-23-item-integrity`.

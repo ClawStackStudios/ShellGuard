@@ -124,8 +124,26 @@ export function VaultShell({
       result = searchVaultItems(result, searchQuery);
     }
 
-    // Sort by recency (created_at desc)
-    result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    // Sort by type then recency (created_at desc)
+    const typeOrder: Record<string, number> = {
+        "password": 1,
+        "card": 2,
+        "identity": 3,
+        "note": 4,
+        "key": 5
+    };
+
+    result.sort((a, b) => {
+        if (activeTypeFilter === "all") {
+            const aType = a.type || "password";
+            const bType = b.type || "password";
+            const aRank = typeOrder[aType] || 99;
+            const bRank = typeOrder[bType] || 99;
+
+            if (aRank !== bRank) return aRank - bRank;
+        }
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
 
     return result;
   }, [items, activeTypeFilter, selectedFolder, selectedTags, tagFilterMode, searchQuery]);

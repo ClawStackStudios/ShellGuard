@@ -161,7 +161,14 @@ export function ItemListPane({
             <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
               <Search size={20} />
             </div>
-            <p className="text-sm">No items found</p>
+            <p className="text-sm">
+                {activeTypeFilter === "password" ? "No passwords found" :
+                 activeTypeFilter === "card" ? "No credit cards found" :
+                 activeTypeFilter === "identity" ? "No identities found" :
+                 activeTypeFilter === "note" ? "No secure notes found" :
+                 activeTypeFilter === "key" ? "No SSH keys found" :
+                 "No items found"}
+            </p>
           </div>
         ) : (
           items.map(item => {

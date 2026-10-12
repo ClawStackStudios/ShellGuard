@@ -43,6 +43,21 @@ The story says how it felt. This says what was actually chosen and why.
 **Chosen**: Option B (Offload all test and build execution to GitHub Actions cloud runners).  
 **Why**: Lucas explicitly directed: "never build locally, always push to github and tail the action for building and testing. it works much much better." The felt reason is pure efficiency and avoiding host resource exhaustion.  
 **Confidence**: high — Backed by proven operational success in sibling projects ShellGuard-Mobile and ShellGuard-TOTP.  
-**Outcome**: Created `.github/workflows/ci.yml`, updated `.agents/rules/git-hygiene.md`, `.agents/rules/cadence-and-lifecycle-prompts.md`, and `.agents/rules/project-hygiene.md`.  
+**Outcome**: Created `.github/workflows/ci.yml`, updated `.agents/rules/git-hygiene.md`, `.agents/rules/cadence-and-lifecycle-prompts.md`, and `.agents/rules/project-hygiene.md`. Initial cloud run completed 100% green in 1m 58s.  
 **Pattern reference**: Link to sibling workflows in `ShellGuard-Mobile` and `ShellGuard-TOTP`.
+
+---
+
+## addressing-jules-plain-name — 2026-10-12 11:20
+
+**Context**: Lucas requested referring to Jules plainly as "Jules" without `@` pings in all PR comments and reviews.  
+**Options considered**:
+- *Option A*: Tag `@google-labs-jules[bot]` to ensure GitHub notification routing — Viable to force bot webhook dispatch, but generates noisy notification emails and treats the collaborator as a machine handle.
+- *Option B*: Address Jules as "Jules" in plain text — Viable because Jules actively monitors PR comments on its branch, and plain text establishes clean, auditable peer collaboration.  
+**Chosen**: Option B (Plain text name).  
+**Why**: Tone and cleanliness. Treating a co-pilot as a teammate by name keeps the review auditable and natural, avoiding noisy notification loops.  
+**Confidence**: high — Verified that Jules actively monitors comments and reads plain feedback directly.  
+**Outcome**: Dispatched review comment on PR #3 addressing Jules plainly; Jules received and processed the checklist.  
+**Pattern reference**: Link to `systemPatterns.md § Two-Agent Co-Pilot Orchestration Protocol`.
+
 

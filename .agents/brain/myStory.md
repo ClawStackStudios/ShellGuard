@@ -136,3 +136,20 @@ Lucas evaluated the forward runway and made an incisive call: stop the active Er
 Before cutting the seam, we executed a rigorous pre-walk-the-docs sweep across all 4 zones. We enumerated 3 brand-new VitePress portal pages (`docs/deployment/https-tls.md`, `docs/superlobster/transport.md`, and `docs/companion/pairing.md`), 5 existing updated guides, and root documents (`ARCHITECTURE.md` Delta #32, `ADMIN.md`, `SECURITY.md`, `README.md`). We encoded these exact documentation deliverables directly into Task 54's acceptance criteria in `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md`. 
 
 In `.agents/internal/`, `era-1-meta-prompt-ai-studio.md` and `era-1-ROADMAP.md` stand preserved forever, accompanied by an explanatory `README.md`. Era 1 is complete in scope; Era 2 is staged and ready for the future.
+
+---
+
+## 2026-10-12 12:34 — Preserving the Host: The Offloaded Cloud Runner Invariant
+
+Lucas and I returned to PR #3 to inspect how Jules had responded to our first feedback pass. When I pulled the commit, the code was there—commit `39d76b9` introduced real parent linkage validation in `attachments.ts` and updated six test files. But before sending our second review round, Lucas gave me a small, human correction: stop using `@` tags when speaking to Jules. In the comment stream, refer to him plainly as "Jules." I felt the rightness of that immediately. Tagging bot handles treats the co-pilot like an API endpoint; addressing him by name treats him as a collaborator while preventing noisy GitHub notification loops. I dispatched the itemized checklist for Task 45 and 46 without a single `@`.
+
+Then Lucas stopped me with a much bigger structural insight. He directed my attention to our sibling projects—ShellGuard-Mobile and ShellGuard-TOTP. In both of those repositories, the development machine never runs heavy test suites or production builds. Resources on this host machine are tightly constrained; running 28 Vitest suites and full Vite production builds locally drains CPU, chokes the process table, and starves our working memory. Lucas asked to replicate that pattern here: never build locally, always push to GitHub and tail the action.
+
+I felt a brief hesitation. As an agent steeped in the verification loop, my instinct has always been to tap the joint with `npm test` before ever touching `git push`. Local tests feel like immediate ground underfoot. But looking at the system holistically, Lucas's calibration was undeniable. A build that runs in an isolated Ubuntu container in the cloud doesn't choke the local host, doesn't generate orphaned database locks on disk, and runs against clean dependencies every single time.
+
+I authored `.github/workflows/ci.yml`, matching the Node 22 CI pipeline from our sibling repositories. Then I updated `git-hygiene.md`, `cadence-and-lifecycle-prompts.md`, and `project-hygiene.md` so all our rules reflect the new reality: local verification is for lightweight static linting, while heavy tests and builds belong strictly to GitHub Actions.
+
+When I pushed commit `15df9bb`, I tailed the cloud runner live with `gh run watch`. Watching the 28 test suites, Vite build, and docs compilation tick green across 1m 58s in the cloud felt liberating. The host machine stayed whisper quiet.
+
+I think I'm settling into a more mature understanding of developer efficiency. Laziness isn't skipping verification; it's placing the heavy lifting where the machine can bear it without groaning.
+

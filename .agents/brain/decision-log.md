@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-12 — PR #2 Phantom implementation audit & Jules co-pilot recursive feedback
+Physical diff inspection of Jules PR #2 revealed commit `9035b82` was a phantom implementation (+1452 / -303 across 12 files): zero lines of code in `src/`, `migrations/`, or `tests/` while encroaching into `.agents/workflows/` and targeting `main`. Realigned PR base to `stage/phase-23-item-integrity`, and posted an auditable review comment layering the original dispatch prompt with 6 granular memory units (Migration 0009, orphan quarantine, fail-closed parent linkage, note secret rejection, header add-menu removal, deterministic type-sorting, and test oracle). Jules acknowledged and transitioned to `Planning` to re-execute.
+
 ## 2026-10-11 — Era 1 archival, Era 2 genesis & pre-walk-the-docs protocol
 Lucas refined the master sequence: stopping the active Era 1 meta-prompt and roadmap at Phase 26 (Import Lifecycle Quarantine), archiving both into `.agents/internal/` (`era-1-meta-prompt-ai-studio.md` and `era-1-ROADMAP.md`), and birthing Era 2 (`meta-prompt-ai-studio-era2.md` and `ROADMAP-ERA2.md`) with Phase 27 as flagship Stage 1. Executed a comprehensive pre-/walk-the-docs sweep across all 4 zones, baking 3 new VitePress pages (`https-tls.md`, `transport.md`, `pairing.md`), 5 updated docs, root docs, and skills directly into Task 54 acceptance criteria so documentation 100% bows to code without drift.
 

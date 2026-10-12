@@ -9,14 +9,11 @@ on:
       - 'docs/**'
       - 'chore/**'
       - 'stage/**'
+      - 'stage/*'
       - 'stage-*'
       - 'feature/**'
     tags-ignore:
       - 'v*'
-  pull_request:
-    branches:
-      - main
-      - 'stage/**'
   workflow_dispatch:
 
 concurrency:

@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-12 — Dedicated PR CI runner workflow & universal test/build gate
+Codified `.github/workflows/pr-check.yml` establishing a dedicated cloud CI test and build gate for all pull requests matching sibling ShellGuard-Mobile architecture. Updated `.github/workflows/ci.yml` with `stage/*` branch pattern matching and offloaded PR events to `pr-check.yml`. Universal PR trigger without branch restrictions guarantees Jules's PRs and multi-agent stage branches run full Vitest suites, Vite builds, and VitePress docs compilation automatically.
+
 ## 2026-10-12 — Pre-Work Assumptions workflow & anticipatory multi-agent orchestration
 Codified `.agents/workflows/pre-work-assumptions.md` establishing the anticipatory stance: when an in-flight stage is actively running (e.g. Jules on PR #3 or cloud CI), project forward into the assumed-complete state, trigger `/work-stage-reflection` for the next stage (Phase N+1), audit downstream seams early, and pre-stage reflection artifacts, test oracles, and micro-stages without idle waiting or conflicting code edits. Physical validation confirmed Jules responded to PR #3 inline feedback with commit `d69d11c` fixing parent-before-attachment creation sequencing in `App.tsx` and SQLite cipher type import in `attachmentIntegrity.ts`.
 
@@ -60,6 +63,3 @@ Discovered that passing 285 isolated tests masked a broken delete function in th
 
 ## 2026-09-21 — Vault item deletion routing & zombie process port shadowing
 A stale Node process on port 6565 from before Phase 21 intercepted `DELETE /api/vault/bulk` as `DELETE /api/vault/:id` with `:id = 'bulk'`, returning 404. Terminated the zombie PID, restored correct routing in `App.tsx` for TOTP/pearl items, integrated `ConfirmDialog` into `ItemDetailPane` for single-item parity with bulk deletes, and cleared `selectedItemId` on deletion to prevent dead selection state.
-
-## 2026-09-20 — Async native PBKDF2 WebCrypto acceleration & 600,000 iteration guidance (N1, N2)
-Pure-TS PBKDF2 running 600k iterations synchronously on the main thread blocked for ~15-20s. Kept the fallback module pure while implementing caller-side native acceleration via `crypto.subtle.deriveBits` in `vaultExport.ts` (~1s execution off-thread) with graceful fallback to pure-TS for non-secure HTTP origins. Upgraded default iteration count from 100,000 to OWASP-recommended 600,000 with backward compatibility.

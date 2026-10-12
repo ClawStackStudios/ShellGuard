@@ -134,6 +134,8 @@ export function uploadAttachmentMultipart(metadata: {
   file_name: string;
   mime_type: string;
   category: string;
+  parent_id?: string;
+  parent_type?: string;
 }, ciphertext: Uint8Array, onProgress?: (percent: number) => void): MultipartUploadHandle {
   const token = sessionStorage.getItem(SESSION_KEYS.TOKEN);
   const form = new FormData();
@@ -142,6 +144,8 @@ export function uploadAttachmentMultipart(metadata: {
   form.append('file_name', metadata.file_name);
   form.append('mime_type', metadata.mime_type);
   form.append('category', metadata.category);
+  if (metadata.parent_id) form.append('parent_id', metadata.parent_id);
+  if (metadata.parent_type) form.append('parent_type', metadata.parent_type);
   form.append('file_data', new Blob([ciphertext as BlobPart], { type: 'application/octet-stream' }), metadata.file_name || 'attachment');
 
   const xhr = new XMLHttpRequest();

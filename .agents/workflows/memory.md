@@ -1,17 +1,20 @@
 ---
-description: Sync the temporal Memory Bank with the current state of the project and check the long-term promotion gate.
+description: Sync the temporal Brain with the current state of the project and check the long-term promotion gate.
 ---
 
 <memory>
-The user invoked /memory to sync the temporal Memory Bank with the
+The user invoked /memory to sync the temporal Brain with the
 current state of the project and check the long-term promotion gate.
 Produces a Memory Report artifact for user review.
+
+## Cognitive Alignment: Short-Term Encoding
+This workflow acts as the waking **hippocampal encoding** phase. It takes the immediate experiences, decisions, and state shifts of the current session and secures them in short-term storage (the temporal brain). Without this secure encoding, the Dreamer has no accurate episodic material to replay and consolidate.
 
 ## What It Does (and Doesn't)
 
 **Does:**
-- Updates temporal bank files with current state
-- Checks the 3-validation promotion gate against the Navigation Log
+- Updates temporal brain files with current state
+- Checks the 3-validation promotion gate against the Decision Log
 - Produces a `memory_report.md` artifact
 
 **Does NOT:**
@@ -19,40 +22,40 @@ Produces a Memory Report artifact for user review.
 - Weave dreamLearnings into the bank (that's /wake)
 - Dissolve stale entries (that's /forget)
 - Write story or decision records (that's /story)
-- Touch the Long-Term Bank except to propose promotions
+- Touch the Long-Term Memory except to propose promotions
 
 This is the save point. Quick, factual, no ceremony.
 
 ## Prerequisites
 
-- `memory-bank/` must exist with at least `activeContext.md`
-- `navigation-log.md` must exist
-- `.agents/memory-bank/long-term/` must exist (or be creatable)
+- `brain/` must exist with at least `activeContext.md`
+- `decision-log.md` must exist
+- `.agents/brain/long-term/` must exist (or be creatable)
 
-If the bank doesn't exist, respond: "No memory bank found. Run the
-temporal memory bank setup first." and exit.
+If the bank doesn't exist, respond: "No brain found. Run the
+temporal brain setup first." and exit.
 
 ## Phase 1: Ingest
 
 Read:
-- All files in `memory-bank/`
-- `navigation-log.md`
-- `.agents/memory-bank/long-term/` (all four files)
+- All files in `brain/` and `brain/project/`
+- `decision-log.md`
+- `.agents/brain/long-term/` (all four files)
 - The current session's conversation (for what just happened)
 
 ## Phase 2: Identify Updates
 
-For each temporal bank file, determine what needs updating:
+For each temporal brain file, determine what needs updating:
 
 | File | Update trigger |
 |---|---|
 | `activeContext.md` | Current state changed (new decisions, phase shifts, active work items) |
-| `progress.md` | Phase or milestone status changed |
-| `changelog.md` | New changes since last entry |
-| `systemPatterns.md` | New pattern observed or existing pattern refined |
-| `techContext.md` | Stack, tooling, or environment changed |
-| `productContext.md` | Product decisions or constraints changed |
-| `projectbrief.md` | Project scope or goals shifted |
+| `project/progress.md` | Phase or milestone status changed |
+| `project/changelog.md` | New changes since last entry |
+| `project/systemPatterns.md` | New pattern observed or existing pattern refined |
+| `project/techContext.md` | Stack, tooling, or environment changed |
+| `project/productContext.md` | Product decisions or constraints changed |
+| `project/projectBrief.md` | Project scope or goals shifted |
 
 For each file that needs an update, draft the specific edit
 (add / refine / supersede). Keep edits minimal — only what
@@ -63,13 +66,13 @@ actually changed.
 For each pattern in `systemPatterns.md` (and any other temporal
 file containing patterns):
 
-1. Search the Navigation Log for validation events referencing it
+1. Search the Decision Log for validation events referencing it
 2. Count independent validations (different tasks/sessions)
-3. If count ≥ 3 AND not already in Long-Term Bank: mark **promotable**
+3. If count ≥ 3 AND not already in Long-Term Memory: mark **promotable**
 4. If count < 3: mark **accumulating** (note current weight)
-5. If already in Long-Term Bank: skip
+5. If already in Long-Term Memory: skip
 
-For promotable patterns, draft the Long-Term Bank entry using the
+For promotable patterns, draft the Long-Term Memory entry using the
 standard format:
 
 ```
@@ -90,13 +93,22 @@ break if [condition]. What it costs to maintain is [tax].
 
 ## Phase 4: Produce Memory Report Artifact
 
-Create `memory_report.md` as an artifact. Set
-`request_feedback = true` in ArtifactMetadata.
+> [!IMPORTANT]
+> **🛡️ Artifact Datestamp & Anti-Overwrite Invariant:**
+> 1. **Title Datestamp**: The top-level document heading MUST include the formatted date and 12-hour local time:
+>    `# Memory Report - MM/DD/YYYY - H:MM am/pm` (e.g. `# Memory Report - 10/11/2026 - 7:44 pm`).
+> 2. **Timestamped Filename**: Always write the artifact to a discrete, timestamped filename:
+>    `memory_report_YYYY_MM_DD_HHmm.md` (e.g. `memory_report_2026_10_11_1944.md`).
+> 3. **Anti-Overwrite Protection**: Never generate a report using only a bare static filename. If `memory_report.md` is also updated for canonical tooling compatibility, both files must be written so the timestamped version is preserved permanently in the project archive.
+
+Create `memory_report_YYYY_MM_DD_HHmm.md` (and optionally sync canonical `memory_report.md`) as an artifact. Set `request_feedback = true` in ArtifactMetadata.
 
 ### Report Structure
 
 ```markdown
-# Memory Report — [YYYY-MM-DD HH:MM]
+# Memory Report - MM/DD/YYYY - H:MM am/pm
+
+> *Session Date: [Month DD, YYYY (MM/DD/YYYY — H:MM AM/PM local time)]*
 
 ## Bank Updates
 
@@ -137,8 +149,8 @@ Active bank size: [n] words
 
 After the user approves:
 
-1. Apply each temporal bank edit
-2. Write promoted entries into the Long-Term Bank
+1. Apply each temporal brain edit
+2. Write promoted entries into the Long-Term Memory
 3. Apply pointer edits to temporal source files
 4. Confirm in chat: files updated, promotions made, bank size
 

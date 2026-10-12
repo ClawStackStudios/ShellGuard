@@ -143,3 +143,15 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 - **Recursive Physical Inspection**: PR descriptions submitted by remote agents are never accepted as proof of implementation. Antigravity performs line-by-line physical diff inspection (`git diff --stat`, `git ls-tree`, `git show`) verifying that production code, migrations, and test suites exist in concrete reality before approving.
 - **Inviolable Agent Home Boundaries**: Remote co-pilots operate strictly in `.jules/`, `src/`, `migrations/`, and `tests/`. The `.agents/` directory is Antigravity's sovereign cognitive territory. Cross-agent file mutations are detected, flagged, and rolled back (`git checkout origin/stage/... -- .agents/`).
 
+## Cloud-Offloaded CI/CD & Verification Architecture (2026-10-12)
+
+- **Zero Host Resource Choke**: Because local development machine resources (CPU/RAM) are constrained, executing heavy Vitest suites and Vite production bundling locally degrades host responsiveness. Testing, compiling, and documentation builds are strictly offloaded to GitHub Actions (`.github/workflows/ci.yml`).
+- **Parity with Sibling Ecosystem**: Mirrors the proven CI architecture established in `ShellGuard-Mobile` and `ShellGuard-TOTP`.
+- **Push-and-Tail Lifecycle**:
+  1. Complete code changes and perform local lightweight static type verification (`npm run lint`).
+  2. Commit under Conventional Commits with Two-Layer Attribution (`User:` / `AI:`).
+  3. Push to remote branch (`git push origin <branch>`).
+  4. Tail the cloud runner live via GitHub CLI (`gh run watch`).
+  5. The Task Completion Gate triggers only when the cloud runner exits 100% green.
+
+

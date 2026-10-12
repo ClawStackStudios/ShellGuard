@@ -114,14 +114,14 @@ trigger: always_on
 ## Advanced Workflows Skill Linkage
 - Deep-dive guides, cherry-pick patterns, worktree commands, and disaster recovery runbooks are codified in [`.agents/skills/git-advanced-workflows/SKILL.md`](file:///config/Local-Storage/workspace-lucas/projects/Agents/ShellGuard/.agents/skills/git-advanced-workflows/SKILL.md).
 
-## Agent Customization & Memory Bank Tracking
-- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and memory bank files are first-class repository citizens and MUST NOT be gitignored.
-- Commit memory bank updates (`activeContext.md`, `progress.md`, `raw_reflection_log.md`) and rule/workflow adjustments alongside the code and release tasks they belong to.
+## Agent Customization & Brain Tracking
+- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and brain files are first-class repository citizens and MUST NOT be gitignored.
+- Commit brain updates (`activeContext.md`, `progress.md`, `raw_reflection_log.md`) and rule/workflow adjustments alongside the code and release tasks they belong to.
 - Do NOT commit ephemeral runtime agent scratchpads, local IDE cache files (e.g. `.crustagent/`), or temporary debug dumps.
 
 ## Multi-Agent Workspace Staging Safety
 - In shared multi-agent repositories (e.g. Antigravity, Cline, Jules):
   - NEVER execute `git add .` or `git commit -a`.
-  - Always stage explicit, targeted paths (e.g. `git add .agents/memory-bank/... src/...`).
+  - Always stage explicit, targeted paths (e.g. `git add .agents/brain/... src/...`).
   - Always run `git diff --cached --stat` before committing to verify that NO files from other agent directories (`.clinerules/`, `.jules/`) have entered the index.
-  - Keep each agent's cognitive memory bank isolated and committed only under deliberate, attributed scopes.
+  - Keep each agent's cognitive brain isolated and committed only under deliberate, attributed scopes.

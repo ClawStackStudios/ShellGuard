@@ -174,18 +174,18 @@ TaskRef: "Align Android Companion Architecture with Application-Scoped Lazy DI P
 
 Learnings:
 - Reconciled ShellGuard-TOTP Android companion architecture against the Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`).
-- Evaluated placement: Internal engineering specifications (`.agents/memory-bank/android/` and `di-container.md`) are the rightful home for frameworkless manual DI specifications, keeping public `/docs/companion/` focused cleanly on zero-knowledge protocols, hardware KeyStore enclaves, and compliance.
+- Evaluated placement: Internal engineering specifications (`.agents/brain/android/` and `di-container.md`) are the rightful home for frameworkless manual DI specifications, keeping public `/docs/companion/` focused cleanly on zero-knowledge protocols, hardware KeyStore enclaves, and compliance.
 - Application-Scoped Lazy DI ensures sub-100ms cold start for OTP generation, zero reflection attack surface, and deterministic RAM zeroization on auto-lock without opaque framework singleton leaks.
-- Replaced outdated `Hilt / Koin` table row in `.agents/memory-bank/android/README.md` and added `di-container.md` specification with `AppContainer`, `DefaultAppContainer`, and ViewModel Factory integrations.
+- Replaced outdated `Hilt / Koin` table row in `.agents/brain/android/README.md` and added `di-container.md` specification with `AppContainer`, `DefaultAppContainer`, and ViewModel Factory integrations.
 
 Difficulties:
 - None; the distinction between public-facing user/cryptographic documentation and internal engineering specifications was clearly aligned with Lucas.
 
 Successes:
-- Updated `.agents/memory-bank/android/README.md`, authored `.agents/memory-bank/android/di-container.md`, updated `techContext.md`, `activeContext.md`, and `decision-log.md` with sliding window invariants preserved.
+- Updated `.agents/brain/android/README.md`, authored `.agents/brain/android/di-container.md`, updated `techContext.md`, `activeContext.md`, and `decision-log.md` with sliding window invariants preserved.
 
 Improvements_Identified_For_Consolidation:
-- Architectural principle: Distinguish user-facing protocol guarantees (in `/docs`) from client-side software construction patterns (in `.agents/memory-bank/android/`).
+- Architectural principle: Distinguish user-facing protocol guarantees (in `/docs`) from client-side software construction patterns (in `.agents/brain/android/`).
 ---
 
 ---
@@ -360,7 +360,7 @@ TaskRef: "Release Draft v0.0.2.2 (Build 24) — The Bioluminescent Reef"
 Learnings:
 - Synchronized package versioning across package.json, package-lock.json, README.md, CHANGELOG.md, and ARCHITECTURE.md to 0.0.2.2.
 - Verified dynamic package version resolver in tests/unit/version.test.ts reads directly from package.json, keeping the test oracle 100% green without assertions needing manual edits.
-- Rolled over the ROADMAP.md 3-version completed milestones sliding window: Phase 18, Phase 19, and Phase 20 are now the active completed trio; Phase 17 was safely migrated to .agents/memory-bank/ROADMAP-HISTORY.md.
+- Rolled over the ROADMAP.md 3-version completed milestones sliding window: Phase 18, Phase 19, and Phase 20 are now the active completed trio; Phase 17 was safely migrated to .agents/brain/ROADMAP-HISTORY.md.
 - Drafted comprehensive release document RELEASE-v0.0.2.2.md highlighting the 4 core themes: Tag Taxonomy & Granular Filters, 500MB Attachment Ceiling, SSH Keypair Dual-Key Presentation & Terminal Ergonomics, and 100% Green Verification Suite.
 - Purged previous draft RELEASE-v0.0.2.1.md cleanly so the repo maintains exactly one active release file.
 
@@ -433,7 +433,7 @@ Learnings:
 - Created server-distinct favicon (`favicon.svg`) with a notched carapace crest shield and multi-grid Web Globe (orthographic WWW grid with equator, prime meridian, dual vertical meridians, and dual horizontal latitudes).
 - Themed the center Web Globe to ShellGuard's signature purple/pink palette (`#e4048a` Lobster Fuchsia, `#ec4899` Hot Pink, `#c026d3` Royal Purple, `#ffffff` center beacon) for high legibility at 16px and 32px tab scale.
 - Maintained strict 1:1 twin parity between `public/` and `docs/public/assets/`.
-- Enforced hard memory bank isolation: Antigravity strictly uses `.agents/memory-bank/`, while Cline uses `.clinerules/memory-bank/`.
+- Enforced hard brain isolation: Antigravity strictly uses `.agents/brain/`, while Cline uses `.clinerules/brain/`.
 
 Difficulties:
 - Resolving Google Search thumbnail reCAPTCHA block when searching user-provided URL; resolved by decoding the base64 URL fragment `#sv=...` with Python to extract the image DocID (`-ittcLCWgFOmnM`) and curling `encrypted-tbn0.gstatic.com` directly.
@@ -444,7 +444,7 @@ Successes:
 
 Improvements_Identified_For_Consolidation:
 - General pattern: Web Server favicon & brand asset twin parity.
-- Hard boundary: Agent memory bank isolation.
+- Hard boundary: Agent brain isolation.
 ---
 
 ---
@@ -522,7 +522,7 @@ Learnings:
 - Realigning the 3-step onboarding workflow to Configure & Generate Keys &rarr; Start Container &rarr; Launch Vault & Molt Identity provides an actionable, linear path for end-users across all documentation entry points.
 
 Difficulties:
-- None; the verification gates and memory bank updates followed standard protocol.
+- None; the verification gates and brain updates followed standard protocol.
 
 Successes:
 - Prepared `RELEASE-v0.0.1.8.md` adhering to ClawStack Studios release template.
@@ -720,7 +720,7 @@ TaskRef: "Version update v0.0.1.3 (hotfix increment, SVG icons, docs hygiene)"
 
 Learnings:
 - Incrementing hotfix versions (4th digit `0.0.1.3`) allows tight iterations for initial deployment polish without exhausting semantic minor/patch digits.
-- Standardizing the version update protocol across `package.json`, `README.md`, `CHANGELOG.md`, `RELEASE-vX.Y.Z.md`, and memory bank ensures zero documentation drift across team transitions.
+- Standardizing the version update protocol across `package.json`, `README.md`, `CHANGELOG.md`, `RELEASE-vX.Y.Z.md`, and brain ensures zero documentation drift across team transitions.
 
 Difficulties:
 - Legacy docs contained stale references to non-existent historical versions (`v0.2.0`) from previous templates. Swept and purged to establish `v0.0.1` as the true Genesis version.
@@ -811,7 +811,7 @@ Learnings:
 - ShellGuard theming: brand split is Shell=lobster-red `#e4048a`, Guard=claw-cyan `#06b6d4`; theme tokens are bg-theme-base/surface, text-theme-main/muted, border-theme-subtle.
 
 Difficulties:
-- tsc --noEmit shows 6 pre-existing errors on main (LoginView.tsx pasteUuid/pasteUsername undefined, SetupView.tsx X undefined) — confirmed via git stash baseline. Memory bank only documented the fieldEncryption one. Verified with `git stash && tsc && git stash pop` — my changes add zero new errors; vite build remains the gate and passes.
+- tsc --noEmit shows 6 pre-existing errors on main (LoginView.tsx pasteUuid/pasteUsername undefined, SetupView.tsx X undefined) — confirmed via git stash baseline. Brain only documented the fieldEncryption one. Verified with `git stash && tsc && git stash pop` — my changes add zero new errors; vite build remains the gate and passes.
 - First curl after vite boot failed (exit 7) at 6s despite "ready in 2295ms" in log — retry after 5s succeeded. Consistent with previous session's note that live smoke needs patience.
 
 Successes:
@@ -936,7 +936,7 @@ Difficulties:
 - Resolving the tension between browser memory constraints (heap exhaustion when unpacking multi-gigabyte ZIPs) and zero-knowledge client encryption invariants. Resolved by mandating bounded streaming chunk readers/writers (O(single file) memory footprint).
 
 Successes:
-- Synthesized and formalized Phase 25 across ROADMAP.md, meta-prompt-ai-studio.md, and cognitive memory bank with 100% green lint check.
+- Synthesized and formalized Phase 25 across ROADMAP.md, meta-prompt-ai-studio.md, and cognitive brain with 100% green lint check.
 ---
 
 

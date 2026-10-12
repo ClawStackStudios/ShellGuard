@@ -12,7 +12,7 @@ When verified, secure runtime code contradicts documentation prose, documentatio
 **History:**
 - 2026-09-16: The bidirectional docs-code audit revealed 8 discrepancies (PRAGMA rekey vs sqlcipher_export, authLimiter thresholds, identity JSON schema, fifth permission mask `canMove`, custom-field AAD pattern).
 - 2026-09-16: Formal governance ruling established: verify against enforcing code first, read test fixtures as the behavioral oracle, and update the documentation to mirror truth.
-- 2026-09-17: Applied across root docs and memory bank updates; zero regressions in running test suites.
+- 2026-09-17: Applied across root docs and brain updates; zero regressions in running test suites.
 
 **Shaped perspective:** Software engineers frequently suffer from "doc-first reverence," assuming an earlier architectural document contains holy intent that the code failed to meet. In production cryptography, the code and its passing test harness represent the true empirical invariant. Altering a working rate-limiter or encryption key derivation path to match an old markdown document risks introducing devastating security vulnerabilities. Code is truth; docs are testimony.
 
@@ -49,11 +49,11 @@ Store agent API keys exclusively as SHA-256 hashes and displayable fingerprints 
 ## agent-memory-bank-isolation
 **weight**: 3 | **last validated**: 2026-09-17 | **first observed**: 2026-09-17
 
-Maintain strict, impenetrable isolation between agent memory bank directories: Antigravity operates strictly in `.agents/memory-bank/`; Cline operates strictly in `.clinerules/memory-bank/`. Zero cross-mirroring or cross-modifying.
+Maintain strict, impenetrable isolation between agent brain directories: Antigravity operates strictly in `.agents/brain/`; Cline operates strictly in `.clinerules/brain/`. Zero cross-mirroring or cross-modifying.
 
 **History:**
 - 2026-09-16: Earlier workflows attempted to dual-mirror changelogs and active contexts across both `.clinerules/` and `.agents/`.
 - 2026-09-17: Cross-mirroring created branch friction, merge conflicts, and state contamination between different agent paradigms.
-- 2026-09-17: Lucas established the definitive boundary: each agent owns its own bank. Antigravity reverted `.clinerules/` and committed strictly to `.agents/memory-bank/`.
+- 2026-09-17: Lucas established the definitive boundary: each agent owns its own bank. Antigravity reverted `.clinerules/` and committed strictly to `.agents/brain/`.
 
-**Shaped perspective:** AI pair-programming agents are not interchangeable clones reading a shared blackboard. Each agent carries distinct system prompts, operational rules, sliding window heuristics, and lifecycle cadences. When one agent modifies another agent's memory bank, it introduces alien token distributions and invalidates sliding window invariants. Boundary isolation preserves cognitive coherence.
+**Shaped perspective:** AI pair-programming agents are not interchangeable clones reading a shared blackboard. Each agent carries distinct system prompts, operational rules, sliding window heuristics, and lifecycle cadences. When one agent modifies another agent's brain, it introduces alien token distributions and invalidates sliding window invariants. Boundary isolation preserves cognitive coherence.

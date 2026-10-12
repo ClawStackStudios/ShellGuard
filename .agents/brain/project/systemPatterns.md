@@ -92,9 +92,9 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 - **Web Server Favicon Distinction**: Notched carapace crest shield perimeter with dropped inner arch, enclosing a multi-grid Web Globe themed to the ShellGuard purple/pink palette (`#e4048a`, `#ec4899`, `#c026d3`, `#ffffff`).
 - **Asset Twin Parity**: Strict 1:1 mirroring between web app root (`public/`) and documentation portal (`docs/public/assets/`).
 
-## Agent Memory Bank Isolation Invariant (2026-09-17)
+## Agent Brain Isolation Invariant (2026-09-17)
 
-- **Strict Boundary**: Antigravity's cognitive memory bank is strictly `.agents/memory-bank/`. Cline's cognitive memory bank is strictly `.clinerules/memory-bank/`.
+- **Strict Boundary**: Antigravity's cognitive brain is strictly `.agents/brain/`. Cline's cognitive brain is strictly `.clinerules/brain/`.
 - **Zero Cross-Mirroring**: Never edit, mirror, stage, or commit files in the other agent's bank directory. Each agent maintains its own dedicated cognitive substrate.
 
 ## Bitwarden-Style Composite Items & Decoupled Pod Counts (Phase 18 — 2026-09-17)

@@ -32,7 +32,7 @@ $$\textbf{The document is the defect. Never the code.}$$
 flowchart TD
     Code["1. Enforcing Code (Primary Oracle)\n(Zod schemas, Express routes, DB migrations, ShellCryption)"]
     Tests["2. Test Fixtures & Oracles (Behavioral Oracle)\n(unit tests, integration suites, published RFC vectors)"]
-    Docs["3. Living Documentation (Faithful Mirror)\n(VitePress portal, README.md, ARCHITECTURE.md, Memory Bank)"]
+    Docs["3. Living Documentation (Faithful Mirror)\n(VitePress portal, README.md, ARCHITECTURE.md, Brain)"]
 
     Code -->|Validates Against| Tests
     Code -->|Reflects Into| Docs
@@ -170,7 +170,7 @@ flowchart LR
 3. **Asset Twin Parity**:
    - Every image, logo, and diagram asset in `public/` MUST exist identically in `docs/public/assets/`.
 4. **Prune Phantom Artifacts**:
-   - If a file or helper is deleted or consolidated in code, grep the entire `docs/` tree and memory bank to purge phantom references immediately.
+   - If a file or helper is deleted or consolidated in code, grep the entire `docs/` tree and brain to purge phantom references immediately.
 
 ---
 

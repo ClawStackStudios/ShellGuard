@@ -12,7 +12,7 @@ description: Project Hygiene & End-to-End Development Lifecycle — cartography,
 
 ```mermaid
 flowchart TD
-    P1["1. Cartography & Grounding\n(Memory bank, git tree, daemon & port hygiene)"] --> P2["2. Seam-Aware Planning\n(Trace: Gesture → Payload → API → DB → UI)"]
+    P1["1. Cartography & Grounding\n(Brain, git tree, daemon & port hygiene)"] --> P2["2. Seam-Aware Planning\n(Trace: Gesture → Payload → API → DB → UI)"]
     P2 --> P3["3. Layered Stroke Execution\n(Backend → commit → Frontend → commit → Tests)"]
     P3 --> P4["4. Automated Verification Gate\n(0 lints, 100% green test oracle, production build)"]
     P4 --> P5["5. The Live Verification Handshake\n(Agent outputs live checklist → Human physical test)"]
@@ -24,8 +24,8 @@ flowchart TD
 
 Before writing or modifying a single line of code:
 
-1. **Memory Bank Re-anchoring**:
-   - Read `.agents/memory-bank/activeContext.md`, `progress.md`, and relevant architectural specs.
+1. **Brain Re-anchoring**:
+   - Read `.agents/brain/activeContext.md`, `progress.md`, and relevant architectural specs.
    - Ground current intent in the trajectory of recent commits and active decisions.
 2. **Working Tree Snapshot**:
    - Run `git status` and `git diff --stat`.
@@ -73,8 +73,8 @@ Work in distinct strokes. Never assemble massive, monolithic pull requests or gi
    - Build targeted tests that verify component dispatch, payload building, and state teardown (not just isolated math or mock units).
    - Verify all tests pass.
    - Commit under `git-hygiene.md` (`test:`).
-4. **Stroke 4: Documentation & Memory Bank**:
-   - Update architecture docs, schemas, and memory bank files (`activeContext.md`, `decision-log.md`, `progress.md`).
+4. **Stroke 4: Documentation & Brain**:
+   - Update architecture docs, schemas, and brain files (`activeContext.md`, `decision-log.md`, `progress.md`).
    - Commit under `git-hygiene.md` (`docs:`).
 
 ---

@@ -109,8 +109,8 @@
 - *Rationale:* Ensures root `RELEASE-v*.md` is the single source of truth mirrored automatically without race conditions or wasted CI runner resources.
 
 **Pattern: First-Class Git Persistence for Agent Customizations (`.agents/`)**
-- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and memory bank files are tracked in Git and never ignored in `.gitignore`.
-- Commit memory bank updates (`activeContext.md`, `progress.md`) alongside corresponding feature code and release tasks.
+- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and brain files are tracked in Git and never ignored in `.gitignore`.
+- Commit brain updates (`activeContext.md`, `progress.md`) alongside corresponding feature code and release tasks.
 - *Rationale:* Preserves agent architectural memory, behavioral guardrails, and automated release workflows across resets, workstations, CI runners, and collaborators.
 
 **Pattern: Docs Bow to Code (The Governance Ruling & Tri-Layer Truth)**
@@ -127,10 +127,10 @@
 - Validate Mermaid diagram syntax: assert every fence is closed and detect fatal unquoted brackets/braces in node labels (`Node[label {with} braces]`).
 - *Rationale:* Eliminates documentation drift, broken deployed subpaths, and broken diagram rendering mechanically without manual proofreading.
 
-**Pattern: Agent Memory Bank Isolation Boundary**
-- Antigravity operates strictly in `.agents/memory-bank/`.
-- Cline operates strictly in `.clinerules/memory-bank/`.
-- Strict isolation: never write, edit, stage, or mirror files to the other agent's memory bank directory.
+**Pattern: Agent Brain Isolation Boundary**
+- Antigravity operates strictly in `.agents/brain/`.
+- Cline operates strictly in `.clinerules/brain/`.
+- Strict isolation: never write, edit, stage, or mirror files to the other agent's brain directory.
 - *Rationale:* Each agent has its own distinct cognitive substrate and workflow lifecycle; cross-contamination destroys state consistency.
 
 **Pattern: Brand Asset Twin Parity**
@@ -258,7 +258,7 @@
 **Pattern: The "Docs Bow to Code" Tri-Layer Truth Architecture**
 - **Layer 1: Enforcing Code (Primary Oracle)** — Zod schemas, Express route controllers, DB migrations, and ShellCryption routines.
 - **Layer 2: Test Fixtures (Behavioral Oracle)** — Vitest unit and integration suites testing invariants and wire shapes.
-- **Layer 3: Living Documentation (Faithful Mirror)** — VitePress portal, README, ARCHITECTURE, and memory bank.
+- **Layer 3: Living Documentation (Faithful Mirror)** — VitePress portal, README, ARCHITECTURE, and brain.
 - When prose contradicts shipped, verified code, the document is the defect; never mutate secure code to match stale text.
 - *Rationale:* Eliminates documentation drift and guarantees documentation truthfulness across human developers and autonomous AI agents.
 

@@ -55,7 +55,7 @@ Never chain file reading inside an open write stream in Python (e.g. `open(f, 'w
 **History:**
 - 2026-09-16: A one-liner prepending a reflection log entry destroyed ~488 lines of raw reflection history when Python executed `'w'` truncation before `'r'` evaluation.
 - 2026-09-16: Recovered from git history and instituted the mandatory rule: read fully into an in-memory variable first, close the read descriptor, and only then open for writing.
-- 2026-09-17: Maintained 100% data integrity across all multi-file memory bank updates.
+- 2026-09-17: Maintained 100% data integrity across all multi-file brain updates.
 
 **Shaped perspective:** The file descriptor is a destructive tool when misused. Python's expression evaluation order makes nested file handles deceptive. Atomic file operations require separating the acquisition of source state from the mutation of target state. A craftsman does not cut into the board while still measuring its length.
 

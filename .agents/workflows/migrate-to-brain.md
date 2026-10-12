@@ -3,20 +3,20 @@ description: Migrate a legacy memory-bank architecture to the Antigravity Brain 
 ---
 
 <migrate-to-brain>
-The user invoked /migrate-to-brain (or requested migration) to convert the legacy `.agents/memory-bank/` structure into the modern `.agents/brain/` structure, enforcing the "Self vs Environment" cognitive boundary.
+The user invoked /migrate-to-brain (or requested migration) to convert the legacy `.agents/brain/` structure into the modern `.agents/brain/` structure, enforcing the "Self vs Environment" cognitive boundary.
 
 ## Prerequisites
 1. The git worktree MUST be clean. Run `git status --porcelain` to verify. If it is dirty, halt and tell the user to commit or stash their changes first.
-2. The `.agents/memory-bank/` directory MUST exist. If it doesn't, halt.
+2. The `.agents/brain/` directory MUST exist. If it doesn't, halt.
 
 ## Phase 1: Directory & Rule Rename
-1. Rename the root memory bank directory:
+1. Rename the root brain directory:
    ```bash
-   git mv .agents/memory-bank .agents/brain
+   git mv .agents/brain .agents/brain
    ```
-2. If `.agents/rules/memory-bank.md` exists, rename it:
+2. If `.agents/rules/brain.md` exists, rename it:
    ```bash
-   if [ -f .agents/rules/memory-bank.md ]; then git mv .agents/rules/memory-bank.md .agents/rules/brain.md; fi
+   if [ -f .agents/rules/brain.md ]; then git mv .agents/rules/brain.md .agents/rules/brain.md; fi
    ```
 
 ## Phase 2: Self vs Environment Split
@@ -41,19 +41,19 @@ Run a search-and-replace sweep across all Markdown files in the `.agents/` direc
 Run the following commands to safely update textual and path references:
 ```bash
 find .agents/ -type f -name "*.md" -exec sed -i \
-  -e 's|\.agents/memory-bank|.agents/brain|g' \
-  -e 's|memory-bank/projectBrief.md|brain/project/projectBrief.md|g' \
-  -e 's|memory-bank/productContext.md|brain/project/productContext.md|g' \
-  -e 's|memory-bank/activeContext.md|brain/activeContext.md|g' \
-  -e 's|memory-bank/systemPatterns.md|brain/project/systemPatterns.md|g' \
-  -e 's|memory-bank/techContext.md|brain/project/techContext.md|g' \
-  -e 's|memory-bank/progress.md|brain/project/progress.md|g' \
-  -e 's|memory-bank/changelog.md|brain/project/changelog.md|g' \
-  -e 's|memory-bank/|brain/|g' \
+  -e 's|\.agents/brain|.agents/brain|g' \
+  -e 's|brain/project/projectBrief.md|brain/project/projectBrief.md|g' \
+  -e 's|brain/project/productContext.md|brain/project/productContext.md|g' \
+  -e 's|brain/activeContext.md|brain/activeContext.md|g' \
+  -e 's|brain/project/systemPatterns.md|brain/project/systemPatterns.md|g' \
+  -e 's|brain/project/techContext.md|brain/project/techContext.md|g' \
+  -e 's|brain/project/progress.md|brain/project/progress.md|g' \
+  -e 's|brain/project/changelog.md|brain/project/changelog.md|g' \
+  -e 's|brain/|brain/|g' \
   -e 's|memory-bank\.md|brain.md|g' \
-  -e 's|Memory Bank|Brain|g' \
-  -e 's|memory bank|brain|g' \
-  -e 's|Memory bank|Brain|g' \
+  -e 's|Brain|Brain|g' \
+  -e 's|brain|brain|g' \
+  -e 's|Brain|Brain|g' \
   {} +
 ```
 

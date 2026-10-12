@@ -3,7 +3,7 @@
 > **request_feedback: true — AWAITING LUCAS'S REVIEW** — none of the below is applied yet. Approve all, approve a subset, or amend.
 
 ## Already Consolidated (no action needed)
-- Docs-vs-bank contradictions cut both ways; Option C queue order (memory bank, changelog, decision-log)
+- Docs-vs-bank contradictions cut both ways; Option C queue order (brain, changelog, decision-log)
 - Chronology/spine patterns: Stage N = Phase N−1, decimal interludes (bank + roadmap)
 - The 8 audit corrections themselves (ARCHITECTURE/SECURITY/portal — the corpus IS the receipt)
 - Decision Log adopted with 14 entries; bank lens (projectBrief standard + systemPatterns invariants)

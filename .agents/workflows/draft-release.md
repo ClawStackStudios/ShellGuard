@@ -28,18 +28,18 @@ Run a full verification loop:
 2. **Execute Roadmap 3-Version Sliding-Window Protocol:**
    - Advance `current_position` in `ROADMAP.md` to `vX.Y.Z.N (Build B) — released & live`.
    - Move the newly completed phase into "Completed Releases".
-   - If "Completed Releases" exceeds 3 milestones, retire the oldest completed phase into `.agents/memory-bank/ROADMAP-HISTORY.md`.
+   - If "Completed Releases" exceeds 3 milestones, retire the oldest completed phase into `.agents/brain/ROADMAP-HISTORY.md`.
    - Advance the active forward queue to start at the next pending phase.
 3. **Synchronize Central Version Anchors:**
    - `package.json` & `package-lock.json` (`"version": "X.Y.Z.N"`)
    - `README.md` badge (`[![Version](https://img.shields.io/badge/Version-vX.Y.Z.N-blue?style=for-the-badge)](CHANGELOG.md)`)
    - `CHANGELOG.md` (`## [X.Y.Z.N] - YYYY-MM-DD`)
    - `ARCHITECTURE.md` (Header, directory tree, test suite count, and Delta changelog)
-4. **Memory Bank Sync:**
-   - Update `.agents/memory-bank/activeContext.md` (top 10 sliding window).
-   - Update `.agents/memory-bank/progress.md` (milestone checkoff).
-   - Update `.agents/memory-bank/decision-log.md` (maintain top 20 sliding window).
-   - Update `.agents/memory-bank/raw_reflection_log.md` (pre-completion reflection entry).
+4. **Brain Sync:**
+   - Update `.agents/brain/activeContext.md` (top 10 sliding window).
+   - Update `.agents/brain/progress.md` (milestone checkoff).
+   - Update `.agents/brain/decision-log.md` (maintain top 20 sliding window).
+   - Update `.agents/brain/raw_reflection_log.md` (pre-completion reflection entry).
 
 ---
 

@@ -9,7 +9,7 @@ description: Documentation hygiene and anti-rot rule — ensures architectural, 
 - "I will update the docs later" is treated as an incomplete task.
 
 ## 2. Trigger Conditions
-You MUST proactively update the corresponding `.agents/memory-bank/` files or `docs/` files when:
+You MUST proactively update the corresponding `.agents/brain/` files or `docs/` files when:
 - **State Model Changes:** If you alter how data flows, where it is stored, or how contexts (like React Context or Zustand) are structured, you must update `attractorBeacon.md` and/or `systemPatterns.md`.
 - **API/Endpoint Changes:** If a server route's payload or response shape changes, update the API documentation or relevant README.
 - **Component Refactors:** If a large component is split or renamed, update the overarching UI documentation and `activeContext.md`.

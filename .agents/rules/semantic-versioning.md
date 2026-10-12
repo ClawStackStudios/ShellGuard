@@ -85,7 +85,7 @@ To keep `ROADMAP.md` dense, actionable, and token-efficient:
 1. **3-Completed-Milestones Ceiling**:
    - The "Completed Releases" section of `ROADMAP.md` strictly holds the **3 most recently completed milestones**.
 2. **Historical Archival**:
-   - When a newly completed phase is added to Completed Releases (bringing the total to 4), the oldest of the four MUST be retired into `.agents/memory-bank/ROADMAP-HISTORY.md`.
+   - When a newly completed phase is added to Completed Releases (bringing the total to 4), the oldest of the four MUST be retired into `.agents/brain/ROADMAP-HISTORY.md`.
 3. **Queue Advancement**:
    - Remove the completed phase from the active forward queue.
    - Advance `current_position` to `vX.Y.Z.W (Build N) — released & live; next Phase N+1 (vX.Y.Z.W+1 / Build N+1)`.

@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Added
-- **Android Companion Architecture Alignment**: Formalized Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`) in `.agents/memory-bank/android/di-container.md` and updated `README.md`. Provides sub-100ms cold start for OTP lookups, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
+- **Android Companion Architecture Alignment**: Formalized Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`) in `.agents/brain/android/di-container.md` and updated `README.md`. Provides sub-100ms cold start for OTP lookups, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
 
 ## [0.0.2.4] - 2026-09-23
 
@@ -168,7 +168,7 @@
 - **`getStoredPodColors`**: returns `{}` instead of merging `INITIAL_DEFAULT_COLORS`.
 - **`getPodColor`**: accepts optional string; returns first palette color (`POD_COLOR_PALETTE[0]`) when input is empty.
 - **All vault item decryption in `scuttleVault`**: fallback category changed from `p.category || "Personal"` to `p.category || ""`.
-- **Port migration: 5353→6464, 5454→6565** — ShellGuard's web UI and API now live on :6464 and :6565 respectively, fully disentangled from CaraBase's port claims (5353/5454). All 26 source files, test ports (5454X → 6464X), Docker, Compose, Unraid template, docs, and both memory banks updated. 155 tests pass, build clean, live smoke verified on both new ports.
+- **Port migration: 5353→6464, 5454→6565** — ShellGuard's web UI and API now live on :6464 and :6565 respectively, fully disentangled from CaraBase's port claims (5353/5454). All 26 source files, test ports (5454X → 6464X), Docker, Compose, Unraid template, docs, and both brains updated. 155 tests pass, build clean, live smoke verified on both new ports.
 
 ### Fixed
 - **Pod deletion/rename state sync**: categories now normalized via `normalizePod()` before comparison, fixing silent failures where unnormalized strings with spaces or slash differences caused the filter to return 0 items and skip updates entirely.

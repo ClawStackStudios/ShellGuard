@@ -327,7 +327,7 @@ For each step, provide a concrete observable check (a test, a screenshot, or a c
 - [ ] Verification: build succeeds
 - [ ] Verification: live run stable
 - [ ] Verification: documentation updated
-- [ ] Memory bank sync (/memory)
+- [ ] Brain sync (/memory)
 - [ ] Story entry (/story) — if meaningful decisions were made
 ```
 

@@ -1,6 +1,6 @@
 # Decision Log — ShellGuard
 
-*Episodic memory: how I moved through the codebase. Semantic truth lives in the Memory Bank; walls, detours, and instincts live here. Sliding window: 20 entries.*
+*Episodic memory: how I moved through the codebase. Semantic truth lives in the Brain; walls, detours, and instincts live here. Sliding window: 20 entries.*
 
 ---
 
@@ -20,7 +20,7 @@ Implemented first-class `card` and `identity` types across the entire vault stac
 Discovered Bitwarden exports linked custom fields via numeric `linkedId` (100–104) without property names; mapped these directly to ShellGuard's `linkedProperty` so linked fields resolve cleanly in `ItemDetailPane`. Created an automated `harvestResidualFields` sweeper with key exclusion sets and empty collection filtering (`[]`/`{}`) to capture unmapped identity fields (`username`, `address2`, `address3`, etc.) and ensure zero data loss on future exports.
 
 ## 2026-09-25 — Android companion dependency injection: Application-Scoped Lazy DI
-Aligned Android companion architecture with Lucas to formalize the Application-Scoped Lazy DI pattern (`AppContainer` with thread-safe `by lazy` properties) over Hilt or Koin. Confirmed this belongs strictly in internal specifications (`.agents/memory-bank/android/` and `di-container.md`) rather than public `/docs/companion/`, preserving VitePress clarity while guaranteeing sub-100ms cold start, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
+Aligned Android companion architecture with Lucas to formalize the Application-Scoped Lazy DI pattern (`AppContainer` with thread-safe `by lazy` properties) over Hilt or Koin. Confirmed this belongs strictly in internal specifications (`.agents/brain/android/` and `di-container.md`) rather than public `/docs/companion/`, preserving VitePress clarity while guaranteeing sub-100ms cold start, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
 
 ## 2026-09-23 — Phase 26 formalization: Import lifecycle, ephemeral TTL & progressive disclosure
 Lucas conceived an underlying organizational system for imported items to combat import remorse and accidental bulk migrations. Formulated Phase 26 ("Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 51 establishes multi-batch fingerprinting (import_batch_id), cross-type parity (pearls, notes, SSH keys), and configurable TTL self-destruct (30m/60m/90m/manual) with auto-graduation upon item edit; Task 52 delivers the "Config" settings surface, dynamic bioluminescent countdown chips, and an atomic batch revert action hatch adhering strictly to Lucas's progressive disclosure invariant (the UI remains 100% silent unless active imported items exist).

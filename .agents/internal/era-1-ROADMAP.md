@@ -14,7 +14,7 @@ statistics:
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
 > *Preserves the Active Forward Queue (Phase 23+) and the 3 most recent completed phases (Phases 20, 21, and 22).*
-> *Historical Phases 1 through 19 are archived in [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).*
+> *Historical Phases 1 through 19 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
 
 ---
 
@@ -24,7 +24,7 @@ statistics:
 - **Next Planned Milestone**: `v0.0.2.5 (Build 27)` (Phase 23)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 23 completes, Phase 20 rolls over into [`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 23 completes, Phase 20 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
 
 ---
 
@@ -496,7 +496,7 @@ state alongside search keywords and pod selection.
 ## 🏛️ Historical Archive (Phases 1 through 19)
 
 Earlier development phases (`v0.0.0.0` void through `v0.0.2.1` Build 22) are permanently archived in:
-👉 **[`ROADMAP-HISTORY.md`](.agents/memory-bank/ROADMAP-HISTORY.md)**
+👉 **[`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
 |:---|:---|:---|:---|

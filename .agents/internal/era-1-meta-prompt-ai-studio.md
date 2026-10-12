@@ -10,7 +10,7 @@
 To ensure optimal token economy and avoid context degradation, development proceeds
 in deterministic 2-task stages mapped 1:1 to the roadmap system — the active
 sliding-window [`../ROADMAP.md`](../ROADMAP.md) and the historical archive
-[`ROADMAP-HISTORY.md`](../.agents/memory-bank/ROADMAP-HISTORY.md) (Phases 1–14).
+[`ROADMAP-HISTORY.md`](../.agents/brain/ROADMAP-HISTORY.md) (Phases 1–14).
 The full ascent — from `v0.0.0.0` (the void) to `v0.0.1.9` (current parity) — is
 recounted stage by stage. This spine **grows with the roadmap**: stages are added
 as each phase of the story is walked.
@@ -161,7 +161,7 @@ project so subsequent stages can reference them:
 
 ## 🥚 Stage 2: Phase 1 Prompt — Scaffold, Auth & API Molt [Baseline: v0.0.0.1 (Build 2)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-1-scaffold-auth--api-molt-baseline-v0001-build-2)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-1-scaffold-auth--api-molt-baseline-v0001-build-2)
 > for complete specifications on **Task 01** and **Task 02**.
 > **📖 Required Context Files for Phase 1**:
 > 1. [`architecture.md`](./architecture.md) — §2 (Boundaries), §3 (Topology), §4 (Invariants).
@@ -173,7 +173,7 @@ Copy and paste this prompt to execute **Phase 1 (Tasks 01 & 02)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 1 (Task 01: Full-Stack Scaffold & Ownership-Scoped API · Task 02: Landing UI, Header & Molt).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 1 (Task 01: Full-Stack Scaffold & Ownership-Scoped API · Task 02: Landing UI, Header & Molt).
 - `architecture.md`: §2 (Boundaries), §3 (Topology), §4 (Threat Model & Invariants).
 
 Execute Phase 1 adhering to the Functionality + UI Component pairing:
@@ -210,7 +210,7 @@ outside its permissions, and the landing shell renders on unified tokens!
 
 ## 🗄️ Stage 3: Phase 2 Prompt — SQLite Bedrock, Security Kernel & Identity Bridge [Baseline: v0.0.0.2 (Build 3)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-2-sqlite-bedrock-security-kernel--identity-bridge-baseline-v0002-build-3)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-2-sqlite-bedrock-security-kernel--identity-bridge-baseline-v0002-build-3)
 > for complete specifications on **Task 03** and **Task 04**.
 > **📖 Required Context Files for Phase 2**:
 > 1. [`database-schema.md`](./database-schema.md) — §1 (DATA_DIR layout), §2 (Migrations), §3 (Schema v1), §4 (Audit redaction).
@@ -224,7 +224,7 @@ Copy and paste this prompt to execute **Phase 2 (Tasks 03 & 04)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 2 (Task 03: Bedrock, Migrations, Audit DB & Security Kernel · Task 04: Envelope Unwrap & Twin-Port Runtime).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 2 (Task 03: Bedrock, Migrations, Audit DB & Security Kernel · Task 04: Envelope Unwrap & Twin-Port Runtime).
 - `database-schema.md`: §1–§4 (layout, migrations, schema v1, audit redaction).
 - `routes-and-contracts.md`: §1–§2 (uniform envelope, identity endpoints).
 - `architecture.md`: §4 (Threat Model & Invariants).
@@ -271,7 +271,7 @@ register → login → vault-fetch journey through the unwrapped envelope!
 
 ## 🔗 Stage 4: Phase 3 Prompt — Vault CRUD, Lobster Keys & Settings Storage [Baseline: v0.0.0.3 (Build 4)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-3-vault-crud-lobster-keys--settings-storage-baseline-v0003-build-4)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-3-vault-crud-lobster-keys--settings-storage-baseline-v0003-build-4)
 > for complete specifications on **Task 05** and **Task 06**.
 > **📖 Required Context Files for Phase 3**:
 > 1. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (Vault domains & verb-permission map), §4 (Lobster Keys lifecycle), §5 (Settings).
@@ -285,7 +285,7 @@ Copy and paste this prompt to execute **Phase 3 (Tasks 05 & 06)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 3 (Task 05: Validated Vault CRUD · Task 06: Lobster Keys Lifecycle & Settings).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 3 (Task 05: Validated Vault CRUD · Task 06: Lobster Keys Lifecycle & Settings).
 - `routes-and-contracts.md`: §3–§5 (vault domains, verb→permission map, agent keys, settings).
 - `key-hierarchy-spec.md`: §2–§4 (lifecycles, claw-strength permissions, requireHuman gates).
 - `database-schema.md`: §3–§4 (schema v1, audit redaction).
@@ -317,7 +317,7 @@ sessions, and settings persisting per owner!
 
 ## 🧪 Stage 5: Phase 4 Prompt — Test Oracle, Container Deployment & License [Baseline: v0.0.0.4 (Build 5)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-4-test-oracle-container-deployment--license-baseline-v0004-build-5)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-4-test-oracle-container-deployment--license-baseline-v0004-build-5)
 > for complete specifications on **Task 07** and **Task 08**.
 > **📖 Required Context Files for Phase 4**:
 > 1. [`verification-gates.md`](./verification-gates.md) — §1 (Harness), §2 (Suites), §3 (Build gates).
@@ -331,7 +331,7 @@ Copy and paste this prompt to execute **Phase 4 (Tasks 07 & 08)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 4 (Task 07: Test Harness & Rekey Recognition · Task 08: Container Packaging & Docs Truthfulness).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 4 (Task 07: Test Harness & Rekey Recognition · Task 08: Container Packaging & Docs Truthfulness).
 - `verification-gates.md`: §1–§3 (harness, suites, build gates).
 - `database-schema.md`: §1–§2 (DATA_DIR layout, migrations).
 - `routes-and-contracts.md`: §3 (vault domains & verb-permission map).
@@ -373,7 +373,7 @@ claim matches runtime behavior!
 
 ## 🔐 Stage 6: Phase 5 Prompt — Per-Row Metadata Encryption & Port Molt [Baseline: v0.0.0.5 (Build 6)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-5-per-row-metadata-encryption--port-molt-baseline-v0005-build-6)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-5-per-row-metadata-encryption--port-molt-baseline-v0005-build-6)
 > for complete specifications on **Task 09** and **Task 10**.
 > **📖 Required Context Files for Phase 5**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §1 (Triple-layer model), §2 (Field encryption), §3 (Guard registry & firewall), §4 (Migration & tooling).
@@ -387,7 +387,7 @@ Copy and paste this prompt to execute **Phase 5 (Tasks 09 & 10)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 5 (Task 09: Per-Row Metadata Encryption · Task 10: Port Molt & Triple-Layer Docs).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 5 (Task 09: Per-Row Metadata Encryption · Task 10: Port Molt & Triple-Layer Docs).
 - `encryption-layers-spec.md`: §1–§4 (triple-layer model, field encryption, firewall, tooling).
 - `database-schema.md`: §1–§2 (layout, migrations).
 - `verification-gates.md`: §2–§3 (suites, build gates).
@@ -424,7 +424,7 @@ remain, and the docs' encryption model matches runtime exactly!
 
 ## 🦞 Stage 7: Phase 6 Prompt — SuperLobster Admin Plane [Baseline: v0.0.0.6 (Build 7)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-6-superlobster-admin-plane-baseline-v0006-build-7)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-6-superlobster-admin-plane-baseline-v0006-build-7)
 > for complete specifications on **Task 11** and **Task 12**.
 > **📖 Required Context Files for Phase 6**:
 > 1. [`admin-suite-spec.md`](./admin-suite-spec.md) — §1–§4 (threat model, API, inviolable rules, component architecture).
@@ -438,7 +438,7 @@ Copy and paste this prompt to execute **Phase 6 (Tasks 11 & 12)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 6 (Task 11: Admin API & requireAdmin · Task 12: Panel Suite & Admin Gate).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 6 (Task 11: Admin API & requireAdmin · Task 12: Panel Suite & Admin Gate).
 - `admin-suite-spec.md`: §1–§4 (T1/T2 threat model, admin API, inviolable rules, components).
 - `verification-gates.md`: §2–§3 (suites, build gates).
 - `routes-and-contracts.md`: §1 (uniform envelope).
@@ -478,7 +478,7 @@ the panel renders each API section with graceful T1 failure!
 
 ## 🐚 Stage 8: Phase 7 Prompt — Multi-Account, QuickLogin & Landing Gateway [Baseline: v0.0.0.7 (Build 8)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-7-multi-account-quicklogin--landing-gateway-baseline-v0007-build-8)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-7-multi-account-quicklogin--landing-gateway-baseline-v0007-build-8)
 > for complete specifications on **Task 13** and **Task 14**.
 > **📖 Required Context Files for Phase 7**:
 > 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §1 (Tokens), §2 (Gateway pattern), §3 (Session UX), §4 (Brand motion).
@@ -492,7 +492,7 @@ Copy and paste this prompt to execute **Phase 7 (Tasks 13 & 14)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 7 (Task 13: Session Manager & Multi-Account State · Task 14: LandingView & AuthGateway).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 7 (Task 13: Session Manager & Multi-Account State · Task 14: LandingView & AuthGateway).
 - `ui-ux-design-system.md`: §1–§4 (tokens, gateway pattern, session UX, brand motion).
 - `key-hierarchy-spec.md`: §2 (hu-/lb- lifecycle rules).
 - `routes-and-contracts.md`: §1–§2 (envelope, identity endpoints).
@@ -506,7 +506,7 @@ Execute Phase 7 adhering to the Functionality + UI Component pairing:
   identity drives the vault fetch; header hosts the account switcher.
 - QuickLogin flow state: locked/reload resolves through QuickLoginModal
   (switch known accounts or re-unlock current identity).
-- Untrack the agent memory bank from the repo; `.env.example` gitignore
+- Untrack the agent brain from the repo; `.env.example` gitignore
   exception.
 
 ### Task 14: [UI Component] LandingView Hero, Dual-Mode AuthGateway & VitePress Portal
@@ -529,7 +529,7 @@ deploys!
 
 ## 🏛️ Stage 9: Phase 8 Prompt — Vault UX Renaissance [Baseline: v0.0.0.8 (Build 9)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-8-vault-ux-renaissance--master-detail-pure-pods--lock-hardening-baseline-v0008-build-9)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-8-vault-ux-renaissance--master-detail-pure-pods--lock-hardening-baseline-v0008-build-9)
 > for complete specifications on **Task 15** and **Task 16**.
 > **📖 Required Context Files for Phase 8**:
 > 1. [`ui-ux-design-system.md`](./ui-ux-design-system.md) — §5 (Master-detail & pod invariants), §6 (Claw-in & identity-aware tools).
@@ -543,7 +543,7 @@ Copy and paste this prompt to execute **Phase 8 (Tasks 15 & 16)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 8 (Task 15: Pods, Lock Hardening & NavIntent · Task 16: Master-Detail & Claw-In).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 8 (Task 15: Pods, Lock Hardening & NavIntent · Task 16: Master-Detail & Claw-In).
 - `ui-ux-design-system.md`: §5–§6 (master-detail architecture, pod invariants, gateway tools).
 - `database-schema.md`: §3 (category semantics).
 - `verification-gates.md`: §2–§3 (suites, gates).
@@ -578,7 +578,7 @@ and the issuer reads "ShellGuard"!
 
 ## 🥚 Stage 10: Phase 9 Prompt — Genesis Release & Origin Hardening [v0.0.1 (Build 10) — 🏷️ First Tag]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-9-genesis-release--origin-hardening-v001-build-10--first-tag)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-9-genesis-release--origin-hardening-v001-build-10--first-tag)
 > for complete specifications on **Task 17** and **Task 18**.
 > **📖 Required Context Files for Phase 9**:
 > 1. [`architecture.md`](./architecture.md) — §1 (System role), §4 (Invariants).
@@ -591,7 +591,7 @@ Copy and paste this prompt to execute **Phase 9 (Tasks 17 & 18)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 9 (Task 17: Origin-Safety Fallbacks · Task 18: Genesis Release Protocol).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 9 (Task 17: Origin-Safety Fallbacks · Task 18: Genesis Release Protocol).
 - `architecture.md`: §1, §4 (system role, invariants).
 - `verification-gates.md`: §2–§3 (suites, build gates).
 
@@ -621,7 +621,7 @@ package.json agree!
 
 ## 🔧 Stage 11: Phase 10 Prompt — Deployment Hotfixes & Dev-Loop Formalization [v0.0.1.2 (Build 11)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-10-deployment-hotfixes--dev-loop-formalization-v0012-build-11)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-10-deployment-hotfixes--dev-loop-formalization-v0012-build-11)
 > for complete specifications on **Task 19** and **Task 20**.
 > **📖 Required Context Files for Phase 10**:
 > 1. [`verification-gates.md`](./verification-gates.md) — §4 (Verification principle), §5 (Release protocol).
@@ -633,7 +633,7 @@ Copy and paste this prompt to execute **Phase 10 (Tasks 19 & 20)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 10 (Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 10 (Task 19: Dev-Loop Rules & Workflows · Task 20: Rolling RELEASE File).
 - `verification-gates.md`: §4–§5 (verification principle, release protocol).
 
 Execute Phase 10 adhering to the Process + Release pairing:
@@ -662,7 +662,7 @@ enforced by finish-task, and CHANGELOG and package.json agree!
 
 ## 🚀 Stage 12: Phase 11 Prompt — Release Publishing CI & Iconography [v0.0.1.3 (Build 12)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-11-release-publishing-ci--iconography-v0013-build-12)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-11-release-publishing-ci--iconography-v0013-build-12)
 > for complete specifications on **Task 21** and **Task 22**.
 > **📖 Required Context Files for Phase 11**:
 > 1. [`verification-gates.md`](./verification-gates.md) — §5 (Release protocol).
@@ -675,7 +675,7 @@ Copy and paste this prompt to execute **Phase 11 (Tasks 21 & 22)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 11 (Task 21: Release Publishing Workflow · Task 22: SVG Iconography & Doc Re-Alignment).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 11 (Task 21: Release Publishing Workflow · Task 22: SVG Iconography & Doc Re-Alignment).
 - `verification-gates.md`: §5 (release protocol, rolling RELEASE file).
 - `ui-ux-design-system.md`: §1 (brand gradient).
 
@@ -705,7 +705,7 @@ gradient!
 
 ## 🔒 Stage 13: Phase 12 Prompt — Pure TypeScript WebCrypto Fallback Engine [v0.0.1.4 (Build 13)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-12-pure-typescript-webcrypto-fallback-engine-v0014-build-13)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-12-pure-typescript-webcrypto-fallback-engine-v0014-build-13)
 > for complete specifications on **Task 23** and **Task 24**.
 > **📖 Required Context Files for Phase 12**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §1 (Triple-layer model), §5 (WebCrypto fallback engine).
@@ -718,7 +718,7 @@ Copy and paste this prompt to execute **Phase 12 (Tasks 23 & 24)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 12 (Task 23: Fallback Engine · Task 24: Release & Docs CI).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 12 (Task 23: Fallback Engine · Task 24: Release & Docs CI).
 - `encryption-layers-spec.md`: §1, §5 (triple-layer model, fallback engine).
 - `verification-gates.md`: §4–§5 (verification principle, release protocol).
 
@@ -748,7 +748,7 @@ exactly one RELEASE file exists!
 
 ## 🎛️ Stage 14: Phase 13 Prompt — Bitwarden-Style Custom Fields [v0.0.1.5 (Build 14) — Milestone]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-13-bitwarden-style-custom-fields-v0015-build-14--milestone)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-13-bitwarden-style-custom-fields-v0015-build-14--milestone)
 > for complete specifications on **Task 25** and **Task 26**.
 > **📖 Required Context Files for Phase 13**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §3 (Guard registry & firewall), §4 (Custom fields data model).
@@ -762,7 +762,7 @@ Copy and paste this prompt to execute **Phase 13 (Tasks 25 & 26)**:
 
 ## 📖 Reference Documentation & Roadmap
 Before writing code, inspect:
-- `../.agents/memory-bank/ROADMAP-HISTORY.md`: Phase 13 (Task 25: Custom Fields Data Layer · Task 26: Editor & Renderers).
+- `../.agents/brain/ROADMAP-HISTORY.md`: Phase 13 (Task 25: Custom Fields Data Layer · Task 26: Editor & Renderers).
 - `encryption-layers-spec.md`: §3–§4 (firewall, custom fields model & AAD namespaces).
 - `ui-ux-design-system.md`: §7 (render behavior per field type).
 - `database-schema.md`: §2 (migrations).
@@ -801,7 +801,7 @@ property changes!
 
 ## 🌐 Stage 15: Phase 14 Prompt — Native LAN TLS [v0.0.1.6 (Build 15)]
 
-> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/memory-bank/ROADMAP-HISTORY.md#phase-14-native-lan-tls-with-self-signed-certificates-v0016-build-15)
+> 🗺️ **Master Roadmap Reference**: See [`ROADMAP-HISTORY.md`](./../.agents/brain/ROADMAP-HISTORY.md#phase-14-native-lan-tls-with-self-signed-certificates-v0016-build-15)
 > for complete specifications on **Task 27** and **Task 28**.
 > **📖 Required Context Files for Phase 14**:
 > 1. [`architecture.md`](./architecture.md) — §5 (Transport security), §4 (Invariants).
@@ -924,7 +924,7 @@ Before writing code, inspect:
 Execute Phase 16 adhering to the Functionality + Documentation pairing:
 
 ### Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver
-- .agents/memory-bank/ core files + android/ sub-bank (api-client,
+- .agents/brain/ core files + android/ sub-bank (api-client,
   crypto-spec, room-schema, totp-engine, ui-compose-models); workflow
   templates; agentic rule sets.
 - Synchronize release-pipeline invariants; formalize agent git tracking.
@@ -940,7 +940,7 @@ Execute Phase 16 adhering to the Functionality + Documentation pairing:
 - release.yml: optimized triggers + chained mirror job; placeholder IPs in
   install guide; molt RELEASE to v0.0.1.8; cut via --release commit flag.
 
-Verify the presented version always equals package.json, the memory bank
+Verify the presented version always equals package.json, the brain
 loads a cold agent into full context, both sides of every documentation
 bridge match runtime truth, a RELEASE-file edit on main re-syncs the
 published release, and the summit tag exists — the walk and the codebase

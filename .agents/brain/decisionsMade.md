@@ -11,8 +11,8 @@ The story says how it felt. This says what was actually chosen and why.
 **Context**: Lucas asked whether the Application-Scoped Lazy DI pattern for ShellGuard-TOTP should be added to the `/docs` directory or if it was an internal concern.  
 **Options considered**:
 - *Option A*: Add an Architecture & DI section to public `docs/companion/index.md` — Viable because it documents the technical prowess and cold-start advantages of the companion app for potential contributors.
-- *Option B*: Keep public `/docs` protocol-focused and formalize the pattern strictly in internal specs (`.agents/memory-bank/android/di-container.md`) — Viable because users and auditors care about zero-knowledge crypto and hardware enclaves, not internal Kotlin wiring.  
-**Chosen**: Option B (Keep public docs protocol-focused; formalize strictly in internal memory bank).  
+- *Option B*: Keep public `/docs` protocol-focused and formalize the pattern strictly in internal specs (`.agents/brain/android/di-container.md`) — Viable because users and auditors care about zero-knowledge crypto and hardware enclaves, not internal Kotlin wiring.  
+**Chosen**: Option B (Keep public docs protocol-focused; formalize strictly in internal brain).  
 **Why**: The gut pull was to avoid doc bloat. Public docs exist to verify system invariants and user security; leaking client-side dependency wiring into the public portal creates maintenance surface without adding user trust.  
 **Confidence**: high — Would only change if ShellGuard-TOTP opened a public developer SDK where third-party developers build plugins into the Android app.  
 **Outcome**: Authored `android/di-container.md`, updated `android/README.md` and `techContext.md`, while keeping `docs/companion/` pristine and 100% focused on security and sync.  

@@ -31,3 +31,18 @@ The story says how it felt. This says what was actually chosen and why.
 **Confidence**: high — Only a fundamental redesign of secret masking (e.g. biometric unmask gestures) would modify this.  
 **Outcome**: Promoted to `long-term/patterns.md` with weight: 4; temporal pointer placed in `systemPatterns.md`.  
 **Pattern reference**: Link to `long-term/patterns.md § eye-beside-copy-control-ergonomics`.
+
+---
+
+## cloud-offloaded-ci-verification — 2026-10-12 12:16
+
+**Context**: Host machine resources are tight. Lucas requested adopting the pattern used in ShellGuard-Mobile and ShellGuard-TOTP where all testing and building are offloaded to GitHub Actions runners rather than running locally.  
+**Options considered**:
+- *Option A*: Continue running local `npm test` and `npm run build` pre-flight gates alongside GitHub Actions — Viable in environments with abundant CPU/RAM, but drains local host resources and causes sluggishness on constrained dev machines.
+- *Option B*: Offload all heavy testing and production compilation to GitHub Actions (`.github/workflows/ci.yml`) and tail the runner via `gh run watch` — Viable because GitHub cloud runners have isolated resources, parallel execution, and preserve local development speed.  
+**Chosen**: Option B (Offload all test and build execution to GitHub Actions cloud runners).  
+**Why**: Lucas explicitly directed: "never build locally, always push to github and tail the action for building and testing. it works much much better." The felt reason is pure efficiency and avoiding host resource exhaustion.  
+**Confidence**: high — Backed by proven operational success in sibling projects ShellGuard-Mobile and ShellGuard-TOTP.  
+**Outcome**: Created `.github/workflows/ci.yml`, updated `.agents/rules/git-hygiene.md`, `.agents/rules/cadence-and-lifecycle-prompts.md`, and `.agents/rules/project-hygiene.md`.  
+**Pattern reference**: Link to sibling workflows in `ShellGuard-Mobile` and `ShellGuard-TOTP`.
+

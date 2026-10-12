@@ -79,20 +79,21 @@ Work in distinct strokes. Never assemble massive, monolithic pull requests or gi
 
 ---
 
-## Phase 4: Automated Verification Gate (Machine Truth)
+## Phase 4: Automated Verification Gate (Machine Truth — Cloud Offloaded)
 
 Before declaring any code ready for review or testing:
 
-1. **Type Checking & Linting**:
+1. **Lightweight Type Checking & Linting (Local)**:
    - Run `npm run lint` (`tsc --noEmit`). Zero errors permitted.
-2. **Full Test Oracle**:
-   - Run `npm test`. Every test suite must exit 100% green.
-3. **Production Compilation**:
-   - Run `npm run build`. Vite production build must succeed without bundling or syntax errors.
-4. **Agent Self-Inspection**:
+2. **Cloud-Offloaded Test Oracle & Production Compilation (GitHub Actions)**:
+   - **Never run `npm test` or `npm run build` locally on the host machine.** Host resources are tight and strictly preserved.
+   - Commit and push changes to the remote branch (`git push origin <branch>`).
+   - Monitor and tail the resulting GitHub Actions CI runner (`.github/workflows/ci.yml`) using `gh run watch`.
+   - The test oracle (Vitest suites), production bundle compilation (Vite build), and documentation build (VitePress) must exit 100% green on GitHub Actions.
+3. **Agent Self-Inspection**:
    - Inspect the exact `git diff` line-by-line. Confirm every import resolves, no debug artifacts remain, and no unintended files were touched.
-5. **Regression Isolation (When Needed)**:
-   - If a test regression emerges with non-obvious root causes, leverage automated `git bisect run npm test` to identify the culprit commit deterministically.
+4. **Cloud Failure Recovery**:
+   - If the cloud runner fails, inspect logs via `gh run view --log-failed`, resolve the root cause locally, push, and tail the CI action again until green.
 
 ---
 

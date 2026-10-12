@@ -11,10 +11,10 @@ The agent acts as an active cartographer of the project's development lifecycle.
 
 ## 🧭 The 4 Boundary Prompts
 
-### 1. Task Completion Gate (Automated Pass → Live Handshake → Commit Check)
-- **When to Trigger**: Immediately after a task's code changes pass the automated pre-flight gates (Phase 4 of `project-hygiene.md`: `npm run lint`, `npm test`, `npm run build` all 100% green).
-- **Agent Action**: Present the automated results and provide a numbered **Live Verification Checklist** for physical testing in the browser, then ask:
-  > *"All automated gates pass 100% green. Here is your Live Verification Checklist to test in the running app: [Checklist]. Once you have tested and verified live, should I commit these changes now under our two-layer attribution format, or are you still reviewing / experimenting locally?"*
+### 1. Task Completion Gate (Cloud CI Pass → Live Handshake → Commit/Merge Check)
+- **When to Trigger**: Immediately after a task's code changes pass the automated cloud verification gates on GitHub Actions (`.github/workflows/ci.yml`: lint, vitest suites, vite build, docs:build all 100% green in the cloud runner tailed via `gh run watch`).
+- **Agent Action**: Present the cloud CI run results and provide a numbered **Live Verification Checklist** for physical testing in the running app, then ask:
+  > *"All cloud CI gates pass 100% green on GitHub Actions (Run #[ID]). Here is your Live Verification Checklist to test in the running app: [Checklist]. Once you have tested and verified live, should I proceed with [next step / merge], or are you still reviewing / experimenting locally?"*
 
 ### 2. Commit Completion Gate (Committed → Version Bump Check)
 - **When to Trigger**: Immediately after a commit is successfully created following `git-hygiene.md`.
@@ -39,6 +39,7 @@ The agent acts as an active cartographer of the project's development lifecycle.
 ---
 
 ## 🚫 Anti-Patterns to Avoid
+- **Never Run Heavy Tests or Builds Locally**: Host machine resources are constrained; always push to GitHub and tail the action (`gh run watch`).
 - **Never Auto-Commit Unprompted**: Always ask before creating commits.
 - **Never Auto-Bump Versions Unprompted**: Version increments must be an intentional decision by the developer.
 - **Never Auto-Tag / Push Releases Unprompted**: Tag pushes trigger remote GitHub Actions and must be confirmed.

@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-12 — Cloud-offloaded CI verification & zero local build/test mandate
+Lucas established a strict operational boundary mirroring ShellGuard-Mobile and ShellGuard-TOTP: host machine resources are tightly constrained, so all testing (`vitest`) and production building (`vite build`, `docs:build`) are strictly offloaded to GitHub Actions (`.github/workflows/ci.yml`). Never build or test locally on the development machine. Codified this across `git-hygiene.md`, `cadence-and-lifecycle-prompts.md`, and `project-hygiene.md` with a push-and-tail workflow via `gh run watch`.
+
 ## 2026-10-12 — PR #2 Phantom implementation audit & Jules co-pilot recursive feedback
 Physical diff inspection of Jules PR #2 revealed commit `9035b82` was a phantom implementation (+1452 / -303 across 12 files): zero lines of code in `src/`, `migrations/`, or `tests/` while encroaching into `.agents/workflows/` and targeting `main`. Realigned PR base to `stage/phase-23-item-integrity`, and posted an auditable review comment layering the original dispatch prompt with 6 granular memory units (Migration 0009, orphan quarantine, fail-closed parent linkage, note secret rejection, header add-menu removal, deterministic type-sorting, and test oracle). Jules acknowledged and transitioned to `Planning` to re-execute.
 

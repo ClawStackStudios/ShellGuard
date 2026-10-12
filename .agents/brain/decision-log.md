@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-12 — Sovereign .agents boundary & disregard Jules .agents modifications
+Lucas explicitly mandated that all modifications in `.agents/` on Jules's PR branch (specifically 9 legacy workflow files in `.agents/workflows/`) must be completely disregarded and never pulled or merged into stage. `.agents/` is orchestrator sovereign territory. When merging Jules's Phase 23 PR, `.agents/` is checked out clean from stage HEAD, preventing any cross-agent contamination.
+
 ## 2026-10-12 — Dedicated PR CI runner workflow & universal test/build gate
 Codified `.github/workflows/pr-check.yml` establishing a dedicated cloud CI test and build gate for all pull requests matching sibling ShellGuard-Mobile architecture. Updated `.github/workflows/ci.yml` with `stage/*` branch pattern matching and offloaded PR events to `pr-check.yml`. Universal PR trigger without branch restrictions guarantees Jules's PRs and multi-agent stage branches run full Vitest suites, Vite builds, and VitePress docs compilation automatically.
 
@@ -60,6 +63,3 @@ Direct inspection of `App.tsx` handlers revealed that pod renames and bulk updat
 
 ## 2026-09-21 — Project hygiene & the live verification handshake
 Discovered that passing 285 isolated tests masked a broken delete function in the UI due to an untested client seam. Solidified `.agents/rules/project-hygiene.md` ratifying the 5-phase development lifecycle: Cartography, Seam-Aware Planning, Layered Stroke Commits, Automated Gates, and the mandatory Live Verification Handshake with Lucas. Tests verify logic; only human live verification proves the joint holds.
-
-## 2026-09-21 — Vault item deletion routing & zombie process port shadowing
-A stale Node process on port 6565 from before Phase 21 intercepted `DELETE /api/vault/bulk` as `DELETE /api/vault/:id` with `:id = 'bulk'`, returning 404. Terminated the zombie PID, restored correct routing in `App.tsx` for TOTP/pearl items, integrated `ConfirmDialog` into `ItemDetailPane` for single-item parity with bulk deletes, and cleared `selectedItemId` on deletion to prevent dead selection state.

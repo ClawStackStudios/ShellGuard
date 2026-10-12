@@ -18,6 +18,8 @@ Release v0.0.2.4 (Build 26) — Reef Polish Pass: Unified Search & Control Ergon
 
 ## Active Decisions
 
+- **Locked**: Zero-.agents/ Ingestion from Jules PR — Any changes to `.agents/` (specifically the 9 workflow files in `.agents/workflows/`) originating from Jules's branch are strictly discarded and never pulled or merged into stage. `.agents/` remains 100% sovereign to Antigravity.
+
 - **Locked**: Android Companion Application-Scoped Lazy DI — ShellGuard-TOTP utilizes pure-Kotlin `AppContainer` with thread-safe `by lazy` property instantiation rather than heavy framework DI (Hilt/Koin). Guarantees sub-100ms cold start, zero reflection overhead, deterministic RAM zeroization on vault lock, and transparent external cryptographic auditability. Public `/docs` maintains a clean protocol- and security-focused scope.
 
 - **Locked**: Import Lifecycle & Ephemeral Quarantine — bulk imports stamp `imported_at` and `import_batch_id` across pearls, notes, and keys; configurable TTL (30m/60m/90m/manual); auto-graduation on item edit; progressive disclosure invariant (zero import UI elements render unless unexpired imported items exist in state); atomic batch rollback with attachment cascade.

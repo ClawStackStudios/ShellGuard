@@ -90,5 +90,29 @@ server therefore runs **its own CA of one**:
 > model never depends on it. Client-side ShellCryption remains the secrecy
 > boundary; TLS protects metadata and availability.
 
+### §5.1 The Reef Handshake (Zero-Touch Mobile Pairing — Phase 27)
+To eliminate manual IP, port, and fingerprint typing on touchscreens, the server formats a standardized pairing URI rendered as an SVG QR Code in the SuperLobster control plane:
+`shellguard://pair?v=1&lan=<url>&ts=<url>&fp=<sha256-hex>&ik=<instance-key-hex>&alias=<name>`
+
+- `lan`: Local Area Network endpoint with port (`https://192.168.1.50:6565`).
+- `ts`: Tailscale MagicDNS / Mesh endpoint (`https://shellguard.reef.ts.net:6565`).
+- `fp`: SHA-256 fingerprint of the active leaf TLS certificate (colon-delimited hex).
+- `ik`: Public Instance Identity Key (uncompressed EC P-256 point in hex).
+- `alias`: Human-readable server label.
+
+### §5.2 The Instance Identity Anchor & Rotation Proof Protocol
+- **Host Trust Anchor**: `DATA_DIR/instance.key` stores a persistent EC P-256 keypair generated on first install.
+- **Rotation Manifest**: Whenever the leaf TLS certificate rotates, the server generates a signed manifest:
+  $$\text{Signature} = \text{ECDSA-SHA256}(\text{instancePrivKey}, \text{fingerprint} \parallel \text{timestamp})$$
+- Served via `GET /api/public/tls-manifest` and in the custom response header `X-ShellGuard-Rotation-Proof`.
+- Mobile clients verify the signature with their pinned `ik` and update their pinned certificate fingerprint silently.
+
+### §5.3 Dual-Homed Network Resolution
+Client connections race LAN probes (`192.168.x.x`, 1200ms timeout) against Tailscale MagicDNS (`*.ts.net`), failing over smoothly to local offline Room storage when offline.
+
+### §5.4 Sync-Native Reactive River
+Live Server-Sent Events stream (`GET /api/sync/events`) broadcasts real-time mutation markers (`{ domain, id, rev, action, timestamp }`), enabling sub-50ms reactive cross-device reconciliation without polling.
+
 ---
+
 

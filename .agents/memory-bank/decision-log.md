@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-10-11 — Era 1 archival, Era 2 genesis & pre-walk-the-docs protocol
+Lucas refined the master sequence: stopping the active Era 1 meta-prompt and roadmap at Phase 26 (Import Lifecycle Quarantine), archiving both into `.agents/internal/` (`era-1-meta-prompt-ai-studio.md` and `era-1-ROADMAP.md`), and birthing Era 2 (`meta-prompt-ai-studio-era2.md` and `ROADMAP-ERA2.md`) with Phase 27 as flagship Stage 1. Executed a comprehensive pre-/walk-the-docs sweep across all 4 zones, baking 3 new VitePress pages (`https-tls.md`, `transport.md`, `pairing.md`), 5 updated docs, root docs, and skills directly into Task 54 acceptance criteria so documentation 100% bows to code without drift.
+
+## 2026-10-03 — Git Advanced Workflows skill synthesis & hygiene rule bolster
+Integrated the Git Advanced Workflows skill into our ecosystem. Formulated `.agents/skills/git-advanced-workflows/SKILL.md` covering interactive rebase, autosquash, worktrees, precision cherry-picking, automated bisect, and reflog recovery. Bolstered `git-hygiene.md` with explicit worktree isolation, pre-rebase safety branches, autosquash workflows, and the 90-day reflog safety net, and updated `project-hygiene.md` with worktree task branching and automated regression isolation.
+
+## 2026-10-03 — Living security contract & OpenSSF SECURITY.md governance
+Lucas requested adding a dedicated `SECURITY.md` pattern to our skills and rules. Codified Section 10 in `docs-hygiene.md`, Template 3 and Core Concept 5 in `doc-automation`, and `fix(security)` Conventional Commit mappings in `changelog-automation` and `git-hygiene.md`. Audited and upgraded root `SECURITY.md` with an OpenSSF-compliant Supported Versions matrix (`v0.0.2.x (Build 26+)`) and a CFAA/DMCA Safe Harbor legal clause for good-faith researchers, tying our documentation directly to code reality.
+
+## 2026-09-27 — Native Credit Card & Identity models, smart auto-spacing & checkout clipboard invariant
+Implemented first-class `card` and `identity` types across the entire vault stack using the polymorphic `vault_pearls` table. Engineered `cardUtils.ts` providing network-aware smart auto-spacing (Amex 4-6-5, others 4-4-4-4), real-time brand detection, length-truthful proportional masking, and clean digit copying to the clipboard so third-party payment forms never reject on spaces. Designed dedicated visual Credit Card and Identity Contact Sheet widgets in `ItemDetailPane` strictly maintaining the Eye-beside-Copy invariant on all sensitive fields.
+
 ## 2026-09-26 — Bitwarden linked ID mapping & residual field harvesting
 Discovered Bitwarden exports linked custom fields via numeric `linkedId` (100–104) without property names; mapped these directly to ShellGuard's `linkedProperty` so linked fields resolve cleanly in `ItemDetailPane`. Created an automated `harvestResidualFields` sweeper with key exclusion sets and empty collection filtering (`[]`/`{}`) to capture unmapped identity fields (`username`, `address2`, `address3`, etc.) and ensure zero data loss on future exports.
 
@@ -51,16 +63,3 @@ Placing `DELETE /bulk` and `POST /bulk-import` after parameterized `:id` handler
 
 ## 2026-09-20 — Phase 21: Per-record Zod safeParse vs middleware validateBody for 207 Multi-Status
 Express `validateBody(schema)` runs before route execution and rejects an entire payload with HTTP 400 if any record fails validation. To achieve true 207 Multi-Status partial failure handling in `POST /api/vault/bulk-import`, the middleware validates only the container array bounds (`1..1000`), while the route handler executes `VaultSchemas.bulkImportItem.safeParse(item)` per record, aggregating failures into `{ index, reason }` chips and persisting valid records in an atomic transaction.
-
-## 2026-09-19 — Phase 20 release drafting & 3-version roadmap sliding window
-Rolled over ROADMAP.md to release v0.0.2.2 (Build 24 — The Bioluminescent Reef) holding completed Phases 18, 19, and 20. Retired Phase 17 into ROADMAP-HISTORY.md preserving the 3-completed-milestones ceiling. Verified dynamic package version resolver ensures 0.0.2.2 passes tests cleanly with zero assertion drift.
-
-## 2026-09-19 — SSH key JSON leak remediation & terminal ergonomics
-Generating in-browser SSH keypairs and unmasking them revealed a stringified `{publicKey, privateKey}` JSON payload instead of pure PKCS#8 PEM. Resolved via a dual-key serialization layer (`parseSshKeySecret`/`serializeSshKeySecret`) with backward compatibility for legacy raw PEMs, clean multi-line monospace code block display, standard RFC 7468 delimiters, direct `.pem` download, and one-click `authorized_keys` shell command copy.
-
-## 2026-09-19 — Phase 20: PodUtils color unification & Node test env safety
-Unified Pod and Tag color mechanics into a shared deterministic color engine in `src/lib/podUtils.ts` (string hashing + explicit user overrides). Discovered Node test environments crash on unguarded `localStorage` accesses; added defensive `typeof localStorage === "undefined"` checks so client color utilities remain completely headless-safe.
-
-## 2026-09-19 — docs bow to code: Phase 19 ripple alignment & Phase 20 500MB sub-task
-Walked the complete codebase and documentation surface to audit production readiness. Found and resolved 12 contradictions: purged 8 obsolete "10 MB" base64 references in favor of the active 50MB Busboy streaming BLOB reality, unfroze ARCHITECTURE.md to v0.0.2.1 (added migration 0005, middleware/utils, 19 test suites, Deltas #21 & #22), fixed conflated auth limiter numbers in architecture docs, and added the 500MB attachment ceiling sub-task to Phase 20 in ROADMAP.md and meta-prompt-ai-studio.md.
-

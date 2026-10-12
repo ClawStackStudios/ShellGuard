@@ -12,6 +12,7 @@
 <details>
 <summary>Click to expand</summary>
 
+- [Supported Versions](#-supported-versions)
 - [Security Model Overview](#-security-model-overview)
 - [Key Types](#-key-types)
 - [Security Practices](#-security-practices)
@@ -23,6 +24,18 @@
 - [Self-Hosted Hardening Checklist](#️-self-hosted-hardening-checklist)
 
 </details>
+
+---
+
+## 📦 Supported Versions
+
+Security updates and critical patches are actively provided for the following releases:
+
+| Version | Supported | Security Notes |
+|:---|:---|:---|
+| `v0.0.2.x (Build 26+)` | ✅ Supported | Active development & current release branch |
+| `v0.0.2.0 – v0.0.2.3` | ⚠️ Upstream Fix Only | Upgrade to latest `v0.0.2.x` recommended |
+| `< v0.0.2.0` | ❌ End of Life | Legacy pre-migration builds; no patches |
 
 ---
 
@@ -356,6 +369,14 @@ Instead, report privately:
 3. **Response time**: We aim to acknowledge within 72 hours.
 4. **Credit**: Reporters are acknowledged in release notes (anonymity respected on request).
 
+### Safe Harbor
+We consider security research conducted under this policy to be:
+- **Authorized** in view of relevant anti-hacking laws (such as CFAA).
+- **Exempt** from anti-circumvention provisions of the DMCA.
+- **Lawful**, helpful to the overall security of the Internet, and conducted in good faith.
+
+If you make a good faith effort to comply with this policy when discovering and reporting a vulnerability, ClawStack Studios will not initiate legal action against you or request law enforcement to investigate. If third-party legal action is initiated against you, we will take steps to make it known that your research was conducted in compliance with this policy.
+
 ---
 
 ## 🛡️ Self-Hosted Hardening Checklist
@@ -426,6 +447,8 @@ The ciphers are equally strong either way. What differs is the transport guarant
 - **Contribution security standards**: See [CONTRIBUTING.md](./CONTRIBUTING.md)
 - **Privacy Policy & Google Play compliance**: See [docs/privacy.md](./docs/privacy.md)
 - **Agent Customizations & Security Rules**: See [.agents/](file:///.agents/)
+- **Documentation Hygiene & Security Governance**: See [.agents/rules/docs-hygiene.md](file:///.agents/rules/docs-hygiene.md)
+- **Documentation Automation Skill**: See [.agents/skills/doc-automation/SKILL.md](file:///.agents/skills/doc-automation/SKILL.md)
 - **Interactive Documentation Portal**: See [docs/](file:///docs/)
 
 ---

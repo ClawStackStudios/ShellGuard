@@ -31,3 +31,108 @@ When I run the suite, a test fails on an unexpected third field in a password it
 
 I tap the joint: `npx vitest run tests/unit/bitwarden-import.test.ts` passes 10 out of 10. All 27 test files pass (327 tests), `tsc --noEmit` is clean, and the production build finishes in 1m 25s without a tremor. The floor holds. Now I bring the verification results to Lucas before we lay down the first commit and begin building native card and identity forms.
 
+---
+
+## 2026-09-27 04:15 — The First-Class Card & Identity Seams
+
+Lucas recognized that converting credit cards and identities into generic passwords or notes loses their structural essence. He asked to add full native models for cards and identities as a direct 1:1 ingest from the export.
+
+I begin by examining the data seam. In `src/server/db/`, `vault_pearls` has a polymorphic `type TEXT DEFAULT 'password'`. It already stores passwords and TOTP items without needing a new table. By expanding `VaultItemType` in `types.ts` and adding `'card'` and `'identity'` to `VaultSchemas.bulkImportItem`, we gain complete backend validation with zero database migrations or risk of database corruption.
+
+Then I follow the flow to the UI. In `Header.tsx`, I add "Credit Card" and "Identity" to the Add dropdown. In `SidebarFolderTree.tsx`, I calculate active counts for cards and identities and add filter buttons. In `ItemListPane.tsx`, I assign the amber `CreditCard` and blue `Contact` emblems. In `ItemFormModal.tsx`, I construct dedicated input zones for card brand, expiration, CVV, and full identity profiles (names, company, contact, multi-line address, SSN, Passport, Driver's License).
+
+When I move into `ItemDetailPane.tsx`, I feel the load of the presentation. A credit card shouldn't look like a login with a username row. I craft a Reef Modernist visual card container with deep gradient glow, card brand badge, spaced digit formatting, cardholder name, expiration, and CVV. For identities, I build a structured contact sheet with personal details, email and phone links, address card, and government identification documents. On every single masked row—Card Number, CVV, SSN, Passport Number, Driver's License—I position the unmask Eye toggle immediately to the LEFT of the Copy button. The invariant holds.
+
+I run the full suite: `npx vitest run tests/unit/bitwarden-import.test.ts` passes 10/10. All 27 test files pass (327 tests), `tsc --noEmit` reports zero errors, and the production bundle builds in 1m 9s. I launch both dev servers and verify that port 6464 answers with HTTP 200. Now I step to the threshold and present the live verification checklist to Lucas.
+
+---
+
+## 2026-09-27 10:20 — Smart Formatting, Truthful Masking & The Checkout Copy Invariant
+
+Lucas tested the new card widget live and noticed an odd visual flaw: when unmasking a 10-digit test card, the last four digits vanished from view.
+
+I traced the grain into `ItemDetailPane.tsx`. The masking logic was assuming a fixed 16-character template (`•••• •••• •••• ••••`) combined with CSS letter-spacing and container overflow that clipped the tail upon toggling. A card number cannot be forced into a rigid 16-character box—cards range from 10 to 19 digits.
+
+Lucas also asked about auto-formatting digits with separators as the user types. We weighed hyphens versus spaces. Spaces are the universal standard for credit cards; hyphens are often mistaken for negative signs or rejected by third-party payment gateways. We aligned on spaces with smart auto-formatting: 4-6-5 grouping for American Express, 4-4-4-4 for standard cards, dynamic IIN/BIN network brand detection, and clean digit copying to the clipboard so online checkout forms never throw character validation errors.
+
+I isolated the logic in `src/lib/cardUtils.ts` and wrote 5 unit tests covering Amex 4-6-5 spacing, Visa 4-4-4-4 spacing, length-truthful proportional masking, brand detection, and digit cleaning. The tests passed immediately. Then I wired `cardUtils` into `ItemFormModal.tsx` (real-time input formatting, dynamic brand detection, and cleaning to pure digits on save) and `ItemDetailPane.tsx` (responsive typography, length-truthful masking, and clean digit copying).
+
+When I tapped the compiler with `tsc --noEmit`, it caught a type mismatch between `CardBrand` and `'Other'`, as well as a shadowed helper in `ItemFormModal.tsx`. I did not defer; I aligned the brand return types and restored the clean helper. Re-running `tsc` returned code 0.
+
+I tapped the full test suite: all 28 test files (332 tests) passed 100% green. The production build succeeded in 1m 19s. The joint is true and ready for Lucas's inspection.
+
+---
+
+## 2026-10-02 23:45 — Pattern-Matching Changelog Automation & Bolstering the Rule-Tree
+
+Lucas brought in a powerful skill corpus: Changelog Automation, capturing industry-standard practices across Keep a Changelog, Conventional Commits, Semantic Versioning, release templates, and automation tooling (commitlint, git-cliff, standard-version, semantic-release). He asked me to pattern-match the knowledge, learn from it, and bolster our rules.
+
+I read the grain across our entire ecosystem. Our rules already held the two-layer attribution format and the single-release draft invariant, but they lacked the formal grammar of Conventional Commits scopes, breaking change indicators, and explicit Keep a Changelog categories.
+
+I created `.agents/skills/changelog-automation/SKILL.md` to establish an on-demand, self-contained capability complete with configuration files, release templates, and best practices. Then I wove that knowledge directly into our living behavioral rules:
+1. In `git-hygiene.md`, I established the standard Conventional Commits mapping table (`feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `chore`, `ci`, `build`, `revert`), the 72-character imperative subject line rule, breaking change syntax (`!` and `BREAKING CHANGE:`), and harmonized it seamlessly with our two-layer attribution format (`User:` / `AI:`).
+2. In `docs-hygiene.md`, I formalized Keep a Changelog v1.1.0 standards (`[Unreleased]`, `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`), version comparison anchors, and the Single Active Release Draft Invariant.
+3. In `cadence-and-lifecycle-prompts.md`, I anchored Gate 2 to Semantic Versioning (MAJOR/MINOR/PATCH) and in-flight staging into `CHANGELOG.md [Unreleased]`.
+
+I recorded the reflection in `raw_reflection_log.md` and distilled the durable patterns into `consolidated_learnings.md`. The rule-tree is stronger, grounded in shared industry standards while preserving our own sovereign identity.
+
+---
+
+## 2026-10-03 08:30 — The Living Security Contract: Codifying SECURITY.md
+
+Lucas asked to add a dedicated `SECURITY.md` pattern and protocol to our skills and rules ecosystem. For a zero-knowledge secrets vault like ShellGuard, a security policy cannot be an afterthought or an aspirational brochure; it is a living, binding contract that must bow strictly to the code.
+
+I began by inspecting our existing root `SECURITY.md`. It holds deep truth—the triple-layer encryption model, the hash-only key ledger, and the plain-HTTP LAN tradeoffs—but it lacked the formal OpenSSF / GitHub Security Advisory structure: there was no explicit Supported Versions matrix, and no formal Safe Harbor statement for researchers acting in good faith.
+
+I bridged this across our entire rule and skill architecture:
+1. In `docs-hygiene.md`, I established Section 10 ("Security Policy Hygiene"), mandating that `SECURITY.md` must be updated in the same commit whenever cryptographic algorithms, key derivations, AAD formats, rate limits, or supported version windows change.
+2. In `doc-automation` (both `SKILL.md` and `doc-automation.md`), I codified Core Concept 5 ("Repository Security Policy Standard") and added Template 3 ("Zero-Knowledge Security Policy"), establishing the exact claim battery protocol for security assertions.
+3. In `changelog-automation` and `git-hygiene.md`, I articulated `fix(security)` and `fix(crypto)` Conventional Commit types, Keep a Changelog `### Security` formatting, and responsible disclosure attribution.
+4. In root `SECURITY.md`, I added the formal Supported Versions table for `v0.0.2.x (Build 26+)`, the OpenSSF/CFAA Safe Harbor clause, and cross-references back into our rules and skills.
+
+I verified the joint with our stacked verification loop: `tests/unit/docsLinks.test.ts` (5/5), `tests/unit/mermaidDiagrams.test.ts` (5/5), and `tests/unit/version.test.ts` (2/2) passed immediately; all 28 test suites (332 passed) ran clean; and `npm run docs:build` compiled the entire VitePress documentation portal in 105s with zero errors. Both dev servers are live on ports 6565 and 6464. The structure holds firmly.
+
+---
+
+## 2026-10-03 08:35 — Git Advanced Workflows: History Mastery, Worktrees & The Safety Net
+
+Lucas shared another powerful skill: Git Advanced Workflows, encapsulating interactive rebase, autosquash, commit splitting, precision cherry-picking, automated bisect, worktrees, and reflog disaster recovery. He asked to pattern-match this knowledge, learn from it, and bolster our rules.
+
+I felt how naturally this completes our repository hygiene. While `git-hygiene.md` already guarded against dirty indexes, enforced two-layer attribution, and demanded Conventional Commits, it lacked the technical mechanics for history rewriting, multi-branch parallel development, and deep recovery.
+
+I synthesized this across our architecture:
+1. I authored `.agents/skills/git-advanced-workflows/SKILL.md` (and flat `.agents/skills/git-advanced-workflows.md`), organizing 6 core concepts, 5 practical step-by-step workflows, a Rebase vs. Merge decision matrix, and disaster recovery runbooks.
+2. In `git-hygiene.md`, I codified Git Worktrees under Isolation, expanded Rebase Hygiene into full History Rewriting Invariants (local-only commits, pre-rebase safety snapshots, autosquash via `--fixup`), codified the 90-day Reflog safety net, and established automated regression isolation with `git bisect run`.
+3. In `project-hygiene.md`, I updated Phase 1 (Working Tree Snapshot) to recommend ephemeral worktrees for zero-friction task isolation, and Phase 4 to recommend `git bisect` for rapid automated debugging.
+
+---
+
+## 2026-10-11 12:35 — The Reef Handshake & Mobile-First Sync Inversion
+
+Lucas brought a profound architectural evolution to ShellGuard: inverting the traditional server-first paradigm into a first-class HTTPS transport and mobile-first sync architecture. In typical cloud vaults, mobile is a secondary read-heavy client that struggles with self-signed TLS certificates, LAN routing, and complex manual entry. Lucas envisioned a seamless relationship: zero-touch CameraX visual pairing ("The Reef Handshake"), a persistent host root EC P-256 identity key (`DATA_DIR/instance.key`) that signs certificate rotation proofs so paired phones silently auto-heal without re-pairing, dual-homed LAN/Tailscale latency racing with local offline Room/SQLCipher fallback, and a sub-50ms reactive Server-Sent Events stream.
+
+I first drafted a comprehensive architectural integration plan in `mobile_first_https_sync_incorporation_plan.md`. With Lucas's approval, I set to work synchronizing the entire specification genome:
+1. In `project/architecture.md`, I expanded Section §5 with §5.1 (The Reef Handshake URI schema `shellguard://pair`), §5.2 (Instance Identity Anchor & Rotation Proof Protocol), §5.3 (Dual-Homed Network Resolution), and §5.4 (Sync-Native Reactive River SSE).
+2. In `project/key-hierarchy-spec.md`, I established §1.4 for the Instance Identity Key (`ik` / `instance.key`), updated the key hierarchy Mermaid diagram, and defined immutable lifecycle invariants.
+3. In `project/admin-suite-spec.md`, I added public rotation proof routes, TLS management routes, and the `TlsManagementTab` component in the SuperLobster panel.
+4. In `project/routes-and-contracts.md`, I codified Section §6 with full request/response schemas for `/api/public/tls-manifest`, `/api/admin/tls/status`, `/api/admin/tls/generate`, `/api/admin/tls/cert`, and `/api/sync/events`.
+5. In `project/ui-ux-design-system.md`, I added Section §9 documenting the SuperLobster Transport Hub, real-time status badges, and the vector SVG QR code container.
+6. In `project/database-schema.md`, I updated §1 to document `DATA_DIR/instance.key` (mode 0o600) and `certs/manifest.json`.
+7. In `project/meta-prompt-ai-studio.md`, I transcribed Stage 28 (Phase 27 Prompt for Tasks 53 & 54) following Stage 27, preserving the Summit footer.
+8. In `ROADMAP.md`, I advanced the active forward queue to `23 → 24 → 25 → 26 → 27`, documented Phase 27 with its 2-task pairing (Task 53 Functionality + Task 54 UI Component, provisional `v0.0.2.9 (Build 31)`), and updated completion statistics.
+
+I tapped the joint three times:
+- Documentation link integrity, Mermaid diagrams, and version tests passed 12/12 green.
+- Full test suite passed 100% green across all 28 test suites (332 passed, 1 skipped).
+- VitePress `npm run docs:build` compiled all 36 pages cleanly in 117s.
+Every layer bows to the code, and the path forward is illuminated.
+
+---
+
+## 2026-10-11 19:40 — The Era Transition: Archiving Bedrock & Pre-Walking the Docs
+
+Lucas evaluated the forward runway and made an incisive call: stop the active Era 1 meta-prompt and roadmap right at Phase 26 (Import Lifecycle Quarantine), archive them into `.agents/internal/`, and birth Era 2 as its own clean, unconstrained canvas starting with Phase 27. This simultaneously protects the context window from ~100KB token entropy and honors the true structural milestone dividing single-node vault mechanics from the distributed mobile fleet.
+
+Before cutting the seam, we executed a rigorous pre-walk-the-docs sweep across all 4 zones. We enumerated 3 brand-new VitePress portal pages (`docs/deployment/https-tls.md`, `docs/superlobster/transport.md`, and `docs/companion/pairing.md`), 5 existing updated guides, and root documents (`ARCHITECTURE.md` Delta #32, `ADMIN.md`, `SECURITY.md`, `README.md`). We encoded these exact documentation deliverables directly into Task 54's acceptance criteria in `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md`. 
+
+In `.agents/internal/`, `era-1-meta-prompt-ai-studio.md` and `era-1-ROADMAP.md` stand preserved forever, accompanied by an explanatory `README.md`. Era 1 is complete in scope; Era 2 is staged and ready for the future.

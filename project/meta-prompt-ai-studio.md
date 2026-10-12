@@ -42,6 +42,7 @@ flowchart TD
     Phase20["🏷️ Stage 21: Phase 20 — Vault Tagging System & Granular Filter Bar ✅<br/>(Task 39: Tag Schema & Scoped Search · Task 40: Tag Chips & Filter State · Sub-tasks: 500MB Ceiling & SSH Key Ergonomics)"]
     Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ✅<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
     Phase22["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ✅<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
+    Interlude235["🩹 Stage 23.5: Post-Phase-22 Interlude — Bitwarden Ingestion Parity & Native Models ✅<br/>(Sub-Phase 23.5.1: Zero-Loss Engine · Sub-Phase 23.5.2: Native Card/Identity Models & Widgets · Build 26)"]
     Phase23["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
     Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ⬜<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
     Phase25["📦 Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock ⬜<br/>(Task 49: Habitat ZIP Archive Engine & Streamed Packaging · Task 50: Two-Stage Ingestion & Reactive Dock)"]
@@ -72,7 +73,8 @@ flowchart TD
     Phase19 --> Phase20
     Phase20 --> Phase21
     Phase21 --> Phase22
-    Phase22 --> Phase23
+    Phase22 --> Interlude235
+    Interlude235 --> Phase23
     Phase23 --> Phase24
     Phase24 --> Phase25
     Phase25 --> Phase26
@@ -1350,6 +1352,15 @@ content, zero search requests hit the network, lock purges the query, the
 Eye-beside-Copy ergonomics delivered by Phase 19 still holds on every masked
 field row, and the full test oracle + tsc + build stay clean!
 ```
+
+
+## 🩹 Stage 23.5 (Post-Phase-22 Interlude): Bitwarden Ingestion Parity & Native Card/Identity Models [in-place receipt v0.0.2.4 (Build 26) — unphased]
+
+> This stage sits **outside** phase numbering — slotted between Phase 22 and Phase 23 to eliminate 100% of data drop during Bitwarden imports and introduce first-class native Credit Card (`card`) and Identity (`identity`) models before Phase 23's attachment parent enforcement.
+
+**Sub-Phases & Checkpoints:**
+1. **Sub-Phase 23.5.1**: Zero-loss ingestion engine, linked ID translation (`linkedId` -> `linkedProperty`), residual field harvester (`harvestResidualFields`), standing test fixture (`bitwarden_full_forms.json`), and 100% zero-drop completeness oracle. (Receipt: `00dd0d6`)
+2. **Sub-Phase 23.5.2**: Native first-class Credit Card (`card`) & Identity (`identity`) Vault Item models, server validation schemas (`VaultSchemas.bulkImportItem`), dedicated UI form modes in `ItemFormModal.tsx`, and Reef Modernist detail widgets in `ItemDetailPane.tsx` upholding the Eye-beside-Copy invariant on all sensitive fields (card number, CVV, SSN, Passport, Driver's License) with deduplicated custom fields.
 
 
 ## 🧩 Stage 24 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 27)]

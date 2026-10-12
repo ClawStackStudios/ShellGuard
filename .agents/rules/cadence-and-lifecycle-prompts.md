@@ -18,13 +18,17 @@ The agent acts as an active cartographer of the project's development lifecycle.
 
 ### 2. Commit Completion Gate (Committed → Version Bump Check)
 - **When to Trigger**: Immediately after a commit is successfully created following `git-hygiene.md`.
+- **SemVer Guidance**:
+  - **MAJOR**: Breaking changes (`feat!`, `BREAKING CHANGE`).
+  - **MINOR**: Backward-compatible new features or major capabilities (`feat`).
+  - **PATCH / BUILD**: Backward-compatible fixes, ergonomic polish, or refactors (`fix`, `perf`, `refactor`).
 - **Agent Action**: Ask the user:
-  > *"Commit is recorded cleanly. Does this change warrant bumping our release version tag (`version` in `package.json` / `ROADMAP.md`), or are we keeping the current version to bundle additional tasks?"*
+  > *"Commit is recorded cleanly under Conventional Commits with two-layer attribution. Does this change warrant bumping our release version tag (`version` in `package.json` / `ROADMAP.md` / `CHANGELOG.md`), or are we keeping the current version to bundle additional tasks into `[Unreleased]` first?"*
 
 ### 3. Version Bump Gate (Versioned → Release Movement Check)
-- **When to Trigger**: Immediately after `versionCode` / `versionName` are updated.
+- **When to Trigger**: Immediately after `versionCode` / `versionName` or package version are updated.
 - **Agent Action**: Ask the user:
-  > *"Version is bumped to `vX.Y.Z.W (Build N)`. Are we moving towards a release to Google Play (pushing the git tag to trigger the GitHub Actions cloud build), or continuing local development on more features first?"*
+  > *"Version is bumped to `vX.Y.Z.W (Build N)`. Are we moving towards generating the release draft (`RELEASE-vX.Y.Z.W.md`) and pushing the git tag to trigger CI/CD, or continuing local development on more features first?"*
 
 ### 4. Non-Blocking Memory Persistence
 - If the user indicates *"No, we're still adding / reviewing"*, the agent:

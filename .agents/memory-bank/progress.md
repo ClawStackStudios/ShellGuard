@@ -46,17 +46,22 @@
 - [x] **Port migration** — settled on :6464 (web) / :6565 (API) development topology, disentangled from CaraBase port range.
 
 - [x] **Phase 22 Implemented — Unified Search & Control Ergonomics (provisional v0.0.2.4, Build 26)** — Tasks 43 & 44: Pure client-side zero-knowledge unified search engine in `src/lib/vaultSearch.ts` querying across decrypted in-memory items (title, username, url, uris, notes, decrypted note secret content, custom fields, attachment filenames, tags); search state purged on lock; consolidated search surfaces by removing redundant global search bars and dropdowns from `Header.tsx` and `Sidebar.tsx` while retaining pod-scoped search in `SidebarFolderTree.tsx`; verified Eye-beside-Copy unmask ergonomics across all masked field rows. Proven by `tests/unit/vaultSearch.test.ts` (10 tests) and all 27 test files (323 tests passed, 1 skipped).
+- [x] **Stage 23.5 Sub-Phase 23.5.1 Implemented — Zero-Loss Bitwarden Ingestion Engine & Residual Harvester (Build 26)** — Upgraded `bitwarden.ts` with `harvestResidualFields` sweeper with key exclusion sets and empty collection pruning (`[]`, `{}`), catching unmapped identity fields (`username`, `address2`, `address3`, etc.) and future foreign properties without data loss; translated Bitwarden numeric `linkedId` (100–104) to `linkedProperty`; fixed Secure Note detail view in `App.tsx` and `ItemDetailPane.tsx`; standing fixture `tests/fixtures/bitwarden_full_forms.json`; proven by 100% Completeness Oracle in `tests/unit/bitwarden-import.test.ts`. Receipt: `00dd0d6`.
+- [x] **Stage 23.5 Sub-Phase 23.5.2 Implemented — Native Credit Card & Identity Models with Dedicated UI Forms, Smart Spacing & Truthful Masking (Build 26)** — Extended `VaultItemType` to `"password" | "note" | "totp" | "key" | "attachment" | "card" | "identity"`; updated server validation schemas (`VaultSchemas.bulkImportItem`); upgraded `bitwarden.ts` to map Case 3 to `'card'` and Case 4 to `'identity'` directly; created `src/lib/cardUtils.ts` with network-aware spacing (Amex 4-6-5, standard 4-4-4-4), brand auto-detection, proportional masking, and clean digit clipboard copying; added sidebar counts and filter buttons in `SidebarFolderTree.tsx`, list icons in `ItemListPane.tsx`, creation dropdown in `Header.tsx`, breakdown statistics in `ImportExportView.tsx`, and stateful form sections in `ItemFormModal.tsx`; engineered Reef Modernist visual Credit Card and Identity Contact Sheet widgets in `ItemDetailPane.tsx` strictly upholding Eye-beside-Copy ergonomics on all sensitive masked fields with deduplicated custom fields. Proven by all 28 test suites (332 passed, 1 skipped).
+- [x] **Era 1 Archival & Era 2 Genesis Established** — Preserved Era 1 (Phases 1–26) in `.agents/internal/` (`era-1-meta-prompt-ai-studio.md` and `era-1-ROADMAP.md`). Created Era 2 specification genome: `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md` with flagship Stage 1 (Phase 27) and a comprehensive 4-zone pre-walked documentation suite.
 
-## What's Left to Build
+## What's Left to Build (Era 1 Queue)
 
 - [ ] **Phase 23: Bitwarden-Model Item Integrity [provisional v0.0.2.5 (Build 27)]** — Tasks 45 & 46: Attachment parent enforcement at bedrock (reject standalone attachments; orphan quarantine), notes reject password payloads, type-truthful dashboard display.
 - [ ] **Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [provisional v0.0.2.6 (Build 28)]** — Tasks 47 & 48: WebCrypto fallback vector parity against NIST/RFC/SP vectors (unskip test), mechanized constant-time sweep in CI, claim battery gate script, threat-model addendum.
 - [ ] **Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [provisional v0.0.2.7 (Build 29)]** — Tasks 49 & 50: Collision-proof client-side streaming ZIP export with decrypted attachments and embedded manifest; Two-Stage Ingestion Pipeline (<2s instant vault bulk-import + non-blocking reactive background Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
 - [ ] **Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [provisional v0.0.2.8 (Build 30)]** — Tasks 51 & 52: Ephemeral import ledger, configurable TTL self-destruct (30m/60m/90m/manual), auto-graduation on edit, progressive disclosure UI, and instant batch purge/revert.
 
+*(Era 2 Horizon: Phase 27 through Phase 32 staged in `project/ROADMAP-ERA2.md` and `project/meta-prompt-ai-studio-era2.md` for cutover upon Phase 26 completion).*
+
 ## Current Status
 
-**v0.0.2.4 (Build 26 — Reef Polish Pass: Unified Search & Control Ergonomics)** — released & live; next milestone in queue: **Phase 23 (provisional v0.0.2.5 / Build 27)**.
+**v0.0.2.4 (Build 26 — Reef Polish Pass: Unified Search & Control Ergonomics)** — released & live; next milestone in active queue: **Phase 23 (provisional v0.0.2.5 / Build 27)**. Era 1 stops at Phase 26; Era 2 staged for seamless cutover.
 
 ## Known Issues
 

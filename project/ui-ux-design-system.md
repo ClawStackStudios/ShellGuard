@@ -120,5 +120,23 @@ decrypted parent item.
 
 ---
 
+## §9. SuperLobster Transport Hub & Pairing Surfaces (Phase 27)
+
+### §9.1 Reef Modernist Transport Status Indicators
+Real-time transport indicators displayed within the SuperLobster control panel (`/superlobster`):
+- `🟢 Active HTTPS (TLS 1.3)`: Emits subtle emerald bioluminescence with active TLS protocol version and port indicator.
+- `🟡 Cleartext HTTP (LAN Only)`: Warning state with coral accent reminding the administrator that transport encryption is disabled.
+- **Fingerprint Pill**: Monospace SHA-256 fingerprint rendered in colon-delimited format (`XX:XX:...`) with one-click copy feedback.
+
+### §9.2 The Reef Handshake QR Pairing Card
+The pairing card in `TlsManagementTab.tsx` provides zero-touch onboarding for ShellGuard Mobile:
+- **Vector SVG QR Code Container**: High-contrast, scannable QR container embedding the `shellguard://pair` URI schema.
+- **Dynamic Endpoint Badges**: Visual chips denoting configured reachability vectors (`LAN IP: 192.168.x.x` and `Tailscale: *.ts.net`).
+- **One-Click Action Toolbar**:
+  - `Copy Pairing URI`: Copies raw URI string for headless or remote client setups.
+  - `Download Certificate (.pem)`: Public-only certificate export for manual trust-store injection.
+  - `Regenerate Cert`: Modal-guarded action to regenerate leaf certificate with instant rotation proof signing.
+
+
 
 

@@ -8,19 +8,28 @@
 ## §1. DATA_DIR Layout & Driver
 
 The storage subsystem is the **Bedrock**: a `DATA_DIR`-rooted sandbox with the
-vault database and the audit database strictly segregated.
+vault database and the audit database strictly segregated, alongside host identity
+and TLS certificate assets.
 
 ```
 $DATA_DIR/
-├── db.sqlite        # vault database (lobsters, tokens, vault payloads)
-├── db.sqlite-wal    # WAL journal (WAL mode)
-├── audit.sqlite     # segregated append-only audit database
-└── audit.sqlite-wal
+├── db.sqlite            # vault database (lobsters, tokens, vault payloads)
+├── db.sqlite-wal        # WAL journal (WAL mode)
+├── audit.sqlite         # segregated append-only audit database
+├── audit.sqlite-wal
+├── instance.key         # Phase 27: Persistent EC P-256 host identity key (0o600)
+└── certs/               # Phase 27: TLS certificates & rotation manifests
+    ├── cert.pem         # Current leaf public certificate
+    ├── key.pem          # Leaf private key (unexportable)
+    └── manifest.json    # Signed rotation proof manifest (ECDSA-SHA256)
 ```
 
 - **Driver**: `better-sqlite3-multiple-ciphers` (enables optional SQLCipher
   encryption-at-rest keyed from `DB_ENCRYPTION_KEY` in a later phase).
 - **Pragmas**: `WAL`, `NORMAL` synchronous, `foreign_keys = ON`.
+- **Host Key & Manifest Persistence (Phase 27)**:
+  - `instance.key`: Unexportable EC P-256 private key file created with strict POSIX permissions `0o600`. Generated once on initial startup, immutable across certificate regenerations.
+  - `certs/manifest.json`: Stores `{ certFingerprint, timestamp, signature }` signed by `instance.key` to enable mobile zero-touch auto-healing.
 - **Reset tooling**: `scripts/scuttle-reset.ts` wipes the sandbox for fresh starts.
 
 ---

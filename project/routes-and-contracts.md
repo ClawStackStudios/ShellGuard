@@ -127,3 +127,37 @@ Revocation must not affect human sessions.
 
 ---
 
+## §6. Transport, Pairing & Sync Contracts (Phase 27)
+
+### A. Public TLS Manifest (`GET /api/public/tls-manifest`)
+Unauthenticated public endpoint returning the active certificate fingerprint, instance public key, and signed rotation proof so mobile clients can auto-heal pinned certificates without manual re-pairing:
+
+```json
+{
+  "success": true,
+  "data": {
+    "certFingerprint": "D4:A8:12:34:56:78:9A:BC:DE:F0:12:34:56:78:9A:BC:DE:F0:12:34:56:78:9A:BC:DE:F0:12:34:56:78:9A:BC",
+    "instancePublicKey": "04a1b2c3d4e5f6...",
+    "timestamp": 1775990000,
+    "signature": "3045022100..."
+  }
+}
+```
+
+### B. Admin TLS Status & Regeneration
+- `GET /api/admin/tls/status` (`requireAdmin`): returns active TLS mode, protocol, port, fingerprint, instance public key, detected SANs, expiration, and complete `shellguard://pair` URI.
+- `POST /api/admin/tls/generate` (`requireAdmin`): generates a fresh 10-year EC P-256 certificate, signs the new rotation manifest with `instance.key`, and returns the updated status and pairing string.
+- `GET /api/admin/tls/cert` (`requireAdmin`): downloads the public `cert.pem`. Private keys are strictly unexportable.
+
+### C. Reactive River Event Stream (`GET /api/sync/events`)
+- **Authentication**: Bearer `api-` token.
+- **Protocol**: `text/event-stream` (Server-Sent Events).
+- **Format**:
+  ```text
+  event: vault_mutation
+  data: {"domain":"vault_pearls","id":"uuid-1234","rev":14,"action":"upsert","timestamp":"2026-10-11T12:00:00.000Z"}
+  ```
+
+---
+
+

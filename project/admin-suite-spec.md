@@ -37,6 +37,10 @@ operate the reef. Its threat model is secrets-aware:
 | `GET /api/admin/audit` | `requireAdmin` | audit log (segregated `audit.sqlite`) |
 | `POST /api/admin/backup` | `requireAdmin` | fail-safe Online-Backup-API snapshot |
 | `GET /api/admin/backups` | `requireAdmin` | backup manifest + rotation list |
+| `GET /api/public/tls-manifest` | none (public) | returns rotation proof `{ certFingerprint, instancePublicKey, timestamp, signature }` |
+| `GET /api/admin/tls/status` | `requireAdmin` | returns current TLS status, SANs, and active fingerprint |
+| `POST /api/admin/tls/generate` | `requireAdmin` + zod | regenerates leaf cert, updates rotation proof, returns pairing URI |
+| `GET /api/admin/tls/cert` | `requireAdmin` | streams public `cert.pem` (private key strictly blocked from download) |
 
 ## §3. Inviolable Admin Rules
 
@@ -51,6 +55,8 @@ operate the reef. Its threat model is secrets-aware:
    ownership scoping, and is itself audited.
 5. **Backups fail-safe** — Online-Backup-API snapshots with manifest +
    rotation; a failed backup never corrupts the live database.
+6. **Private key never exported** — `GET /api/admin/tls/cert` exports only
+   the public certificate PEM; `key.pem` and `instance.key` are strictly unexportable.
 
 ## §4. Panel Component Architecture
 
@@ -59,6 +65,7 @@ SuperLobsterContext    — volatile session state + verify loop
 SuperLobsterLogin      — token gate (admin-login hash alias)
 SuperLobsterPanel      — tabbed shell
 ├── SuperLobsterStatus    — diagnostics + uptime
+├── TlsManagementTab      — Transport & Mobile Pairing Hub (status, fingerprint, QR pairing card, cert download, regeneration)
 ├── SuperLobsterUsers     — strict-metadata lobster management + cascade delete
 ├── SuperLobsterSettings  — whitelist-only editor
 ├── SuperLobsterAudit     — audit log viewer

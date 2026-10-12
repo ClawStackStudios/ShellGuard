@@ -1,4 +1,154 @@
 ---
+Date: 2026-10-11
+TaskRef: "Execute Era 1 Archival (.agents/internal), Era 2 Genesis, and Pre-Walk-the-Docs Protocol"
+
+Learnings:
+- Mastered the Era boundary pattern: bifurcating long-running meta-prompt spines and roadmaps into clean historical epochs (Era 1: Single-Node Vault & Data Bedrock, Stages 0–27 / Phases 1–26; Era 2: Distributed Sync & Mobile-First Fleet, Phase 27+).
+- Created `.agents/internal/` archive containing `era-1-meta-prompt-ai-studio.md`, `era-1-ROADMAP.md`, and an explanatory `README.md`, preserving the complete historical provenance while relieving ~100KB context entropy from active files.
+- Executed comprehensive pre-/walk-the-docs audit mapping all 4 documentation zones (Zone 1 Root Docs, Zone 2 Specifications, Zone 3 Agent Skills, Zone 4 VitePress Portal).
+- Created `project/meta-prompt-ai-studio-era2.md` with flagship Stage 1 (Phase 27) and `project/ROADMAP-ERA2.md` with 4 forward phases (Phases 27–30).
+- Baked the pre-walked documentation deliverables (3 new VitePress pages, 5 updated docs, root docs, and skills) directly into Task 54's acceptance criteria in the Era 2 spine, guaranteeing documentation 100% bows to code before completion.
+
+Difficulties:
+- Managing large document structures without losing historical context or introducing link regression. Solved by archival in `.agents/internal/` and stacked vitest validation.
+
+Successes:
+- Era 1 files cleanly reset to Phase 26; Era 2 spine established with massive room for detailed architectural prompts; zero documentation drift.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Era Bifurcation & Internal Spine Archiving (`.agents/internal/era-N-*`).
+- General pattern: Pre-Walk-the-Docs Mapping (Pre-baking doc deliverables into task acceptance criteria).
+---
+
+---
+Date: 2026-10-11
+TaskRef: "Incorporate Mobile-First HTTPS Transport with Reef Handshake & Native Pairing Architecture across Specifications and Roadmap"
+
+Learnings:
+- Inverted traditional server-first vault design into a sync-native mobile relationship: zero-touch CameraX visual pairing via `shellguard://pair?v=1&lan=...&ts=...&fp=...&ik=...&alias=...`.
+- Implemented the Instance Identity Anchor pattern: persistent EC P-256 host keypair (`DATA_DIR/instance.key` mode 0o600) generates and signs rotation proof manifests (`certs/manifest.json`), decoupling leaf TLS certificates from client trust and enabling mobile clients to auto-heal pinned certificates silently.
+- Codified dual-homed network mobility: client-side latency racing between LAN (`192.168.x.x`) and Tailscale MagicDNS (`*.ts.net`), falling back to local offline Room/SQLCipher database.
+- Codified sync-native reactive river: Server-Sent Events stream (`GET /api/sync/events`) delivering sub-50ms cross-device mutation reconciliation.
+- Synchronized the reverse-build architecture across all 3 layers: The Spine (`project/meta-prompt-ai-studio.md` Stage 28 prompt for Tasks 53 & 54), The Oracles (`project/architecture.md`, `project/key-hierarchy-spec.md`, `project/admin-suite-spec.md`, `project/routes-and-contracts.md`, `project/ui-ux-design-system.md`, `project/database-schema.md`), and The Router (`ROADMAP.md` Phase 27, queue advanced to `23 → 24 → 25 → 26 → 27`, provisional `v0.0.2.9 (Build 31)`).
+- Verified against test harness: `docsLinks.test.ts` (5/5), `mermaidDiagrams.test.ts` (5/5), `version.test.ts` (2/2), full test suite (332 passed, 1 skipped), and VitePress `npm run docs:build` (117s clean).
+
+Difficulties:
+- Ensuring that leaf certificate regeneration does not disrupt existing mobile trust anchors; resolved by anchoring long-term trust in the immutable `instance.key` and proving leaf rotations via signed ECDSA manifests.
+
+Successes:
+- Fully aligned web specifications with companion Android repository architecture (`ShellGuard-Mobile`), creating an unshakeable cryptographic foundation for zero-touch pairing and self-healing certificate rotations.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Instance Identity Anchor & Cryptographic Rotation Proof Manifest (`instance.key` + `manifest.json`).
+- General pattern: Dual-Homed Network Resolution (LAN + MagicDNS racing with offline fallback).
+- General pattern: Zero-Touch CameraX QR Pairing URI Schema (`shellguard://pair`).
+---
+
+---
+Date: 2026-10-03
+TaskRef: "Synthesize Git Advanced Workflows Skill & Bolster Git and Project Hygiene Rules"
+
+Learnings:
+- Pattern-matched comprehensive Git Advanced Workflows skill corpus: Interactive Rebase (pick, reword, edit, squash, fixup, drop), Autosquash (`--fixup` / `--autosquash`), Commit Splitting (`reset HEAD^`), Precision Cherry-Picking (single, ranges, stage-only `-n`, partial file paths), Automated Regression Bisect (`git bisect run`), Git Worktrees for concurrent task isolation, and the Reflog 90-day safety net.
+- Authored on-demand skill `.agents/skills/git-advanced-workflows/SKILL.md` (and flat `.agents/skills/git-advanced-workflows.md`) detailing the 5 practical workflows, Rebase vs Merge decision matrix, disaster recovery runbooks, and Do's/Don'ts.
+- Bolstered `.agents/rules/git-hygiene.md` with:
+  - Git Worktree guidance under Isolation.
+  - Rebase & History Rewriting Invariants: local-only commits, pre-rebase safety snapshot branches (`backup/<branch>-pre-rebase`), autosquash workflow, non-interactive rebase variables (`GIT_EDITOR=:`), and commit splitting.
+  - Disaster Recovery & The Reflog Safety Net (restoring deleted commits/branches via `git reflog`, universal `--abort` escape hatches).
+  - Automated Regression Isolation with `git bisect run`.
+  - Skill cross-reference link to `git-advanced-workflows/SKILL.md`.
+- Bolstered `.agents/rules/project-hygiene.md`:
+  - Phase 1 Working Tree Snapshot updated with Git Worktree recommendation for concurrent branching.
+  - Phase 4 updated with Automated Regression Isolation (`git bisect run npm test`) for non-obvious test regressions.
+- Verified test suite: `docsLinks.test.ts` (5/5), `mermaidDiagrams.test.ts` (5/5), `version.test.ts` (2/2) — all 12 passed 100% green.
+
+Difficulties:
+- None; existing clean two-layer attribution and isolation rules provided ideal scaffolding for these advanced workflows.
+
+Successes:
+- Equipped the codebase and agent system with complete advanced git capabilities, eliminating branch switching thrashing via worktrees, providing a robust reflog safety net, and systematizing automated regression hunting.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: The Ephemeral Worktree Parallelism Pattern (`git worktree add ../<path> -b <branch>`).
+- General pattern: The Reflog Safety Net & Pre-Rebase Snapshot Protocol (`git branch backup/...`).
+- General pattern: Automated Test-Driven Regression Bisect (`git bisect run <test-cmd>`).
+---
+
+---
+Date: 2026-10-03
+TaskRef: "Codify SECURITY.md Standard into Doc-Automation & Changelog-Automation Skills and Hygiene Rules"
+
+Learnings:
+- Integrated open-source repository security policy standards (OpenSSF Best Practices, GitHub Security Advisories, and CISA Coordinated Vulnerability Disclosure) into the ShellGuard skill and rules ecosystem.
+- Upgraded `.agents/rules/docs-hygiene.md` with Section 10: Security Policy Hygiene (`SECURITY.md`), mandating that `SECURITY.md` is a living contract updated in lockstep with crypto changes, key ledgers, rate limits, and release tags.
+- Bolstered `.agents/skills/doc-automation/SKILL.md` (and `doc-automation.md`) with Core Concept 5 ("Repository Security Policy Standard") and Template 3 ("Zero-Knowledge Security Policy"), establishing the security claim battery audit protocol.
+- Bolstered `.agents/skills/changelog-automation/SKILL.md` (and `changelog-automation.md`) and `.agents/rules/git-hygiene.md` with `fix(security)` and `fix(crypto)` Conventional Commit types, Keep a Changelog `### Security` formatting, and responsible disclosure credit attribution.
+- Enhanced root `SECURITY.md` with a prominent Supported Versions Matrix (`v0.0.2.x (Build 26+)` active vs EOL), a legal Safe Harbor clause (CFAA/DMCA exemption for good-faith researchers), and cross-references to hygiene rules and skills.
+- Verified all documentation and code gates: `docsLinks.test.ts` (5/5), `mermaidDiagrams.test.ts` (5/5), `version.test.ts` (2/2), full test suite (332 passed), and `npm run docs:build` (105.50s clean).
+
+Difficulties:
+- Ensuring the security policy balances honest disclosure of self-hosted plain-HTTP tradeoffs without undermining zero-knowledge assurances. Handled via the triple-layer encryption architecture and transport matrix in `SECURITY.md`.
+
+Successes:
+- Completely unified the security posture across documentation skills, git hygiene rules, and repository contracts with 100% automated test verification.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Living Security Contract Architecture (`SECURITY.md` + Supported Versions Matrix + Safe Harbor Clause).
+- General pattern: Security Commit Mapping (`fix(security)`, `fix(crypto)`) and Keep a Changelog `### Security` Attribution.
+---
+
+---
+Date: 2026-10-03
+TaskRef: "Synthesize Novel Sibling Skill: Doc-Automation ('Docs Bow to Code' Protocol & VitePress Verification)"
+
+Learnings:
+- Researched cutting-edge docs-as-code automation and contract-based documentation patterns: executable contracts, documentation drift mechanics, automated link and mermaid diagram oracles, and behavioral claim batteries.
+- Designed and authored novel sibling skill `.agents/skills/doc-automation/SKILL.md` (and flat `.agents/skills/doc-automation.md`), perfectly mirroring the epistemic shape of `changelog-automation`.
+- Established the core philosophy: "Docs Bow to Code" — when a document contradicts shipped, verified code, the document is the defect; code and test fixtures are physical reality.
+- Encapsulated the tri-layer source of truth: 1. Enforcing Code (Primary Oracle), 2. Test Fixtures (Behavioral Oracle), 3. Living Documentation (Faithful Mirror).
+- Codified the automated verification test harness:
+  - `docsLinks.test.ts`: checks all 3 link classes (Config, Markdown, Raw HTML hrefs) and enforces the `withBase()` Vue component invariant so base-pathed deployments (`/ShellGuard/`) never 404.
+  - `mermaidDiagrams.test.ts`: validates all fenced mermaid blocks across `README.md` and `docs/**`, guarding against unclosed fences, unquoted braces in node labels, and edge label syntax errors.
+  - `version.test.ts`: enforces dynamic ground-truth resolution from `package.json` vs static caching.
+- Codified the 4-step Claim Battery Audit Protocol (Enumerate, Never Recall; Wire-Exact Payload Alignment; Asset Twin Parity; Prune Phantom References).
+- Provided standardized VitePress feature guide and REST endpoint matrix markdown templates.
+- Linked Section 9 in `.agents/rules/docs-hygiene.md` directly to `doc-automation`.
+- Verified 100% green: 12 tests across all 3 docs suites passed, and `npm run docs:build` completed in 107.87s.
+
+Difficulties:
+- Identifying all edge cases where custom Vue components emit un-rewritten hrefs in VitePress subpath deployments; solved by asserting `:href="normalizedHref"` with `withBase()`.
+
+Successes:
+- Produced a comprehensive, production-grade sibling skill tailored 1:1 to ShellGuard and VitePress that eliminates documentation drift mechanically.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: The "Docs Bow to Code" Tri-Layer Source of Truth & Claim Battery Audit Protocol.
+- General pattern: Automated Multi-Class Link & Mermaid Syntax Test Oracles for Static Site Generators.
+---
+
+---
+Date: 2026-10-02
+TaskRef: "Synthesize Changelog Automation Skill into Git Hygiene, Docs Hygiene, and Lifecycle Rules"
+
+Learnings:
+- Pattern-matched comprehensive Changelog Automation skill into ShellGuard's rule ecosystem: Conventional Commits, Keep a Changelog v1.1.0, Semantic Versioning v2.0.0, release notes generation templates, and release workflow automation tooling (git-cliff, standard-version, semantic-release, commitizen).
+- Bolstered `.agents/rules/git-hygiene.md` with strict Conventional Commits type mapping table (`feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `chore`, `ci`, `build`, `revert`), 72-character imperative subject line rule, breaking change syntax (`!` and `BREAKING CHANGE:`), and seamless union with the Two-Layer Attribution format (`User:` / `AI:`).
+- Bolstered `.agents/rules/docs-hygiene.md` with Keep a Changelog v1.1.0 standardization (`[Unreleased]`, `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`), version comparison anchors, and the Single Active Release Draft Invariant for `RELEASE-vX.Y.Z.W.md` files.
+- Bolstered `.agents/rules/cadence-and-lifecycle-prompts.md` with SemVer guidance (MAJOR, MINOR, PATCH) and staging of unreleased changes into `CHANGELOG.md [Unreleased]` at Commit Completion Gate 2.
+- Created on-demand skill `.agents/skills/changelog-automation/SKILL.md` capturing all implementation methods, configurations, release notes templates, commit message examples, and Do's/Don'ts.
+
+Difficulties:
+- Ensuring the standard Conventional Commits header integrates cleanly with ShellGuard's mandatory two-layer attribution format without cluttering commit history. Solved by defining the Conventional Commit line as the commit title/subject, followed immediately by the `User:` intent line and `AI:` implementation line in the body.
+
+Successes:
+- Upgraded 3 foundational agent rules (`git-hygiene.md`, `docs-hygiene.md`, `cadence-and-lifecycle-prompts.md`), created dedicated on-demand skill, and distilled durable patterns into long-term memory.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Harmonizing Conventional Commits with Two-Layer Attribution format.
+- General pattern: Keep a Changelog 1.1.0 and Single Active Release Draft architecture.
+---
+
+---
 Date: 2026-09-26
 TaskRef: "Stage 23.5 Sub-Phase 23.5.1: Zero-Loss Bitwarden Ingestion Engine & Residual Field Harvester"
 

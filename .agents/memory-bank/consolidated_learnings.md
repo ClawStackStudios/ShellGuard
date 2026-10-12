@@ -70,6 +70,18 @@
 
 ## Git & Workflow
 
+**Pattern: Conventional Commits with Two-Layer Attribution Format**
+- Structure commit headers strictly as `<type>(<scope>): <summary under 72 chars>` using imperative mood without trailing periods.
+- Map types directly to changelog sections: `feat` $\rightarrow$ `Added`, `fix` $\rightarrow$ `Fixed`, `refactor`/`perf` $\rightarrow$ `Changed`, `revert` $\rightarrow$ `Removed`.
+- Indicate breaking changes with `!` on the type (`feat(api)!:`) or a `BREAKING CHANGE:` footer with migration notes.
+- Layer ShellGuard's two-layer attribution (`User:` for intent/architecture, `AI:` for concrete implementation) directly under the Conventional Commit header.
+- *Rationale:* Bridges automated tooling (`commitlint`, `git-cliff`, `standard-version`) with human-readable authorship and structural intent.
+
+**Pattern: Keep a Changelog 1.1.0 & Single Active Release Draft Architecture**
+- Maintain `CHANGELOG.md` following Keep a Changelog v1.1.0 with an `## [Unreleased]` buffer and standardized sections (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`), anchored by comparison links at the footer.
+- Maintain the Single Active Release Draft Invariant: exactly one `RELEASE-vX.Y.Z.W.md` document exists in the repository root at any time, mirrored directly into GitHub Releases upon tag creation.
+- *Rationale:* Eliminates conflicting release artifacts and guarantees clean synchronization between Git history, release documentation, and CI/CD pipelines.
+
 **Pattern: Agent File Staging Discipline**
 - When agents modify files, verify staged files before committing.
 - Agents may stage unrelated files (docs, config) alongside their target changes.
@@ -101,11 +113,19 @@
 - Commit memory bank updates (`activeContext.md`, `progress.md`) alongside corresponding feature code and release tasks.
 - *Rationale:* Preserves agent architectural memory, behavioral guardrails, and automated release workflows across resets, workstations, CI runners, and collaborators.
 
-**Pattern: Docs Bow to Code (The Governance Ruling)**
-- When verified, secure runtime code contradicts documentation prose, docs bow to code.
+**Pattern: Docs Bow to Code (The Governance Ruling & Tri-Layer Truth)**
+- When verified, secure runtime code contradicts documentation prose, docs bow to code: the document is the defect, never the code.
 - Stale prose is the defect; never alter working, secure code to match an out-of-date document claim.
-- Verify against the code first (and its test fixtures); then correct the documentation.
+- Source of truth operates in 3 layers: (1) Enforcing Code (Primary Oracle), (2) Test Fixtures & Vectors (Behavioral Oracle), (3) Living Documentation (Faithful Mirror).
+- Apply the Claim Battery Method: grep enforcing code first; if no literal hit, grep test fixtures; assert documentation matches code truth.
 - *Rationale:* Prevents security degradation from retrofitting code to obsolete or misremembered documentation specs.
+
+**Pattern: Automated Multi-Class Link & Mermaid Syntax Test Oracles for VitePress**
+- Enforce documentation integrity via automated machine tests (`docsLinks.test.ts` and `mermaidDiagrams.test.ts`) in CI.
+- Validate all 3 link classes: Config links (`link: '/...'`), Markdown links (`](/...)`), and Raw HTML hrefs (`href="/..."` in custom Vue components).
+- Guard against base-prefix regression in custom Vue theme components by enforcing `withBase()` and `:href="normalizedHref"`.
+- Validate Mermaid diagram syntax: assert every fence is closed and detect fatal unquoted brackets/braces in node labels (`Node[label {with} braces]`).
+- *Rationale:* Eliminates documentation drift, broken deployed subpaths, and broken diagram rendering mechanically without manual proofreading.
 
 **Pattern: Agent Memory Bank Isolation Boundary**
 - Antigravity operates strictly in `.agents/memory-bank/`.
@@ -230,3 +250,36 @@
 - Manual logout ("Claw Out") sets `sg_nav_intent = "landing"`, ensuring reloads stay on the marketing/landing page.
 - Inactivity timeouts, locking, and logins set `sg_nav_intent = "dashboard"`, ensuring reloads maintain the locked dashboard overlay context.
 - *Rationale:* Eliminates reload ambiguity when user identities exist in persistent storage while session keys are volatile in `sessionStorage`.
+
+---
+
+## Documentation & Repository Hygiene
+
+**Pattern: The "Docs Bow to Code" Tri-Layer Truth Architecture**
+- **Layer 1: Enforcing Code (Primary Oracle)** — Zod schemas, Express route controllers, DB migrations, and ShellCryption routines.
+- **Layer 2: Test Fixtures (Behavioral Oracle)** — Vitest unit and integration suites testing invariants and wire shapes.
+- **Layer 3: Living Documentation (Faithful Mirror)** — VitePress portal, README, ARCHITECTURE, and memory bank.
+- When prose contradicts shipped, verified code, the document is the defect; never mutate secure code to match stale text.
+- *Rationale:* Eliminates documentation drift and guarantees documentation truthfulness across human developers and autonomous AI agents.
+
+**Pattern: The Living Security Contract (`SECURITY.md`)**
+- Root `SECURITY.md` is a binding contract, not an aspirational marketing brochure.
+- Must include OpenSSF-compliant Supported Versions Matrix (`0.0.2.x`), Coordinated Vulnerability Disclosure protocol, private reporting SLA (72h), and formal Safe Harbor legal protections for good-faith security researchers.
+- Every cryptographic claim (Layer 1 ShellCryption AES-GCM-256, Layer 2 SG-META, Layer 3 SQLCipher, hash-only LobsterKey ledger) must be verified against literal code hits via the Claim Battery Protocol.
+- *Rationale:* Zero-knowledge vaults require absolute honesty and transparent boundaries between client assurances, storage guarantees, and transport tradeoffs.
+
+**Pattern: Ephemeral Worktrees for Zero-Friction Task Isolation**
+- When working on concurrent tasks, urgent hotfixes, or multi-agent parallel branches without disturbing in-flight working trees, utilize Git Worktrees (`git worktree add ../<path> -b <branch>`). Clean up with `git worktree remove` and `git worktree prune`.
+- *Rationale:* Eliminates risky stash operations, branch switching thrashing, and dirty working tree accidents.
+
+**Pattern: The Reflog Safety Net & Pre-Rebase Snapshot Protocol**
+- Always create a temporary safety branch (`git branch backup/<branch>-$(date +%s)`) before executing an interactive rebase, squashing, or resetting history.
+- Git retains all ref movements for at least 90 days in `git reflog`; any accidentally dropped commit or deleted branch can be fully recovered.
+- Master universal `--abort` escape hatches (`git rebase --abort`, `git cherry-pick --abort`, `git merge --abort`) to escape cleanly if conflicts occur.
+- *Rationale:* Transforms history rewriting from a high-risk venture into a deterministic, completely reversible operation.
+
+**Pattern: Automated Test-Driven Regression Bisect**
+- Use `git bisect run <test-command>` (e.g. `git bisect run npx vitest run ...`) to isolate regressions across large commit histories in $O(\log N)$ time.
+- *Rationale:* Eliminates speculative manual checkout loops and pinpoints exact commit faults automatically.
+
+

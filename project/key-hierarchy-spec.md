@@ -1,11 +1,11 @@
 # 🔑 ShellGuard — Key Hierarchy Specification
 
-> **The three key types, their lifecycles, permissions & boundaries**
-> *Pulled into existence by Phase 3 (Lobster Keys). Grows with the walk.*
+> **The four key types, their lifecycles, permissions & boundaries**
+> *Pulled into existence by Phase 3 (Lobster Keys) & Phase 27 (Instance Key). Grows with the walk.*
 
 ---
 
-## §1. The Three Key Types
+## §1. The Key Hierarchy
 
 ```mermaid
 flowchart TD
@@ -18,7 +18,21 @@ flowchart TD
     HU --> MINT["mint (requireHuman)"]
     MINT --> LB["🦞 lb- key<br/>AGENT-SCOPED<br/>lb- + 64 base62"]
     LB -->|"SHA-256 at rest"| KEYS["lobster_keys table<br/>(permissions, rate_limit, expires_at)"]
+
+    IK["🏛️ ik key<br/>INSTANCE IDENTITY ANCHOR<br/>EC P-256 (secp256r1)"]
+    IK -->|"Signs rotation proof"| MANIFEST["GET /api/public/tls-manifest<br/>(Silently auto-heals mobile cert pinning)"]
 ```
+
+### §1.4 The Instance Identity Key (`ik` / `instance.key` — Phase 27)
+A server-level persistent cryptographic anchor decoupling leaf certificate rotation from client trust:
+
+| Property | Specification |
+|:---|:---|
+| **Algorithm** | EC P-256 (`secp256r1`) Keypair |
+| **Storage** | `DATA_DIR/instance.key` (POSIX mode `0o600`) |
+| **Transmission** | Private key NEVER transmitted. Public key (`ik`) exported as uncompressed hex via QR code & `/api/public/tls-manifest`. |
+| **Purpose** | Signs TLS certificate rotation manifests, allowing paired mobile clients to auto-heal without re-pairing. |
+| **Lifecycle** | Generated once on server installation; immutable across certificate regenerations. |
 
 ## §2. Lifecycle Rules (inviolable)
 
@@ -27,6 +41,7 @@ flowchart TD
 | `hu-` | Client-generated | **SHA-256(hu-) only** — plaintext NEVER crosses the wire | `lobsters.key_hash` (unique) | User destroys key → vault unrecoverable by design |
 | `api-` | Issued by `/api/auth/token` from a verified key hash | Bearer header | `api_tokens` with `expires_at` | TTL expiry or logout |
 | `lb-` | Minted by a human via `POST /api/agent-keys` | Returned **once** in plaintext at mint | Hashed server-side, plus `permissions`, `rate_limit`, `expires_at` | Revocable (`PATCH …/revoke`) or deletable — **without affecting human sessions** |
+| `ik` | Server-generated on first install (`instanceKey.ts`) | **Public key only** (hex via QR & manifest) | `DATA_DIR/instance.key` (`0o600`) | Server host reset or manual admin purge |
 
 ## §3. Permission Model (claw strength)
 

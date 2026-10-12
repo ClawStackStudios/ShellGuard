@@ -30,6 +30,7 @@ Before writing or modifying a single line of code:
 2. **Working Tree Snapshot**:
    - Run `git status` and `git diff --stat`.
    - Never assume the tree is clean. If uncommitted in-flight user edits exist, identify and preserve them.
+   - For parallel tasks or independent review work, spin up a dedicated worktree (`git worktree add`) instead of stashing or branch switching (see [`.agents/skills/git-advanced-workflows/SKILL.md`](file:///config/Local-Storage/workspace-lucas/projects/Agents/ShellGuard/.agents/skills/git-advanced-workflows/SKILL.md)).
 3. **Daemon & Port Listener Hygiene**:
    - In development environments with file watchers (`tsx --watch`, `vite`), detached or orphaned background processes can silently hold network sockets (e.g. ports `6565`, `6464`).
    - Check active listeners before debugging or launching dev servers:
@@ -90,6 +91,8 @@ Before declaring any code ready for review or testing:
    - Run `npm run build`. Vite production build must succeed without bundling or syntax errors.
 4. **Agent Self-Inspection**:
    - Inspect the exact `git diff` line-by-line. Confirm every import resolves, no debug artifacts remain, and no unintended files were touched.
+5. **Regression Isolation (When Needed)**:
+   - If a test regression emerges with non-obvious root causes, leverage automated `git bisect run npm test` to identify the culprit commit deterministically.
 
 ---
 

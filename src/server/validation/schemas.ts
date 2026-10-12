@@ -103,6 +103,8 @@ export const NoteSchemas = {
     tags: itemTags,
     attachments: z.string().max(2000000).optional(), // opaque JSON string
     custom_fields: z.string().max(500000).optional(), // opaque
+  }).passthrough().refine(data => !('secret' in data), {
+    message: "Notes cannot contain secret credentials",
   }),
   update: z.object({
     title: itemTitle,
@@ -111,6 +113,8 @@ export const NoteSchemas = {
     tags: itemTags,
     attachments: z.string().max(2000000).optional(), // opaque JSON string
     custom_fields: z.string().max(500000).optional(), // opaque
+  }).passthrough().refine(data => !('secret' in data), {
+    message: "Notes cannot contain secret credentials",
   }),
 };
 
@@ -123,6 +127,7 @@ export const SshKeySchemas = {
     category: itemCategory,
     tags: itemTags,
     custom_fields: z.string().max(500000).optional(), // opaque
+    attachments: z.string().max(2000000).optional(), // opaque JSON string
   }),
   update: z.object({
     title: itemTitle,
@@ -131,6 +136,7 @@ export const SshKeySchemas = {
     category: itemCategory,
     tags: itemTags,
     custom_fields: z.string().max(500000).optional(), // opaque
+    attachments: z.string().max(2000000).optional(), // opaque JSON string
   }),
 };
 

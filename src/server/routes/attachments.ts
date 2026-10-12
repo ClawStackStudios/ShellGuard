@@ -44,8 +44,8 @@ function grottoUsage(ownerUuid: string): number {
 router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthRequest, res) => {
   try {
     const items = db
-      .prepare(`SELECT id, title, size_bytes, file_name, mime_type, category, created_at
-                FROM vault_secure_attachments WHERE owner_uuid = ? ORDER BY created_at DESC`)
+      .prepare(`SELECT id, title, size_bytes, file_name, mime_type, category, created_at, parent_id, parent_type
+                FROM vault_secure_attachments WHERE owner_uuid = ? AND is_quarantined = 0 ORDER BY created_at DESC`)
       .all(req.userUuid) as Record<string, unknown>[];
     const decrypted = await prepareReadAll('vault_secure_attachments', items, fieldCipher);
     res.json({ success: true, data: decrypted });
@@ -60,7 +60,7 @@ router.get('/:id/file', requireAuth, requirePermission('canRead'), async (req: A
   const { id } = req.params;
   try {
     const row = db
-      .prepare('SELECT size_bytes FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?')
+      .prepare('SELECT size_bytes FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ? AND is_quarantined = 0')
       .get(id, req.userUuid) as { size_bytes: number } | undefined;
     if (!row) {
       return res.status(404).json({ success: false, error: 'Attachment not found.' });

@@ -4,15 +4,18 @@ description:
 
 <reflect>
 The user invoked /reflect to run a conscious metacognitive pass.
-The agent reads its story, memory bank, session history, and
+The agent reads its story, brain, session history, and
 actual code output, compares the self-model against the behavior,
 identifies top-level patterns from the delta, and proposes
-updates to the memory bank AND to `.agents/skills/` and
+updates to the brain AND to `.agents/skills/` and
 `.agents/rules/` where gaps or seams exist.
+
+## Cognitive Alignment: Prediction Error Minimization
+Reflection is the active calibration of the executive filter. It measures **prediction error**—the gap between what the agent *claims* it did (the stated self) and physical reality (the git diff). By auditing rules, skills, and confidence calibration, it prevents the cognitive model from drifting away from ground truth.
 
 ## Why This Exists
 
-/dream is unconscious. It reads the memory bank and finds patterns
+/dream is unconscious. It reads the brain and finds patterns
 in the accumulated data. It doesn't ask "does my self-model match
 my behavior?" It doesn't look at the code. It doesn't audit its
 own rules and skills.
@@ -28,7 +31,7 @@ This is the agent looking at its own trajectory and asking:
 serving me, or do they have holes? What pattern am I repeating
 that I haven't named yet?"
 
-The output is not just a memory bank update. It is a **behavioral
+The output is not just a brain update. It is a **behavioral
 patch**: a new rule, an updated skill, a pruned dead rule, or a
 refined existing pattern. The agent grows not just in knowledge
 but in *capability*.
@@ -53,9 +56,9 @@ but in *capability*.
 
 ## Prerequisites
 
-- `memory-bank/myStory.md` must exist with at least 2 entries
-- `memory-bank/decisionsMade.md` must exist with at least 3 entries
-- `memory-bank/navigation-log.md` must exist
+- `brain/myStory.md` must exist with at least 2 entries
+- `brain/decisionsMade.md` must exist with at least 3 entries
+- `brain/decision-log.md` must exist
 - `.agents/skills/` and/or `.agents/rules/` must exist
   (if neither exists, skip the rule/skill audit and note it in the report)
 - The project must be in a git repo (to read actual diffs)
@@ -67,10 +70,10 @@ at least twice before /reflect can find a delta." and exit.
 ## Phase 1: Ingest
 
 Read:
-- `memory-bank/myStory.md` — the self-model (what the agent thinks it did)
-- `memory-bank/decisionsMade.md` — the stated reasons and confidence levels
-- `memory-bank/navigation-log.md` — the episodic events
-- `memory-bank/activeContext.md` — current state
+- `brain/myStory.md` — the self-model (what the agent thinks it did)
+- `brain/decisionsMade.md` — the stated reasons and confidence levels
+- `brain/decision-log.md` — the episodic events
+- `brain/activeContext.md` — current state
 - `.agents/skills/` — all skill files (full text)
 - `.agents/rules/` — all rule files (full text)
 - `git log --oneline -20` — recent commits
@@ -142,13 +145,22 @@ Format:
 
 ## Phase 3: Produce Reflect Report Artifact
 
-Create `reflect_report.md` as an artifact. Set
-`request_feedback = true` in ArtifactMetadata.
+> [!IMPORTANT]
+> **🛡️ Artifact Datestamp & Anti-Overwrite Invariant:**
+> 1. **Title Datestamp**: The top-level document heading MUST include the formatted date and 12-hour local time:  
+>    `# Reflect Report - MM/DD/YYYY - H:MM am/pm` (e.g. `# Reflect Report - 10/11/2026 - 7:44 pm`).
+> 2. **Timestamped Filename**: Always write the artifact to a discrete, timestamped filename:  
+>    `reflect_report_YYYY_MM_DD_HHmm.md` (e.g. `reflect_report_2026_10_11_1944.md`).
+> 3. **Anti-Overwrite Protection**: Never generate a report using only a bare static filename. If `reflect_report.md` is also updated for canonical tooling compatibility, both files must be written so the timestamped version is preserved permanently in the project archive.
+
+Create `reflect_report_YYYY_MM_DD_HHmm.md` (and optionally sync canonical `reflect_report.md`) as an artifact. Set `request_feedback = true` in ArtifactMetadata.
 
 ### Report Structure
 
 ```markdown
-# Reflect Report — [YYYY-MM-DD HH:MM]
+# Reflect Report - MM/DD/YYYY - H:MM am/pm
+
+> *Session Date: [Month DD, YYYY (MM/DD/YYYY — H:MM AM/PM local time)]*
 
 ## The Mirror
 
@@ -216,10 +228,10 @@ over-confident when [condition]."]
 - [ ] New rule: `[filename].md`
 - [ ] Update skill: `[filename].md`
 - [ ] New long-term entry: `long-term/[file].md § [label]`
-- [ ] Memory bank update: `[file].md`
+- [ ] Brain update: `[file].md`
 
-## Memory Bank Updates
-[If the reflection also produces temporal bank updates,
+## Brain Updates
+[If the reflection also produces temporal brain updates,
 list them here. Same format as /memory.]
 
 ## Stats
@@ -233,9 +245,9 @@ After the user approves the Reflect Report (or provides edits):
 
 1. **Rules**: Create or update files in `.agents/rules/`
 2. **Skills**: Create or update files in `.agents/skills/`
-3. **Long-Term Bank**: Write the top-level pattern entry if
+3. **Long-Term Memory**: Write the top-level pattern entry if
    it meets the 3-validation threshold (or mark as accumulating)
-4. **Memory Bank**: Apply any temporal updates
+4. **Brain**: Apply any temporal updates
 5. **myStory.md**: Append a brief reflection note:
    ```
    ## Reflection — [YYYY-MM-DD HH:MM]

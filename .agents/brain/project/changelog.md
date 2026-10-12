@@ -3,7 +3,12 @@
 ## [Unreleased]
 
 ### Added
+- **Native Payment Card & Identity Models (Sub-Phase 23.5.2)**: Extended `VaultItemType` to `"card"` and `"identity"`, built `cardUtils.ts` with network-aware smart auto-spacing (Amex 4-6-5, standard 4-4-4-4), brand detection, length-truthful masking, and clean numeric digit clipboard copying; integrated form sections in `ItemFormModal.tsx` and contact sheet detail widgets in `ItemDetailPane.tsx`.
+- **Zero-Loss Bitwarden Ingestion Engine & Residual Harvester (Sub-Phase 23.5.1)**: Automated `harvestResidualFields` sweeper capturing unmapped identity and custom fields with empty collection pruning (`[]`, `{}`); translated Bitwarden numeric `linkedId` to `linkedProperty`; fixed Secure Note detail cards with quick-copy.
+- **Era 1 Archival & Era 2 Master Spine**: Archived historical meta-prompt and roadmap into `.agents/internal/`; authored `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md` with flagship Stage 1 (Phase 27 SuperLobster TLS Control Plane & Guided Mobile Pairing Hub) with complete 4-zone pre-walked documentation suite.
+- **Brain Architecture Migration (`/migrate-to-brain`)**: Transformed legacy `.agents/memory-bank/` into the Self vs. Environment `.agents/brain/` architecture, separating internal cognitive state (`activeContext.md`, `myStory.md`, `decision-log.md`) from external project foundations (`brain/project/`).
 - **Android Companion Architecture Alignment**: Formalized Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`) in `.agents/brain/android/di-container.md` and updated `README.md`. Provides sub-100ms cold start for OTP lookups, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
+- **Two-Agent Co-Pilot Orchestration Protocol (Stage 24 / Phase 23)**: Dispatched Google Jules (`8580131941674843399`) on `stage/phase-23-item-integrity` under Mode 3 (Long-Lived Co-Pilot). Audited incoming PR #2, enforced Agent Home Boundary isolation, realigned base branch, and delivered recursive review comment with 6 embedded memory units.
 
 ## [0.0.2.4] - 2026-09-23
 

@@ -137,3 +137,9 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 - **Reef Modernist Modals over Native Dialogs**: Zero browser `prompt()` or `confirm()` calls. Batch actions use accessible custom modal cards (`ConfirmDialog` and inline inputs) styled in dark-mode aesthetic, ensuring headless browser test compatibility.
 - **Mutation Field Preservation**: Batch mutation handlers (e.g. `onBulkMoveToPod`) explicitly preserve all existing item metadata (e.g. `tags: item.tags`) to prevent silent column clobbering.
 
+## Two-Agent Co-Pilot Orchestration Protocol (The Lucas Pattern — Mode 3)
+
+- **Division of Cognition**: Antigravity serves as the local cartographer, conductor, and gate auditor within the repository; Google Jules serves as an asynchronous remote worker in an isolated cloud container.
+- **Recursive Physical Inspection**: PR descriptions submitted by remote agents are never accepted as proof of implementation. Antigravity performs line-by-line physical diff inspection (`git diff --stat`, `git ls-tree`, `git show`) verifying that production code, migrations, and test suites exist in concrete reality before approving.
+- **Inviolable Agent Home Boundaries**: Remote co-pilots operate strictly in `.jules/`, `src/`, `migrations/`, and `tests/`. The `.agents/` directory is Antigravity's sovereign cognitive territory. Cross-agent file mutations are detected, flagged, and rolled back (`git checkout origin/stage/... -- .agents/`).
+

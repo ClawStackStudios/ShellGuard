@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-12 — Pre-Work Assumptions workflow & anticipatory multi-agent orchestration
+Codified `.agents/workflows/pre-work-assumptions.md` establishing the anticipatory stance: when an in-flight stage is actively running (e.g. Jules on PR #3 or cloud CI), project forward into the assumed-complete state, trigger `/work-stage-reflection` for the next stage (Phase N+1), audit downstream seams early, and pre-stage reflection artifacts, test oracles, and micro-stages without idle waiting or conflicting code edits. Physical validation confirmed Jules responded to PR #3 inline feedback with commit `d69d11c` fixing parent-before-attachment creation sequencing in `App.tsx` and SQLite cipher type import in `attachmentIntegrity.ts`.
+
 ## 2026-10-12 — Work Stage Reflection workflow & Jules PR #3 inline diff review
 Codified the Work Stage Reflection protocol in `.agents/workflows/work-stage-reflection.md` and `.agents/workflows/plan.md`, formalizing the 6-section structural completeness inspection and zero-touch mandate. Committed (`f974ffb`), pushed to stage, and verified via GitHub Actions CI (Run `38302734807` passed 100% green in 2m 19s). Conducted diff inspection of Jules PR #3 commit `f9e6b2a` and posted inline comments on `attachmentIntegrity.ts` (SQLite cipher import fix) and `routes/attachments.ts` (parent creation sequencing requirement) plus an auditable review summary guiding base branch sync (to enable cloud CI on PR #3) and Task 46 frontend requirements.
 
@@ -60,15 +63,3 @@ A stale Node process on port 6565 from before Phase 21 intercepted `DELETE /api/
 
 ## 2026-09-20 — Async native PBKDF2 WebCrypto acceleration & 600,000 iteration guidance (N1, N2)
 Pure-TS PBKDF2 running 600k iterations synchronously on the main thread blocked for ~15-20s. Kept the fallback module pure while implementing caller-side native acceleration via `crypto.subtle.deriveBits` in `vaultExport.ts` (~1s execution off-thread) with graceful fallback to pure-TS for non-secure HTTP origins. Upgraded default iteration count from 100,000 to OWASP-recommended 600,000 with backward compatibility.
-
-## 2026-09-20 — Peer review hardening: KDF branching, CSPRNG enforcement & metadata registration
-Addressing Cline's peer review audit highlighted that HKDF cannot be used for user-supplied passphrases due to lack of a work factor against GPU brute-force; implemented pure-TS PBKDF2-SHA256 (100k iterations) in webCryptoFallback.ts and branched derivation between ClawKey and passphrase. Enforced fail-closed CSPRNG on AES-GCM salt/nonce, registered 'uris' under MetadataGuard Layer 2 metadata encryption, converted 0007.down.sql to a safe no-op, and built dedicated published RFC 6238 vectors in totpUtils.test.ts.
-
-## 2026-09-20 — Bitwarden export sniffer priority & encrypted export tripwire
-Bitwarden export sniffer must inspect for proprietary encrypted exports before running standard JSON array mappings, or it would attempt to process encrypted ciphertext (`2.***`) as valid item titles. Surfacing an actionable guidance alert instructs the user to export unencrypted JSON/CSV or use the Bitwarden CLI. Additionally, dynamic TOTP URI parsing seamlessly normalizes non-standard 8-digit and SHA256/512 configurations without data loss.
-
-## 2026-09-20 — Express route shadowing on parameterized subpaths
-Placing `DELETE /bulk` and `POST /bulk-import` after parameterized `:id` handlers caused Express to capture `/bulk` as `req.params.id = 'bulk'`. Declaring static and batch subpaths strictly before parameterized routes resolved the shadowing immediately. In Express routers, order of declaration is an immutable routing invariant.
-
-## 2026-09-20 — Phase 21: Per-record Zod safeParse vs middleware validateBody for 207 Multi-Status
-Express `validateBody(schema)` runs before route execution and rejects an entire payload with HTTP 400 if any record fails validation. To achieve true 207 Multi-Status partial failure handling in `POST /api/vault/bulk-import`, the middleware validates only the container array bounds (`1..1000`), while the route handler executes `VaultSchemas.bulkImportItem.safeParse(item)` per record, aggregating failures into `{ index, reason }` chips and persisting valid records in an atomic transaction.

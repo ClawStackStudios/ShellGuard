@@ -96,7 +96,7 @@ Every Work Stage Reflection must answer all six sections thoroughly and concrete
 
 ## 📄 Phase 3: Artifact Generation Standards
 
-The reflection produces a single markdown artifact: `implementation_plan.md` (or `stage_<N>_implementation_plan.md`) located in `<appDataDir>/brain/<conversation-id>/`.
+The reflection produces a single markdown artifact: `implementation_plan.md` (or `stage_<N>_implementation_plan.md`) located in the active artifact directory.
 
 The artifact **must** include:
 1. **Mermaid Diagrams**: Include high-contrast, visually aesthetic Mermaid diagrams illustrating architecture, state transitions, or sequence flows (`RULE: mermaid-plans.md`).

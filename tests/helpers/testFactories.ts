@@ -140,6 +140,8 @@ export interface AttachmentPayload {
   file_name: string;
   mime_type: string;
   category: string;
+  parent_id?: string;
+  parent_type?: string;
 }
 
 export function makeAttachmentPayload(overrides: Partial<AttachmentPayload> = {}): AttachmentPayload {
@@ -147,7 +149,7 @@ export function makeAttachmentPayload(overrides: Partial<AttachmentPayload> = {}
   return {
     id,
     title: `Attachment ${randomHex(3)}`,
-    file_data: Buffer.from(shellCryptionBlob('vault_secure_attachments', id), 'utf8'),
+    file_data: Buffer.from(shellCryptionBlob('vault_secure_attachments', id), 'utf8') as any,
     file_name: 'recovery-codes.enc',
     mime_type: 'application/octet-stream',
     category: 'Documents',
@@ -165,15 +167,19 @@ export async function uploadAttachment(
   token: string,
   payload: AttachmentPayload
 ): Promise<request.Response> {
-  return request(app)
+  let req = request(app)
     .post('/api/attachments')
     .set('Authorization', `Bearer ${token}`)
     .field('id', payload.id)
     .field('title', payload.title)
     .field('file_name', payload.file_name)
     .field('mime_type', payload.mime_type)
-    .field('category', payload.category)
-    .attach('file_data', payload.file_data, { filename: payload.file_name, contentType: 'application/octet-stream' });
+    .field('category', payload.category);
+
+  if (payload.parent_id) req = req.field('parent_id', payload.parent_id);
+  if (payload.parent_type) req = req.field('parent_type', payload.parent_type);
+
+  return req.attach('file_data', payload.file_data, { filename: payload.file_name, contentType: 'application/octet-stream' });
 }
 
 /**

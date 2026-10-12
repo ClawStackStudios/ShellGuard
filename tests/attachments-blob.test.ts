@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import type { ServerHandle } from './helpers/testDb.js';
 import { loadServer, releaseServer } from './helpers/testDb.js';
-import { makeAttachmentPayload, uploadAttachment, oversizedBytes } from './helpers/testFactories.js';
+import { makeAttachmentPayload, uploadAttachment, oversizedBytes, makePearlPayload } from './helpers/testFactories.js';
 import { createTestUserWithToken } from './helpers/testAuth.js';
 import { migrateAttachmentBlobs } from '../src/server/database/attachmentBlobs.js';
 
@@ -109,8 +109,10 @@ describe('Streaming & limits', () => {
   it(
     'streams a >1MB ciphertext back in exact chunks (substr-based BLOB reads)',
     async () => {
+      const parentId = 'blob-parent-1';
+      await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
       // 1.5MB of ciphertext — spans 2 × 1MB chunk reads.
-      const payload = makeAttachmentPayload({ file_data: oversizedBytes(1.5 * 1024 * 1024) });
+      const payload = makeAttachmentPayload({ file_data: oversizedBytes(1.5 * 1024 * 1024) as any, parent_id: parentId, parent_type: 'password' });
       const up = await uploadAttachment(srv.app, token, payload);
       expect(up.status).toBe(201);
 
@@ -128,7 +130,9 @@ describe('Streaming & limits', () => {
   it(
     'rejects a per-file breach (4MB ceiling) with 413 and stores nothing',
     async () => {
-      const payload = makeAttachmentPayload({ file_data: oversizedBytes(4 * 1024 * 1024 + 1024) });
+      const parentId = 'blob-parent-2';
+      await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+      const payload = makeAttachmentPayload({ file_data: oversizedBytes(4 * 1024 * 1024 + 1024) as any, parent_id: parentId, parent_type: 'password' });
       const res = await uploadAttachment(srv.app, token, payload);
 
       expect(res.status).toBe(413);
@@ -144,15 +148,17 @@ describe('Streaming & limits', () => {
   it(
     'rejects a grotto-quota breach with 413',
     async () => {
+      const parentId = 'blob-parent-3';
+      await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
       // Quota = 8MB. Prior usage ≤ 1.5MB; two 3MB uploads stay under
       // (≤7.5MB), the next 1MB upload breaches.
-      const fill1 = makeAttachmentPayload({ file_data: oversizedBytes(3 * 1024 * 1024) });
-      const fill2 = makeAttachmentPayload({ file_data: oversizedBytes(3 * 1024 * 1024) });
+      const fill1 = makeAttachmentPayload({ file_data: oversizedBytes(3 * 1024 * 1024) as any, parent_id: parentId, parent_type: 'password' });
+      const fill2 = makeAttachmentPayload({ file_data: oversizedBytes(3 * 1024 * 1024) as any, parent_id: parentId, parent_type: 'password' });
       expect((await uploadAttachment(srv.app, token, fill1)).status).toBe(201);
       expect((await uploadAttachment(srv.app, token, fill2)).status).toBe(201);
       fill1Id = fill1.id;
 
-      const breach = makeAttachmentPayload({ file_data: oversizedBytes(1024 * 1024) });
+      const breach = makeAttachmentPayload({ file_data: oversizedBytes(1024 * 1024) as any, parent_id: parentId, parent_type: 'password' });
       const res = await uploadAttachment(srv.app, token, breach);
 
       expect(res.status).toBe(413);
@@ -170,7 +176,7 @@ describe('Streaming & limits', () => {
   it('DELETE frees grotto quota (the deleted bytes count no more)', async () => {
     // The grotto is at 7.5MB after the quota test — a fresh 512KB upload
     // would breach (413). Delete fill1 (3MB) first; the same upload then fits.
-    const probe = makeAttachmentPayload({ file_data: oversizedBytes(512 * 1024) });
+    const probe = makeAttachmentPayload({ file_data: oversizedBytes(512 * 1024) as any, parent_id: 'blob-parent-3', parent_type: 'password' });
     const before = await uploadAttachment(srv.app, token, probe);
     expect(before.status).toBe(413);
 

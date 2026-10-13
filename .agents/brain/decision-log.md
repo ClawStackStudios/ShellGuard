@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-12 — 100% Jules steering offload & complete Walk-the-Docs delegation
+Lucas directed fully steering by review comments on PR #3, offloading 100% of the remaining Phase 23 execution onto Jules: fixing both UI seams (Header Add Item dropdown menu array and App.tsx parent-before-attachment creation sequencing) and executing the full /walk-the-docs pass across VitePress (attachments.md, blueprint-schema.md, api-reference.md, the-grotto.md, glossary.md) and root manifests (ROADMAP.md, meta-prompt, CHANGELOG.md, README.md). We hold the sovereign orchestrator boundary, discarding all .agents/ modifications upon final merge.
+
 ## 2026-10-12 — Sovereign .agents boundary & disregard Jules .agents modifications
 Lucas explicitly mandated that all modifications in `.agents/` on Jules's PR branch (specifically 9 legacy workflow files in `.agents/workflows/`) must be completely disregarded and never pulled or merged into stage. `.agents/` is orchestrator sovereign territory. When merging Jules's Phase 23 PR, `.agents/` is checked out clean from stage HEAD, preventing any cross-agent contamination.
 

@@ -30,9 +30,11 @@ Instead of bloating credential rows with monolithic payloads, ShellGuard stores 
 
 ### Key Technical Properties:
 
-1. **500 MB Hard Limit Per Attachment**: Enforced mid-stream by the server's `Busboy` multipart handler (`ATTACHMENT_MAX_MB`, default 500MB per attachment) — a breach destroys the request and returns `413`, never buffering past the ceiling.
-2. **1000 MB (1 GB) Grotto Quota Per Owner**: Total stored ciphertext is capped per `owner_uuid` (`GROTTO_QUOTA_MB`, default 1000MB) via an exact `SUM(size_bytes)` aggregate — over-quota uploads yield `413` and store nothing.
-3. **Unlimited Attachments Per Parent Item**: A login pearl or secure note can link to as many individual file attachments as needed via its JSON UUID array.
-4. **Atomic Cascade Deletion**: When a vault pearl or secure note is deleted (`DELETE /api/vault/:id`, `DELETE /api/vault/bulk`, or `DELETE /api/notes/:id`), the backend automatically performs a foreign-key-safe cascade deletion of all linked attachment records in `vault_secure_attachments`.
-5. **Client-Side Encryption & Decryption**: File bytes are encrypted in your browser before upload; the ShellCryption envelope streams as multipart bytes (no base64 inflation). The list endpoint never carries payloads — downloads stream the BLOB in 1MB chunks from `GET /api/attachments/:id/file` and decrypt in browser memory.
-6. **Inline Previews**: Common image types and PDFs render in an encrypted preview modal — PDFs load from a Blob object URL (never a `data:` URI, honoring the insecure-origin invariant).
+1. **Zero-Standalone Invariant**: Attachments are always child components of a primary vault item (Password, Card, Identity, Secure Note, or SSH Key). Standalone attachments are forbidden. A valid `parent_id` and `parent_type` must be provided during upload, or the server will return `400 Bad Request`.
+2. **500 MB Hard Limit Per Attachment**: Enforced mid-stream by the server's `Busboy` multipart handler (`ATTACHMENT_MAX_MB`, default 500MB per attachment) — a breach destroys the request and returns `413`, never buffering past the ceiling.
+3. **1000 MB (1 GB) Grotto Quota Per Owner**: Total stored ciphertext is capped per `owner_uuid` (`GROTTO_QUOTA_MB`, default 1000MB) via an exact `SUM(size_bytes)` aggregate — over-quota uploads yield `413` and store nothing.
+4. **Unlimited Attachments Per Parent Item**: A login pearl, secure note, or SSH key can link to as many individual file attachments as needed via its JSON UUID array.
+5. **Atomic Cascade Deletion**: When a parent item is deleted, the backend automatically performs a foreign-key-safe cascade deletion of all linked attachment records in `vault_secure_attachments`.
+6. **Client-Side Encryption & Decryption**: File bytes are encrypted in your browser before upload; the ShellCryption envelope streams as multipart bytes (no base64 inflation). The list endpoint never carries payloads — downloads stream the BLOB in 1MB chunks from `GET /api/attachments/:id/file` and decrypt in browser memory.
+7. **Inline Previews**: Common image types and PDFs render in an encrypted preview modal — PDFs load from a Blob object URL (never a `data:` URI, honoring the insecure-origin invariant).
+8. **Orphan Quarantine Engine**: During server boot, any unparented legacy or orphaned attachments are placed into quarantine (`is_quarantined = 1`). Quarantined attachments are hidden from lists and file streams but are never deleted to prevent data loss. Quarantine events are recorded in the audit logs.

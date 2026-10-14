@@ -47,6 +47,12 @@ The cross-ecosystem architectural topology between the ShellGuard Web Vault and 
 ### 📦 `.sgtotp.bak`
 The sovereign backup envelope format produced by the ShellGuard-TOTP companion. Supports both encrypted (`shellguard-totp-backup-v1` via HKDF-SHA256 and AES-GCM-256 with AAD verification and SHA-256 integrity checksums) and plaintext (`shellguard-totp-plain-export-v1`) archives.
 
+### 📎 Bitwarden Item Integrity Model
+The foundational invariant dictating that every attachment must be a child of a primary vault item (Password, Credit Card, Identity, Secure Note, or SSH Key). Attachments cannot exist independently. Standalone attachment creation is structurally forbidden across all UI boundaries and API contracts.
+
+### 🧹 Orphan Quarantine
+An automated safety engine that executes during server boot. If the server detects any attachments that lack a valid parent item reference (`parent_id`, `parent_type`), those rows are flagged as quarantined (`is_quarantined = 1`). Quarantined attachments are hidden from lists and file streams to maintain the Bitwarden Item Integrity Model, but are never deleted to prevent accidental data loss.
+
 ### 🔐 Three Secrets Model
 The architectural model governing ShellGuard's key segregation:
 1. `hu-` Key: Owned by the human; controls client-side ShellCryption.

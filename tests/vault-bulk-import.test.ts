@@ -246,21 +246,26 @@ describe('Phase 21: Bulk Import Endpoint & Batch Operations', () => {
     });
 
     it('cascades bulk deletion to referenced secure attachments', async () => {
-      // 1. Upload an attachment
-      const attPayload = makeAttachmentPayload();
-      const uploadRes = await uploadAttachment(srv.app, tokenA, attPayload);
-      expect(uploadRes.status).toBe(201);
-
       // 2. Create a pearl referencing this attachment
       const pearl = makePearlPayload();
       const createRes = await request(srv.app)
         .post('/api/vault')
         .set('Authorization', `Bearer ${tokenA}`)
+        .send(pearl);
+      expect(createRes.status).toBe(201);
+
+      // 1. Upload an attachment
+      const attPayload = makeAttachmentPayload({ parent_id: pearl.id, parent_type: 'password' });
+      const uploadRes = await uploadAttachment(srv.app, tokenA, attPayload);
+      expect(uploadRes.status).toBe(201);
+
+      await request(srv.app)
+        .put(`/api/vault/${pearl.id}`)
+        .set('Authorization', `Bearer ${tokenA}`)
         .send({
           ...pearl,
           attachments: JSON.stringify([attPayload.id]),
         });
-      expect(createRes.status).toBe(201);
 
       const db = srv.db;
       if (!db) throw new Error('Database handle missing');

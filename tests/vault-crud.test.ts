@@ -257,7 +257,9 @@ describe.each(ENTITIES)('$label — CRUD × envelope × opacity', (spec) => {
 
 describe('Attachment BLOB contract (Phase 19)', () => {
   it('POST multipart creates an attachment and echoes the {success,data} envelope', async () => {
-    const payload = makeAttachmentPayload();
+    const parentId = 'crud-att-parent-1';
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+    const payload = makeAttachmentPayload({ parent_id: parentId, parent_type: 'password' });
     const res = await uploadAttachment(srv.app, token, payload);
 
     expect(res.status).toBe(201);
@@ -266,7 +268,9 @@ describe('Attachment BLOB contract (Phase 19)', () => {
   });
 
   it('LIST is metadata-only: file_data never leaves via GET /', async () => {
-    const payload = makeAttachmentPayload();
+    const parentId = 'crud-att-parent-2';
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+    const payload = makeAttachmentPayload({ parent_id: parentId, parent_type: 'password' });
     await uploadAttachment(srv.app, token, payload);
 
     const records = await listRecords('/api/attachments');
@@ -277,7 +281,9 @@ describe('Attachment BLOB contract (Phase 19)', () => {
   });
 
   it('OPACITY INVARIANT: storage layer holds the posted ciphertext bytes verbatim (direct-SQL half)', async () => {
-    const payload = makeAttachmentPayload();
+    const parentId = 'crud-att-parent-3';
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+    const payload = makeAttachmentPayload({ parent_id: parentId, parent_type: 'password' });
     await uploadAttachment(srv.app, token, payload);
 
     if (!srv.db) {
@@ -293,7 +299,9 @@ describe('Attachment BLOB contract (Phase 19)', () => {
   });
 
   it('GET /:id/file streams the exact ciphertext bytes back', async () => {
-    const payload = makeAttachmentPayload();
+    const parentId = 'crud-att-parent-4';
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+    const payload = makeAttachmentPayload({ parent_id: parentId, parent_type: 'password' });
     await uploadAttachment(srv.app, token, payload);
 
     const res = await request(srv.app)
@@ -306,7 +314,9 @@ describe('Attachment BLOB contract (Phase 19)', () => {
   });
 
   it('PUT updates metadata only — the ciphertext blob survives untransformed', async () => {
-    const payload = makeAttachmentPayload();
+    const parentId = 'crud-att-parent-5';
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+    const payload = makeAttachmentPayload({ parent_id: parentId, parent_type: 'password' });
     await uploadAttachment(srv.app, token, payload);
     const newTitle = 'attachment — renamed';
 
@@ -344,7 +354,9 @@ describe('Attachment BLOB contract (Phase 19)', () => {
   it(
     'rejects an upload past the 50MB per-file ceiling with 413',
     async () => {
-      const payload = makeAttachmentPayload({ file_data: oversizedBytes(50 * 1024 * 1024 + 1024) });
+      const parentId = 'crud-att-parent-7';
+      await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+      const payload = makeAttachmentPayload({ file_data: oversizedBytes(50 * 1024 * 1024 + 1024) as any, parent_id: parentId, parent_type: 'password' });
       const res = await uploadAttachment(srv.app, token, payload);
 
       expect(res.status).toBe(413);
@@ -354,7 +366,9 @@ describe('Attachment BLOB contract (Phase 19)', () => {
   );
 
   it('stores arbitrary opaque bytes verbatim (server must NOT validate blob contents)', async () => {
-    const payload = makeAttachmentPayload({ file_data: Buffer.from('definitely-not-a-real-envelope !!!', 'utf8') });
+    const parentId = 'crud-att-parent-6';
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(makePearlPayload({ id: parentId, title: 'Parent', type: 'password', category: 'test' }));
+    const payload = makeAttachmentPayload({ file_data: Buffer.from('definitely-not-a-real-envelope !!!', 'utf8') as any, parent_id: parentId, parent_type: 'password' });
     const res = await uploadAttachment(srv.app, token, payload);
     expect(res.status).toBe(201);
 
@@ -370,21 +384,23 @@ describe('Attachment BLOB contract (Phase 19)', () => {
 
 describe('Pearl → attachment cascade delete', () => {
   it('deleting a pearl removes every attachment it references', async () => {
-    // Two attachments owned by the caller…
-    const att1 = makeAttachmentPayload();
-    const att2 = makeAttachmentPayload();
-    expect((await uploadAttachment(srv.app, token, att1)).status).toBe(201);
-    expect((await uploadAttachment(srv.app, token, att2)).status).toBe(201);
-
-    // …linked from a pearl via the attachments JSON column (IDs only).
-    const pearlPayload = makePearlPayload({
-      attachments: JSON.stringify([att1.id, att2.id]),
-    });
-    const pearl = await request(srv.app)
+    const pearlPayload = makePearlPayload();
+    const pearlRes = await request(srv.app)
       .post('/api/vault')
       .set('Authorization', `Bearer ${token}`)
       .send(pearlPayload);
-    expect(pearl.status).toBe(201);
+    expect(pearlRes.status).toBe(201);
+
+    // Two attachments owned by the caller…
+    const att1 = makeAttachmentPayload({ parent_id: pearlPayload.id, parent_type: 'password' });
+    const att2 = makeAttachmentPayload({ parent_id: pearlPayload.id, parent_type: 'password' });
+    expect((await uploadAttachment(srv.app, token, att1)).status).toBe(201);
+    expect((await uploadAttachment(srv.app, token, att2)).status).toBe(201);
+
+    await request(srv.app)
+      .put(`/api/vault/${pearlPayload.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ...pearlPayload, attachments: JSON.stringify([att1.id, att2.id]) });
 
     const del = await request(srv.app)
       .delete(`/api/vault/${pearlPayload.id}`)
@@ -413,8 +429,11 @@ describe('Pearl → attachment cascade delete', () => {
   });
 
   it('cascade never crosses owner scope', async () => {
+    const pearl = makePearlPayload();
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(pearl);
+
     // Attachments owned by the caller…
-    const att = makeAttachmentPayload();
+    const att = makeAttachmentPayload({ parent_id: pearl.id, parent_type: 'password' });
     expect((await uploadAttachment(srv.app, token, att)).status).toBe(201);
 
     // …but the pearl belongs to another owner referencing them.

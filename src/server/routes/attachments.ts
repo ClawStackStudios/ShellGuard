@@ -44,8 +44,8 @@ function grottoUsage(ownerUuid: string): number {
 router.get('/', requireAuth, requirePermission('canRead'), async (req: AuthRequest, res) => {
   try {
     const items = db
-      .prepare(`SELECT id, title, size_bytes, file_name, mime_type, category, created_at
-                FROM vault_secure_attachments WHERE owner_uuid = ? ORDER BY created_at DESC`)
+      .prepare(`SELECT id, title, size_bytes, file_name, mime_type, category, created_at, parent_id, parent_type
+                FROM vault_secure_attachments WHERE owner_uuid = ? AND is_quarantined = 0 ORDER BY created_at DESC`)
       .all(req.userUuid) as Record<string, unknown>[];
     const decrypted = await prepareReadAll('vault_secure_attachments', items, fieldCipher);
     res.json({ success: true, data: decrypted });
@@ -60,7 +60,7 @@ router.get('/:id/file', requireAuth, requirePermission('canRead'), async (req: A
   const { id } = req.params;
   try {
     const row = db
-      .prepare('SELECT size_bytes FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?')
+      .prepare('SELECT size_bytes FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ? AND is_quarantined = 0')
       .get(id, req.userUuid) as { size_bytes: number } | undefined;
     if (!row) {
       return res.status(404).json({ success: false, error: 'Attachment not found.' });
@@ -175,6 +175,23 @@ router.post('/', requireAuth, requirePermission('canWrite'), (req: AuthRequest, 
         const file_name = (fields.file_name ?? '').slice(0, 512);
         const mime_type = (fields.mime_type ?? '').slice(0, 255);
         const category = (fields.category ?? '').slice(0, 64);
+        const parent_id = fields.parent_id ?? '';
+        const parent_type = fields.parent_type ?? '';
+
+        if (!parent_id || !parent_type) {
+          return finish(400, { success: false, error: 'Attachments require a valid parent vault item reference. Standalone attachments are forbidden.' });
+        }
+
+        let parentTable = '';
+        if (parent_type === 'password' || parent_type === 'card' || parent_type === 'identity' || parent_type === 'pearl') {
+          parentTable = 'vault_pearls';
+        } else if (parent_type === 'note') {
+          parentTable = 'vault_secure_notes';
+        } else if (parent_type === 'key') {
+          parentTable = 'vault_ssh_keys';
+        } else {
+           return finish(400, { success: false, error: 'Invalid parent type.' });
+        }
 
         if (!id || id.length > 64) return finish(400, { success: false, error: 'Invalid attachment id.' });
         if (!title || title.length > 255) return finish(400, { success: false, error: 'Invalid attachment title.' });
@@ -190,10 +207,34 @@ router.post('/', requireAuth, requirePermission('canWrite'), (req: AuthRequest, 
 
         const toStore = await prepareWrite('vault_secure_attachments', { title, file_name, category }, fieldCipher);
 
-        db.prepare(`
-          INSERT INTO vault_secure_attachments (id, owner_uuid, title, file_data, size_bytes, file_name, mime_type, category, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(id, req.userUuid, toStore.title, ciphertext, ciphertext.length, toStore.file_name, mime_type, toStore.category, new Date().toISOString());
+        const trx = db.transaction(() => {
+          // Verify parent exists
+          const parentRow = db.prepare(`SELECT attachments FROM ${parentTable} WHERE id = ? AND owner_uuid = ?`).get(parent_id, req.userUuid) as { attachments?: string } | undefined;
+          if (!parentRow) {
+             throw new Error('NOT_FOUND');
+          }
+
+          db.prepare(`
+            INSERT INTO vault_secure_attachments (id, owner_uuid, title, file_data, size_bytes, file_name, mime_type, category, created_at, parent_id, parent_type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).run(id, req.userUuid, toStore.title, ciphertext, ciphertext.length, toStore.file_name, mime_type, toStore.category, new Date().toISOString(), parent_id, parent_type);
+
+          // Update parent's attachments array
+          let attachmentsArr: string[] = [];
+          try {
+            attachmentsArr = JSON.parse(parentRow.attachments || '[]');
+            if (!Array.isArray(attachmentsArr)) attachmentsArr = [];
+          } catch {
+             attachmentsArr = [];
+          }
+          if (!attachmentsArr.includes(id)) {
+            attachmentsArr.push(id);
+          }
+          db.prepare(`UPDATE ${parentTable} SET attachments = ? WHERE id = ? AND owner_uuid = ?`)
+            .run(JSON.stringify(attachmentsArr), parent_id, req.userUuid);
+        });
+
+        trx();
 
         audit.log('ATTACHMENT_UPLOADED', {
           action: 'attachment_uploaded',
@@ -205,6 +246,9 @@ router.post('/', requireAuth, requirePermission('canWrite'), (req: AuthRequest, 
         finish(201, { success: true, data: { id, title, category, size_bytes: ciphertext.length } });
       } catch (err: any) {
         console.error('Attachments POST error:', err);
+        if (err.message === 'NOT_FOUND') {
+            return finish(400, { success: false, error: 'Parent item not found.' });
+        }
         if (err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' || err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
           return finish(400, { success: false, error: 'An attachment with this ID already exists.' });
         }

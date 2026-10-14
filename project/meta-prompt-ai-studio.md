@@ -1363,12 +1363,11 @@ field row, and the full test oracle + tsc + build stay clean!
 2. **Sub-Phase 23.5.2**: Native first-class Credit Card (`card`) & Identity (`identity`) Vault Item models, server validation schemas (`VaultSchemas.bulkImportItem`), dedicated UI form modes in `ItemFormModal.tsx`, and Reef Modernist detail widgets in `ItemDetailPane.tsx` upholding the Eye-beside-Copy invariant on all sensitive fields (card number, CVV, SSN, Passport, Driver's License) with deduplicated custom fields.
 
 
-## 🧩 Stage 24 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 27)]
+## 🧩 Stage 24 (Completed): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 27)] ✅
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-23-bitwarden-model-item-integrity--attachment-parent-enforcement--dashboard-type-truth-work-driven-version--provisional-v0025-build-27)
 > for complete specifications on **Task 45** and **Task 46**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 23; green-light from
-> Lucas still required.
+> **Execution state**: COMPLETED & VERIFIED — PR #3 integrated and Phase 23 released.
 > 📚 **Documentation Impact**: SECURITY.md (form-contract) · ARCHITECTURE.md (attachments route) · reference/blueprint-schema.md (quarantine) · docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md · docs/vault-features
 > **📖 Required Context Files for Phase 23**:
 > 1. [`database-schema.md`](./database-schema.md) — §3 (separated item tables; `vault_secure_attachments` as children).

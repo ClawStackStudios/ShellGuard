@@ -375,7 +375,9 @@ export function ItemFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    if (type === 'identity') {
+    if (type === 'attachment') {
+      if (!isEdit && pendingAttachments.length === 0 && linkedAttachmentIds.length === 0) return;
+    } else if (type === 'identity') {
       // Identity secret is optional; defaults to notes or full name or title
     } else {
       if (!password) return;
@@ -389,6 +391,9 @@ export function ItemFormModal({
 
       if (type === 'key') {
         finalSecret = serializeSshKeySecret(password, sshPublicKey);
+      } else if (type === 'attachment') {
+        finalSecret = pendingAttachments[0]?.file_name || "";
+        finalUsername = pendingAttachments[0]?.file_name || username;
       } else if (type === 'card') {
         finalSecret = cleanCardNumber(password);
         finalUsername = username;
@@ -632,6 +637,46 @@ export function ItemFormModal({
               />
             </div>
 
+            {/* Standalone Attachment Dropzone */}
+            {type === 'attachment' && (
+              <div className="col-span-1 md:col-span-2 space-y-3">
+                <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-2">
+                  Attachment File (Encrypted Storage, max 500MB) {!isEdit && <span className="text-red-500">*</span>}
+                </label>
+                <div
+                  onClick={openAttachmentPicker}
+                  className="w-full border-2 border-dashed border-claw-cyan/50 rounded-2xl p-8 flex flex-col items-center justify-center bg-claw-cyan/5 hover:bg-claw-cyan/10 transition-colors cursor-pointer text-center"
+                >
+                  <Upload size={32} className="text-claw-cyan/70 mb-2" />
+                  <p className="text-theme-main font-bold text-sm">Click to select file</p>
+                  <p className="text-xs text-theme-muted mt-1">Single-file encrypted BLOB storage (up to 500MB)</p>
+                </div>
+                {attachmentError && <p className="text-xs text-red-500">{attachmentError}</p>}
+
+                {/* Staged pending attachment */}
+                {pendingAttachments.length > 0 && (
+                  <ul className="space-y-2">
+                    {pendingAttachments.map(att => (
+                      <li key={att.id} className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 border border-theme-subtle rounded-xl px-3.5 py-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Paperclip size={16} className="text-claw-cyan flex-shrink-0" />
+                          <span className="text-sm font-medium text-theme-main truncate">{att.file_name}</span>
+                          <span className="text-xs text-theme-muted font-mono shrink-0">({formatBytes(att.size)})</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setPendingAttachments(prev => prev.filter(a => a.id !== att.id))}
+                          className="text-slate-400 hover:text-red-500 p-1 rounded-lg transition-colors cursor-pointer"
+                          title="Remove file"
+                        >
+                          <X size={15}/>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {/* Credit Card specifics */}
             {type === 'card' && (
@@ -1584,11 +1629,11 @@ export function ItemFormModal({
             </button>
             <button 
               type="submit" 
-              disabled={isSaving || !title.trim() || (!isEdit && type !== 'identity' && !password)}
+              disabled={isSaving || !title.trim() || (type === 'attachment' ? (!isEdit && pendingAttachments.length === 0 && linkedAttachmentIds.length === 0) : !password)}
               className="px-6 py-2.5 bg-gradient-to-r from-claw-cyan to-deep-teal hover:from-cyan-500 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all flex items-center gap-2 text-sm cursor-pointer"
             >
               {isSaving ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
-              {isSaving ? (isEdit ? "Updating..." : "Saving...") : (isEdit ? "Save Changes" : "Save Item")}
+              {isSaving ? (isEdit ? "Updating..." : "Saving...") : (isEdit ? "Save Changes" : (type === 'attachment' ? "Save Attachment" : "Save Item"))}
             </button>
           </div>
         </form>

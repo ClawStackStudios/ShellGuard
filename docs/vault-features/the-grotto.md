@@ -16,13 +16,13 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 | Item Type | Icon | Encrypted Payload Fields | Metadata Fields (Layer 2 Encrypted) |
 | :--- | :--- | :--- | :--- |
 | **Vault Pearl (Login)** | 🔑 | `secret` (Password), `totp_secret` (Seed), `attachments` (File IDs), `custom_fields` | `title`, `username`, `url`, `category`, `notes`, `tags` |
+| **Credit Card** | 💳 | `secret` (Card Details), `attachments` (File IDs), `custom_fields` | `title`, `username`, `category`, `notes`, `tags` |
+| **Identity** | 🪪 | `secret` (Identity Details), `attachments` (File IDs), `custom_fields` | `title`, `username`, `category`, `notes`, `tags` |
 | **Secure Note** | 📝 | `content` (Markdown body), `attachments` (File IDs), `custom_fields` | `title`, `category`, `notes`, `tags` |
-| **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields` | `title`, `username`, `category`, `notes`, `tags` |
-| **Encrypted Attachment**| 📎 | Encrypted file BLOB (AES-GCM up to 500 MB streaming, 1000 MB quota) | `title`, `file_name`, `mime_type`, `category` |
+| **SSH Key** | 💻 | `key_value` (Private Key — raw or generated keypair JSON), `custom_fields`, `attachments` (File IDs) | `title`, `username`, `category`, `notes`, `tags` |
+| **Encrypted Attachment**| 📎 | Encrypted file BLOB (AES-GCM up to 500 MB streaming, 1000 MB quota) | `title`, `file_name`, `mime_type`, `category`, `parent_id`, `parent_type` |
 
-> **Pod tallies count primary items only** — attachments are children of their
-> login/note/key (linked via the parent's `attachments` ID array) and never
-> inflate folder badges, even though they appear in the encrypted corpus.
+> **Bitwarden Item Integrity Model**: The UI enforces a deterministic sort order across all lists: Passwords (`password`) → Credit Cards (`card`) → Identities (`identity`) → Secure Notes (`note`) → SSH Keys (`key`). Attachments (`attachment`) are *never* standalone vault items and cannot be created independently; they exist exclusively as child components inside a parent item's detail pane. Unparented attachments are swept into quarantine on boot. Pod tallies count primary items only.
 
 ---
 

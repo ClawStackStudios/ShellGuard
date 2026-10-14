@@ -571,13 +571,7 @@ export default function App() {
       
       if (item.type === 'note') {
         const existingIds = parseAttachmentIds(item.attachments);
-        const uploadedIds: string[] = [];
-        if (item.newAttachments && item.newAttachments.length > 0) {
-          for (const att of item.newAttachments) {
-            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, id, 'note', { category: item.category || "" }));
-          }
-        }
-        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+        const attachmentIdsJson = JSON.stringify(existingIds);
 
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
@@ -590,29 +584,28 @@ export default function App() {
           custom_fields: encryptedCustomFields,
           attachments: attachmentIdsJson
         });
+
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            await uploadAttachmentRecord(shellKey, att, id, 'note', { category: item.category || "" });
+          }
+        }
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
         const existingIds = parseAttachmentIds(item.attachments);
-        const uploadedIds: string[] = [];
-        if (item.newAttachments && item.newAttachments.length > 0) {
-          for (const att of item.newAttachments) {
-            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, id, 'key', { category: item.category || "" }));
-          }
-        }
-        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+        const attachmentIdsJson = JSON.stringify(existingIds);
 
         await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields, attachments: attachmentIdsJson });
-      } else {
-        const existingIds = parseAttachmentIds(item.attachments);
-        const uploadedIds: string[] = [];
+
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
-            const pType = (item.type === 'password' || item.type === 'card' || item.type === 'identity' || item.type === 'pearl' as any) ? item.type : 'pearl';
-            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, id, pType, { category: item.category || "" }));
+            await uploadAttachmentRecord(shellKey, att, id, 'key', { category: item.category || "" });
           }
         }
-        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+      } else {
+        const existingIds = parseAttachmentIds(item.attachments);
+        const attachmentIdsJson = JSON.stringify(existingIds);
 
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
@@ -640,6 +633,13 @@ export default function App() {
           attachments: attachmentIdsJson,
           custom_fields: encryptedCustomFields
         });
+
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            const pType = (item.type === 'password' || item.type === 'card' || item.type === 'identity' || item.type === 'pearl' as any) ? item.type : 'pearl';
+            await uploadAttachmentRecord(shellKey, att, id, pType, { category: item.category || "" });
+          }
+        }
       }
       await scuttleVault(shellKey);
       return id;

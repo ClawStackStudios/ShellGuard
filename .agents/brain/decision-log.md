@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-16 — Phase 4 Sub-Stage 25.1 Directive Dispatched to Jules
+Audited Jules's physical git state and confirmed commit 2fc608b on stage/phase-23-item-integrity-8580131941674843399 (PR #3) incorporating the formal Sub-Stage 25.1 prompt block into project/meta-prompt-ai-studio.md. Formulated and dispatched the complete Phase 4 operational directive: relational cascade on DELETE /api/attachments/:id, runtime quarantine sweeper POST /api/attachments/quarantine/sweep, pre-flight quota GET /api/attachments/quota, dedicated vitest assertions in tests/attachment-integrity.test.ts, and walk-the-docs synchronization.
+
 ## 2026-10-16 — Rigorous PR #4 Review, Base Branch Realignment & Remediation Dispatch
 Executed /git-review-pr on Jules PR #4 and documented evidence-graded findings in pr_review_4_2026_10_16_0545.md. Found that while implementation in ac5dfd2 passed cloud CI green, PR #4 misdirected its target base to main, breached sovereign .agents/ in commit 9035b82, and failed to push the promised Sub-Stage 25.1 prompt. Realigned PR base to stage/phase-23-item-integrity via GitHub CLI and dispatched a Lucas-approved invariable-centered remediation directive (issuecomment-6209118929) to collapse Jules's work into strict relational integrity and sovereign boundaries.
 
@@ -66,7 +69,4 @@ Executed release protocol for v0.0.2.3 ("The Deep Ingestion & Vault Parity Molt"
 
 ## 2026-09-22 — Note attachments parity, ghost pod purging & detail pane selection preservation
 Physical verification of Areas 3 & 4 surfaced 3 friction points: standalone attachments defaulting to category 'Attachment' created ghost pods in bulk modals; notes lacked binary attachment support across db schema and routes; and saving an item unmounted VaultShell because uploadProgress was rendered inside mode="wait", dropping selectedItemId. Resolved by pruning ghost pods in podUtils and VaultShell, executing Migration 0008 to add attachments to vault_secure_notes with cascade deletion in notes.ts, lifting selectedItemId to App.tsx, and decoupling progress/error banners into their own non-blocking container.
-
-## 2026-09-21 — Live verification friction points & decoupling preview complexity
-Lucas's physical verification surfaced 4 critical joints: switching accounts to a locked user trapped the modal in a re-render loop if `activeLobsterId` changed prematurely, while switching between unlocked accounts required an un-reactive page reload; hidden custom fields gave zero visual feedback before saving; bulk modals lacked pod/tag chips; and binary attachments suffered 415 errors and preview bloat. Decoupled preview complexity in favor of pure encrypted BLOB storage with direct download and delete, staged switch targets safely, added eye toggles to custom fields, and derived chip pickers directly from vault items.
 

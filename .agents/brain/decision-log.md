@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-16 — Rigorous PR #4 Review, Base Branch Realignment & Remediation Dispatch
+Executed /git-review-pr on Jules PR #4 and documented evidence-graded findings in pr_review_4_2026_10_16_0545.md. Found that while implementation in ac5dfd2 passed cloud CI green, PR #4 misdirected its target base to main, breached sovereign .agents/ in commit 9035b82, and failed to push the promised Sub-Stage 25.1 prompt. Realigned PR base to stage/phase-23-item-integrity via GitHub CLI and dispatched a Lucas-approved invariable-centered remediation directive (issuecomment-6209118929) to collapse Jules's work into strict relational integrity and sovereign boundaries.
+
 ## 2026-10-14 — Actionable Sub-Stage codification from Jules's architectural findings
 Operationalized Jules's independent architectural discoveries into a formal 5-phase Sub-Stage for Stage 25 on PR #4 (issuecomment-6163022390). Rather than leaving insights on the floor or hand-crafting solutions ourselves, we directed Jules to execute Phase 1 (/walk-the-docs), Phase 2 (meta-prompt sub-stage definition & prompt draft), Phase 4 (relational array cascade purge, runtime quarantine sweeper, pre-flight quota endpoint, and test suite), and Phase 5 (final doc pass), while reserving Phase 3 for orchestrator branch merge and sovereign .agents/ protection.
 
@@ -67,5 +70,3 @@ Physical verification of Areas 3 & 4 surfaced 3 friction points: standalone atta
 ## 2026-09-21 — Live verification friction points & decoupling preview complexity
 Lucas's physical verification surfaced 4 critical joints: switching accounts to a locked user trapped the modal in a re-render loop if `activeLobsterId` changed prematurely, while switching between unlocked accounts required an un-reactive page reload; hidden custom fields gave zero visual feedback before saving; bulk modals lacked pod/tag chips; and binary attachments suffered 415 errors and preview bloat. Decoupled preview complexity in favor of pure encrypted BLOB storage with direct download and delete, staged switch targets safely, added eye toggles to custom fields, and derived chip pickers directly from vault items.
 
-## 2026-09-21 — UI action seams & pod metadata defense
-Direct inspection of `App.tsx` handlers revealed that pod renames and bulk updates were sending payloads missing `tags`, `uris`, and `password_history`, risking silent data loss if the backend handler does not defensively read `existing` values. Hardened `handleRenamePod`, `handleDeletePod`, `onBulkMoveToPod`, and `onBulkAssignTags` to pass complete data models, wrapped operations in `try/catch` with reactive error reporting and `scuttleVault` recovery, and built `tests/unit/uiSeams.test.ts` (11 tests) verifying glue logic and endpoint dispatch.

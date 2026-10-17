@@ -6,6 +6,7 @@ import { validateBody } from '../middleware/validate.js';
 import { AttachmentSchemas } from '../validation/schemas.js';
 import { fieldCipher } from '../utils/fieldEncryption.js';
 import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
+import { quarantineOrphanAttachments } from '../database/attachmentIntegrity.js';
 
 const router = Router();
 
@@ -296,14 +297,36 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Attac
 router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: AuthRequest, res) => {
   const { id } = req.params;
   try {
-    const row = db.prepare('SELECT id, category, size_bytes FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
+    const row = db.prepare('SELECT id, category, size_bytes, parent_id, parent_type FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?').get(id, req.userUuid) as any;
     if (!row) {
       return res.status(404).json({ success: false, error: 'Attachment not found.' });
     }
 
     const decryptedRow = await prepareRead('vault_secure_attachments', row, fieldCipher);
 
-    db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
+    const deleteTransaction = db.transaction(() => {
+      db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
+
+      if (row.parent_id && row.parent_type) {
+        let tableName = '';
+        if (row.parent_type === 'note') tableName = 'vault_secure_notes';
+        else if (row.parent_type === 'key') tableName = 'vault_ssh_keys';
+        else tableName = 'vault_pearls'; // pearl, password, card, identity
+
+        const parentRow = db.prepare(`SELECT attachments FROM ${tableName} WHERE id = ? AND owner_uuid = ?`).get(row.parent_id, req.userUuid) as any;
+        if (parentRow && parentRow.attachments) {
+          try {
+            const currentAttachments: string[] = JSON.parse(parentRow.attachments);
+            const updatedAttachments = currentAttachments.filter((attId: string) => attId !== id);
+            db.prepare(`UPDATE ${tableName} SET attachments = ? WHERE id = ? AND owner_uuid = ?`).run(JSON.stringify(updatedAttachments), row.parent_id, req.userUuid);
+          } catch (e) {
+            console.error(`Failed to parse attachments JSON for parent ${row.parent_id}`);
+          }
+        }
+      }
+    });
+
+    deleteTransaction();
 
     audit.log('ATTACHMENT_DELETED', {
       action: 'attachment_deleted',
@@ -316,6 +339,29 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: A
   } catch (err: any) {
     console.error('Attachments DELETE error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure removing attachment.' });
+  }
+});
+
+// Pre-flight quota endpoint
+router.get('/quota', requireAuth, requirePermission('canRead'), (req: AuthRequest, res) => {
+  try {
+    const usedBytes = grottoUsage(req.userUuid);
+    const remainingBytes = Math.max(0, GROTTO_QUOTA_BYTES - usedBytes);
+    res.json({ success: true, data: { used_bytes: usedBytes, quota_bytes: GROTTO_QUOTA_BYTES, remaining_bytes: remainingBytes } });
+  } catch (err: any) {
+    console.error('Quota Check Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to retrieve storage quota.' });
+  }
+});
+
+// Run quarantine sweeper manually
+router.post('/quarantine/sweep', requireAuth, requirePermission('canWrite'), (req: AuthRequest, res) => {
+  try {
+    const stats = quarantineOrphanAttachments(db);
+    res.json({ success: true, data: stats });
+  } catch (err: any) {
+    console.error('Quarantine Sweep Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to run quarantine sweep.' });
   }
 });
 

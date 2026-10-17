@@ -52,7 +52,9 @@ All ShellGuard endpoints return standard `{ success: boolean, data?: any, error?
 | `GET` | `/api/attachments/:id/file` | `canRead` | Stream the ciphertext BLOB (`application/octet-stream`, 1MB chunks; fails if quarantined) |
 | `POST` | `/api/attachments` | `canWrite` | Multipart upload of the client-encrypted ShellCryption envelope (requires valid `parent_id` and `parent_type`, standalone yields `400`; 500 MB/file ceiling, 1000 MB grotto quota per owner — `413` on breach) |
 | `PUT` | `/api/attachments/:id` | `canEdit` | Metadata-only update (file replacement re-uploads) |
-| `DELETE` | `/api/attachments/:id`| `canDelete` | Delete an attachment record (frees grotto quota) |
+| `DELETE` | `/api/attachments/:id`| `canDelete` | Delete an attachment record (frees grotto quota; transactionally purges ID from parent item's JSON array across pearls, notes, and SSH keys) |
+| `GET` | `/api/attachments/quota` | `canRead` | Pre-flight capacity check returning `{ used_bytes, quota_bytes, remaining_bytes }` based on `GROTTO_QUOTA_MB` |
+| `POST` | `/api/attachments/quarantine/sweep` | `canWrite` | Runtime orphan sweeper isolating unparented attachments on-demand. Returns count of quarantined orphan attachments. |
 
 ---
 

@@ -132,4 +132,60 @@ describe('Phase 23: Attachment Integrity & Contracts', () => {
       const fileRes = await request(srv.app).get('/api/attachments/quarantined-1/file').set('Authorization', `Bearer ${token}`);
       expect(fileRes.status).toBe(404);
   });
+
+  it('DELETE /api/attachments/:id purges ID from parent item JSON array', async () => {
+    // 1. Create a parent item
+    const pearl = makePearlPayload();
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${token}`).send(pearl);
+
+    // 2. Upload an attachment
+    const payload = makeAttachmentPayload({ parent_id: pearl.id, parent_type: 'password' });
+    const res = await uploadAttachment(srv.app, token, payload);
+    expect(res.status).toBe(201);
+
+    // 3. Verify it exists in parent's array
+    let pRes = await request(srv.app).get('/api/vault').set('Authorization', `Bearer ${token}`);
+    let parent = pRes.body.data.find((i: any) => i.id === pearl.id);
+    expect(parent.attachments).toContain(payload.id);
+
+    // 4. Delete the attachment
+    const delRes = await request(srv.app).delete(`/api/attachments/${payload.id}`).set('Authorization', `Bearer ${token}`);
+    expect(delRes.status).toBe(200);
+
+    // 5. Verify it was removed from parent's array
+    pRes = await request(srv.app).get('/api/vault').set('Authorization', `Bearer ${token}`);
+    parent = pRes.body.data.find((i: any) => i.id === pearl.id);
+    expect(parent.attachments).not.toContain(payload.id);
+  });
+
+  it('POST /api/attachments/quarantine/sweep runs isolation without reboot', async () => {
+    const db = srv.db;
+    if (!db) throw new Error('Database not found');
+
+    // Create unparented attachment directly in DB
+    db.prepare(`
+        INSERT INTO vault_secure_attachments (id, owner_uuid, title, file_data, size_bytes, file_name, mime_type, category, created_at, is_quarantined)
+        VALUES ('orphan-sweep', ?, 'Orphan Sweep', x'00', 4, 'sweep.txt', 'text/plain', '', '2026-10-12T00:00:00Z', 0)
+    `).run(userUuid);
+
+    // Call sweeper endpoint
+    const res = await request(srv.app).post('/api/attachments/quarantine/sweep').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.quarantined).toBeGreaterThanOrEqual(1);
+
+    // Verify it was quarantined
+    const row = db.prepare('SELECT is_quarantined FROM vault_secure_attachments WHERE id = ?').get('orphan-sweep') as any;
+    expect(row.is_quarantined).toBe(1);
+  });
+
+  it('GET /api/attachments/quota accurately computes used and remaining capacity', async () => {
+    const res = await request(srv.app).get('/api/attachments/quota').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(typeof res.body.data.used_bytes).toBe('number');
+    expect(typeof res.body.data.quota_bytes).toBe('number');
+    expect(typeof res.body.data.remaining_bytes).toBe('number');
+    expect(res.body.data.used_bytes + res.body.data.remaining_bytes).toBe(res.body.data.quota_bytes);
+  });
 });

@@ -155,7 +155,7 @@ export function Header({
                     transition={{ duration: 0.12 }}
                     className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-[#1a0c12] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 p-1.5"
                   >
-                    {(["password", "card", "identity", "note", "key", "attachment"] as const).map((type) => (
+                    {(["password", "card", "identity", "note", "key"] as const).map((type) => (
                       <button
                         key={type}
                         type="button"

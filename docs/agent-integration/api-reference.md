@@ -35,24 +35,26 @@ All ShellGuard endpoints return standard `{ success: boolean, data?: any, error?
 | Method | Path | Required Permission | Description |
 |---|---|---|---|
 | `GET` | `/api/notes` | `canRead` | List all secure notes (supports `?tags=a,b` intersection filter) |
-| `POST` | `/api/notes` | `canWrite` | Create a secure note (supports `tags` and `attachments` JSON array) |
-| `PUT` | `/api/notes/:id` | `canEdit` | Update an existing secure note |
+| `POST` | `/api/notes` | `canWrite` | Create a secure note (rejects payloads containing `secret` field with 400 Validation Error) |
+| `PUT` | `/api/notes/:id` | `canEdit` | Update an existing secure note (rejects `secret` field) |
 | `DELETE` | `/api/notes/:id` | `canDelete` | Delete secure note (cascades linked attachments) |
 | `GET` | `/api/keys` | `canRead` | List all SSH keys (supports `?tags=a,b` intersection filter) |
-| `POST` | `/api/keys` | `canWrite` | Create an SSH key (supports `tags` array) |
-| `PUT` | `/api/keys/:id` | `canEdit` | Update an existing SSH key |
-| `DELETE` | `/api/keys/:id` | `canDelete` | Delete an SSH key |
+| `POST` | `/api/keys` | `canWrite` | Create an SSH key (supports `tags` and `attachments` JSON array) |
+| `PUT` | `/api/keys/:id` | `canEdit` | Update an existing SSH key (supports `attachments`) |
+| `DELETE` | `/api/keys/:id` | `canDelete` | Delete an SSH key (cascades linked attachments) |
 
 ---
 
 ### 4. Attachments (Reference Model — Phase 19 BLOB contract & Phase 20 Ceiling)
 | Method | Path | Required Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/attachments` | `canRead` | List attachment metadata only (payload BLOB never included) |
-| `GET` | `/api/attachments/:id/file` | `canRead` | Stream the ciphertext BLOB (`application/octet-stream`, 1MB chunks) |
-| `POST` | `/api/attachments` | `canWrite` | Multipart upload of the client-encrypted ShellCryption envelope (500 MB/file ceiling, 1000 MB grotto quota per owner — `413` on breach) |
+| `GET` | `/api/attachments` | `canRead` | List attachment metadata only (filters out quarantined files `is_quarantined = 0`; payload BLOB never included) |
+| `GET` | `/api/attachments/:id/file` | `canRead` | Stream the ciphertext BLOB (`application/octet-stream`, 1MB chunks; fails if quarantined) |
+| `POST` | `/api/attachments` | `canWrite` | Multipart upload of the client-encrypted ShellCryption envelope (requires valid `parent_id` and `parent_type`, standalone yields `400`; 500 MB/file ceiling, 1000 MB grotto quota per owner — `413` on breach) |
 | `PUT` | `/api/attachments/:id` | `canEdit` | Metadata-only update (file replacement re-uploads) |
-| `DELETE` | `/api/attachments/:id`| `canDelete` | Delete an attachment record (frees grotto quota) |
+| `DELETE` | `/api/attachments/:id`| `canDelete` | Delete an attachment record (frees grotto quota; transactionally purges ID from parent item's JSON array across pearls, notes, and SSH keys) |
+| `GET` | `/api/attachments/quota` | `canRead` | Pre-flight capacity check returning `{ used_bytes, quota_bytes, remaining_bytes }` based on `GROTTO_QUOTA_MB` |
+| `POST` | `/api/attachments/quarantine/sweep` | `canWrite` | Runtime orphan sweeper isolating unparented attachments on-demand. Returns count of quarantined orphan attachments. |
 
 ---
 

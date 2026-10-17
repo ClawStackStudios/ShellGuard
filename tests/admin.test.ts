@@ -138,10 +138,11 @@ describe('Cross-guard isolation', () => {
 describe('Lobsters overview — strict metadata', () => {
   it('returns counts and identity but NEVER vault payload fields', async () => {
     // Seed the user with one of every entity type.
-    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${userToken}`).send(makePearlPayload());
+    const pearl = makePearlPayload();
+    await request(srv.app).post('/api/vault').set('Authorization', `Bearer ${userToken}`).send(pearl);
     await request(srv.app).post('/api/notes').set('Authorization', `Bearer ${userToken}`).send(makeNotePayload());
     await request(srv.app).post('/api/keys').set('Authorization', `Bearer ${userToken}`).send(makeSshKeyPayload());
-  const attRes = await uploadAttachment(srv.app, userToken, makeAttachmentPayload());
+  const attRes = await uploadAttachment(srv.app, userToken, makeAttachmentPayload({ parent_id: pearl.id, parent_type: 'password' }));
   if (attRes.status !== 201) {
     throw new Error(`attachment setup failed: ${attRes.status} ${JSON.stringify(attRes.body)}`);
   }

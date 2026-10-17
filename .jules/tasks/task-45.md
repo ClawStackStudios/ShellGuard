@@ -1,8 +1,8 @@
 # Task 45: Attachment Parent Enforcement, Orphan Quarantine & Form-Contract Rules
 
-> **Milestone**: Stage 24 / Phase 23 (Task 45 of 52)  
-> **Domain**: Bedrock Database, Security Membrane & API Contracts  
-> **Target Branch**: `stage/phase-23-item-integrity`  
+> **Milestone**: Stage 24 / Phase 23 (Task 45 of 52)
+> **Domain**: Bedrock Database, Security Membrane & API Contracts
+> **Target Branch**: `stage/phase-23-item-integrity`
 > **Attribution**: Conventional Commits with Two-Layer Attribution (`User:` / `AI:`)
 
 ---

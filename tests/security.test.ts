@@ -72,11 +72,12 @@ async function createEntity(
 describe('Cross-owner isolation', () => {
   let aliceToken: string;
   let bobToken: string;
+  const pearlPayload = makePearlPayload();
   const alice = {
-    pearl: makePearlPayload(),
+    pearl: pearlPayload,
     note: makeNotePayload(),
     sshKey: makeSshKeyPayload(),
-    attachment: makeAttachmentPayload(),
+    attachment: makeAttachmentPayload({ parent_id: pearlPayload.id, parent_type: 'password' }),
   };
 
   beforeAll(async () => {

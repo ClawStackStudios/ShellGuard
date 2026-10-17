@@ -7,7 +7,7 @@ description: Authoritative SQLite Schema Definitions for ShellGuard & Forensic A
 
 <CopyPage />
 
-The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.3 (migrations 0001-0008).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`), migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`), migration `0006_vault_tags` adds `tags` JSON columns and owner indices, migration `0007_composite_item_features` adds secondary login URIs (`uris`) and password generation revision history (`password_history`) to `vault_pearls`, and migration `0008_note_attachments` adds child binary attachment support (`attachments TEXT DEFAULT '[]'`) to `vault_secure_notes`.
+The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.4 (migrations 0001-0009).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`), migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`), migration `0006_vault_tags` adds `tags` JSON columns and owner indices, migration `0007_composite_item_features` adds secondary login URIs (`uris`) and password generation revision history (`password_history`) to `vault_pearls`, migration `0008_note_attachments` adds child binary attachment support (`attachments TEXT DEFAULT '[]'`) to `vault_secure_notes`, and migration `0009_attachment_integrity` enforces Bitwarden-style item integrity (adding `attachments` to `vault_ssh_keys` and parent linkage/quarantine columns to `vault_secure_attachments`).
 
 ShellGuard maintains two separate SQLite database files:
 1. **`DATA_DIR/db.sqlite`**: The primary operational database, encrypted whole-DB with SQLCipher (Layer 3) and per-row metadata encryption (Layer 2).
@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS vault_ssh_keys (
   category      TEXT DEFAULT '',
   custom_fields TEXT DEFAULT '',
   tags          TEXT DEFAULT '[]',
+  attachments   TEXT DEFAULT '[]',
   created_at    TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
@@ -120,15 +121,19 @@ Stores binary file attachments under the **Reference Model**. Linked from `vault
 
 ```sql
 CREATE TABLE IF NOT EXISTS vault_secure_attachments (
-  id         TEXT PRIMARY KEY,
-  owner_uuid TEXT NOT NULL,
-  title      TEXT NOT NULL,
-  file_data  BLOB NOT NULL,
-  size_bytes INTEGER NOT NULL DEFAULT 0,
-  file_name  TEXT DEFAULT '',
-  mime_type  TEXT DEFAULT '',
-  category   TEXT DEFAULT '',
-  created_at TEXT NOT NULL,
+  id             TEXT PRIMARY KEY,
+  owner_uuid     TEXT NOT NULL,
+  title          TEXT NOT NULL,
+  file_data      BLOB NOT NULL,
+  size_bytes     INTEGER NOT NULL DEFAULT 0,
+  file_name      TEXT DEFAULT '',
+  mime_type      TEXT DEFAULT '',
+  category       TEXT DEFAULT '',
+  parent_id      TEXT,
+  parent_type    TEXT,
+  is_quarantined INTEGER DEFAULT 0,
+  quarantined_at TEXT,
+  created_at     TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 

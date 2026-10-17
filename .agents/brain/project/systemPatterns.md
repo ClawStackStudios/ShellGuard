@@ -137,21 +137,28 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 - **Reef Modernist Modals over Native Dialogs**: Zero browser `prompt()` or `confirm()` calls. Batch actions use accessible custom modal cards (`ConfirmDialog` and inline inputs) styled in dark-mode aesthetic, ensuring headless browser test compatibility.
 - **Mutation Field Preservation**: Batch mutation handlers (e.g. `onBulkMoveToPod`) explicitly preserve all existing item metadata (e.g. `tags: item.tags`) to prevent silent column clobbering.
 
+## Bitwarden-Model Item Integrity & Relational Attachment Cascade (Phase 23 & Sub-Stage 25.1)
+
+- **Migration `0009_attachment_integrity.sql`**: Mandatory parent linkage (`parent_id`, `parent_type`, `is_quarantined`, `quarantined_at`) on all attachments. Standalone attachment creation is forbidden (`400 Bad Request`).
+- **Non-Destructive Orphan Quarantine**: Boot-time sweeper `quarantineOrphanAttachments()` sweeps unparented attachments into safe quarantine (`is_quarantined = 1`), logging `ATTACHMENT_QUARANTINED` to `audit.sqlite` without deleting files. Quarantined attachments are filtered from API listings and UI downloads.
+- **Relational Cascade on Delete**: `DELETE /api/attachments/:id` transactionally removes the deleted attachment's ID from its parent item's (`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`) `attachments` JSON array.
+- **On-Demand Quarantine Sweeper & Pre-Flight Quota Validation**: `POST /api/attachments/quarantine/sweep` triggers immediate isolation of unparented attachments without rebooting. `GET /api/attachments/quota` inspects `{ used_bytes, quota_bytes, remaining_bytes }` against `GROTTO_QUOTA_MB`.
+- **Note Validation Invariant**: `NoteSchemas` strictly rejects credential fields (e.g. `secret`) to prevent notes from degrading into unmanaged password containers.
+- **Dashboard Type Truth**: Attachments removed from the top-bar Add menu; primary dashboard item lists sorted deterministically: Passwords → Credit Cards → Identities → Secure Notes → SSH Keys.
+
+## Root AGENTS.md Invariant Skill-Seed Architecture (2026-10-17)
+
+- **Compress the Constraint, Not the Procedure**: The repository root `AGENTS.md` functions as a generative skill-seed (~550 tokens) rather than an exhaustive procedural instruction manual (~3,500 tokens).
+- **On-Demand Boundary Cartography**: Eliminates fragile, static file trees in favor of directing high-agency agents and sub-agents to map on-demand along 6 core seams (Runtime, Triple-Layer Crypto, Identity & Keys, Relational Storage, API Surface, Frontend & Design System).
+- **Sovereign Boundary Intact**: Root `AGENTS.md` establishes whole-repo guidance; `.agents/AGENTS.md` remains 100% sovereign to Antigravity.
+
 ## Two-Agent Co-Pilot Orchestration Protocol (The Lucas Pattern — Mode 3)
 
-- **Division of Cognition**: Antigravity serves as the local cartographer, conductor, and gate auditor within the repository; Google Jules serves as an asynchronous remote worker in an isolated cloud container.
-- **Recursive Physical Inspection**: PR descriptions submitted by remote agents are never accepted as proof of implementation. Antigravity performs line-by-line physical diff inspection (`git diff --stat`, `git ls-tree`, `git show`) verifying that production code, migrations, and test suites exist in concrete reality before approving.
-- **Inviolable Agent Home Boundaries**: Remote co-pilots operate strictly in `.jules/`, `src/`, `migrations/`, and `tests/`. The `.agents/` directory is Antigravity's sovereign cognitive territory. Cross-agent file mutations are detected, flagged, and rolled back (`git checkout origin/stage/... -- .agents/`).
+→ Consolidated to `long-term/patterns.md § two-agent-co-pilot-orchestration` (weight: 6, 2026-10-17)
 
 ## Cloud-Offloaded CI/CD & Verification Architecture (2026-10-12)
 
-- **Zero Host Resource Choke**: Because local development machine resources (CPU/RAM) are constrained, executing heavy Vitest suites and Vite production bundling locally degrades host responsiveness. Testing, compiling, and documentation builds are strictly offloaded to GitHub Actions (`.github/workflows/ci.yml`).
-- **Parity with Sibling Ecosystem**: Mirrors the proven CI architecture established in `ShellGuard-Mobile` and `ShellGuard-TOTP`.
-- **Push-and-Tail Lifecycle**:
-  1. Complete code changes and perform local lightweight static type verification (`npm run lint`).
-  2. Commit under Conventional Commits with Two-Layer Attribution (`User:` / `AI:`).
-  3. Push to remote branch (`git push origin <branch>`).
-  4. Tail the cloud runner live via GitHub CLI (`gh run watch`).
-  5. The Task Completion Gate triggers only when the cloud runner exits 100% green.
+→ Consolidated to `long-term/patterns.md § cloud-offloaded-ci-verification` (weight: 4, 2026-10-17)
+
 
 

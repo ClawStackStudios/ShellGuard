@@ -11,6 +11,7 @@
 - **Attachment Orphan Quarantine:** Built `quarantineOrphanAttachments()` engine that runs at boot, sweeping any legacy unparented or orphaned attachments into safe quarantine (`is_quarantined = 1`). Quarantined attachments are hidden from API lists and UI downloads but never deleted to prevent accidental data loss. Logs `ATTACHMENT_QUARANTINED` to `audit.sqlite`.
 - **Note Validation Invariants:** Secure Note endpoints now structurally reject payloads containing standard credential fields (such as `secret`), guaranteeing Notes remain purely document/markdown ledgers.
 - **Root AGENTS.md Governance Contract:** Established canonical repository root `AGENTS.md` articulating project meaning, top-level invariables, immutable operating rules, core patterns, navigation, and skill bindings.
+- **Co-Pilot PR Cleanliness:** Closed superseded ancestor PR #3 with an auditable summary; 0 open PRs across the repository.
 
 ### Changed
 - **Dashboard Type Truth:** Polished the Vault Dashboard to strictly reflect the Item Integrity Model. The Add-Item `+` dropdown menu removed the `attachment` item, and all primary lists (`ItemListPane`, `VaultShell`) are now deterministically sorted by type: Passwords -> Credit Cards -> Identities -> Secure Notes -> SSH Keys.

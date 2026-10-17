@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-17 — Tossing superseded PR #3 and clean PR closure
+Lucas queried whether to merge or toss lingering open PR #3 from the earlier Jules Phase 23 iteration. Inspected branch topology and commit diff: PR #3 (`stage/phase-23-item-integrity-8580131941674843399`) was Jules's preliminary draft, completely superseded by PR #4 and PR #5 (`stage-phase-23-item-integrity-8580131941674843399`), which brought in Sub-Stage 25.1 and were already merged into `main`. Closed PR #3 via `gh pr close 3` with an auditable summary, leaving zero open PRs.
+
 ## 2026-10-17 — Phase 23 stage merge, sovereign boundary enforcement & release v0.0.2.5 preparation
 Executed the final stage merge of Phase 23 / Sub-Stage 25.1 into main. Mechanically checked out orchestrator HEAD for `.agents/` (`git checkout HEAD -- .agents/`) during stage merge, resolving all contaminated co-pilot workflow modifications cleanly while taking 100% of Jules's verified code in `src/`, `tests/`, `migrations/`, and `docs/`. Merged stage into `main` with `--no-ff`. Authored `RELEASE-v0.0.2.5.md`, purged old `RELEASE-v0.0.2.4.md`, retired Phase 20 into `ROADMAP-HISTORY.md`, advanced `ROADMAP.md` 3-version sliding window (Phases 21, 22, 23), and synchronized version anchors across all manifests and architecture diagrams.
 
@@ -64,6 +67,4 @@ Discovered Bitwarden exports linked custom fields via numeric `linkedId` (100–
 ## 2026-09-25 — Android companion dependency injection: Application-Scoped Lazy DI
 Aligned Android companion architecture with Lucas to formalize the Application-Scoped Lazy DI pattern (`AppContainer` with thread-safe `by lazy` properties) over Hilt or Koin. Confirmed this belongs strictly in internal specifications (`.agents/brain/android/` and `di-container.md`) rather than public `/docs/companion/`, preserving VitePress clarity while guaranteeing sub-100ms cold start, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
 
-## 2026-09-23 — Phase 26 formalization: Import lifecycle, ephemeral TTL & progressive disclosure
-Lucas conceived an underlying organizational system for imported items to combat import remorse and accidental bulk migrations. Formulated Phase 26 ("Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 51 establishes multi-batch fingerprinting (import_batch_id), cross-type parity (pearls, notes, SSH keys), and configurable TTL self-destruct (30m/60m/90m/manual) with auto-graduation upon item edit; Task 52 delivers the "Config" settings surface, dynamic bioluminescent countdown chips, and an atomic batch revert action hatch adhering strictly to Lucas's progressive disclosure invariant (the UI remains 100% silent unless active imported items exist).
 

@@ -8,7 +8,7 @@
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
 - **Build**: Vite (strictPort :6464, /api proxy → :6565), VitePress for documentation portal
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 28 suites / 332 passed (1 skipped, 333 total), per-suite DATA_DIR isolation; executed strictly in cloud runners via GitHub Actions
+- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 29 suites / 341 passed (1 skipped, 342 total), per-suite DATA_DIR isolation; executed strictly in cloud runners via GitHub Actions
 - **Continuous Integration & Cloud Verification**: GitHub Actions (`.github/workflows/ci.yml`) on Node.js 22 ubuntu-latest runner executing `npm run lint`, `npm test`, `npm run build`, and `npm run docs:build` off-host; tailed live via `gh run watch`
 - **Asynchronous Co-Pilot Tooling**: Google Jules CLI (`jules` v0.1+) configured for remote container task delegation and GitHub PR orchestration under long-lived stage branches (`stage/phase-*`)
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
@@ -63,7 +63,7 @@ npm run scuttle:dev-start
 
 - `npm run lint` — TypeScript static check (`tsc --noEmit`) [Safe to run locally]
 - `git push origin <branch> && gh run watch` — Trigger and tail cloud verification on GitHub Actions [Standard Verification Flow]
-- `npm test` — all suites (28 test files, 332 passed, 1 skipped) [Run via GitHub Actions runner only]
+- `npm test` — all suites (29 test files, 341 passed, 1 skipped) [Run via GitHub Actions runner only]
 - `npm run build` — Vite production bundle [Run via GitHub Actions runner only]
 - `npm run docs:build` — VitePress documentation portal build [Run via GitHub Actions runner only]
 - `npm run scuttle:dev-reset` — wipe data-dev/

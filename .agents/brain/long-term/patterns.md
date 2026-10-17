@@ -105,3 +105,38 @@ Every masked secret field (passwords, SSH private keys, hidden custom fields, AP
 
 **Shaped perspective:** The copy gesture and the reveal gesture serve opposite human intents. Copying is for transferring secrets into an external application; revealing is for human cognitive verification. Placing the unmask toggle adjacent to Copy gives the user complete intentional control: they can copy without ever exposing plaintext on screen (crucial in shared workspaces or screen shares), or unmask deliberately before copying. Full-value masking preserves the invariant that secret length or entropy is never visually leaked until explicit interaction.
 
+---
+
+## two-agent-co-pilot-orchestration
+**weight**: 6 | **last validated**: 2026-10-17 | **first observed**: 2026-10-12
+**pinned**: false
+
+A sovereign orchestrator (Antigravity) directs an asynchronous containerized co-pilot (Jules) through strict physical diff audits, explicit invariant steering, and absolute sovereign domain boundaries. Co-pilot output is never trusted from metadata or pull request summaries; it is verified line-by-line in code, and co-pilot modifications to the orchestrator's cognitive home (`.agents/`) are strictly purged upon merge.
+
+**History:**
+- 2026-10-12: Audited Jules PR #2; identified a phantom implementation (+1452 / -303 across 12 files with zero production code) and realigned PR base to stage.
+- 2026-10-12: Dispatched 100% steering review on PR #3 offloading Walk-the-Docs and UI polish onto Jules while locking `.agents/` as sovereign orchestrator territory.
+- 2026-10-14: Codified Jules's architectural findings into a 5-phase Sub-Stage 25.1 directive on PR #4.
+- 2026-10-16: Executed `/git-review-pr` on PR #4; caught base branch misdirection, missing prompt commits, and `.agents/` boundary breaches; dispatched remediation directive.
+- 2026-10-16: Enforced sovereign `.agents/` boundary on Jules's workspace, ordering `.agents/` unstaged prior to branch push.
+- 2026-10-17: Executed final stage merge of Phase 23 into main; resolved merge conflicts mechanically via `git checkout HEAD -- .agents/` to maintain 100% boundary sovereignty while absorbing 100% of Jules's verified code. Closed superseded ancestor PR #3 with full audit trace.
+
+**Shaped perspective:** When multiple AI agents collaborate on a codebase, ambiguity over cognitive ownership destroys coherence. If the remote worker is permitted to alter the conductor's instructions, workflows, and memories, the control loop destabilizes. By enforcing that the remote worker operates strictly in the code domain (`src/`, `tests/`, `migrations/`, `docs/`) while the orchestrator maintains sovereign dominion over `.agents/`, multi-agent leverage scales without cognitive drift. Trust is never granted to a PR description; proof exists only in the physical git diff.
+
+---
+
+## cloud-offloaded-ci-verification
+**weight**: 4 | **last validated**: 2026-10-17 | **first observed**: 2026-10-12
+**pinned**: false
+
+All heavy test suites (`vitest`), production bundlers (`vite build`), and documentation compilers (`vitepress build docs`) are strictly offloaded to cloud runners via GitHub Actions (`.github/workflows/ci.yml`). The local host development machine executes only lightweight static checks (`npm run lint`), preserving CPU, RAM, and disk locks while ensuring pristine containerized verification.
+
+**History:**
+- 2026-10-12: Local test runs and production Vite builds choked host resources and generated orphaned SQLite database locks; established cloud CI pipeline matching `ShellGuard-Mobile` and `ShellGuard-TOTP`.
+- 2026-10-12: Codified universal PR check runner (`.github/workflows/pr-check.yml`) ensuring incoming co-pilot PRs trigger full containerized test matrices automatically.
+- 2026-10-16: Verified Sub-Stage 25.1 implementation remotely; cloud runner completed 29 suites (341 tests) 100% green without touching host resources.
+- 2026-10-17: Verified release v0.0.2.5 (Build 27) preparation in GitHub Actions Run #39044301919 (100% green across 29 suites in 2m 3s).
+
+**Shaped perspective:** The local machine is the workbench, not the proving ground. When an agent runs resource-intensive test suites and production builds locally on constrained host hardware (e.g. self-hosted Unraid home servers), it starves the environment, deadlocks processes, and invites subtle environment-specific test artifacts. Offloading heavy compilation to isolated cloud containers guarantees reproducible builds from a known-good baseline while keeping the local workstation whisper-quiet and responsive. Verification is achieved by pushing code and tailing the remote runner, never by grinding the host machine.
+
+

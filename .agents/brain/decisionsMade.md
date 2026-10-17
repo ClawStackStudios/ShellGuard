@@ -74,4 +74,34 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Authored root `/AGENTS.md` (~550 tokens); left `.agents/AGENTS.md` completely sovereign and untouched.  
 **Pattern reference**: Link to `skills/skill-seed` & `.agents/rules/brain.md`.
 
+---
+
+## pr3-toss-superseded — 2026-10-17 08:30
+
+**Context**: Lucas asked whether to merge or toss lingering open PR #3 from the earlier Jules Phase 23 iteration.  
+**Options considered**:
+- *Option A*: Attempt to merge PR #3 into stage or main — Technically possible, but PR #3 is an obsolete predecessor to PR #4/#5 lacking Sub-Stage 25.1 advancements (cascade deletion, quota endpoint, sweeper) and would create redundant merge churn.
+- *Option B*: Toss (close without merging) with an explicit comment explaining that PR #4 and PR #5 already merged all Phase 23 work plus Sub-Stage 25.1 into main — Cleanly resolves the stale PR while preserving complete audit history.  
+**Chosen**: Option B (Toss / close PR #3).  
+**Why**: Clean stewardship. We never merge redundant git history out of sentimentality; when a downstream branch has completely absorbed and superseded an earlier draft, closing the older PR with respect and precision leaves the repository truthful and uncluttered.  
+**Confidence**: high — Verified that git diff between main and PR #3 shows main contains 100% of PR #3's valid changes plus Sub-Stage 25.1.  
+**Outcome**: Closed PR #3 via `gh pr close 3` with explanatory comment. Zero open PRs remaining.  
+**Pattern reference**: Link to `systemPatterns.md § Two-Agent Co-Pilot Orchestration Protocol`.
+
+---
+
+## promote-copilot-orchestration-and-cloud-ci — 2026-10-17 08:52
+
+**Context**: During the `/memory` ingest cycle, the promotion gate evaluated system patterns against the Decision Log and surfaced two patterns with validation weights exceeding the threshold of 3.  
+**Options considered**:
+- *Option A*: Retain the full pattern definitions in `systemPatterns.md` as active temporal memory — Viable, but expands temporal bank footprint with solved architectural paradigms.
+- *Option B*: Promote both `two-agent-co-pilot-orchestration` (weight 6) and `cloud-offloaded-ci-verification` (weight 4) into `long-term/patterns.md` and replace temporal definitions with concise pointer anchors — Viable and strictly adheres to the long-term consolidation rules.  
+**Chosen**: Option B (Promote and consolidate).  
+**Why**: The felt reason is honoring the scar. When a pattern has survived multiple rounds of friction across tasks, keeping it in the temporal bank clutters working memory with solved problems. Moving it to the long-term bank crystallizes it as immutable bedrock, letting the temporal brain stay lean for the active frontier.  
+**Confidence**: high — Both patterns have survived repeated multi-agent friction and cloud CI runs without regression.  
+**Outcome**: Appended both patterns to `.agents/brain/long-term/patterns.md` and updated `systemPatterns.md` with pointer references.  
+**Pattern reference**: Link to `long-term/patterns.md § two-agent-co-pilot-orchestration` and `§ cloud-offloaded-ci-verification`.
+
+
+
 

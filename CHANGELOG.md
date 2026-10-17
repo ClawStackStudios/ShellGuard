@@ -1,6 +1,16 @@
 # Changelog — ShellGuard
 
-## [Unreleased]
+## [Unreleased] - Phase 23
+
+### Added
+- **Attachment Relational Cascade (Sub-Stage 25.1):** Expanded the `DELETE /api/attachments/:id` endpoint to cleanly and transactionally remove the deleted attachment's ID from its parent item's (`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`) `attachments` JSON array.
+- **Runtime Sweeper & Pre-Flight Quota Validation (Sub-Stage 25.1):** Exposed `POST /api/attachments/quarantine/sweep` for on-demand isolation of unparented attachments without needing a reboot. Exposed `GET /api/attachments/quota` pre-flight endpoint returning `{ used_bytes, quota_bytes, remaining_bytes }` capacity stats based on `GROTTO_QUOTA_MB` limits.
+- **Attachment Item Integrity:** Completed Migration 0009 `0009_attachment_integrity` aligning the database schema strictly with the Bitwarden Item Integrity Model. Attachments are now strictly enforced as child components of primary vault items (Passwords, Cards, Identities, Notes, SSH Keys) and require explicit `parent_id` and `parent_type` fields upon creation. Standalone attachment creation is forbidden and returns 400 Bad Request.
+- **Attachment Orphan Quarantine:** Built `quarantineOrphanAttachments()` engine that runs at boot, sweeping any legacy unparented or orphaned attachments into safe quarantine (`is_quarantined = 1`). Quarantined attachments are hidden from API lists and UI downloads but never deleted to prevent accidental data loss. Logs `ATTACHMENT_QUARANTINED` to `audit.sqlite`.
+- **Note Validation Invariants:** Secure Note endpoints now structurally reject payloads containing standard credential fields (such as `secret`), guaranteeing Notes remain purely document/markdown ledgers.
+
+### Changed
+- **Dashboard Type Truth:** Polished the Vault Dashboard to strictly reflect the Item Integrity Model. The Add-Item `+` dropdown menu removed the `attachment` item, and all primary lists (`ItemListPane`, `VaultShell`) are now deterministically sorted by type: Passwords -> Credit Cards -> Identities -> Secure Notes -> SSH Keys.
 
 ## [0.0.2.4] - 2026-09-23
 

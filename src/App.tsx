@@ -508,6 +508,8 @@ export default function App() {
   const uploadAttachmentRecord = async (
     key: CryptoKey, 
     att: PendingAttachment,
+    parentId: string,
+    parentType: string,
     overrides?: { title?: string; category?: string }
   ): Promise<string> => {
     const encryptedFile = await encryptField(att.dataUrl, key, "vault_secure_attachments", att.id);
@@ -522,6 +524,8 @@ export default function App() {
       file_name: att.file_name,
       mime_type: att.mime_type || "application/octet-stream",
       category: podCategory,
+      parent_id: parentId,
+      parent_type: parentType,
     }, ciphertext, (percent) => setUploadProgress({ name: att.file_name, percent }));
     activeUploadRef.current = handle;
     try {
@@ -567,13 +571,7 @@ export default function App() {
       
       if (item.type === 'note') {
         const existingIds = parseAttachmentIds(item.attachments);
-        const uploadedIds: string[] = [];
-        if (item.newAttachments && item.newAttachments.length > 0) {
-          for (const att of item.newAttachments) {
-            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, { category: item.category || "" }));
-          }
-        }
-        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+        const attachmentIdsJson = JSON.stringify(existingIds);
 
         const encryptedContent = await encryptField(item.secret, shellKey, "vault_secure_notes", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
@@ -586,40 +584,28 @@ export default function App() {
           custom_fields: encryptedCustomFields,
           attachments: attachmentIdsJson
         });
+
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            await uploadAttachmentRecord(shellKey, att, id, 'note', { category: item.category || "" });
+          }
+        }
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
-        await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
-      } else if (item.type === 'attachment') {
-        // Phase 19: Upload standalone attachment ciphertext stream via multipart contract
+        const existingIds = parseAttachmentIds(item.attachments);
+        const attachmentIdsJson = JSON.stringify(existingIds);
+
+        await restAdapter.POST("/api/keys", { id, title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields, attachments: attachmentIdsJson });
+
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
-            await uploadAttachmentRecord(shellKey, att, {
-              title: item.title || att.file_name,
-              category: item.category || ""
-            });
+            await uploadAttachmentRecord(shellKey, att, id, 'key', { category: item.category || "" });
           }
-        } else if (item.secret) {
-          await uploadAttachmentRecord(shellKey, {
-            id,
-            file_name: item.username || item.title || "attachment",
-            mime_type: "application/octet-stream",
-            size: item.secret.length,
-            dataUrl: item.secret
-          }, {
-            title: item.title,
-            category: item.category || ""
-          });
         }
       } else {
         const existingIds = parseAttachmentIds(item.attachments);
-        const uploadedIds: string[] = [];
-        if (item.newAttachments && item.newAttachments.length > 0) {
-          for (const att of item.newAttachments) {
-            uploadedIds.push(await uploadAttachmentRecord(shellKey, att, { category: item.category || "" }));
-          }
-        }
-        const attachmentIdsJson = JSON.stringify(Array.from(new Set([...existingIds, ...uploadedIds])));
+        const attachmentIdsJson = JSON.stringify(existingIds);
 
         const encryptedSecret = await encryptField(item.secret, shellKey, "vault_pearls", id);
         let encryptedTotp = "";
@@ -647,6 +633,13 @@ export default function App() {
           attachments: attachmentIdsJson,
           custom_fields: encryptedCustomFields
         });
+
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            const pType = (item.type === 'password' || item.type === 'card' || item.type === 'identity' || item.type === 'pearl' as any) ? item.type : 'pearl';
+            await uploadAttachmentRecord(shellKey, att, id, pType, { category: item.category || "" });
+          }
+        }
       }
       await scuttleVault(shellKey);
       return id;
@@ -684,7 +677,7 @@ export default function App() {
 
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
-            const uploadedId = await uploadAttachmentRecord(shellKey, att, { category: item.category || "" });
+            const uploadedId = await uploadAttachmentRecord(shellKey, att, id, 'note', { category: item.category || "" });
             combinedAttachmentIds.push(uploadedId);
           }
         }
@@ -709,17 +702,30 @@ export default function App() {
       } else if (item.type === 'key') {
         const encryptedKey = await encryptField(item.secret, shellKey, "vault_ssh_keys", id);
         const encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
-        await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields });
-      } else if (item.type === 'attachment') {
-        // Phase 19: PUT is metadata-only — file replacement means re-upload.
-        const cleanCat = (item.category === "Attachment" || item.category === "attachment" || item.category === "all") ? "" : item.category;
-        await restAdapter.PUT(`/api/attachments/${id}`, { title: item.title, file_name: item.username, mime_type: "", category: cleanCat });
+        let combinedAttachmentIds: string[] = parseAttachmentIds(item.attachments);
+
+        if (item.newAttachments && item.newAttachments.length > 0) {
+          for (const att of item.newAttachments) {
+            const uploadedId = await uploadAttachmentRecord(shellKey, att, id, 'key', { category: item.category || "" });
+            combinedAttachmentIds.push(uploadedId);
+          }
+        }
+        if (item.removedAttachmentIds && item.removedAttachmentIds.length > 0) {
+          for (const attId of item.removedAttachmentIds) {
+            await restAdapter.DELETE(`/api/attachments/${attId}`).catch(() => {});
+            combinedAttachmentIds = combinedAttachmentIds.filter(att_id => att_id !== attId);
+          }
+        }
+        combinedAttachmentIds = Array.from(new Set(combinedAttachmentIds));
+
+        await restAdapter.PUT(`/api/keys/${id}`, { title: item.title, key_value: encryptedKey, username: item.username, category: item.category, tags: item.tags, custom_fields: encryptedCustomFields, attachments: JSON.stringify(combinedAttachmentIds) });
       } else {
         let combinedAttachmentIds: string[] = parseAttachmentIds(item.attachments);
 
         if (item.newAttachments && item.newAttachments.length > 0) {
           for (const att of item.newAttachments) {
-            const uploadedId = await uploadAttachmentRecord(shellKey, att, { category: item.category || "" });
+            const pType = (item.type === 'password' || item.type === 'card' || item.type === 'identity' || item.type === 'pearl' as any) ? item.type : 'pearl';
+            const uploadedId = await uploadAttachmentRecord(shellKey, att, id, pType, { category: item.category || "" });
             combinedAttachmentIds.push(uploadedId);
           }
         }

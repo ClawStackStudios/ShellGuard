@@ -8,7 +8,9 @@
 - **Frontend**: React + Tailwind CSS (Reef Modernist design system)
 - **Build**: Vite (strictPort :6464, /api proxy → :6565), VitePress for documentation portal
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 24 suites / 285 passed (1 skipped, 286 total), per-suite DATA_DIR isolation
+- **Testing**: Vitest + supertest, sequential execution (`fileParallelism: false`), 28 suites / 332 passed (1 skipped, 333 total), per-suite DATA_DIR isolation; executed strictly in cloud runners via GitHub Actions
+- **Continuous Integration & Cloud Verification**: GitHub Actions (`.github/workflows/ci.yml`) on Node.js 22 ubuntu-latest runner executing `npm run lint`, `npm test`, `npm run build`, and `npm run docs:build` off-host; tailed live via `gh run watch`
+- **Asynchronous Co-Pilot Tooling**: Google Jules CLI (`jules` v0.1+) configured for remote container task delegation and GitHub PR orchestration under long-lived stage branches (`stage/phase-*`)
 - **Container**: Multi-stage node:20-alpine, PUID/PGID aware
 - **License**: AGPL-3.0-only
 - **Mobile Stack (Native Android)**: Kotlin 2.0+, Jetpack Compose, Room (SQLCipher), Android Keystore Biometrics, Retrofit/Ktor, WorkManager, Application-Scoped Lazy DI (`AppContainer`)
@@ -36,6 +38,7 @@ npm run scuttle:dev-start
 
 - `crypto.webcrypto.subtle` HANGS in this environment — always use native `crypto` module
 - `crypto.hkdfSync` for key derivation, `crypto.createCipheriv`/`createDecipheriv` for AES-256-GCM
+- **Cloud-Offloaded Verification Policy**: NEVER run `npm test`, `npm run build`, or `npm run docs:build` locally on host. All test and build executions are offloaded to GitHub Actions (`.github/workflows/ci.yml`). Host machine resources are strictly preserved. Developers and agents run lightweight static checks locally (`npm run lint`), commit with Two-Layer Attribution, push to the remote branch, and tail the action via `gh run watch`. Verification is achieved only when the cloud runner completes 100% green.
 - **WebCrypto Insecure Origin Fallback**: Client-side uses pure TypeScript fallback engine (`src/lib/webCryptoFallback.ts`) for SHA-256, HMAC, HKDF, PBKDF2, and AES-GCM when accessing ShellGuard over plain HTTP LAN origins where `window.crypto.subtle` is undefined.
 - **Async Native PBKDF2 Fast Path**: For vault export envelopes requiring 600,000 PBKDF2 iterations, `vaultExport.ts` uses caller-side feature detection (`globalThis.crypto?.subtle.deriveBits`) for sub-second off-thread derivation, falling back to pure-TS `pbkdf2Sha256` for non-secure origins.
 - **Vite Dev Watcher Ignores**: `server.watch.ignored` in `vite.config.ts` ignores `tests/**`, `data*/**`, `*.sqlite*`, and `*.wal` to prevent crash loops when SQLite ephemeral WAL files are generated and deleted during test runs.
@@ -58,12 +61,10 @@ npm run scuttle:dev-start
 
 ## Tool Usage Patterns
 
-- `npm test` — all suites (21 test files, 259 passed, 1 skipped)
-- `npm run test:integration` — auth-flow + vault-crud + settings + metadata-encryption
-- `npm run test:security` — cross-owner isolation + permission bypass
-- `npm run test:build-gates` — Dockerfile/config shape gates
-- `npm run lint` — TypeScript check (`tsc --noEmit`)
-- `npm run build` — Vite production bundle
-- `npm run docs:build` — VitePress documentation portal build
+- `npm run lint` — TypeScript static check (`tsc --noEmit`) [Safe to run locally]
+- `git push origin <branch> && gh run watch` — Trigger and tail cloud verification on GitHub Actions [Standard Verification Flow]
+- `npm test` — all suites (28 test files, 332 passed, 1 skipped) [Run via GitHub Actions runner only]
+- `npm run build` — Vite production bundle [Run via GitHub Actions runner only]
+- `npm run docs:build` — VitePress documentation portal build [Run via GitHub Actions runner only]
 - `npm run scuttle:dev-reset` — wipe data-dev/
 - `tsx scripts/encrypt-existing-metadata.ts` — batch encrypt legacy plaintext metadata

@@ -109,8 +109,8 @@
 - *Rationale:* Ensures root `RELEASE-v*.md` is the single source of truth mirrored automatically without race conditions or wasted CI runner resources.
 
 **Pattern: First-Class Git Persistence for Agent Customizations (`.agents/`)**
-- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and memory bank files are tracked in Git and never ignored in `.gitignore`.
-- Commit memory bank updates (`activeContext.md`, `progress.md`) alongside corresponding feature code and release tasks.
+- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and brain files are tracked in Git and never ignored in `.gitignore`.
+- Commit brain updates (`activeContext.md`, `progress.md`) alongside corresponding feature code and release tasks.
 - *Rationale:* Preserves agent architectural memory, behavioral guardrails, and automated release workflows across resets, workstations, CI runners, and collaborators.
 
 **Pattern: Docs Bow to Code (The Governance Ruling & Tri-Layer Truth)**
@@ -127,10 +127,10 @@
 - Validate Mermaid diagram syntax: assert every fence is closed and detect fatal unquoted brackets/braces in node labels (`Node[label {with} braces]`).
 - *Rationale:* Eliminates documentation drift, broken deployed subpaths, and broken diagram rendering mechanically without manual proofreading.
 
-**Pattern: Agent Memory Bank Isolation Boundary**
-- Antigravity operates strictly in `.agents/memory-bank/`.
-- Cline operates strictly in `.clinerules/memory-bank/`.
-- Strict isolation: never write, edit, stage, or mirror files to the other agent's memory bank directory.
+**Pattern: Agent Brain Isolation Boundary**
+- Antigravity operates strictly in `.agents/brain/`.
+- Cline operates strictly in `.clinerules/brain/`.
+- Strict isolation: never write, edit, stage, or mirror files to the other agent's brain directory.
 - *Rationale:* Each agent has its own distinct cognitive substrate and workflow lifecycle; cross-contamination destroys state consistency.
 
 **Pattern: Brand Asset Twin Parity**
@@ -258,7 +258,7 @@
 **Pattern: The "Docs Bow to Code" Tri-Layer Truth Architecture**
 - **Layer 1: Enforcing Code (Primary Oracle)** — Zod schemas, Express route controllers, DB migrations, and ShellCryption routines.
 - **Layer 2: Test Fixtures (Behavioral Oracle)** — Vitest unit and integration suites testing invariants and wire shapes.
-- **Layer 3: Living Documentation (Faithful Mirror)** — VitePress portal, README, ARCHITECTURE, and memory bank.
+- **Layer 3: Living Documentation (Faithful Mirror)** — VitePress portal, README, ARCHITECTURE, and brain.
 - When prose contradicts shipped, verified code, the document is the defect; never mutate secure code to match stale text.
 - *Rationale:* Eliminates documentation drift and guarantees documentation truthfulness across human developers and autonomous AI agents.
 
@@ -282,4 +282,23 @@
 - Use `git bisect run <test-command>` (e.g. `git bisect run npx vitest run ...`) to isolate regressions across large commit histories in $O(\log N)$ time.
 - *Rationale:* Eliminates speculative manual checkout loops and pinpoints exact commit faults automatically.
 
+**Pattern: The "Real Finishers" Quality Gate & User-Facing VitePress Cohesion**
+- The VitePress portal (`/docs/`) is user-facing; prose must be human-readable, polished, and structured so a human developer or operator can read from start to finish without cognitive friction.
+- Whenever a stage introduces new endpoints, data columns, or operational capabilities, they MUST immediately slot into existing documentation surfaces (`api-reference.md`, `vault-features/*.md`) with explicit session token / auth contracts (`Bearer Token (canRead)` / `canWrite`).
+- Align implementation intent with test oracles across all entity models to prevent silent logic drift.
+- *Rationale:* Eliminates orphaned features, undocumented API contracts, and unpolished public documentation.
 
+**Pattern: Co-Pilot Terminal Phrasing & Non-Circular Directives**
+- When dispatching wrap-up or completion directives to co-pilot agents (e.g. Jules), instructions must be strictly non-circular and terminal ("Push your changes once to the branch, then wrap up. We'll take it from here.").
+- Avoid phrasing that repeats actions ("Once pushed, push changes to the branch") or invites indefinite confirmation loops.
+- *Rationale:* Co-pilot agents require tight probability framing; explicit terminal boundaries collapse uncertainty and prevent stalling.
+
+**Pattern: Sovereign Domain Isolation & PR Ingestion Defense**
+- `.agents/` is Antigravity's sovereign domain. External/co-pilot agents must never modify it.
+- In PR reviews from external co-pilots, any modifications in `.agents/` are completely disregarded and mechanically discarded upon merge (`git checkout HEAD -- .agents/`).
+- *Rationale:* Preserves orchestrator brain, rules, and workflows from cross-agent contamination while allowing collaborative code merges.
+
+**Pattern: The Core Merging Invariable & Stacked Security Proofs**
+- *"A merge should leave the codebase improved, or at the very least not worse."*
+- Evaluate merge safety across stacked proofs: Layer 1 Zero-Knowledge ciphertext, Layer 2 metadata encryption, Layer 3 SQLCipher, tenant isolation via `owner_uuid`, streaming DoS limits (`ATTACHMENT_MAX_MB`), fail-closed validation, and quarantine integrity (zero data loss).
+- *Rationale:* Guarantees that iterative development strengthens rather than degrades the system's cryptographic and relational foundations.

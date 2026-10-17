@@ -1,138 +1,111 @@
 ---
-description: A deterministic workflow for walking and auditing root and portal documentation to ensure docs bow to code with absolute currency and rigor.
+description: Deterministic workflow to walk the documentation, verify all claims against the physical codebase, and ensure docs bow to code with systemic accuracy.
 ---
 
-# 🚶 Walk the Docs Protocol Workflow
+# 🚶‍♂️ Walk the Docs Workflow
 
-> **Core Axiom:** *"Docs Bow to Code."* Code is the bedrock ground truth; documentation is its faithful cartographic mirror. A change without updated documentation is incomplete work.
-> **Use When:** Concluding a feature phase, completing post-verification hardening, applying database migrations, modifying API contracts or UI controls, or conducting an anti-rot documentation audit.
-> **Pair With:** `.agents/rules/project-hygiene.md`, `.agents/rules/git-hygiene.md`, and `.agents/rules/cadence-and-lifecycle-prompts.md`.
-
----
-
-## 🧭 Phase 1: Code Ground Truth Inventory (Cartography First)
-
-Before editing a single markdown file, inspect the active codebase to establish exact, uncompromised numbers and facts:
-
-1. **Database & Migrations:**
-   - Run `ls migrations/*.sql` to confirm the exact migration range (e.g. `0001_initial` through `0008_note_attachments`).
-   - Check table schemas, columns, indexes, and default values (`better-sqlite3` DDL in migrations and `src/server/database/`).
-2. **API Routes & Wire Contracts:**
-   - Inspect `server.ts` and `src/server/routes/*.ts` to verify exact mount paths (e.g. `/api/keys` vs `/api/ssh-keys`).
-   - Inspect `src/server/validation/schemas.ts` for Zod body/query validation contracts.
-   - Verify cascade delete mechanics across parent-child relationships.
-3. **UI Controls & Storage Boundaries:**
-   - Inspect constants (`ATTACHMENT_MAX_MB`, `GROTTO_QUOTA_MB`, timeouts).
-   - Verify user-facing labels and form constraints in modal and pane components.
-4. **Test Oracle Truth:**
-   - Run `npm test` to capture exact suite count and test counts (e.g. `26 test suites / 313 passed`).
+> **Philosophy:** The codebase is the physical reality and sole source of structural truth. The documentation must bow to the code with systemic precision.
+> **Pair With:** [`.agents/skills/doc-automation/SKILL.md`](file:///config/Local-Storage/workspace-lucas/projects/Agents/ShellGuard-Mobile/.agents/skills/doc-automation/SKILL.md), `.agents/rules/docs-hygiene.md`, `.agents/rules/git-hygiene.md`, and `.agents/rules/cadence-and-lifecycle-prompts.md`.
 
 ---
 
-## 🗺️ Phase 2: Systematic Documentation Sweep (The 4 Zones)
-
-Walk through the documentation across all four critical zones in sequence. Check off each file as it is aligned to code truth:
-
-### 🏛️ Zone 1: Root Core Documentation
-- [ ] **`ARCHITECTURE.md`**:
-  - Update migrations list in the directory tree.
-  - Update test suite count and list newly introduced test files.
-  - Append a new numbered **Architectural Delta** detailing the intent, design invariants, files touched, and verification receipts.
-- [ ] **`BLUEPRINT.md`**:
-  - Update migration range in the header (e.g. `0001` through `0008`).
-  - Align table DDL columns, types, and defaults (e.g. `uris`, `password_history`, `attachments`).
-  - Register new migrations in the "Supporting Reefs & Migrations" list.
-- [ ] **`README.md`**:
-  - Verify API endpoint matrices (paths, HTTP methods, permission guards, descriptions).
-  - Update reference model explanations (e.g. citing all supported parent types for attachments).
-  - Verify storage quotas, rate limits, and setup flags.
-- [ ] **`CHANGELOG.md`**:
-  - Under `## [Unreleased]`, document sub-phase additions, fixes, and architectural adjustments.
-  - Include file paths, migration numbers, and specific UX/security improvements.
-- [ ] **`ROADMAP.md`**:
-  - Check off completed sub-phases and tasks.
-  - Verify migration numbering in upcoming forward phases (prevent numbering collisions with newly inserted migrations).
-
-### 🧬 Zone 2: The Project Genome (`project/`)
-- [ ] **`project/database-schema.md`**:
-  - Synchronize SQLite DDL schemas with migrations.
-  - Document migration version notes, Layer 1 vs Layer 2 encryption mappings, and indices.
-- [ ] **`project/routes-and-contracts.md`**:
-  - Update domain router table rows with payload columns, encryption layers, and cascade deletion rules.
-  - Verify permission mappings (`canRead`, `canWrite`, `canEdit`, `canDelete`).
-- [ ] **`project/meta-prompt-ai-studio.md`**:
-  - Synchronize stage descriptions, sub-phase checklists, and execution prompt blueprints.
-  - Align future phase migration references.
-
-### 🤖 Zone 3: Agent Integration & Skills
-- [ ] **`skills/shellguard/SKILL.md`**:
-  - Synchronize TypeScript interface fields for vault domain items.
-  - Document parameter options, default values, and cascade deletion behaviors.
-- [ ] **`docs/agent-integration/api-reference.md`**:
-  - Verify complete endpoint matrix with accurate paths and full CRUD verbs (GET, POST, PUT, DELETE).
-- [ ] **`docs/agent-integration/lobster-keys.md`**:
-  - Verify the permissions matrix correctly references all active API endpoints.
-
-### 🌐 Zone 4: VitePress Documentation Portal (`docs/`)
-- [ ] **`docs/reference/blueprint-schema.md`**:
-  - Update ground-truth migration version and table schemas.
-- [ ] **Feature Specifications (`docs/vault-features/`)**:
-  - Update `the-grotto.md` item types tables with current payload and metadata columns.
-  - Update `attachments.md` to reflect all parent types under the Reference Model, storage limits, and cascade rules.
-  - Update `import-export.md` for supported import formats, sniffer logic, and export options.
-- [ ] **VitePress Configuration (`docs/.vitepress/config.ts`)**:
-  - Ensure sidebar titles, links, and page headings match updated documentation terminology (e.g. *Encrypted Attachments* vs *Password Attachments*).
+## 🧭 Overview & Execution Trigger
+Execute this workflow:
+1. Immediately upon completing all implementation and passing unit/Robolectric tests for a phase or task.
+2. Whenever asked: *"have we ensured any docs that might need updating from touching this phase got updated with the phase?"* or when auditing repo state.
+3. Before triggering a release tag or commit.
 
 ---
 
-## 🛡️ Phase 3: The Four Pre-Flight Verification Gates
-
-Never declare a documentation walk complete until all four verification gates pass 100% green:
+## 🔍 Phase 1: Physical Codebase Inventory
+Inspect the physical tree diff to establish what actually changed before reading or modifying documentation:
 
 ```bash
-# 1. Documentation Portal Integrity (0 broken links, 0 markdown/SSR build errors)
-npm run docs:build
-
-# 2. Test Oracle Integrity (Verify all suites pass and match documented numbers)
-npm test
-
-# 3. Type & Syntax Integrity
-npm run lint
-
-# 4. Production Application Bundle Validation
-npm run build
+git status
+git diff --stat
 ```
 
-*If `docs:build` fails on broken links or malformed tags, fix them immediately. If tests fail, resolve root causes before proceeding.*
+Identify the exact domains touched:
+- **Core Entities & DB**: Did entities, DAOs, or migrations change?
+- **Cryptography / Keystore / Security**: Were keys, ciphers, receivers, or preferences altered?
+- **UI & Navigation**: Were routes, screens, viewmodels, or themes added/modified?
+- **Sync & Networking**: Were payloads, endpoints, or serialization models modified?
+- **Versioning**: Were `versionCode` or `versionName` in `app/build.gradle.kts` touched?
 
 ---
 
-## 🧠 Phase 4: Memory Bank Synchronization
+## 📋 Phase 2: The 8-Point Documentation Walk
 
-Keep cognitive continuity aligned with documentation state:
+Walk each anchor document sequentially and enforce bidirectional consistency with the code:
 
-1. **`activeContext.md`**:
-   - Update `Current Work Focus` and slide the `Recent Changes` window (maintaining the latest 10 events).
-2. **`progress.md`**:
-   - Update test suite counts, passing test metrics, and `Current Status`.
-3. **`raw_reflection_log.md`**:
-   - Record significant friction points, doc drift discoveries, or architectural insights.
+### 1. Versioning & Build Manifest (`app/build.gradle.kts`)
+- [ ] Confirm monotonic `versionCode` (+1 for release builds).
+- [ ] Confirm semantic `versionName` matches the target milestone.
+
+### 2. Strategic Roadmap (`ROADMAP.md`)
+- [ ] Mark completed tasks with `[x]`.
+- [ ] Update `current_position` to reflect the completed phase and name the next phase.
+- [ ] Recalculate `features_completed: XX%`.
+- [ ] **Monotonic Downstream Build Alignment**: Trace all future phases and verify that build projections (`Phase X ➔ Build Y`) account for any hotfixes or inserted phases, preserving monotonic build code ordering throughout the document.
+
+### 3. Stage & Prompt Alignment (`project/meta-prompt-ai-studio.md`)
+- [ ] Re-index upcoming stage headers (e.g. `### Stage 14 (Phase 13): ... (Build 17)`).
+- [ ] Verify prompts, version tags, and task descriptions align with the updated roadmap.
+
+### 4. Public Changelog (`CHANGELOG.md` at Repository Root)
+- [ ] Add `## [X.Y.Z.N] - YYYY-MM-DD (Build N)` header.
+- [ ] Itemize Added / Changed / Fixed / Verified entries under Keep a Changelog conventions.
+- [ ] Check against actual git diff to ensure every significant feature or fix is represented.
+
+### 5. Root Release Manifest (`RELEASE-vX.Y.Z.N.md`)
+- [ ] Ensure a dedicated release note file exists at root (`RELEASE-v<versionName>.md`).
+- [ ] Verify that `.github/workflows/release.yml` will find and parse this file upon tag push.
+
+### 6. Mobile Store Distribution Notes (`RELEASE-PLAY.md`)
+- [ ] Prepend `<en-US>` release notes block for the build.
+- [ ] **Strict Constraint**: Ensure the block length is **strictly under 500 characters** to satisfy Google Play Console limits.
+
+### 7. Repository Gateway (`README.md`)
+- [ ] Bump release version badge (e.g., `vX.Y.Z.N (Build N)`).
+- [ ] Update passing test suite count badge/prose to match current test oracle total.
+- [ ] Highlight new user-facing features or security suites in the feature list.
+
+### 8. Architectural & Storage Specs (`project/*.md`, `ARCHITECTURE.md`)
+- [ ] **Room DB Schema** (`project/room-storage-schema.md`): If database entities changed, update schema version, entity listings, and DAO signatures.
+- [ ] **Cryptography & Keystore** (`project/crypto-and-keystore.md`): If key management, broadcast receivers, or security controls changed, document methods and security guarantees.
+- [ ] **Architecture Blueprint** (`ARCHITECTURE.md`): Update component interaction diagrams, threat models, and operational modes.
+- [ ] **UI/UX Design System** (`project/ui-ux-design-system.md`): If theme tokens, typography, or component patterns changed, update design specs.
+
+### 9. Cross-Repository Compatibility (`compatibility_layer.md`)
+- [ ] If network sync payloads, item formats, or REST endpoints were updated, open and synchronize `compatibility_layer.md` in the partner repository (e.g. ShellGuard Web Server) before closing the task.
 
 ---
 
-## 📦 Phase 5: Multi-Agent Staging & Attribution Handshake
+## 🧠 Phase 3: Brain & Companion Log Attestation
 
-1. **Check Staging Safety:**
-   ```bash
-   git status
-   git diff --stat
-   ```
-   *Verify that NO other agent homes (`.clinerules/`, `.jules/`) have been touched.*
-2. **Present Live Verification & Commit Prompt:**
-   Adhere to `cadence-and-lifecycle-prompts.md` Gate 1: Present automated gate receipts, summarize the documentation updates, and ask the human for approval to commit under the two-layer attribution format:
-   ```text
-   docs: <short summary of documentation synchronization>
+Walk and synchronize the agent semantic and episodic memory:
+- [ ] `.agents/brain/activeContext.md`: Slide 10-event window, record current phase status.
+- [ ] `.agents/brain/project/progress.md`: Mark phase done, update test metrics, update what's next.
+- [ ] `.agents/brain/project/changelog.md`: Append version entry.
+- [ ] `.agents/brain/raw_reflection_log.md`: Record learnings and difficulties.
+- [ ] `.agents/brain/decision-log.md`: Record felt friction and architectural calibrations.
 
-   User: <intent, prompt, or architectural direction provided by human>
-   AI: <exact docs updated, test counts verified, and build gates passed>
-   ```
+---
+
+## ✅ Phase 4: Verification & Pre-Commit Oracle Gate
+
+Never attest to documentation accuracy without running the test suite:
+
+```bash
+export JAVA_HOME="/config/Applications/android-studio/jbr"
+export PATH="$JAVA_HOME/bin:/config/Android/Sdk/platform-tools:$PATH"
+export GRADLE_OPTS="-XX:-UsePerfData -Djava.io.tmpdir=$PWD/app/build/tmp"
+
+# 1. Oracle Verification
+./gradlew testDebugUnitTest --no-configuration-cache --no-daemon
+
+# 2. Build Verification
+./gradlew assembleDebug --no-daemon
+```
+
+Confirm that test counts in `README.md`, `CHANGELOG.md`, and brain match the actual test run output (`Total: N, Failures: 0, Errors: 0`).

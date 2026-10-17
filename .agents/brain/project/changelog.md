@@ -3,7 +3,14 @@
 ## [Unreleased]
 
 ### Added
-- **Android Companion Architecture Alignment**: Formalized Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`) in `.agents/memory-bank/android/di-container.md` and updated `README.md`. Provides sub-100ms cold start for OTP lookups, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
+- **Cloud-Offloaded CI/CD & Verification Policy (`.github/workflows/ci.yml`)**: Mirrored from `ShellGuard-Mobile` and `ShellGuard-TOTP`; offloaded all testing (`vitest run`), production compilation (`vite build`), and documentation builds (`vitepress build docs`) to GitHub Actions runner to preserve host machine resources. Codified push-and-tail workflow via `gh run watch` in `git-hygiene.md`, `cadence-and-lifecycle-prompts.md`, and `project-hygiene.md`. Verified 100% green on initial cloud run (`38296609445`) in 1m 58s.
+- **Jules PR #3 Audit & Targeted Review (Stage 24 / Phase 23)**: Audited incoming PR #3 commit `39d76b9` (`stage/phase-23-item-integrity-8580131941674843399`); verified parent linkage multipart validation in `src/server/routes/attachments.ts` and test suite updates across 6 files; dispatched auditable checklist to Jules covering orphan backfill quarantine, note secret rejection, GET quarantine filter, dedicated test suite, and Task 46 frontend type-truth requirements.
+- **Native Payment Card & Identity Models (Sub-Phase 23.5.2)**: Extended `VaultItemType` to `"card"` and `"identity"`, built `cardUtils.ts` with network-aware smart auto-spacing (Amex 4-6-5, standard 4-4-4-4), brand detection, length-truthful masking, and clean numeric digit clipboard copying; integrated form sections in `ItemFormModal.tsx` and contact sheet detail widgets in `ItemDetailPane.tsx`.
+- **Zero-Loss Bitwarden Ingestion Engine & Residual Harvester (Sub-Phase 23.5.1)**: Automated `harvestResidualFields` sweeper capturing unmapped identity and custom fields with empty collection pruning (`[]`, `{}`); translated Bitwarden numeric `linkedId` to `linkedProperty`; fixed Secure Note detail cards with quick-copy.
+- **Era 1 Archival & Era 2 Master Spine**: Archived historical meta-prompt and roadmap into `.agents/internal/`; authored `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md` with flagship Stage 1 (Phase 27 SuperLobster TLS Control Plane & Guided Mobile Pairing Hub) with complete 4-zone pre-walked documentation suite.
+- **Brain Architecture Migration (`/migrate-to-brain`)**: Transformed legacy `.agents/memory-bank/` into the Self vs. Environment `.agents/brain/` architecture, separating internal cognitive state (`activeContext.md`, `myStory.md`, `decision-log.md`) from external project foundations (`brain/project/`).
+- **Android Companion Architecture Alignment**: Formalized Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`) in `.agents/brain/android/di-container.md` and updated `README.md`. Provides sub-100ms cold start for OTP lookups, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
+- **Two-Agent Co-Pilot Orchestration Protocol (Stage 24 / Phase 23)**: Dispatched Google Jules (`8580131941674843399`) on `stage/phase-23-item-integrity` under Mode 3 (Long-Lived Co-Pilot). Audited incoming PR #2, enforced Agent Home Boundary isolation, realigned base branch, and delivered recursive review comment with 6 embedded memory units.
 
 ## [0.0.2.4] - 2026-09-23
 
@@ -168,7 +175,7 @@
 - **`getStoredPodColors`**: returns `{}` instead of merging `INITIAL_DEFAULT_COLORS`.
 - **`getPodColor`**: accepts optional string; returns first palette color (`POD_COLOR_PALETTE[0]`) when input is empty.
 - **All vault item decryption in `scuttleVault`**: fallback category changed from `p.category || "Personal"` to `p.category || ""`.
-- **Port migration: 5353→6464, 5454→6565** — ShellGuard's web UI and API now live on :6464 and :6565 respectively, fully disentangled from CaraBase's port claims (5353/5454). All 26 source files, test ports (5454X → 6464X), Docker, Compose, Unraid template, docs, and both memory banks updated. 155 tests pass, build clean, live smoke verified on both new ports.
+- **Port migration: 5353→6464, 5454→6565** — ShellGuard's web UI and API now live on :6464 and :6565 respectively, fully disentangled from CaraBase's port claims (5353/5454). All 26 source files, test ports (5454X → 6464X), Docker, Compose, Unraid template, docs, and both brains updated. 155 tests pass, build clean, live smoke verified on both new ports.
 
 ### Fixed
 - **Pod deletion/rename state sync**: categories now normalized via `normalizePod()` before comparison, fixing silent failures where unnormalized strings with spaces or slash differences caused the filter to return 0 items and skip updates entirely.

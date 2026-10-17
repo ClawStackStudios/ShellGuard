@@ -1,94 +1,70 @@
 ---
-description: Semantic versioning logic for determining and applying project version increments from CHANGELOG.md analysis.
+trigger: model_decision
+description: When Updating the project/application versioning
 ---
 
 # Workflow: Intelligent Project Versioning & Documentation
 
 This rule defines an automated, multi-step process for releasing a new version of the project. I MUST follow this logic precisely to ensure a correct and consistent release version incrementation methodology.
 
-### Step 1: Determine New Version (Automated Logic)
+### Step 1: Determine New Version (Work-Driven 4-Digit Logic)
 
-My primary task is to calculate the new version number. I MUST follow this decision tree in order:
+My primary task is to calculate the new version number following the `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`) convention. **We do not force artificial target versions**; the nature and magnitude of the actual completed work dictates which tier increments:
 
 1.  **Check for Explicit User Input:**
-    - First, check if the user has provided an explicit version type (e.g., `major`, `minor`, `patch`, `fix`).
+    - First, check if the user has provided an explicit version type or number (e.g., `major`, `minor`, `patch`, `revision`, `v0.0.0.4`, `v0.0.1.0`).
     - If yes, this is the highest priority. Proceed to calculate the new version based on this input.
 
-2.  **Infer from `CHANGELOG.md`:**
-    - If no explicit type is given, I MUST infer it by analyzing the content under the `[Unreleased]` section of `CHANGELOG.md`.
-    - Apply the following Semantic Versioning logic:
-        - If I find `BREAKING CHANGE:` text or a `### Removed` section, it MUST be a **MAJOR** increment.
-        - If I find a `### Added` section, it MUST be a **MINOR** increment.
-        - If I only find `### Fixed`, `### Security`, or other minor sections, it MUST be a **PATCH** increment.
+2.  **Infer from Implemented Work & `CHANGELOG.md`:**
+    - If no explicit type is given, calculate the increment by parsing commit types and changelog entries:
+        - **MAJOR (`X+1.0.0.0`)**: Triggered by breaking change indicators (`!` in commit header like `feat!:`, `refactor!:`, or `BREAKING CHANGE:` footer). Includes schema-incompatible database migrations, breaking cryptographic envelope versions (`v > 1`), or major ecosystem version milestones.
+        - **MINOR (`X.Y+1.0.0`)**: Triggered by new features (`feat` commits, `Added` entries). In our roadmap, increments for major cohesive phase deliverables (e.g. Phase 5 Autofill, Phase 6 Backup & Settings).
+        - **PATCH (`X.Y.Z+1.0`)**: Triggered by bug fixes (`fix`), performance optimizations (`perf`), or substantive refactors (`refactor`) impacting existing functionality (`Fixed`, `Changed`, `Security`).
+        - **REVISION (`X.Y.Z.N+1`)**: Triggered by maintenance (`chore`), documentation (`docs`), style (`style`), build tweaks (`build`), or iterative hotfixes.
+        - **Android Play Console Invariant**: Every release upload MUST increment `versionCode` (`N + 1` strictly monotonic integer) in `app/build.gradle.kts`, even when maintaining `versionName` display parity.
 
 3.  **Ask User on Ambiguity (Fallback):**
-    - ⚠️ **If my inference is ambiguous** (e.g., only a `### Changed` section exists), I **MUST NOT GUESS**.
-    - Instead, I MUST ask the user for clarification. Present my analysis and provide clear choices.
-    - **✅ Use this template for asking:**
-      > "I have analyzed the changes in `[Unreleased]` and the version increment is ambiguous. Based on the changes, I suggest the following options:
-      > - **MINOR (`X.Y.Z`):** Choose this for new, backward-compatible features.
-      > - **PATCH (`A.B.C`):** Choose this for backward-co mpatible bug fixes.
+    - ⚠️ **If my inference is ambiguous**, I **MUST NOT GUESS**.
+    - Instead, I MUST ask the user for clarification. Present my analysis and provide clear choices:
+      > "I have analyzed the changes in `[Unreleased]` and the version increment tier is ambiguous. Based on the work completed:
+      > - **PATCH (`vX.Y.Z+1.0`):** For completed feature phases or substantial bug fixes.
+      > - **REVISION (`vX.Y.Z.N+1`):** For small adjustments, iterative tweaks, or hotfixes.
+      > - **RE-RELEASE (`vX.Y.Z.N (Build N+1)`):** Keep display version, increment `versionCode` only.
       >
-      > Please specify which version is correct."
+      > Which version increment should we apply?"
 
 ### Step 2: Pre-flight Check & Confirmation
 
 Before modifying any files, perform an internal verification and present a plan to the user.
 
-1.  **Internal Verification:** Use a thinking block to confirm I have all necessary information.
+1.  **Internal Verification:** Use a thinking block to confirm I have all necessary information dynamically read from the project:
     ```xml
     <thinking>
-    1.  Current version source file identified (e.g., `package.json`).
-    2.  Current version read: [e.g., 1.9.3]
+    1.  Current version source file read (`app/build.gradle.kts`).
+    2.  Current version read dynamically: [e.g., versionName = "X.Y.Z.N", versionCode = N]
     3.  Increment type determined: [e.g., minor (inferred)]
-    4.  Calculated new version: [e.g., 1.10.0]
+    4.  Calculated new version: [e.g., versionName = "X.Y+1.0.0", versionCode = N + 1]
     5.  Required files are present and accessible.
     Plan is ready for execution.
     </thinking>
     ```
-2.  **State Your Plan:** Present the confirmed new version number to the user and ask for final approval before writing any changes. For example: "I will increment the version to `1.10.0`. Is this correct?"
+2.  **State Your Plan:** Present the confirmed new version number to the user and ask for final approval before writing any changes. For example: "I will increment the version from `vX.Y.Z.N (Build N)` to `vA.B.C.D (Build N+1)`. Is this correct?"
 
 ### Step 3: Execute Core File Modifications
 
 Once the user confirms, I will proceed with the following precise file modifications.
 
 1.  **Update Central Version Source:**
-    - Locate and update the version number in the identified source file (`package.json`, `app-config.yaml`, etc.).
+    - Locate and update the version number in the central source file (`app/build.gradle.kts` for Android, setting `versionCode = N + 1` and `versionName = "X.Y.Z.N"`).
 
 2.  **Update `CHANGELOG.md`:**
-    - Create a new version heading below `[Unreleased]` using the format `## [X.Y.Z] - YYYY-MM-DD`.
+    - Create a new version heading below `[Unreleased]` using the format `## [X.Y.Z.N] - YYYY-MM-DD`.
     - Move the summarized changes from the `[Unreleased]` section to this new version section.
     - Update the version comparison link at the bottom of the file.
 
 3.  **Update `README.md` Version Badge:**
     - Find the version badge in `README.md` and update the version number.
     - **✅ Template:** `[![Version](https://img.shields.io/badge/version-NEW.VERSION.HERE-blue.svg)](CHANGELOG.md)`
-
-4.  **Build-number sweep:**
-    - Consuming `Build N` shifts every queued phase's provisional `(Build N+x)` label by +1 in BOTH `ROADMAP.md` and `project/meta-prompt-ai-studio.md` — INCLUDING anchor hrefs that embed build numbers.
-    - Sweep with version-prefixed patterns (disambiguation), assert each replacement count, and re-run the anchor battery afterwards.
-
-### Step 3.5: Clean Release Draft Invariant & Archival
-1. **Single Active Release Draft**:
-   - The repository root MUST contain strictly **ONE** active release draft file (`RELEASE-vX.Y.Z.W.md`).
-   - When generating a new release draft, previous draft files (e.g. `RELEASE-v0.0.2.1.md`) MUST be purged in the same stroke. Never leave stale release notes behind.
-2. **Central Version Anchor Grid**:
-   - Ensure the new version is synchronized across all 5 central anchors:
-     1. `package.json` (`"version": "X.Y.Z.W"`)
-     2. `package-lock.json` (`"version": "X.Y.Z.W"` in root and `packages[""]`)
-     3. `README.md` (Version shield badge)
-     4. `CHANGELOG.md` (Promote `[Unreleased]` to `## [X.Y.Z.W] - YYYY-MM-DD`)
-     5. `ARCHITECTURE.md` (Version header, directory structure, test suite counts, and Delta entry)
-
-### Step 3.6: Roadmap 3-Version Sliding-Window Protocol
-To keep `ROADMAP.md` dense, actionable, and token-efficient:
-1. **3-Completed-Milestones Ceiling**:
-   - The "Completed Releases" section of `ROADMAP.md` strictly holds the **3 most recently completed milestones**.
-2. **Historical Archival**:
-   - When a newly completed phase is added to Completed Releases (bringing the total to 4), the oldest of the four MUST be retired into `.agents/memory-bank/ROADMAP-HISTORY.md`.
-3. **Queue Advancement**:
-   - Remove the completed phase from the active forward queue.
-   - Advance `current_position` to `vX.Y.Z.W (Build N) — released & live; next Phase N+1 (vX.Y.Z.W+1 / Build N+1)`.
 
 ### Step 4: 🧠 Intelligently Update Project Documentation
 
@@ -105,20 +81,32 @@ My goal is to ensure all technical and maintenance documentation reflects the ne
 
 ### Step 5: Prepare Git Commit Message
 
-Once all file changes are approved and applied, I will prepare and output the following commit message text. **DO NOT execute the commit.**
+Once all file changes are approved and applied, I will prepare and output the commit message following the two-layer attribution format:
 
-**✅ Template:**
 ```
-<version number> <short, descriptive title>
+chore(release): bump version to vX.Y.Z.N (Build N+1) --release vX.Y.Z.N
 
-- A bulleted list summarizing the key feature/fix changes.
-- Update project documentation to reflect new changes.
+User: <intent/direction provided by human>
+AI: <files updated, tests verified, and documentation synchronized>
 ```
 
-**Example Output:**
-```
-1.10.0 Introduce User Profile Caching
+---
 
-- Implemented Redis caching for user profile data to reduce database load.
-- Added new environment variables for Redis connection.
-- Updated ARCHITECTURE.md with details on the new caching layer.
+## 🚫 Versioning Anti-Patterns to Avoid
+
+1. **Never Hardcode Static Version Assumptions**: Always read the live version dynamically from `app/build.gradle.kts` (`versionCode` and `versionName`). Never assume a hardcoded starting number.
+2. **Never Duplicate `versionCode`**: Google Play Console will immediately reject any upload with an existing or decremented `versionCode`. It must strictly increment (`N + 1`).
+3. **Never Desynchronize Version Anchors**: Updating `app/build.gradle.kts` without updating `CHANGELOG.md`, `README.md`, and drafting `RELEASE-vX.Y.Z.N.md` creates documentation drift. All anchors evolve in the same release commit.
+4. **Never Guess Ambiguous Increments**: If changes in `[Unreleased]` do not cleanly map to a single SemVer increment tier, always ask the user with structured choices rather than guessing.
+5. **Never Ignore the Downstream Blast Radius**: If you bump a version incorrectly in `ROADMAP.md` or `changelog.md`, every future phase and milestone mapped in those documents becomes mathematically corrupted. You must strictly adhere to the tier definitions (e.g., a phase deliverable is a PATCH, not a MINOR) to protect the integrity of the entire roadmap.
+
+---
+
+## 🛡️ Version Conflict Resolution Matrix
+
+| Conflict / Edge Case Scenario | Resolution Strategy |
+| :--- | :--- |
+| **Play Console Bundle Rejection / Re-release** | Keep `versionName = "X.Y.Z.N"` identical for user visibility, increment `versionCode = N + 1`. |
+| **Hotfix on Live Release** | Increment the 4th digit: `vX.Y.Z.N` ➔ `vX.Y.Z.N+1` and increment `versionCode = N + 1`. |
+| **Simultaneous Breaking + Non-Breaking Changes** | The higher-precedence tier wins: `MAJOR` (`X+1.0.0.0`) supersedes `MINOR` and `PATCH`. |
+| **Release Note Corrections Post-Release** | Edit `RELEASE-vX.Y.Z.N.md` on `main`; the CI `mirror` job syncs the description without rebuilding binaries. |

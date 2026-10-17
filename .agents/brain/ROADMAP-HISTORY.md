@@ -281,7 +281,7 @@ across `ARCHITECTURE.md`, `SECURITY.md`, `README.md`, `QUICKSTART.md` and
 > rotation — no HTTP restore, offline `scripts/restore.ts` procedure instead.
 > The full panel suite ships as eight components plus the `BouncyBrand`
 > brand-motion component and the admin-login hash alias. The agent build
-> system also molts: the memory bank restructures under `.claude/`
+> system also molts: the brain restructures under `.claude/`
 > *(build-system receipts: `eab0272`, `8f47b35`, `9eb0f7e`)*.
 > *(Core receipts: `5e789cc`, `4d23433` — 2026-08-27/28. First appearance of
 > `attachmentUtils.ts` — the attachments architecture begins here.)*
@@ -344,7 +344,7 @@ document the plane across `README.md`, `ARCHITECTURE.md`, `SECURITY.md`,
 > pattern port — human `hu-` / agent `lb-` tabs) that doubles as protocol
 > education, rendering the actual key-lifecycle diagram and the invariant
 > verbatim: *"✅ hu- keys NEVER sent plaintext"*. The knowledge system molts
-> alongside: the memory bank is untracked from the repo (agent-internal state
+> alongside: the brain is untracked from the repo (agent-internal state
 > stays local), `.env.example` gains a gitignore exception, and the VitePress
 > documentation portal deploys to GitHub Pages.
 > *(Core receipts: `5f777d7`, `8a89260`, `0d9f83c`, `b882ecb`, `0ed7f8a` —
@@ -360,7 +360,7 @@ the vault data fetch, the header shows the account switcher, and login/setup
 flows write through the session manager. Add the QuickLogin flow state:
 locked/reload states resolve through `QuickLoginModal` (switch known accounts
 or re-unlock the current identity), improving auth state management across
-`LoginView`, `SetupView` and the vault view. Untrack the agent memory bank
+`LoginView`, `SetupView` and the vault view. Untrack the agent brain
 from the repo (`.claude/` stays local — agent-internal state never pollutes
 the canonical tree) and add `.env.example` to the gitignore exception list.
 
@@ -707,7 +707,7 @@ README license badge to AGPL-3.0; molt the RELEASE file and cut `v0.0.1.5`.
 > Companion work: `release.yml` gains `--release` commit-flag publishing,
 > `DESIGN.md` syncs with the master-detail and custom-fields patterns, the
 > `.agents/` directory molts out of the git index (agent rules go local,
-> like the memory bank), release-notes hygiene cleans the rolling model,
+> like the brain), release-notes hygiene cleans the rolling model,
 > and the first Android companion documentation initializes — the
 > ShellGuard-TOTP bridge begins. *(Receipts: `fa72f67`, `2c13b39`,
 > `d982474`, `e8497bd`, `9aba894`, `33157ff`, `f35ba4a`, merge `02ed28e`,
@@ -741,7 +741,7 @@ Description: Extend `release.yml`: commit messages containing `--release
 as body) — releases no longer require manual tag pushes alone. Synchronize
 `DESIGN.md` with the modern master-detail layout and custom-fields
 patterns; untrack `.agents/` from the git index (agent rules live local,
-like the memory bank); clean release-notes hygiene for the rolling model;
+like the brain); clean release-notes hygiene for the rolling model;
 initialize the Android companion documentation suite (architecture specs
 and engineering guidelines — the ShellGuard-TOTP bridge begins); molt the
 RELEASE file and cut `v0.0.1.6`.
@@ -818,7 +818,7 @@ divider; molt the RELEASE file and cut `v0.0.1.7`.
 > Phase Feature Set Overview:
 > The walk ends where the application stands today — and the documentation
 > system becomes a first-class citizen. The project scaffolds its agentic
-> knowledge infrastructure: a comprehensive memory bank (including a
+> knowledge infrastructure: a comprehensive brain (including a
 > dedicated `android/` sub-bank mirroring the companion's crypto, Room
 > schema, TOTP engine and UI models), workflow templates, and formalized
 > agentic rule sets — then synchronizes release-pipeline invariants and
@@ -838,7 +838,7 @@ divider; molt the RELEASE file and cut `v0.0.1.7`.
 - [x] **Task 31: [Functionality] Agentic Knowledge Infrastructure & Dynamic Version Resolver**
 
 Description: Initialize the project scaffolding for agent collaboration: a
-comprehensive memory bank under `.agents/memory-bank/` — core files plus a
+comprehensive brain under `.agents/brain/` — core files plus a
 dedicated `android/` sub-bank (api-client, crypto-spec, room-schema,
 totp-engine, ui-compose-models) mirroring the companion's internals —
 workflow templates, and agentic rule sets (attractor beacon, git hygiene,
@@ -853,7 +853,7 @@ match).
 
 > Success Criteria: The version presented in the SuperLobster panel, backups
 > and API always equals `package.json`; the resolver survives a missing env
-> var; the memory bank loads a cold agent into full project context; the
+> var; the brain loads a cold agent into full project context; the
 > android/ sub-bank mirrors the companion's spec truth.
 
 - [x] **Task 32: [Documentation Component] Privacy Policy, Docs Bridge Parity & Chained Mirror Release**
@@ -958,7 +958,7 @@ across `key-hierarchy-spec.md` receipts, `ARCHITECTURE.md` and `SECURITY.md`.
 > attachments from Pod item metrics so attached files never artificially inflate
 > folder counts. Introduces native in-browser WebCrypto ED25519/RSA-4096 SSH keypair
 > generation with downloadable public/private keys.
-> *(Source: Attractor Beacon §6, memory-bank/progress.md)*
+> *(Source: Attractor Beacon §6, brain/project/progress.md)*
 > *(Receipts: `6f9b00d` — Task 35 keypair engine + pod-decoupling receipts,
 > `61336a1` — Task 36 master-form key section, release prep + tag `v0.0.2.0` — 2026-09-17. Released & live.)*
 

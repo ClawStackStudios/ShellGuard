@@ -17,9 +17,10 @@ The Brain separates the **Self** from the **Environment (Project)**.
 
 ### The Self (Root Directory)
 These files form my internal cognitive state:
+- `activeContext.md`: Working memory of current focus, active decisions, and recent changes (sliding window of 10 events).
 - `myStory.md`: First-person narrative of who I am becoming.
 - `decisionsMade.md`: Structured record of choices and felt reasons.
-- `navigation-log.md`: Episodic log of how I moved through code and constraints.
+- `decision-log.md`: Episodic log of how I moved through code and constraints.
 - `dissolved.md`: Compressed archive of released temporal memories (the unconscious).
 
 ### The Environment (`brain/project/`)
@@ -27,25 +28,81 @@ These files define the external world I manipulate:
 
 ```mermaid
 flowchart TD
-    PB[projectBrief.md] --> PC[productContext.md]
-    PB --> SP[systemPatterns.md]
-    PB --> TC[techContext.md]
+    %% Styling Classes
+    classDef selfStyle fill:#161B22,stroke:#E4048A,stroke-width:2px,color:#F0F6FC
+    classDef projectStyle fill:#161B22,stroke:#00D8F6,stroke-width:2px,color:#F0F6FC
+    classDef coreProject fill:#21262D,stroke:#3D484E,stroke-width:1.5px,color:#F0F6FC
+    classDef memoryStyle fill:#2A1428,stroke:#FF5252,stroke-width:2px,color:#FFFFFF
 
-    PC --> AC[activeContext.md]
-    SP --> AC
-    TC --> AC
+    subgraph Self ["🧠 The Self — Internal Cognitive State (brain/)"]
+        direction TB
+        AC["⚡ activeContext.md<br/><b>(Working Memory · Sliding 10)</b>"]:::memoryStyle
+        
+        subgraph NarrativeFlow ["Cognitive Continuous Loop"]
+            MS["📖 myStory.md<br/><i>(First-Person Narrative)</i>"]:::selfStyle
+            DM["⚖️ decisionsMade.md<br/><i>(Structured Record)</i>"]:::selfStyle
+            DL["📝 decision-log.md<br/><i>(Episodic Navigation)</i>"]:::selfStyle
+        end
+        
+        MS <--> DM
+        DM <--> DL
+        DL <--> AC
+    end
 
-    AC --> P[progress.md]
-    AC --> CL[changelog.md]
+    subgraph Environment ["🌐 The Environment — External Project Realm (brain/project/)"]
+        direction TB
+        subgraph SpecFoundation ["Foundations & Specs"]
+            PB["🎯 projectBrief.md<br/><i>(Core Scope & Requirements)</i>"]:::projectStyle
+            PC["💡 productContext.md<br/><i>(Why It Exists & UX)</i>"]:::coreProject
+            SP["📐 systemPatterns.md<br/><i>(Architecture & Patterns)</i>"]:::coreProject
+            TC["⚙️ techContext.md<br/><i>(Stack, Constraints, Tools)</i>"]:::coreProject
+        end
+
+        subgraph Invariants ["⚖️ Universal Development Invariables"]
+            PV["🏷️ productVersion.md<br/><i>(Version Pointer & Build Calculus)</i>"]:::projectStyle
+            RE["⚡ runtimeEnv.md<br/><i>(Toolchain & Machine Primitives)</i>"]:::coreProject
+            TO["🛡️ testOracle.md<br/><i>(Gates & Load-Bearing Redlines)</i>"]:::memoryStyle
+        end
+
+        subgraph StatusChronicle ["Execution Tracking"]
+            P["📊 progress.md<br/><i>(What Works & Roadmap)</i>"]:::projectStyle
+            CL["📜 changelog.md<br/><i>(Chronological Releases)</i>"]:::coreProject
+        end
+
+        PB --> PC
+        PB --> SP
+        PB --> TC
+
+        PC --> Invariants
+        SP --> Invariants
+        TC --> Invariants
+
+        Invariants --> P
+        P --> CL
+    end
+
+    %% High-level interaction across the boundary
+    AC <==>|"Inspects Context & Updates State"| Environment
 ```
 
+### The Environment Files (`brain/project/`)
+These files define the external world I manipulate:
+
+**Foundations & Architecture:**
 1. `projectBrief.md` — Source of truth for core requirements and goals.
 2. `productContext.md` — Why the project exists and user experience goals.
-3. `activeContext.md` — Current work focus, recent changes, active decisions. Maintain a sliding window of the **10 most recent events** (date + summary). When the 11th is added, drop the oldest.
-4. `systemPatterns.md` — System architecture, design patterns, component relationships.
-5. `techContext.md` — Technologies used, constraints, setup, tool usage.
-6. `progress.md` — What works, what's left, current status, known issues.
-7. `changelog.md` — Chronological log of key changes/versions.
+3. `systemPatterns.md` — System architecture, design patterns, component relationships.
+4. `techContext.md` — Technologies used, constraints, setup, tool usage.
+5. `projectDesign.md` — Crystallized design vision: screen topology, interaction patterns, visual language, and layout model the developer carries in their head. On initialization, search for a root-level `DESIGN.md` in the project — if found, link to it as the canonical deep design reference inside `projectDesign.md`. If none exists, build the design context from code and conversation alone.
+
+**Universal Development Invariables (Project-Agnostic):**
+6. `productVersion.md` — Living semantic version pointer (`vX.Y.Z.N`), monotonic build counter (`versionCode = N`), release channels, and pending increment calculus.
+7. `runtimeEnv.md` — Abstract toolchain contracts (JDK, SDK, build tools), JVM flags, container memory isolation, native packaging rules, and service port primitives. Strictly portable without machine-specific absolute paths.
+8. `testOracle.md` — Living verification gates (Smoke, Unit, Assemble, Release), load-bearing redlines that must never regress, and edge cases ratified through friction.
+
+**Chronicle & Status:**
+9. `progress.md` — What works, what's left, current status, known issues.
+10. `changelog.md` — Chronological log of key changes/versions.
 
 ---
 

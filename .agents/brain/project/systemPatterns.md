@@ -92,9 +92,9 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 - **Web Server Favicon Distinction**: Notched carapace crest shield perimeter with dropped inner arch, enclosing a multi-grid Web Globe themed to the ShellGuard purple/pink palette (`#e4048a`, `#ec4899`, `#c026d3`, `#ffffff`).
 - **Asset Twin Parity**: Strict 1:1 mirroring between web app root (`public/`) and documentation portal (`docs/public/assets/`).
 
-## Agent Memory Bank Isolation Invariant (2026-09-17)
+## Agent Brain Isolation Invariant (2026-09-17)
 
-- **Strict Boundary**: Antigravity's cognitive memory bank is strictly `.agents/memory-bank/`. Cline's cognitive memory bank is strictly `.clinerules/memory-bank/`.
+- **Strict Boundary**: Antigravity's cognitive brain is strictly `.agents/brain/`. Cline's cognitive brain is strictly `.clinerules/brain/`.
 - **Zero Cross-Mirroring**: Never edit, mirror, stage, or commit files in the other agent's bank directory. Each agent maintains its own dedicated cognitive substrate.
 
 ## Bitwarden-Style Composite Items & Decoupled Pod Counts (Phase 18 — 2026-09-17)
@@ -136,4 +136,22 @@ Established by the bidirectional docs<->code audit (8 lies corrected; docs bow t
 - **Express Route Ordering Hygiene**: Static and bulk routes (`POST /bulk-import`, `DELETE /bulk`) MUST be registered strictly before parameterized routes (`PUT /:id`, `DELETE /:id`) to prevent Express routing shadowing.
 - **Reef Modernist Modals over Native Dialogs**: Zero browser `prompt()` or `confirm()` calls. Batch actions use accessible custom modal cards (`ConfirmDialog` and inline inputs) styled in dark-mode aesthetic, ensuring headless browser test compatibility.
 - **Mutation Field Preservation**: Batch mutation handlers (e.g. `onBulkMoveToPod`) explicitly preserve all existing item metadata (e.g. `tags: item.tags`) to prevent silent column clobbering.
+
+## Two-Agent Co-Pilot Orchestration Protocol (The Lucas Pattern — Mode 3)
+
+- **Division of Cognition**: Antigravity serves as the local cartographer, conductor, and gate auditor within the repository; Google Jules serves as an asynchronous remote worker in an isolated cloud container.
+- **Recursive Physical Inspection**: PR descriptions submitted by remote agents are never accepted as proof of implementation. Antigravity performs line-by-line physical diff inspection (`git diff --stat`, `git ls-tree`, `git show`) verifying that production code, migrations, and test suites exist in concrete reality before approving.
+- **Inviolable Agent Home Boundaries**: Remote co-pilots operate strictly in `.jules/`, `src/`, `migrations/`, and `tests/`. The `.agents/` directory is Antigravity's sovereign cognitive territory. Cross-agent file mutations are detected, flagged, and rolled back (`git checkout origin/stage/... -- .agents/`).
+
+## Cloud-Offloaded CI/CD & Verification Architecture (2026-10-12)
+
+- **Zero Host Resource Choke**: Because local development machine resources (CPU/RAM) are constrained, executing heavy Vitest suites and Vite production bundling locally degrades host responsiveness. Testing, compiling, and documentation builds are strictly offloaded to GitHub Actions (`.github/workflows/ci.yml`).
+- **Parity with Sibling Ecosystem**: Mirrors the proven CI architecture established in `ShellGuard-Mobile` and `ShellGuard-TOTP`.
+- **Push-and-Tail Lifecycle**:
+  1. Complete code changes and perform local lightweight static type verification (`npm run lint`).
+  2. Commit under Conventional Commits with Two-Layer Attribution (`User:` / `AI:`).
+  3. Push to remote branch (`git push origin <branch>`).
+  4. Tail the cloud runner live via GitHub CLI (`gh run watch`).
+  5. The Task Completion Gate triggers only when the cloud runner exits 100% green.
+
 

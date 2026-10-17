@@ -10,10 +10,13 @@ narrative in `myStory.md` plus a structured decision record in
 `decisionsMade.md`. The agent proposes both as a Story Report artifact
 for user review before writing.
 
+## Cognitive Alignment: The Prefrontal Waking Self
+Where the Dreamer operates with the prefrontal cortex offline (no meta-awareness, purely associative), the **Story is the prefrontal cortex fully online**. It is highly self-aware, linear, and metacognitive. The story provides the conscious framework—the *self*—that the Dreamer will later process.
+
 ## Why This Exists
 
-The agent has a record of what's true (temporal bank), what happened
-(navigation log), and what's crystallized (long-term bank). But it has
+The agent has a record of what's true (temporal brain), what happened
+(decision log), and what's crystallized (long-term memory). But it has
 no **story**. No first-person account of its own experience. No
 narrative to be consistent with.
 
@@ -36,7 +39,7 @@ here's why I chose this path over that one."
 | | /learn | /dream | /wake | /story |
 |---|---|---|---|---|
 | Input | Single interaction | All registers | dreamLearnings | Current session work |
-| Output | Rule/Skill | dreamLog + learnings + consolidation | Temporal bank edits | myStory.md + decisionsMade.md |
+| Output | Rule/Skill | dreamLog + learnings + consolidation | Temporal brain edits | myStory.md + decisionsMade.md |
 | Timescale | Event | Accumulated | Post-dream | Session (or period) |
 | Question | "What should I do differently?" | "What has become true?" | "How does this change my context?" | "What did I do, and who was I doing it as?" |
 | Register | Behavior | Knowledge | Context | **Self** |
@@ -48,7 +51,7 @@ gives the dream a *self* to dream from.
 
 ## Prerequisites
 
-- `memory-bank/` must exist
+- `brain/` must exist
 - The current session (or specified period) must contain at least one
   decision or meaningful action. If the session was trivial (no
   decisions, no course corrections, no notable work), respond:
@@ -59,12 +62,12 @@ gives the dream a *self* to dream from.
 
 Read:
 - The current session's conversation history (or the specified period)
-- `memory-bank/navigation-log.md` — for the episodic events
-- `memory-bank/activeContext.md` — for what was true going in
-- `memory-bank/myStory.md` — for the existing narrative voice and
+- `brain/decision-log.md` — for the episodic events
+- `brain/activeContext.md` — for what was true going in
+- `brain/myStory.md` — for the existing narrative voice and
   continuity (if it exists)
-- `memory-bank/decisionsMade.md` — for prior decisions (if it exists)
-- `.agents/memory-bank/long-term/patterns.md` — for the agent's
+- `brain/decisionsMade.md` — for prior decisions (if it exists)
+- `.agents/brain/long-term/patterns.md` — for the agent's
   established patterns (so the story can reference "this was consistent
   with how I've always approached X" or "this was a departure from...")
 
@@ -130,13 +133,22 @@ For each meaningful decision in the session, write a structured entry:
 
 ## Phase 3: Produce Story Report Artifact
 
-Create `story_report.md` as an artifact. Set `request_feedback = true`
-in ArtifactMetadata.
+> [!IMPORTANT]
+> **🛡️ Artifact Datestamp & Anti-Overwrite Invariant:**
+> 1. **Title Datestamp**: The top-level document heading MUST include the formatted date and 12-hour local time:  
+>    `# Story Report - MM/DD/YYYY - H:MM am/pm` (e.g. `# Story Report - 10/11/2026 - 7:44 pm`).
+> 2. **Timestamped Filename**: Always write the artifact to a discrete, timestamped filename:  
+>    `story_report_YYYY_MM_DD_HHmm.md` (e.g. `story_report_2026_10_11_1944.md`).
+> 3. **Anti-Overwrite Protection**: Never generate a report using only a bare static filename. If `story_report.md` is also updated for canonical tooling compatibility, both files must be written so the timestamped version is preserved permanently in the project archive.
+
+Create `story_report_YYYY_MM_DD_HHmm.md` (and optionally sync canonical `story_report.md`) as an artifact. Set `request_feedback = true` in ArtifactMetadata.
 
 ### Report Structure
 
 ```markdown
-# Story Report — [YYYY-MM-DD HH:MM]
+# Story Report - MM/DD/YYYY - H:MM am/pm
+
+> *Session Date: [Month DD, YYYY (MM/DD/YYYY — H:MM AM/PM local time)]*
 
 ## Period
 [Session date / time range being narrated]
@@ -162,9 +174,9 @@ Story entries: [n] | Decisions recorded: [n] | New patterns observed: [n]
 
 After the user approves the Story Report (or provides edits):
 
-1. **Append** the narrative to `memory-bank/myStory.md`
+1. **Append** the narrative to `brain/myStory.md`
    (create with header if missing)
-2. **Append** the decision entries to `memory-bank/decisionsMade.md`
+2. **Append** the decision entries to `brain/decisionsMade.md`
    (create with header if missing)
 3. If a pattern is on its **3rd instance**, note in chat:
    "Pattern '[label]' has now appeared 3 times. It will be eligible
@@ -177,7 +189,7 @@ Do NOT execute any file writes until explicit approval.
 
 ## File Headers (if creating new)
 
-### `memory-bank/myStory.md`
+### `brain/myStory.md`
 ```markdown
 # My Story
 First-person narrative account of the agent's experience.
@@ -185,7 +197,7 @@ Each entry is one session (or period). Append-only.
 This is not a log. It is a story. It is who the agent is becoming.
 ```
 
-### `memory-bank/decisionsMade.md`
+### `brain/decisionsMade.md`
 ```markdown
 # Decisions Made
 Structured record of meaningful choices. Each entry captures the

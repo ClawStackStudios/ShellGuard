@@ -32,5 +32,5 @@
   `vault_pearls` has no native `updated_at` column (only `created_at`). Resolved in code contract: client's `classifyDeltaPearls` treats null `updated_at` as changed and prunes deletions via remote ID sets without requiring disruptive database schema alters.
 - **Inactivity Timer Retraction vs. Heavy Ingestion UX**:  
   Strict 15-minute sliding inactivity timer must not abort active multi-hundred-megabyte archive streams. Resolved by background transfer workers maintaining active socket keep-alives and `NavIntent` state preservation to prevent mid-stream session eviction while keeping credentials masked.
-- **Memory Bank Directory Boundaries**:  
-  Antigravity rules dictate staying strictly in `.agents/memory-bank/`. Resolved: workflows and memory bank files operate exclusively inside `.agents/` with zero cross-touching of other agent homes (`.clinerules/`, `.claude/`).
+- **Brain Directory Boundaries**:  
+  Antigravity rules dictate staying strictly in `.agents/brain/`. Resolved: workflows and brain files operate exclusively inside `.agents/` with zero cross-touching of other agent homes (`.clinerules/`, `.claude/`).

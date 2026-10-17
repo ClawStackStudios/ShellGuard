@@ -4,6 +4,15 @@ import { runMigrations } from './migrationRunner.js';
 import { migrateAgentKeyLedger } from './keyLedger.js';
 import { migrateAttachmentBlobs } from './attachmentBlobs.js';
 import { createAuditLogger } from '../utils/auditLogger.js';
+import { quarantineOrphanAttachments } from './attachmentIntegrity.js';
+
+// Initialize Audit DB (Segregated)
+const auditDb = createConnection('audit.sqlite', process.env.DB_ENCRYPTION_KEY);
+initializeAuditSchema(auditDb);
+
+// Centralized Audit Logger Singleton
+const audit = createAuditLogger(auditDb);
+export { auditDb, audit };
 
 // Initialize and migrate on load
 runMigrations(dbInstance);
@@ -14,12 +23,8 @@ migrateAgentKeyLedger(dbInstance);
 // Phase 19: re-encode legacy TEXT attachment payloads to native BLOBs (after migrations)
 migrateAttachmentBlobs(dbInstance);
 
-// Initialize Audit DB (Segregated)
-const auditDb = createConnection('audit.sqlite', process.env.DB_ENCRYPTION_KEY);
-initializeAuditSchema(auditDb);
-
-// Centralized Audit Logger Singleton
-const audit = createAuditLogger(auditDb);
+// Phase 23: Relink or quarantine attachments
+quarantineOrphanAttachments(dbInstance);
 
 /** Purge expired tokens utility */
 export function purgeExpiredTokens(): number {
@@ -31,4 +36,4 @@ export function purgeExpiredTokens(): number {
 }
 
 export default dbInstance;
-export { dbInstance as db, auditDb, audit };
+export { dbInstance as db };

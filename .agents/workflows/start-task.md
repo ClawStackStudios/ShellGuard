@@ -5,14 +5,14 @@ description: A workflow defining the strict initialization protocol for beginnin
 # 🚀 Task Initialization Workflow
 
 > **Use When:** Commencing ANY new feature, bugfix, or refactor.
-> **Pair With:** `.agents/rules/git-hygiene.md` and `.agents/rules/memory-bank.md`.
+> **Pair With:** `.agents/rules/git-hygiene.md` and `.agents/rules/brain.md`.
 
 ---
 
 ## 🛑 Step 1: Pre-Flight Context Alignment
 Before writing a single line of code, you MUST establish context:
-1. Read `.agents/memory-bank/activeContext.md` to understand the current work focus and recent changes.
-2. Read `.agents/memory-bank/systemPatterns.md` or related architectural docs (`attractorBeacon.md`) if the task touches core state or logic.
+1. Read `.agents/brain/activeContext.md` to understand the current work focus and recent changes.
+2. Read `.agents/brain/systemPatterns.md` or related architectural docs (`attractorBeacon.md`) if the task touches core state or logic.
 
 ## 🌿 Step 2: Git Hygiene Check & Branch Creation
 You must NEVER work directly on `main`.

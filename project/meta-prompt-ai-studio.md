@@ -1363,12 +1363,11 @@ field row, and the full test oracle + tsc + build stay clean!
 2. **Sub-Phase 23.5.2**: Native first-class Credit Card (`card`) & Identity (`identity`) Vault Item models, server validation schemas (`VaultSchemas.bulkImportItem`), dedicated UI form modes in `ItemFormModal.tsx`, and Reef Modernist detail widgets in `ItemDetailPane.tsx` upholding the Eye-beside-Copy invariant on all sensitive fields (card number, CVV, SSN, Passport, Driver's License) with deduplicated custom fields.
 
 
-## 🧩 Stage 24 (Queued): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 27)]
+## 🧩 Stage 24 (Completed): Phase 23 Prompt — Bitwarden-Model Item Integrity, Attachment Parent Enforcement & Dashboard Type Truth [work-driven — provisional v0.0.2.5 (Build 27)] ✅
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-23-bitwarden-model-item-integrity--attachment-parent-enforcement--dashboard-type-truth-work-driven-version--provisional-v0025-build-27)
 > for complete specifications on **Task 45** and **Task 46**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 23; green-light from
-> Lucas still required.
+> **Execution state**: COMPLETED & VERIFIED — PR #3 integrated and Phase 23 released.
 > 📚 **Documentation Impact**: SECURITY.md (form-contract) · ARCHITECTURE.md (attachments route) · reference/blueprint-schema.md (quarantine) · docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md · docs/vault-features
 > **📖 Required Context Files for Phase 23**:
 > 1. [`database-schema.md`](./database-schema.md) — §3 (separated item tables; `vault_secure_attachments` as children).
@@ -1424,6 +1423,37 @@ rejected, the add menu has no Attachment option, the list shows exactly the
 three primary types with attachments only inside parents, sorting is
 deterministic, and the full test oracle + tsc + build stay clean!
 ```
+
+## 🩹 Stage 24.5 (Queued): Sub-Stage 25.1 / Phase 23.5 Prompt — Relational Integrity, Runtime Sweeper & Pre-Flight Quota Validation
+
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md) (Architectural Review Sub-Stage).
+> **Execution state**: QUEUED — executes immediately before Phase 24.
+> 📚 **Documentation Impact**: docs/vault-features/attachments.md · docs/agent-integration/api-reference.md
+> **📖 Required Context Files for Phase 23.5**:
+> 1. [`database-schema.md`](./database-schema.md) — §3 (`vault_secure_attachments` parent fields vs `attachments` JSON arrays).
+> 2. [`routes-and-contracts.md`](./routes-and-contracts.md) — §3 (attachment endpoints).
+
+Copy and paste this prompt to execute **Phase 23.5 (Sub-Stage 25.1)**:
+
+```markdown
+We are executing Sub-Stage 25.1 (Phase 23.5) to address architectural findings related to Relational Integrity, Runtime Sweepers, and Pre-Flight Quotas.
+
+Please implement the following:
+1. **Relational Attachment Integrity & Dangling Array Purge**:
+   In `src/server/routes/attachments.ts`, update `DELETE /api/attachments/:id` to cascade cleanly: when an attachment row is deleted, atomically remove the deleted attachment ID from the parent item's `attachments` JSON column across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`. Use a database transaction.
+2. **Runtime Quarantine Sweeper**:
+   Expose a `POST /api/attachments/quarantine/sweep` endpoint utilizing `quarantineOrphanAttachments()` so long-running servers can identify unparented attachments on-demand.
+3. **Pre-Flight Quota Validation**:
+   Expose a `GET /api/attachments/quota` endpoint returning `{ used_bytes, quota_bytes, remaining_bytes }` so clients can inspect capacity (`GROTTO_QUOTA_MB`) prior to heavy uploads.
+4. **Automated Test Coverage**:
+   Add tests to `tests/attachment-integrity.test.ts` verifying:
+   - Deleting an attachment purges its ID from the parent's `attachments` array.
+   - `POST /api/attachments/quarantine/sweep` correctly isolates orphans.
+   - `GET /api/attachments/quota` accurately computes remaining bytes.
+
+After code is complete, perform a `walk-the-docs` pass aligning API references. Do not touch `.agents/`. Validate with `npm test`.
+```
+
 
 ## 🔬 Stage 25 (Queued): Phase 24 Prompt — Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 28)]
 

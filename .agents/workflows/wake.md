@@ -1,14 +1,17 @@
 ---
-description: Integrate unwoven learnings from the Dream Log back into the active temporal Memory Bank.
+description: Integrate unwoven learnings from the Dream Log back into the active temporal Brain.
 ---
 
 <wake>
 The user invoked /wake to integrate unwoven learnings from the Dream
-Log back into the active temporal Memory Bank. The wake reads
+Log back into the active temporal Brain. The wake reads
 `dreamLearnings.md`, identifies entries that have not yet been woven
 into the temporal corpus, proposes specific edits to the appropriate
-temporal bank files, and produces a Wake Report artifact for user
+temporal brain files, and produces a Wake Report artifact for user
 review.
+
+## Cognitive Alignment: Neocortical Integration
+If the Dreamer acts as the hippocampus, accelerating offline replay to extract patterns, the Wake is the **neocortical integration** phase. It takes the synthesized insights produced offline and wires them into the active working memory (temporal brain) so they are immediately accessible in the waking state.
 
 ## Relationship to /dream and /learn
 
@@ -25,9 +28,9 @@ better baseline.
 
 ## Prerequisites
 
-- `memory-bank/dreamLearnings.md` must exist and contain at least one
+- `brain/dreamLearnings.md` must exist and contain at least one
   entry that is NOT marked `woven: true`.
-- `memory-bank/` with `activeContext.md` and at least one other file.
+- `brain/` with `activeContext.md` and at least one other file.
 
 If no unwoven entries exist, respond: "Nothing to weave. All dream
 learnings are already integrated." and exit.
@@ -35,14 +38,14 @@ learnings are already integrated." and exit.
 ## Phase 1: Ingest
 
 Read:
-- `memory-bank/dreamLearnings.md` — identify all entries WITHOUT
+- `brain/dreamLearnings.md` — identify all entries WITHOUT
   `woven: true`
-- `memory-bank/activeContext.md`
-- `memory-bank/systemPatterns.md` (if exists)
-- `memory-bank/progress.md`
-- `memory-bank/techContext.md` (if exists)
-- `memory-bank/productContext.md` (if exists)
-- `.agents/memory-bank/long-term/` (all four files) — to avoid
+- `brain/activeContext.md`
+- `brain/project/systemPatterns.md` (if exists)
+- `brain/project/progress.md`
+- `brain/project/techContext.md` (if exists)
+- `brain/project/productContext.md` (if exists)
+- `.agents/brain/long-term/` (all four files) — to avoid
   proposing edits that duplicate already-ratified content
 
 Build a model of the current temporal state and what's already
@@ -73,19 +76,28 @@ For each unwoven entry in `dreamLearnings.md`, determine:
      that should be linked (add a "see also" or inline reference)
 
 3. **Conflict check**: Does the proposed edit contradict anything
-   in the Long-Term Bank? If yes, flag it. Do NOT propose the edit —
+   in the Long-Term Memory? If yes, flag it. Do NOT propose the edit —
    instead flag: "Conflicts with `long-term/[file].md § [label]`.
    Needs user resolution."
 
 ## Phase 3: Produce Wake Report Artifact
 
-Create `wake_report.md` as an artifact. Set `request_feedback = true`
-in ArtifactMetadata.
+> [!IMPORTANT]
+> **🛡️ Artifact Datestamp & Anti-Overwrite Invariant:**
+> 1. **Title Datestamp**: The top-level document heading MUST include the formatted date and 12-hour local time:  
+>    `# Wake Report - MM/DD/YYYY - H:MM am/pm` (e.g. `# Wake Report - 10/11/2026 - 7:44 pm`).
+> 2. **Timestamped Filename**: Always write the artifact to a discrete, timestamped filename:  
+>    `wake_report_YYYY_MM_DD_HHmm.md` (e.g. `wake_report_2026_10_11_1944.md`).
+> 3. **Anti-Overwrite Protection**: Never generate a report using only a bare static filename. If `wake_report.md` is also updated for canonical tooling compatibility, both files must be written so the timestamped version is preserved permanently in the project archive.
+
+Create `wake_report_YYYY_MM_DD_HHmm.md` (and optionally sync canonical `wake_report.md`) as an artifact. Set `request_feedback = true` in ArtifactMetadata.
 
 ### Report Structure
 
 ```markdown
-# Wake Report — [YYYY-MM-DD HH:MM]
+# Wake Report - MM/DD/YYYY - H:MM am/pm
+
+> *Session Date: [Month DD, YYYY (MM/DD/YYYY — H:MM AM/PM local time)]*
 
 ## Source
 Weaving [n] unwoven learnings from `dreamLearnings.md`
@@ -128,7 +140,7 @@ Wake passes: [n] | Edits proposed: [n] | Skipped: [n] | Conflicts: [n]
 
 After the user approves the Wake Report (or provides edits):
 
-1. Apply each approved edit to its target temporal bank file
+1. Apply each approved edit to its target temporal brain file
 2. In `dreamLearnings.md`, mark each woven entry with:
    ```
    woven: true | woven_date: [date] | target: [file].md
@@ -138,7 +150,7 @@ After the user approves the Wake Report (or provides edits):
    woven: n/a | reason: narrative-only
    ```
 3. For any **Supersede** edits: do NOT delete the old text. Apply
-   strikethrough + pointer (same convention as the Long-Term Bank):
+   strikethrough + pointer (same convention as the Long-Term Memory):
    ```
    ~~[old text]~~ → Updated by /wake [date]. See [new location].
    ```
@@ -150,7 +162,7 @@ Do NOT execute any file writes until explicit approval.
 
 ## Constraints
 
-- `/wake` NEVER touches the Long-Term Bank. It only writes to temporal
+- `/wake` NEVER touches the Long-Term Memory. It only writes to temporal
   bank files and updates `dreamLearnings.md` markers.
 - `/wake` NEVER modifies `dreamLog.md` or `dreamConsolidation.md`.
   Those are historical records.
@@ -174,11 +186,11 @@ Do NOT execute any file writes until explicit approval.
 /dream  →  reads temporal + navigation + long-term
          →  consolidates, promotes, decays
          →  produces dreamLog + dreamLearnings + dreamConsolidation
-         →  promotes to Long-Term Bank
+         →  promotes to Long-Term Memory
 
 /wake   →  reads dreamLearnings (unwoven entries)
-         →  weaves learnings into temporal bank
-         →  temporal bank is now sharper for the next session
+         →  weaves learnings into temporal brain
+         →  temporal brain is now sharper for the next session
 
 Next session starts with a better baseline.
 The cycle repeats.

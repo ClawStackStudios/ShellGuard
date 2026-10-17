@@ -9,7 +9,7 @@ trigger: always_on
 - One task = one branch. Don't mix unrelated changes into the same branch or working tree.
 - When handling urgent hotfixes or multi-agent parallel branches without disturbing in-flight state, utilize Git Worktrees (`git worktree add ../<path> -b <branch>`). Always clean up worktrees when finished (`git worktree remove`, `git worktree prune`).
 - Before starting, snapshot state: `git status` and `git diff --stat`. If the tree is dirty with work you didn't author, stop and ask.
-- When committing work you did not author (in-flight user edits), run the project's test + build gates on the merged working tree BEFORE the commit. Their edits ride your commit message; they ride your verification too.
+- When committing work you did not author (in-flight user edits), commit, push to the remote branch, and tail the GitHub Actions CI run. Their edits ride your commit message; they ride cloud verification too.
 
 ## Commits & Conventional Standards
 - Keep changes small and self-contained; one logical change per commit. No mega-commits, no unrelated refactors bundled in.
@@ -54,7 +54,7 @@ trigger: always_on
 ## Secrets & safety
 - Never commit, read, or echo `.env`, `.env.*`, `secrets/**`, or any API keys/tokens.
 - Never push to a protected branch; open a PR instead.
-- Run linters, type checks, and the test suite before considering work done; don't commit if they fail.
+- Run lightweight static type checks (`npm run lint`) if needed; NEVER run heavy tests (`npm test`) or production builds (`npm run build`) locally. Offload all testing and building to GitHub Actions.
 
 ## Attribution & Commit Body Format
 - Commit under the human's configured identity (`git config user.name` / `user.email`). No separate agent identity, no AI co-author line.
@@ -76,13 +76,30 @@ trigger: always_on
 - If the agent did purely exploratory work with no human direction in that commit, write `User: (autonomous)` — but this should be the exception, not the norm.
 - No trailers, no co-author lines, no `AI-Model:` metadata. The two-layer message *is* the attribution.
 
+## Cloud-Offloaded CI/CD & Verification Policy
+- **No Local Testing or Building**: Host machine resources are strictly conserved. NEVER execute `npm test` or `npm run build` locally on this development machine.
+- **GitHub Actions as Single Source of Truth**: All test execution (Vitest suites), production bundle compilation (Vite build), and documentation builds (VitePress build) are offloaded to GitHub Actions (`.github/workflows/ci.yml`).
+- **Push & Tail Workflow**:
+  1. Complete code modifications and verify TypeScript types statically if necessary (`npm run lint`).
+  2. Commit changes using Conventional Commits with Two-Layer Attribution (`User:` / `AI:`).
+  3. Push the branch to GitHub: `git push origin <branch>`.
+  4. Immediately tail and monitor the resulting GitHub Actions workflow run:
+     ```bash
+     gh run list --workflow=ci.yml --limit 1
+     gh run watch
+     ```
+  5. If the cloud action fails, inspect the cloud logs (`gh run view --log-failed`), apply the fix locally, push, and tail again.
+  6. Verification is achieved only when the GitHub Actions CI runner exits 100% green.
+
 ## Git Hygiene Do's and Don'ts
 - **DO**: Follow Conventional Commits so automated changelog generators (`git-cliff`, `standard-version`) parse releases cleanly.
 - **DO**: Reference issues and PRs (`Closes #123`) in the commit footer when resolving tracked work.
 - **DO**: Keep scopes consistent across the project (`vault`, `auth`, `search`, `crypto`, `ui`, `api`, `deps`).
+- **DO**: Push commits to GitHub and tail the CI action (`gh run watch`) to verify cloud builds and test runs.
 - **DON'T**: Bundle unrelated changes across multiple domains into a single "mega-commit".
 - **DON'T**: Forget breaking change indicators (`!` or `BREAKING CHANGE:`) when changing contracts.
-- **DON'T**: Commit failing code—automated pre-flight gates (`lint`, `test`, `build`) must be 100% green before staging.
+- **DON'T**: Run `npm test` or `npm run build` locally on the host machine—local resources are constrained; all testing and compilation are strictly offloaded to GitHub Actions cloud runners.
+- **DON'T**: Consider a task verified until the remote GitHub Actions CI run completes 100% green.
 
 ## Rebase & History Rewriting Invariants
 - **Local Commits Only**: NEVER rebase or rewrite commits on public or shared branches (`main`, `master`, or released tags).
@@ -114,14 +131,14 @@ trigger: always_on
 ## Advanced Workflows Skill Linkage
 - Deep-dive guides, cherry-pick patterns, worktree commands, and disaster recovery runbooks are codified in [`.agents/skills/git-advanced-workflows/SKILL.md`](file:///config/Local-Storage/workspace-lucas/projects/Agents/ShellGuard/.agents/skills/git-advanced-workflows/SKILL.md).
 
-## Agent Customization & Memory Bank Tracking
-- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and memory bank files are first-class repository citizens and MUST NOT be gitignored.
-- Commit memory bank updates (`activeContext.md`, `progress.md`, `raw_reflection_log.md`) and rule/workflow adjustments alongside the code and release tasks they belong to.
+## Agent Customization & Brain Tracking
+- Agent directories (`.agents/`, `.claude/`, `.clinerules/`) containing rules, skills, workflows, templates, and brain files are first-class repository citizens and MUST NOT be gitignored.
+- Commit brain updates (`activeContext.md`, `progress.md`, `raw_reflection_log.md`) and rule/workflow adjustments alongside the code and release tasks they belong to.
 - Do NOT commit ephemeral runtime agent scratchpads, local IDE cache files (e.g. `.crustagent/`), or temporary debug dumps.
 
 ## Multi-Agent Workspace Staging Safety
 - In shared multi-agent repositories (e.g. Antigravity, Cline, Jules):
   - NEVER execute `git add .` or `git commit -a`.
-  - Always stage explicit, targeted paths (e.g. `git add .agents/memory-bank/... src/...`).
+  - Always stage explicit, targeted paths (e.g. `git add .agents/brain/... src/...`).
   - Always run `git diff --cached --stat` before committing to verify that NO files from other agent directories (`.clinerules/`, `.jules/`) have entered the index.
-  - Keep each agent's cognitive memory bank isolated and committed only under deliberate, attributed scopes.
+  - Keep each agent's cognitive brain isolated and committed only under deliberate, attributed scopes.

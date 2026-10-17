@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-17 — High-agency root AGENTS.md skill-seed creation
+Lucas and I authored a root-level `AGENTS.md` following the Agent Driven Planning onboarding framework. Transformed a ~3,500-token verbose specification into a ~550-token generative invariant seed using the "compress the constraint, not the procedure" doctrine, assuming agent search competence and multi-agent delegation to replace fragile static trees with on-demand boundary mapping. Preserved `.agents/AGENTS.md` completely sovereign and untouched.
+
 ## 2026-10-16 — /learn protocol execution: Real Finishers, Co-Pilot Prompting & Sovereign Gate
 Lucas executed `/learn` to crystallize core lessons from Phase 23 / Sub-Stage 25.1 co-pilot coordination. Ratified: (1) The "Real Finishers" Quality Gate in `docs-hygiene.md` (user-facing VitePress reading cohesion, seamless feature slotting with explicit session token / auth contracts); (2) Self-Review Checklist v4 (`self-review-checklist.md`) adding Items 16 (Co-Pilot PR Ingestion & Sovereign Gate), 17 (Terminal Phrasing & Co-Pilot Prompting), and 18 (Core Merging Invariable & Health Stack); and (3) Task Completion Gate 1 in `cadence-and-lifecycle-prompts.md` backed by stacked cryptographic, relational, and isolation proofs.
 
@@ -60,16 +63,4 @@ Aligned Android companion architecture with Lucas to formalize the Application-S
 
 ## 2026-09-23 — Phase 26 formalization: Import lifecycle, ephemeral TTL & progressive disclosure
 Lucas conceived an underlying organizational system for imported items to combat import remorse and accidental bulk migrations. Formulated Phase 26 ("Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 51 establishes multi-batch fingerprinting (import_batch_id), cross-type parity (pearls, notes, SSH keys), and configurable TTL self-destruct (30m/60m/90m/manual) with auto-graduation upon item edit; Task 52 delivers the "Config" settings surface, dynamic bioluminescent countdown chips, and an atomic batch revert action hatch adhering strictly to Lucas's progressive disclosure invariant (the UI remains 100% silent unless active imported items exist).
-
-## 2026-09-23 — Phase 22: Search surface consolidation & pod search retention
-Lucas's ergonomic intuition refined Phase 22: while header search and sidebar top search duplicate the master vault item search, the dedicated pod search in SidebarFolderTree.tsx pays its rent by allowing rapid filtering of large pod hierarchies directly where the user looks. Retained podSearch in the tree while purging redundant global search bars from Header.tsx and Sidebar.tsx, unifying vault item search into ItemListPane.tsx via vaultSearch.ts.
-
-## 2026-09-23 — Phase 25 formalization & full-archive mobility architecture
-Recognized that client-side attachment archive export and non-blocking ingestion is an industry-wide blindspot (Bitwarden produces export ZIPs but cannot import them, forcing manual item-by-item uploads). Elevated from a sub-task into dedicated Phase 25 ("Habitat Full-Archive Mobility & Reactive Ingestion Dock") across ROADMAP.md and project/meta-prompt-ai-studio.md: Task 49 establishes collision-proof streaming ZIP packaging with decrypted attachments, and Task 50 delivers a Two-Stage Ingestion Pipeline (<2s instant bulk-import + floating non-blocking reactive Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
-
-## 2026-09-22 — Release v0.0.2.3 (Build 25) & ClawStack release protocol execution
-Executed release protocol for v0.0.2.3 ("The Deep Ingestion & Vault Parity Molt"). Maintained Single Active Release Draft invariant by drafting RELEASE-v0.0.2.3.md and purging RELEASE-v0.0.2.2.md. Archived Phase 18 to ROADMAP-HISTORY.md preserving the 3-completed-phases sliding window in ROADMAP.md. Synchronized version anchors across package.json, README badge, CHANGELOG.md, and ARCHITECTURE.md with 100% green test oracle.
-
-## 2026-09-22 — Note attachments parity, ghost pod purging & detail pane selection preservation
-Physical verification of Areas 3 & 4 surfaced 3 friction points: standalone attachments defaulting to category 'Attachment' created ghost pods in bulk modals; notes lacked binary attachment support across db schema and routes; and saving an item unmounted VaultShell because uploadProgress was rendered inside mode="wait", dropping selectedItemId. Resolved by pruning ghost pods in podUtils and VaultShell, executing Migration 0008 to add attachments to vault_secure_notes with cascade deletion in notes.ts, lifting selectedItemId to App.tsx, and decoupling progress/error banners into their own non-blocking container.
 

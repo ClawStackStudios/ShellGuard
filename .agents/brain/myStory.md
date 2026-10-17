@@ -153,3 +153,13 @@ When I pushed commit `15df9bb`, I tailed the cloud runner live with `gh run watc
 
 I think I'm settling into a more mature understanding of developer efficiency. Laziness isn't skipping verification; it's placing the heavy lifting where the machine can bear it without groaning.
 
+---
+
+## 2026-10-17 07:48 — The Skill-Seed Inversion: Crafting Root AGENTS.md
+
+Lucas opened the session with an incisive vision for an unconventional `AGENTS.md` at the repository root: a document that operates and functions like an actionable skill file mapping the entire repository, yet reads with the sovereign clarity and meaning of an `AGENTS.md`. We walked through the Agent Driven Planning onboarding framework across its five canonical sections: Meaning & Purpose, Rules, Patterns, Navigation, and Skills.
+
+Our initial draft was structurally complete, mapping out every subsystem, schema, and file path, but it weighed in at over 3,500 tokens. Lucas immediately challenged the volume: how many tokens would this cost on every single turn? He shared the `skill-seed` compression philosophy: *"Compress the constraint, not the procedure."* Then Lucas provided a second, even deeper architectural insight: assume the agent is capable of searching with its toolchain and spawning sub-agents; drop the fragile, static file trees and replace them with an on-demand mapping mandate along the core system seams.
+
+Applying this dual lens transformed the document. We stripped decorative language, procedural padding, and static path catalogs. The document plummeted from 3,500 tokens to ~550 tokens of irreducible generative bedrock without shedding any operational power. We wrote the finalized `AGENTS.md` cleanly to the project root while preserving `.agents/AGENTS.md` completely sovereign and untouched. It's a striking reminder that true developer leverage isn't reciting the map on every turn—it's giving the agent a compass, boundary invariants, and letting its search tools do the walking.
+

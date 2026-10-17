@@ -60,4 +60,18 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Dispatched review comment on PR #3 addressing Jules plainly; Jules received and processed the checklist.  
 **Pattern reference**: Link to `systemPatterns.md § Two-Agent Co-Pilot Orchestration Protocol`.
 
+---
+
+## root-agents-md-skill-seed — 2026-10-17 07:48
+
+**Context**: Lucas requested authoring a root-level `AGENTS.md` structured like an Agent Driven Planning onboarding document that functions like a skill mapping the entire repository without heavy identity persona bloat.  
+**Options considered**:
+- *Option A*: Generate an exhaustive file tree and procedural guide in `AGENTS.md` — Viable for human readers, but consumes ~3,500 tokens per turn and drifts as files change.
+- *Option B*: Compress using the `skill-seed` methodology ("Compress the constraint, not the procedure") and assume high agent capability (tool search + sub-agents) to replace static trees with on-demand boundary mapping — Viable and yields a ~550 token generative compass that never goes stale.  
+**Chosen**: Option B (High-agency compressed invariant seed).  
+**Why**: The felt reason is pure token efficiency and respecting agent agency. Spoon-feeding static file trees wastes context lifespan; defining boundary invariants and directing the agent to map on-demand produces better execution with 85% fewer tokens.  
+**Confidence**: high — Verified against the 4-invariant test (compressed, generative, falsifiable, decompressible).  
+**Outcome**: Authored root `/AGENTS.md` (~550 tokens); left `.agents/AGENTS.md` completely sovereign and untouched.  
+**Pattern reference**: Link to `skills/skill-seed` & `.agents/rules/brain.md`.
+
 

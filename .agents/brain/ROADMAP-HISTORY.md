@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 19 (`v0.0.0.0` → `v0.0.2.1`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 20 (`v0.0.0.0` → `v0.0.2.2`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 20, 21, and 22), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 21, 22, and 23), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -1037,4 +1037,46 @@ masked value stays in the value column; full-value mask invariant intact.
 > in the encrypted object-URL modal ✅; the Eye-beside-Copy cluster holds on every masked
 > field row ✅; the full test oracle (230 tests) + `tsc` + `vite build` + `docs:build`
 > stay clean ✅.
+
+---
+
+## Phase 20: Vault Tagging System & Granular Filter Bar [v0.0.2.2 (Build 24)] ✅
+
+> Phase Feature Set Overview:
+> Introduces flexible, multi-dimensional categorization alongside hierarchical Pods.
+> Users can assign arbitrary colored tags to any vault item, filter across intersecting
+> tags in the sidebar, and execute scoped searches with AND/OR logic. Elevates the
+> attachment storage ceiling from 50MB to 500MB (1000MB grotto quota), and introduces
+> a purpose-built dual-key SSH architecture with clean PKCS#8 PEM display, .pem download,
+> and instant authorized_keys command copying.
+> *(Receipts: Phase 20 Tasks 39/40 + Storage Ceiling & SSH Ergonomics sub-tasks, 2026-09-19. Released & live.)*
+
+> 📚 **Documentation Impact**: reference/blueprint-schema.md + BLUEPRINT.md (tags columns) - ARCHITECTURE.md (query contract, storage limits, Delta 23) - docs/agent-integration/api-reference.md (?tags= param) - reference/glossary.md (Tag entry) - docs/vault-features (chips + filters, the-grotto SSH dual-key) — ✅ synced.
+
+- [x] **Task 39: [Functionality] Tag Schema & Indices, Tag Assignment Mutation & Scoped Search**
+
+Description: Create `migrations/0006_vault_tags.up.sql` adding `tags` (ShellCrypted JSON array
+or junction table) across pearls, notes, and SSH keys. Update route handlers in `vault.ts`,
+`notes.ts`, and `sshKeys.ts` to support querying by tag intersection (`?tags=finance,infra`).
+Update audit logging to capture tag assignment events. Ensure tags respect client-side
+ShellCryption and per-row metadata encryption.
+
+  - [x] **Sub-task: [Storage Ceiling] Elevate Per-File Attachment Limit (50MB → 500MB)**  
+    Description: Update the attachment streaming upload pipeline and validation (`ATTACHMENT_MAX_MB` default, busboy limits, client dropzone limits, and quota enforcement) to raise the per-file attachment ceiling from 50MB to 500MB. Align error messaging, environment configuration documentation, and test suites.
+
+> Success Criteria: Items support multiple tags; searching by tag filters accurately in
+> SQL with ownership scoping; tag mutations emit audit trail events; attachment upload ceiling safely allows files up to 500MB with end-to-end streaming validation; 100% test pass.
+
+- [x] **Task 40: [UI Component] Tag Selector Chips, Sidebar Tag Cloud & Multi-Filter State**
+
+Description: Add tag input autocomplete chips in item edit modals with auto-suggested
+existing tags and color pickers. Add a collapsible "Tags" section in `SidebarFolderTree.tsx`
+displaying active tags with item counts. Thread active tag selection into the main vault filter
+state alongside search keywords and pod selection.
+
+  - [x] **Sub-task: [SSH Key Ergonomics] Dual-Key Management & Terminal Ergonomics**  
+    Description: Resolve JSON serialization leaks on SSH key unmasking by implementing dual-key serialization (`{ publicKey, privateKey }`) under Layer 1 ShellCryption with backward compatibility (`parseSshKeySecret`), strict RFC 7468 PKCS#8 PEM formatting (`-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`), decoupled form modal fields, direct `.pem` file download, and one-click copy of OpenSSH public keys and `authorized_keys` shell one-liners.
+
+> Success Criteria: Users can add/remove tags via keyboard chips; clicking a tag in the
+> sidebar instantly filters the vault grid; multi-tag filters combine with AND/OR logic; SSH keys present clean PEM formatting without JSON leaks, and support direct .pem downloads and authorized_keys command copying.
 

@@ -1,6 +1,8 @@
 # Changelog — ShellGuard
 
-## [Unreleased] - Phase 23
+## [Unreleased]
+
+## [0.0.2.5] - 2026-10-17
 
 ### Added
 - **Attachment Relational Cascade (Sub-Stage 25.1):** Expanded the `DELETE /api/attachments/:id` endpoint to cleanly and transactionally remove the deleted attachment's ID from its parent item's (`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`) `attachments` JSON array.
@@ -8,6 +10,7 @@
 - **Attachment Item Integrity:** Completed Migration 0009 `0009_attachment_integrity` aligning the database schema strictly with the Bitwarden Item Integrity Model. Attachments are now strictly enforced as child components of primary vault items (Passwords, Cards, Identities, Notes, SSH Keys) and require explicit `parent_id` and `parent_type` fields upon creation. Standalone attachment creation is forbidden and returns 400 Bad Request.
 - **Attachment Orphan Quarantine:** Built `quarantineOrphanAttachments()` engine that runs at boot, sweeping any legacy unparented or orphaned attachments into safe quarantine (`is_quarantined = 1`). Quarantined attachments are hidden from API lists and UI downloads but never deleted to prevent accidental data loss. Logs `ATTACHMENT_QUARANTINED` to `audit.sqlite`.
 - **Note Validation Invariants:** Secure Note endpoints now structurally reject payloads containing standard credential fields (such as `secret`), guaranteeing Notes remain purely document/markdown ledgers.
+- **Root AGENTS.md Governance Contract:** Established canonical repository root `AGENTS.md` articulating project meaning, top-level invariables, immutable operating rules, core patterns, navigation, and skill bindings.
 
 ### Changed
 - **Dashboard Type Truth:** Polished the Vault Dashboard to strictly reflect the Item Integrity Model. The Add-Item `+` dropdown menu removed the `attachment` item, and all primary lists (`ItemListPane`, `VaultShell`) are now deterministically sorted by type: Passwords -> Credit Cards -> Identities -> Secure Notes -> SSH Keys.
@@ -251,3 +254,12 @@
 ### Fixed
 - Integration fixes: test wiring, schema validation, import paths
 - Test isolation: per-suite DATA_DIR and PORT allocation
+
+[Unreleased]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.5...HEAD
+[0.0.2.5]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.4...v0.0.2.5
+[0.0.2.4]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.3...v0.0.2.4
+[0.0.2.3]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.2...v0.0.2.3
+[0.0.2.2]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.1...v0.0.2.2
+[0.0.2.1]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.0...v0.0.2.1
+[0.0.2.0]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.1.9...v0.0.2.0
+

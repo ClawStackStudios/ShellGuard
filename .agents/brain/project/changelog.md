@@ -2,15 +2,18 @@
 
 ## [Unreleased]
 
+## [0.0.2.5] - 2026-10-17
+
 ### Added
-- **Cloud-Offloaded CI/CD & Verification Policy (`.github/workflows/ci.yml`)**: Mirrored from `ShellGuard-Mobile` and `ShellGuard-TOTP`; offloaded all testing (`vitest run`), production compilation (`vite build`), and documentation builds (`vitepress build docs`) to GitHub Actions runner to preserve host machine resources. Codified push-and-tail workflow via `gh run watch` in `git-hygiene.md`, `cadence-and-lifecycle-prompts.md`, and `project-hygiene.md`. Verified 100% green on initial cloud run (`38296609445`) in 1m 58s.
-- **Jules PR #3 Audit & Targeted Review (Stage 24 / Phase 23)**: Audited incoming PR #3 commit `39d76b9` (`stage/phase-23-item-integrity-8580131941674843399`); verified parent linkage multipart validation in `src/server/routes/attachments.ts` and test suite updates across 6 files; dispatched auditable checklist to Jules covering orphan backfill quarantine, note secret rejection, GET quarantine filter, dedicated test suite, and Task 46 frontend type-truth requirements.
-- **Native Payment Card & Identity Models (Sub-Phase 23.5.2)**: Extended `VaultItemType` to `"card"` and `"identity"`, built `cardUtils.ts` with network-aware smart auto-spacing (Amex 4-6-5, standard 4-4-4-4), brand detection, length-truthful masking, and clean numeric digit clipboard copying; integrated form sections in `ItemFormModal.tsx` and contact sheet detail widgets in `ItemDetailPane.tsx`.
-- **Zero-Loss Bitwarden Ingestion Engine & Residual Harvester (Sub-Phase 23.5.1)**: Automated `harvestResidualFields` sweeper capturing unmapped identity and custom fields with empty collection pruning (`[]`, `{}`); translated Bitwarden numeric `linkedId` to `linkedProperty`; fixed Secure Note detail cards with quick-copy.
-- **Era 1 Archival & Era 2 Master Spine**: Archived historical meta-prompt and roadmap into `.agents/internal/`; authored `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md` with flagship Stage 1 (Phase 27 SuperLobster TLS Control Plane & Guided Mobile Pairing Hub) with complete 4-zone pre-walked documentation suite.
-- **Brain Architecture Migration (`/migrate-to-brain`)**: Transformed legacy `.agents/memory-bank/` into the Self vs. Environment `.agents/brain/` architecture, separating internal cognitive state (`activeContext.md`, `myStory.md`, `decision-log.md`) from external project foundations (`brain/project/`).
-- **Android Companion Architecture Alignment**: Formalized Application-Scoped Lazy DI pattern (`AppContainer` via Kotlin `by lazy`) in `.agents/brain/android/di-container.md` and updated `README.md`. Provides sub-100ms cold start for OTP lookups, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
-- **Two-Agent Co-Pilot Orchestration Protocol (Stage 24 / Phase 23)**: Dispatched Google Jules (`8580131941674843399`) on `stage/phase-23-item-integrity` under Mode 3 (Long-Lived Co-Pilot). Audited incoming PR #2, enforced Agent Home Boundary isolation, realigned base branch, and delivered recursive review comment with 6 embedded memory units.
+- **Attachment Relational Cascade (Sub-Stage 25.1):** Expanded the `DELETE /api/attachments/:id` endpoint to cleanly and transactionally remove the deleted attachment's ID from its parent item's (`vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`) `attachments` JSON array.
+- **Runtime Sweeper & Pre-Flight Quota Validation (Sub-Stage 25.1):** Exposed `POST /api/attachments/quarantine/sweep` for on-demand isolation of unparented attachments without needing a reboot. Exposed `GET /api/attachments/quota` pre-flight endpoint returning `{ used_bytes, quota_bytes, remaining_bytes }` capacity stats based on `GROTTO_QUOTA_MB` limits.
+- **Attachment Item Integrity:** Completed Migration 0009 `0009_attachment_integrity` aligning the database schema strictly with the Bitwarden Item Integrity Model. Attachments are now strictly enforced as child components of primary vault items (Passwords, Cards, Identities, Notes, SSH Keys) and require explicit `parent_id` and `parent_type` fields upon creation. Standalone attachment creation is forbidden and returns 400 Bad Request.
+- **Attachment Orphan Quarantine:** Built `quarantineOrphanAttachments()` engine that runs at boot, sweeping any legacy unparented or orphaned attachments into safe quarantine (`is_quarantined = 1`). Quarantined attachments are hidden from API lists and UI downloads but never deleted to prevent accidental data loss. Logs `ATTACHMENT_QUARANTINED` to `audit.sqlite`.
+- **Note Validation Invariants:** Secure Note endpoints now structurally reject payloads containing standard credential fields (such as `secret`), guaranteeing Notes remain purely document/markdown ledgers.
+- **Root AGENTS.md Governance Contract:** Established canonical repository root `AGENTS.md` articulating project meaning, top-level invariables, immutable operating rules, core patterns, navigation, and skill bindings.
+
+### Changed
+- **Dashboard Type Truth:** Polished the Vault Dashboard to strictly reflect the Item Integrity Model. The Add-Item `+` dropdown menu removed the `attachment` item, and all primary lists (`ItemListPane`, `VaultShell`) are now deterministically sorted by type: Passwords -> Credit Cards -> Identities -> Secure Notes -> SSH Keys.
 
 ## [0.0.2.4] - 2026-09-23
 

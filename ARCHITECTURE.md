@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.4. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.5. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 
@@ -34,7 +34,7 @@
 ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
-├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.4)
+├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.5)
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
@@ -86,14 +86,16 @@ ShellGuard/
 │   ├── 0007_composite_item_features.up.sql   # Phase 21 (v0.0.2.3): secondary uris & password_history columns
 │   ├── 0007_composite_item_features.down.sql # Rollback composite item features (safe no-op)
 │   ├── 0008_note_attachments.up.sql          # Phase 21 Post-Verification: note attachments column
-│   └── 0008_note_attachments.down.sql        # Rollback note attachments (safe no-op)
+│   ├── 0008_note_attachments.down.sql        # Rollback note attachments (safe no-op)
+│   ├── 0009_attachment_integrity.up.sql      # Phase 23 (v0.0.2.5): attachment parent enforcement & quarantine
+│   └── 0009_attachment_integrity.down.sql    # Rollback attachment parent integrity
 │
 ├── 🔧 scripts/
 │   ├── scuttle-reset.ts               # Scuttles data-dev/ or data/ (--env production|development)
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # 26 Vitest + supertest suites, per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 29 Vitest + supertest suites (341 tests), per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
@@ -764,8 +766,10 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `unit/vaultDelete.test.ts` | Bulk item deletion API, ownership filtering, linked attachment cascading, and audit log generation |
 | `unit/uiSeams.test.ts` | Post-verification seam hardening: note attachment arrays, ghost pod purging, decoupled banner persistence, and view selection focus |
 | `unit/vaultSearch.test.ts` | Pure client-side zero-knowledge search engine matching titles, usernames, URLs, secondary URIs, decrypted notes, custom fields, attachment filenames, and tags |
+| `attachment-integrity.test.ts` | Phase 23 Bitwarden Item Integrity: mandatory parent linkage, standalone creation rejection, boot & runtime orphan quarantine, cascade deletion, pre-flight quota inspection, and note credential rejection |
+| `unit/cardUtils.test.ts` | Native payment card spacing (Amex 4-6-5, standard 4-4-4-4), brand auto-detection, proportional masking, and digit extraction |
 
-Run them: `npm test` (all 27 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 29 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 
@@ -802,6 +806,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 25 | Bitwarden Universal Ingestion, Composite Item Ergonomics & Dual Export Suite (Bitwarden JSON/CSV parser with folder-to-pod normalization, dynamic RFC 6238 TOTP engine, secondary login URIs with Layer 2 metadata encryption, client-side password generation history sealed with `vault_pearls_history` AAD, migration 0007, zero-knowledge AES-256-GCM encrypted backup envelopes via HKDF/PBKDF2, and RFC 4180 CSV export with password sanitization audit controls) | Enterprise-grade interoperability, credential migration fidelity, and sovereign backup archival (Phase 21 Sub-Phase, v0.0.2.3) |
 | 26 | Note Attachments Parity, Ghost Pod Purging & Post-Verification Seam Hardening (Migration 0008 adding `attachments TEXT DEFAULT '[]'` to `vault_secure_notes`, `NoteSchemas` validation with cascade child deletion in `notes.ts`, `podUtils.ts` case-insensitive pod sanitization eliminating ghost `Attachment` pod, lifted `selectedItemId` and decoupled progress/error banners from view-routing `<AnimatePresence mode="wait">` preserving item selection focus, tiered verification templates `verificationChecklist-basic.md`/`verificationChecklist-advanced`, and 25-test `uiSeams.test.ts` suite) | Closes operational seams discovered during physical human verification, establishing 1:1 attachment parity across notes and logins while solidifying the live verification handshake protocol (Phase 21 Post-Verification Hardening, v0.0.2.3) |
 | 27 | Unified Search Engine & Ergonomic Control Surfaces (Pure client-side zero-knowledge search in `vaultSearch.ts` querying in-memory decrypted `vaultItems` across titles, usernames, URLs, secondary URIs, decrypted notes, custom field names/values, attachment filenames, and tags; automatic search term purge upon lock/logout; consolidation of search topology removing redundant Header and Sidebar global search bars while preserving dedicated pod tree search in `SidebarFolderTree.tsx`; verified Eye-beside-Copy unmask positioning across all masked rows; 10 unit tests in `vaultSearch.test.ts`) | Consolidates search into a single high-speed client-side engine with zero-network leakage and cleans up duplicate UI controls without sacrificing granular pod navigation (Phase 22, v0.0.2.4, Tasks 43 & 44) |
+| 28 | Bitwarden-Model Item Integrity & Attachment Relational Cascade (Migration 0009 enforcing mandatory parent linkage on `vault_secure_attachments`, strict rejection of standalone attachment creation via 400 Bad Request, boot-time & on-demand orphan quarantine `quarantineOrphanAttachments()` flagging unparented rows `is_quarantined = 1` with `audit.sqlite` logging, cascade cleanup removing deleted attachment IDs from parent `attachments` JSON arrays, `GET /api/attachments/quota` pre-flight capacity stats, and Secure Note credential rejection invariant preventing `secret` payloads in notes; paired with Vault Dashboard Add-Menu correction removing attachment creation and deterministic type ordering) | Establishes strict Bitwarden Item Integrity across data layer and UI surfaces, preventing orphaned attachment bloat while preserving user data through non-destructive quarantine (Phase 23, v0.0.2.5, Tasks 45 & 46 + Sub-Stage 25.1) |
 
 ---
 

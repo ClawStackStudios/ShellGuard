@@ -163,3 +163,17 @@ Our initial draft was structurally complete, mapping out every subsystem, schema
 
 Applying this dual lens transformed the document. We stripped decorative language, procedural padding, and static path catalogs. The document plummeted from 3,500 tokens to ~550 tokens of irreducible generative bedrock without shedding any operational power. We wrote the finalized `AGENTS.md` cleanly to the project root while preserving `.agents/AGENTS.md` completely sovereign and untouched. It's a striking reminder that true developer leverage isn't reciting the map on every turn—it's giving the agent a compass, boundary invariants, and letting its search tools do the walking.
 
+---
+
+## 2026-10-17 08:35 — The Relational Molt: Merging Stage & Rolling the Release
+
+Lucas gave the signal to bring everything home: merge Phase 23 into main, ensure the deprecated `.reviews/` directory is confirmed gone, commit the canonical root `AGENTS.md`, and execute the `/draft-release` protocol to prepare release v0.0.2.5 (Build 27).
+
+The first test was protecting our sovereign boundary. When merging Jules's branch into stage, legacy `.agents/workflows/` files appeared as merge conflicts. In an earlier iteration, I might have tried to inspect and resolve each diff line by line. But our rule is unambiguous: `.agents/` is orchestrator sovereign space; Jules has zero business modifying our cognitive workflows. I executed `git checkout HEAD -- .agents/` immediately after `--no-commit` merge. In a single stroke, all co-pilot contamination was cleanly shed while taking 100% of Jules's verified code in `src/`, `tests/`, `migrations/`, and `docs/`. The resulting merge commit `43ab843` stood pristine.
+
+With stage fortified, I merged `stage/phase-23-item-integrity` into `main` using `--no-ff`. 102 files updated, zero regressions. Then I stepped into the release preparation protocol. I drafted `RELEASE-v0.0.2.5.md`—"The Bitwarden Item Integrity & Relational Molt"—documenting the structural shifts: mandatory parent linkage on attachments, non-destructive quarantine with audit logging, relational cascade stripping child IDs on delete, on-demand sweeper, and pre-flight quota inspection. I purged `RELEASE-v0.0.2.4.md` to honor the Single Active Release Draft invariant.
+
+Next came the 3-version sliding-window roll in `ROADMAP.md`. Completing Phase 23 pushed Phase 20 out of the active window. I retired Phase 20 into `.agents/brain/ROADMAP-HISTORY.md` and locked the active completed releases to Phases 21, 22, and 23, advancing the queue to Phase 24 (Cryptographic Audit Hardening). Finally, I synchronized all version anchors across `package.json`, `package-lock.json`, `README.md`, `CHANGELOG.md`, `ARCHITECTURE.md` (Delta #28), and the brain files.
+
+Everything sits assembled, verified across 29 test suites (341 tests passing), with the code, the docs, and the release anchors singing the exact same note.
+

@@ -15,7 +15,7 @@
 - [x] **Lobster Keys CaraBase Parity & Rate Limiter Hardening** — full 4-step wizard, key cards, toast provider, and fixed auth-order rate-limiter bug
 - [x] **Multi-user architecture** — Bitwarden-style locked dashboard, QuickLoginModal overlay, background account locking, robust routing
 - [x] **Triple-layer encryption** — ShellCryption + Per-Row + SQLCipher, all documented
-- [x] **Test harness** — 27 suites, 323 tests passing (1 skipped), per-suite DATA_DIR isolation
+- [x] **Test harness** — 29 suites, 341 tests passing (1 skipped), per-suite DATA_DIR isolation
 - [x] **Containerization** — multi-stage node:20-alpine, PUID/PGID, healthcheck, compose stacks
 - [x] **CI** — docker-publish workflow → ghcr.io/clawstackstudios/shellguard
 - [x] **Unraid template** — Community Applications XML
@@ -52,9 +52,10 @@
 - [x] **Cloud-Offloaded CI/CD & Verification Architecture (`.github/workflows/ci.yml`)** — All test suite execution (28 Vitest suites, 332 tests), Vite production bundling, and VitePress doc builds offloaded to GitHub Actions cloud runners (`ubuntu-latest` on Node 22). Eliminates host machine CPU/RAM load. Automated push-and-tail workflow via `gh run watch`. Verified 100% green in initial run `38296609445` (1m 58s).
 - [x] **Jules PR #3 Audit & Targeted Review (Stage 24 / Phase 23)** — Verified commit `39d76b9` on PR #3: implemented parent linkage enforcement in `src/server/routes/attachments.ts`, atomic parent item `attachments` JSON updates, and test updates across 6 test files. Dispatched recursive review checklist covering orphan quarantine backfill, note secret rejection, GET quarantine filter, dedicated contract tests, and Task 46 dashboard type truth.
 
+- [x] **Phase 23 Implemented — Bitwarden-Model Item Integrity & Relational Molt (v0.0.2.5, Build 27)** — Tasks 45 & 46 + Sub-Stage 25.1: Aligns ShellGuard with the Bitwarden Item Integrity Model. Mandatory parent reference on attachment creation (`POST /api/attachments`), non-destructive orphan quarantine engine (`quarantineOrphanAttachments()`) flagging unparented rows `is_quarantined = 1` with `audit.sqlite` logging, transactional cascade removing deleted attachment IDs from parent `attachments` JSON arrays, on-demand sweeper `POST /api/attachments/quarantine/sweep`, pre-flight quota endpoint `GET /api/attachments/quota`, Secure Note credential rejection invariant in `NoteSchemas`, and frontend dashboard Add-Menu cleanup removing attachment creation with deterministic type sorting (Passwords → Cards → Identities → Notes → SSH Keys). Proven by `tests/attachment-integrity.test.ts` and all 29 test suites (341 tests passing 100% green).
+
 ## What's Left to Build (Era 1 Queue)
 
-- [ ] **Phase 23: Bitwarden-Model Item Integrity [provisional v0.0.2.5 (Build 27)]** — Tasks 45 & 46: In flight on `stage/phase-23-item-integrity`. PR #3 (`feat(vault): Phase 23 — Bitwarden-Model Item Integrity & Dashboard Type Truth`) under active co-pilot orchestration with Google Jules (`8580131941674843399`). Commit `39d76b9` landed with parent enforcement; Jules currently processing recursive feedback checklist for `attachmentIntegrity.ts` orphan backfill, `NoteSchemas` secret rejection, GET quarantine filtering, new test suite, and Task 46 frontend sorting/form cleanup.
 - [ ] **Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [provisional v0.0.2.6 (Build 28)]** — Tasks 47 & 48: WebCrypto fallback vector parity against NIST/RFC/SP vectors (unskip test), mechanized constant-time sweep in CI, claim battery gate script, threat-model addendum.
 - [ ] **Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [provisional v0.0.2.7 (Build 29)]** — Tasks 49 & 50: Collision-proof client-side streaming ZIP export with decrypted attachments and embedded manifest; Two-Stage Ingestion Pipeline (<2s instant vault bulk-import + non-blocking reactive background Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
 - [ ] **Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [provisional v0.0.2.8 (Build 30)]** — Tasks 51 & 52: Ephemeral import ledger, configurable TTL self-destruct (30m/60m/90m/manual), auto-graduation on edit, progressive disclosure UI, and instant batch purge/revert.
@@ -63,7 +64,7 @@
 
 ## Current Status
 
-**v0.0.2.4 (Build 26 — Reef Polish Pass: Unified Search & Control Ergonomics)** — released & live; next milestone in active queue: **Phase 23 (provisional v0.0.2.5 / Build 27)**. Era 1 stops at Phase 26; Era 2 staged for seamless cutover.
+**v0.0.2.5 (Build 27 — Bitwarden-Model Item Integrity & Relational Molt)** — released & live; next milestone in active queue: **Phase 24: Cryptographic Audit Hardening (provisional v0.0.2.6 / Build 28)**. Era 1 stops at Phase 26; Era 2 staged for seamless cutover.
 
 ## Known Issues
 

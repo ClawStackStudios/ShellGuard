@@ -1,4 +1,28 @@
 ---
+Date: 2026-10-17
+TaskRef: "Merge Phase 23 & Sub-Stage 25.1 to Main, Execute /draft-release for v0.0.2.5 (Build 27) and Retire Phase 20"
+
+Learnings:
+- Mastered the Mechanical Checkout Sovereign Boundary: When merging a co-pilot's branch that includes unwanted modifications to orchestrator files (`.agents/`), merging with `--no-commit` and immediately executing `git checkout HEAD -- .agents/` cleanly discards all foreign co-pilot files without touching the working tree of features, tests, migrations, or docs.
+- Single Active Release Draft Invariant: The repository root maintains strictly ONE `RELEASE-v*.md` file. Drafting `RELEASE-v0.0.2.5.md` requires immediately purging `RELEASE-v0.0.2.4.md` via `git rm`.
+- 3-Version Rolling Window Execution: Retiring the oldest completed phase (Phase 20) to `.agents/brain/ROADMAP-HISTORY.md` while rolling Phase 23 into `ROADMAP.md` preserves a clean, tight, 3-phase sliding window of completed work (Phases 21, 22, and 23) and advances the forward queue cleanly starting with Phase 24.
+- Synchronized Version Anchoring: Version updates must span 100% of anchors in lockstep: `package.json`, `package-lock.json`, `README.md` badge, `CHANGELOG.md` section, `ARCHITECTURE.md` (directory tree, test suite count, and Deltas table), and the brain's `productContext`/`progress`/`changelog`.
+
+Difficulties:
+- Resolving git merge conflicts across 9 workflow files without tedious line-by-line inspection; completely eliminated by the mechanical checkout command `git checkout HEAD -- .agents/`.
+
+Successes:
+- Zero .agents/ contamination admitted from external co-pilot branch.
+- Full merge to `main` with `--no-ff`.
+- Clean 100% alignment across all release manifests.
+- Test oracle intact at 29 test suites and 341 tests passing.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Mechanical Checkout for Co-Pilot PR Conflict Resolution (`git checkout HEAD -- .agents/`).
+- General pattern: Single Active Release Draft & 3-Version Roadmap Sliding Window Synchronization.
+---
+
+---
 Date: 2026-10-16
 TaskRef: "Execute /learn Protocol: Codify Real Finishers Gate, Co-Pilot Prompting Invariants, and Sovereign PR Boundary Defense"
 

@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-17 — Phase 23 stage merge, sovereign boundary enforcement & release v0.0.2.5 preparation
+Executed the final stage merge of Phase 23 / Sub-Stage 25.1 into main. Mechanically checked out orchestrator HEAD for `.agents/` (`git checkout HEAD -- .agents/`) during stage merge, resolving all contaminated co-pilot workflow modifications cleanly while taking 100% of Jules's verified code in `src/`, `tests/`, `migrations/`, and `docs/`. Merged stage into `main` with `--no-ff`. Authored `RELEASE-v0.0.2.5.md`, purged old `RELEASE-v0.0.2.4.md`, retired Phase 20 into `ROADMAP-HISTORY.md`, advanced `ROADMAP.md` 3-version sliding window (Phases 21, 22, 23), and synchronized version anchors across all manifests and architecture diagrams.
+
 ## 2026-10-17 — High-agency root AGENTS.md skill-seed creation
 Lucas and I authored a root-level `AGENTS.md` following the Agent Driven Planning onboarding framework. Transformed a ~3,500-token verbose specification into a ~550-token generative invariant seed using the "compress the constraint, not the procedure" doctrine, assuming agent search competence and multi-agent delegation to replace fragile static trees with on-demand boundary mapping. Preserved `.agents/AGENTS.md` completely sovereign and untouched.
 

@@ -13,8 +13,15 @@ The agent acts as an active cartographer of the project's development lifecycle.
 
 ### 1. Task Completion Gate (Cloud CI Pass → Live Handshake → Commit/Merge Check)
 - **When to Trigger**: Immediately after a task's code changes pass the automated cloud verification gates on GitHub Actions (`.github/workflows/ci.yml`: lint, vitest suites, vite build, docs:build all 100% green in the cloud runner tailed via `gh run watch`).
+- **Core Invariable**: *"A merge should leave the codebase improved, or at the very least not worse."*
+- **Real Finishers Verification**:
+  1. **Documentation Bows to Code**: Root manifests and VitePress docs reflect runtime ground truth.
+  2. **User-Facing Readability**: VitePress pages flow smoothly, human-readable, minimizing cognitive friction.
+  3. **Feature Slotting & Auth Contracts**: All new routes slot into API matrices with explicit session token / auth levels.
+  4. **Test Oracle Alignment**: Test fixtures verify implementation intent across all supported models to eliminate silent logic drift.
+  5. **Sovereign Domain Protection**: Zero `.agents/` modifications admitted from external co-pilots.
 - **Agent Action**: Present the cloud CI run results and provide a numbered **Live Verification Checklist** for physical testing in the running app, then ask:
-  > *"All cloud CI gates pass 100% green on GitHub Actions (Run #[ID]). Here is your Live Verification Checklist to test in the running app: [Checklist]. Once you have tested and verified live, should I proceed with [next step / merge], or are you still reviewing / experimenting locally?"*
+  > *"All cloud CI gates pass 100% green on GitHub Actions (Run #[ID]). The merge health checks verify the codebase is left stronger, more secure, and relationally sound. Here is your Live Verification Checklist to test in the running app: [Checklist]. Once you have tested and verified live, should I proceed with [next step / merge], or are you still reviewing / experimenting locally?"*
 
 ### 2. Commit Completion Gate (Committed → Version Bump Check)
 - **When to Trigger**: Immediately after a commit is successfully created following `git-hygiene.md`.

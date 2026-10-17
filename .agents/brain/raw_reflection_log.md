@@ -1,4 +1,27 @@
 ---
+Date: 2026-10-16
+TaskRef: "Execute /learn Protocol: Codify Real Finishers Gate, Co-Pilot Prompting Invariants, and Sovereign PR Boundary Defense"
+
+Learnings:
+- Codified the "Real Finishers" Quality Gate across `docs-hygiene.md`, `self-review-checklist.md`, and `cadence-and-lifecycle-prompts.md`: user-facing VitePress cohesion (human-readable, frictionless narrative), feature slotting invariant (endpoints must not float unslotted in docs), and explicit session token / auth level contracts.
+- Codified Co-Pilot Terminal Phrasing & Prompting Precision: co-pilot agents require tight probability framing and non-circular, decisive terminal directives ("push once to branch, wrap up, orchestrator takes over") to prevent confirmation loops and stalling.
+- Codified the Sovereign Domain Invariant & Ingestion Defense: `.agents/` is Antigravity's sovereign domain. External/co-pilot modifications in `.agents/` are completely disregarded and mechanically discarded upon merge (`git checkout HEAD -- .agents/`).
+- Codified the Core Merging Invariable: "A merge should leave the codebase improved, or at the very least not worse," backed by stacked proofs across Layer 1-3 encryption, tenant isolation, DoS limits, and quarantine integrity.
+
+Difficulties:
+- Recognizing subtle co-pilot guidance loops where conversational phrasing ("Once pushed, push changes...") can cause the co-pilot to pause or ask duplicate questions. Resolved by single-stroke terminal directives.
+
+Successes:
+- Proposal approved by Lucas and ratified across the rule-tree, self-review checklist (v4), and lifecycle prompts with zero syntax drift.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: The "Real Finishers" Quality Gate & User-Facing VitePress Cohesion.
+- General pattern: Co-Pilot Terminal Phrasing & Non-Circular Guidance.
+- General pattern: Sovereign Domain Isolation & PR Boundary Enforcement.
+- General pattern: The Merge Health Invariable & Stacked Security Proofs.
+---
+
+---
 Date: 2026-10-11
 TaskRef: "Execute Era 1 Archival (.agents/internal), Era 2 Genesis, and Pre-Walk-the-Docs Protocol"
 

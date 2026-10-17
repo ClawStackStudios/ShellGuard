@@ -81,5 +81,12 @@ Documentation updates should not be isolated to a separate "chore: update docs" 
   - Maintain a transparent **Supported Versions Matrix** reflecting active branches vs. EOL releases.
   - Keep responsible disclosure instructions, private reporting email channels, and Safe Harbor commitments clear and unambiguous.
 
+## 11. User-Facing VitePress Cohesion & Frictionless Flow
+- **Human-Centric Reading Experience**: The VitePress portal (`/docs/`) is user-facing. Technical accuracy is a prerequisite, but prose must be clear, engaging, polished, and structured so a human developer or operator can read from start to finish without jarring context jumps or cognitive friction.
+- **Narrative Continuity**: Avoid disconnected lists of technical notes. Walk the reader through the user mental model first, then the interface, and finally the underlying cryptographic and relational contracts.
 
-
+## 12. Feature Slotting Invariant & Auth Contracts
+- **No Floating Implementations**: Whenever a stage introduces new endpoints, data columns, or operational capabilities, they MUST immediately slot into existing documentation surfaces:
+  - **Endpoint Matrix (`api-reference.md`)**: Add the route with exact HTTP verb, path, description, payload/response types, and explicit **Session Token / Auth Requirement** (e.g. `None`, `Bearer Token (canRead)`, `Bearer Token (canWrite)`).
+  - **Feature Guides (`vault-features/*.md`)**: Document user-facing implications, reverse cascade rules, and edge-case behaviors (e.g. pre-flight quota queries, runtime sweeper triggers).
+- **Zero Orphaned Features**: An endpoint or capability that exists in code but is unslotted in docs is a definition-of-done defect.

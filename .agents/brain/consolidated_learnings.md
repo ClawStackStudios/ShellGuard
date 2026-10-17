@@ -282,4 +282,23 @@
 - Use `git bisect run <test-command>` (e.g. `git bisect run npx vitest run ...`) to isolate regressions across large commit histories in $O(\log N)$ time.
 - *Rationale:* Eliminates speculative manual checkout loops and pinpoints exact commit faults automatically.
 
+**Pattern: The "Real Finishers" Quality Gate & User-Facing VitePress Cohesion**
+- The VitePress portal (`/docs/`) is user-facing; prose must be human-readable, polished, and structured so a human developer or operator can read from start to finish without cognitive friction.
+- Whenever a stage introduces new endpoints, data columns, or operational capabilities, they MUST immediately slot into existing documentation surfaces (`api-reference.md`, `vault-features/*.md`) with explicit session token / auth contracts (`Bearer Token (canRead)` / `canWrite`).
+- Align implementation intent with test oracles across all entity models to prevent silent logic drift.
+- *Rationale:* Eliminates orphaned features, undocumented API contracts, and unpolished public documentation.
 
+**Pattern: Co-Pilot Terminal Phrasing & Non-Circular Directives**
+- When dispatching wrap-up or completion directives to co-pilot agents (e.g. Jules), instructions must be strictly non-circular and terminal ("Push your changes once to the branch, then wrap up. We'll take it from here.").
+- Avoid phrasing that repeats actions ("Once pushed, push changes to the branch") or invites indefinite confirmation loops.
+- *Rationale:* Co-pilot agents require tight probability framing; explicit terminal boundaries collapse uncertainty and prevent stalling.
+
+**Pattern: Sovereign Domain Isolation & PR Ingestion Defense**
+- `.agents/` is Antigravity's sovereign domain. External/co-pilot agents must never modify it.
+- In PR reviews from external co-pilots, any modifications in `.agents/` are completely disregarded and mechanically discarded upon merge (`git checkout HEAD -- .agents/`).
+- *Rationale:* Preserves orchestrator brain, rules, and workflows from cross-agent contamination while allowing collaborative code merges.
+
+**Pattern: The Core Merging Invariable & Stacked Security Proofs**
+- *"A merge should leave the codebase improved, or at the very least not worse."*
+- Evaluate merge safety across stacked proofs: Layer 1 Zero-Knowledge ciphertext, Layer 2 metadata encryption, Layer 3 SQLCipher, tenant isolation via `owner_uuid`, streaming DoS limits (`ATTACHMENT_MAX_MB`), fail-closed validation, and quarantine integrity (zero data loss).
+- *Rationale:* Guarantees that iterative development strengthens rather than degrades the system's cryptographic and relational foundations.

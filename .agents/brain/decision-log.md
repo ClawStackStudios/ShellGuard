@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-16 — /learn protocol execution: Real Finishers, Co-Pilot Prompting & Sovereign Gate
+Lucas executed `/learn` to crystallize core lessons from Phase 23 / Sub-Stage 25.1 co-pilot coordination. Ratified: (1) The "Real Finishers" Quality Gate in `docs-hygiene.md` (user-facing VitePress reading cohesion, seamless feature slotting with explicit session token / auth contracts); (2) Self-Review Checklist v4 (`self-review-checklist.md`) adding Items 16 (Co-Pilot PR Ingestion & Sovereign Gate), 17 (Terminal Phrasing & Co-Pilot Prompting), and 18 (Core Merging Invariable & Health Stack); and (3) Task Completion Gate 1 in `cadence-and-lifecycle-prompts.md` backed by stacked cryptographic, relational, and isolation proofs.
+
 ## 2026-10-16 — Phase 4 Sub-Stage 25.1 Directive Dispatched to Jules
 Audited Jules's physical git state and confirmed commit 2fc608b on stage/phase-23-item-integrity-8580131941674843399 (PR #3) incorporating the formal Sub-Stage 25.1 prompt block into project/meta-prompt-ai-studio.md. Formulated and dispatched the complete Phase 4 operational directive: relational cascade on DELETE /api/attachments/:id, runtime quarantine sweeper POST /api/attachments/quarantine/sweep, pre-flight quota GET /api/attachments/quota, dedicated vitest assertions in tests/attachment-integrity.test.ts, and walk-the-docs synchronization.
 

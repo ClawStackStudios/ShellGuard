@@ -74,6 +74,9 @@ describe('Build gates — Auditor\'s Claim Battery (Docs bow to Code)', () => {
     expect(shellCryptionCode).toContain('${table}:${recordId}');
     expect(encLayersDocs).toContain('vault_pearls_custom:{id}');
   });
+
+  // TODO(jules): Phase 25 / Task 50 — Auditor Battery Additions (Classes L2 & L6)
+  // Constraints: Codify Class L2 (database schema tables in src/server/db/schema.ts match migration files) and Class L6 (ATTACHMENT_MAX_MB = 500, GROTTO_QUOTA_MB = 1000).
 });
 
 describe('Build gates — always-on repository shape', () => {

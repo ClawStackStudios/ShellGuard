@@ -77,23 +77,27 @@ Before committing or submitting a PR, you **must** run all three verification ga
    User: <directive / intent>
    AI: <implementation details and test receipts>
    ```
+7. **The Epistemic Escape Hatch (Honest Uncertainty Annotation)**: If you implement a fix or refactor where you have lower confidence—where the code works and passes tests, but you suspect a subtle edge case, a potential performance issue, or an architectural compromise—**DO NOT disguise it**. Complete the fix, and immediately place an inline comment directly above it:
+   ```typescript
+   // TODO(uncertainty): [Explain your exact doubt, assumptions made, or edge cases]
+   ```
+   Then list your flagged uncertainty in your Pull Request description under `### ⚠️ Epistemic Flags & Surfaced Uncertainties`. Surfacing honest doubt is explicitly rewarded.
 
 ---
 
-## 🎯 Active Milestone: Stage 24 (Phase 23)
+## 🎯 Active Milestone: Stage 25 (Phase 24)
 
-You are tasked with executing **Stage 24 (Phase 23: Bitwarden-Model Item Integrity & Dashboard Type Truth)** on branch `stage/phase-23-item-integrity`:
+> **Previous Milestone**: Stage 24 (Phase 23) — **COMPLETED & SHIPPED in v0.0.2.5 (Build 27)**.
 
-1. **Task 45 (`.jules/tasks/task-45.md`)**:
-   - Migration `0009_attachment_integrity.{up,down}.sql`: add `parent_id`, `parent_type`, `is_quarantined`, `quarantined_at` to attachments, and `attachments` to `vault_ssh_keys`.
-   - In-code backfill `quarantineOrphanAttachments()`: relink orphan attachments or quarantine them (`is_quarantined = 1`) with audit logs.
-   - Route `POST /api/attachments`: enforce parent linkage; standalone fails closed (400).
-   - Note schemas: reject password credentials (`secret` payload).
-   - Test suite: `tests/attachment-integrity.test.ts`.
+You are tasked with executing **Stage 25 (Phase 24: Cryptographic Audit Hardening & Third-Party Auditability)** on target branch `stage/phase-24-crypto-hardening`:
 
-2. **Task 46 (`.jules/tasks/task-46.md`)**:
-   - Header add-menu: remove `'📎 Attachment'` so only primary types appear.
-   - ItemFormModal: remove standalone attachment mode.
-   - ItemListPane & VaultShell: type-aware deterministic sorting (`password` → `card` → `identity` → `note` → `key`), contextual empty states.
+1. **Task 47 (`.jules/tasks/task-47.md`)**:
+   - WebCrypto fallback vector parity: run pure-TS engine against real standards vectors (FIPS 180-4 SHA-256, RFC 2104 HMAC, RFC 5869 HKDF, SP 800-38D AES-GCM) in `tests/unit/webCryptoFallback.test.ts`.
+   - Mechanize constant-time comparison sweep across `src/` to guarantee zero `===` on secrets, mandating `constantTimeCompare()` from `src/server/utils/crypto.ts`.
+   - Document side-channel boundary in `project/encryption-layers-spec.md` §5 (functional LAN parity vs. hardware side-channel parity).
 
-**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against `stage/phase-23-item-integrity`.
+2. **Task 48 (`.jules/tasks/task-48.md`)**:
+   - Codify the executable claim battery in `tests/build-gates.test.ts` (rate limiters, schemas, identity shapes, AAD namespaces) to catch documentation drift in CI.
+   - Write the auditor's addendum across `SECURITY.md` and `docs/architecture/threat-model.md` (in-process rate limiting, per-key LRU eviction, redaction-regex coverage).
+
+**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against `stage/phase-24-crypto-hardening`.

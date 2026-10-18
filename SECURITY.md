@@ -271,6 +271,15 @@ The instance admin plane at `/superlobster` (URL-only entry — no UI links anyw
 | **Rate Limiting** | ✅ Mitigated | Three tiers | Global `apiLimiter` (100 req/min), `authLimiter` (10 attempts/15m default — `AUTH_RATE_LIMIT`-tunable, skips successful logins), per-agent LRU limiter honoring each key's configured rate limit (1–10000) |
 | **Audit Trail** | ✅ Mitigated | Segregated append-only `audit.sqlite` | Every mutation logged with extended redaction; daily retention prune; tamper-resistant isolation from live data |
 
+### The Auditor's Addendum (Phase 24)
+
+For forensic and operational clarity, the following runtime realities are explicitly declared:
+
+- **In-process rate limiting**: The application utilizes in-memory rate limiters. A process restart (or container recreation) resets all limits to zero. Multi-instance or clustered deployments share no in-memory state; rate limits apply strictly per-node unless an external layer (like Redis or an L7 proxy) is introduced.
+- **Per-key LRU eviction**: The in-memory cache for agent key rate limits has a maximum capacity. If the cache exceeds this capacity, older key entries are evicted via Least Recently Used (LRU) policy. Evicted keys fall back safely to SQLite database lookups upon their next request, ensuring no bypass or crash occurs, though throughput drops marginally.
+- **Redaction-regex coverage**: Our audit logging mechanism utilizes strict regex patterns to redact sensitive substrings before they hit the `audit.sqlite` file. Tokens (`api-`), identities (`hu-`), and agent keys (`lb-`) are blanket redacted, replacing the sensitive key material with `[REDACTED]`.
+- **PBKDF2 iteration count**: Custom passphrase exports and derivation flows use exactly 600,000 iterations of PBKDF2-HMAC-SHA256, strictly matching the OWASP recommended iteration standard for password hashing.
+
 ### Key Leakage Vectors
 
 | Key Type | Storage | Risk | Mitigation |

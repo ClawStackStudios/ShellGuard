@@ -11,6 +11,17 @@ The agent acts as an active cartographer of the project's development lifecycle.
 
 ## 🧭 The 4 Boundary Prompts
 
+### 0. Jules Pre-Dispatch Gate (Scoping → Staging → Trigger Check)
+- **When to Trigger**: Whenever delegating a stage or coding task to Google Jules CLI.
+- **Core Invariable**: *"Never dispatch cold; never dispatch unprompted; pre-heat Jules inference, authorize uncertainty escape hatches, and guard sovereign boundaries."*
+- **Mandatory 4-Gate Pipeline (`skills/prep-jules-work/SKILL.md`)**:
+  1. **Gate 1 (Map)**: Author Master Domain Map artifact and align scope with the user.
+  2. **Gate 2 (Artifacts)**: Author Jules Launch Brief and Live Task Tracker artifacts.
+  3. **Gate 3 (Pre-Heat)**: Author `.jules/tasks/task-<N>.md`, pre-insert scoped knowledge in `.jules/knowledge/KNOWLEDGE.md`, plant inline `// TODO(jules):` anchors, and authorize the Epistemic Escape Hatch `// TODO(uncertainty):`.
+  4. **Gate 4 (User Trigger)**: Assemble prompt enforcing `.jules/` discovery and `.agents/` sovereign boundary, stop, and let the user make the final trigger call.
+- **Agent Action**: Present the staged brief, tracker, and dispatch command, then ask:
+  > *"All pre-flight artifacts and .jules/ knowledge files are staged with the Epistemic Escape Hatch authorized. The dispatch prompt is assembled with strict .agents/ boundaries and .jules/ knowledge citations. Shall I execute `jules new` to dispatch the task, or would you like to make any adjustments first?"*
+
 ### 1. Task Completion Gate (Cloud CI Pass → Live Handshake → Commit/Merge Check)
 - **When to Trigger**: Immediately after a task's code changes pass the automated cloud verification gates on GitHub Actions (`.github/workflows/ci.yml`: lint, vitest suites, vite build, docs:build all 100% green in the cloud runner tailed via `gh run watch`).
 - **Core Invariable**: *"A merge should leave the codebase improved, or at the very least not worse."*

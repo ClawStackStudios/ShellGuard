@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-10-17 — /learn protocol: prep-jules-work skill & epistemic escape hatch
+Lucas executed `/learn` on the structural staging workflow preceding Jules dispatch. Codified the self-contained `prep-jules-work` skill enforcing the 4-Gate Preparation Pipeline (Map Gate → Artifacts Gate → Pre-Heat Gate → User Trigger Gate). Established two mandatory prompt invariants: explicit `.jules/` discovery (Jules does not read it by default) and sovereign `.agents/` exclusion. Authored Lucas's profound insight—the Epistemic Escape Hatch Protocol (`// TODO(uncertainty):`)—authorizing Jules to flag low-confidence compromises and removing RLHF faked-confidence bias. Added Gate 0 to `cadence-and-lifecycle-prompts.md`, updated `.jules/JULES.md`, and pre-heated `.jules/knowledge/KNOWLEDGE.md`.
+
+## 2026-10-17 — Jules TODO mapping, stale milestone cleanup & Phase 24 task anchoring
+Lucas requested a repository-wide audit and map of Jules TODO comments, eliminating stale milestone indicators while keeping active TODOs current. Verified production code and test suites contain zero dangling TODO comments. Stamped Stage 24 / Sub-Stage 25.1 as complete in `project/meta-prompt-ai-studio.md`, marked `.jules/tasks/task-45.md` & `task-46.md` completed, advanced `.jules/JULES.md` to Phase 24, authored `task-47.md` and `task-48.md`, and placed 5 actionable, current `TODO(jules)` anchors across code and docs to enable autonomous co-pilot execution.
+
 ## 2026-10-17 — Tossing superseded PR #3 and clean PR closure
 Lucas queried whether to merge or toss lingering open PR #3 from the earlier Jules Phase 23 iteration. Inspected branch topology and commit diff: PR #3 (`stage/phase-23-item-integrity-8580131941674843399`) was Jules's preliminary draft, completely superseded by PR #4 and PR #5 (`stage-phase-23-item-integrity-8580131941674843399`), which brought in Sub-Stage 25.1 and were already merged into `main`. Closed PR #3 via `gh pr close 3` with an auditable summary, leaving zero open PRs.
 
@@ -63,8 +69,5 @@ Implemented first-class `card` and `identity` types across the entire vault stac
 
 ## 2026-09-26 — Bitwarden linked ID mapping & residual field harvesting
 Discovered Bitwarden exports linked custom fields via numeric `linkedId` (100–104) without property names; mapped these directly to ShellGuard's `linkedProperty` so linked fields resolve cleanly in `ItemDetailPane`. Created an automated `harvestResidualFields` sweeper with key exclusion sets and empty collection filtering (`[]`/`{}`) to capture unmapped identity fields (`username`, `address2`, `address3`, etc.) and ensure zero data loss on future exports.
-
-## 2026-09-25 — Android companion dependency injection: Application-Scoped Lazy DI
-Aligned Android companion architecture with Lucas to formalize the Application-Scoped Lazy DI pattern (`AppContainer` with thread-safe `by lazy` properties) over Hilt or Koin. Confirmed this belongs strictly in internal specifications (`.agents/brain/android/` and `di-container.md`) rather than public `/docs/companion/`, preserving VitePress clarity while guaranteeing sub-100ms cold start, zero reflection attack surface, and deterministic RAM zeroization upon vault lock.
 
 

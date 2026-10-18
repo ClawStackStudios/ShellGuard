@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-10-18 — /learn protocol: Post-review verification & adjacency sweep ratified
+Lucas executed `/learn` on post-review verification mechanics preceding PR merge. Codified Phase 5.5 in `working-with-jules/SKILL.md`, enhanced `git-review-pr/SKILL.md` (target base alignment check and post-review checklist), and updated Gate 1 in `cadence-and-lifecycle-prompts.md`. Ratified the 4 Post-Review Gates: (1) Target base alignment (`gh pr edit --base stage/*`), (2) Live task tracker reconciliation (flagging omitted sub-tasks as candidate gaps), (3) 4-question adjacency & unarticulated operational sweep (OWASP vs YAGNI), and (4) Epistemic doubt ratification against native platform truth.
+
+## 2026-10-17 — Phase 24 dispatched to Jules & stage branch grounded
+Pushed `stage/phase-24-crypto-hardening` to origin with pre-heated `.jules/knowledge/KNOWLEDGE.md`, Tasks 47 & 48 anchored, and 5 inline `TODO(jules)` markers across code and tests. Dispatched Google Jules CLI (Session `1532409642078832614`) with atomic prompt enforcing `.jules/` discovery, sovereign `.agents/` exclusion, and the Epistemic Escape Hatch (`// TODO(uncertainty):`). Live tracking matrix active.
+
 ## 2026-10-17 — /learn protocol: prep-jules-work skill & epistemic escape hatch
 Lucas executed `/learn` on the structural staging workflow preceding Jules dispatch. Codified the self-contained `prep-jules-work` skill enforcing the 4-Gate Preparation Pipeline (Map Gate → Artifacts Gate → Pre-Heat Gate → User Trigger Gate). Established two mandatory prompt invariants: explicit `.jules/` discovery (Jules does not read it by default) and sovereign `.agents/` exclusion. Authored Lucas's profound insight—the Epistemic Escape Hatch Protocol (`// TODO(uncertainty):`)—authorizing Jules to flag low-confidence compromises and removing RLHF faked-confidence bias. Added Gate 0 to `cadence-and-lifecycle-prompts.md`, updated `.jules/JULES.md`, and pre-heated `.jules/knowledge/KNOWLEDGE.md`.
 
@@ -66,8 +72,4 @@ Lucas requested adding a dedicated `SECURITY.md` pattern to our skills and rules
 
 ## 2026-09-27 — Native Credit Card & Identity models, smart auto-spacing & checkout clipboard invariant
 Implemented first-class `card` and `identity` types across the entire vault stack using the polymorphic `vault_pearls` table. Engineered `cardUtils.ts` providing network-aware smart auto-spacing (Amex 4-6-5, others 4-4-4-4), real-time brand detection, length-truthful proportional masking, and clean digit copying to the clipboard so third-party payment forms never reject on spaces. Designed dedicated visual Credit Card and Identity Contact Sheet widgets in `ItemDetailPane` strictly maintaining the Eye-beside-Copy invariant on all sensitive fields.
-
-## 2026-09-26 — Bitwarden linked ID mapping & residual field harvesting
-Discovered Bitwarden exports linked custom fields via numeric `linkedId` (100–104) without property names; mapped these directly to ShellGuard's `linkedProperty` so linked fields resolve cleanly in `ItemDetailPane`. Created an automated `harvestResidualFields` sweeper with key exclusion sets and empty collection filtering (`[]`/`{}`) to capture unmapped identity fields (`username`, `address2`, `address3`, etc.) and ensure zero data loss on future exports.
-
 

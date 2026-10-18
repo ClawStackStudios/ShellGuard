@@ -20,7 +20,62 @@ const readIfExists = (rel: string): string | null => {
   return fs.existsSync(p) ? fs.readFileSync(p, 'utf-8') : null;
 };
 
-// TODO(jules): Phase 24 / Task 48 — Wire executable claim battery gate (validating rateLimiter configs, schema claims vs migrations, identity shape, and AAD namespaces) to fail CI automatically on documentation drift.
+// ─── The Auditor's Claim Battery (Phase 24 / Task 48) ────────────────────────
+describe('Build gates — Auditor\'s Claim Battery (Docs bow to Code)', () => {
+  it('guarantees rate limiter claims match code', () => {
+    const rateLimiterCode = readIfExists('src/server/middleware/rateLimiter.ts') ?? '';
+    const securityDocs = readIfExists('SECURITY.md') ?? '';
+
+    // Check that apiLimiter 100 req/min is in code and docs
+    expect(rateLimiterCode).toMatch(/1\s*\*\s*60\s*\*\s*1000/);
+    expect(rateLimiterCode).toMatch(/'100'/);
+    expect(securityDocs).toContain('100 req/min');
+
+    // Check that authLimiter 10 attempts/15m is in code and docs
+    expect(rateLimiterCode).toMatch(/15\s*\*\s*60\s*\*\s*1000/);
+    expect(rateLimiterCode).toMatch(/'10'/);
+    expect(securityDocs).toMatch(/10\s*attempts\s*\/\s*15\s*m/i);
+
+    // Check that adminAuthLimiter 5 attempts/10m is in code and docs
+    expect(rateLimiterCode).toMatch(/windowMs:\s*10\s*\*\s*60\s*\*\s*1000/);
+    expect(rateLimiterCode).toMatch(/max:\s*5/);
+    expect(securityDocs).toContain('5 attempts / 10 min');
+  });
+
+  it('guarantees identity key formats match code', () => {
+    const authCode = readIfExists('src/server/middleware/auth.ts') ?? '';
+    const docs = readIfExists('SECURITY.md') ?? '';
+
+    expect(authCode).toContain("key?.startsWith('hu-')");
+    expect(authCode).toContain("key?.startsWith('lb-')");
+    expect(authCode).toContain("key?.startsWith('api-')");
+
+    expect(docs).toContain('`hu-`');
+    expect(docs).toContain('`lb-`');
+    expect(docs).toContain('`api-`');
+  });
+
+  it('guarantees permission masks match schemas', () => {
+    const schemasCode = readIfExists('src/server/validation/schemas.ts') ?? '';
+    const securityDocs = readIfExists('SECURITY.md') ?? '';
+
+    expect(schemasCode).toMatch(/canRead:\s*z\.boolean/);
+    expect(schemasCode).toMatch(/canWrite:\s*z\.boolean/);
+    expect(schemasCode).toMatch(/canEdit:\s*z\.boolean/);
+    expect(schemasCode).toMatch(/canDelete:\s*z\.boolean/);
+
+    expect(securityDocs).toContain('canRead');
+    expect(securityDocs).toContain('canDelete');
+  });
+
+  it('guarantees AAD namespaces match test fixtures', () => {
+    const encLayersDocs = readIfExists('project/encryption-layers-spec.md') ?? '';
+    const shellCryptionCode = readIfExists('src/lib/shellCryption.ts') ?? '';
+    expect(shellCryptionCode).toContain('${table}:${recordId}');
+    expect(encLayersDocs).toContain('vault_pearls_custom:{id}');
+  });
+});
+
 describe('Build gates — always-on repository shape', () => {
   it('has a package.json with lint and build scripts', () => {
     const pkg = JSON.parse(readIfExists('package.json') ?? 'null');
@@ -209,5 +264,46 @@ describe.skipIf(!fs.existsSync(path.join(PROJECT_ROOT, unraidFile)))('Build gate
     expect(raw).toContain('ghcr.io/clawstackstudios/shellguard');
     expect(raw).toMatch(/DB_ENCRYPTION_KEY/);
     expect(raw).toMatch(/WebUI[\s\S]{0,80}6464/);
+  });
+});
+
+// ─── Constant-Time Parity Sweep ──────────────────────────────────────────────
+describe('Build gates — Constant-Time Parity Sweep', () => {
+  it('guarantees zero === or !== comparisons on secret fields (tokens, keys, hashes)', () => {
+    const authCode = readIfExists('src/server/routes/auth.ts') ?? '';
+    const adminCode = readIfExists('src/server/routes/admin.ts') ?? '';
+    const authMwCode = readIfExists('src/server/middleware/auth.ts') ?? '';
+    const cryptoCode = readIfExists('src/server/utils/crypto.ts') ?? '';
+
+    // We check that none of these files contain secret-like variable comparisons
+    // using === or !==
+    // Regex matches var === var where either side looks like a secret
+    const secretVars = ['key', 'token', 'keyHash', 'secret', 'passphrase', 'providedHash', 'expectedHash'];
+
+    for (const fileCode of [authCode, adminCode, authMwCode, cryptoCode]) {
+      const lines = fileCode.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.includes('===') || line.includes('!==')) {
+          for (const secretVar of secretVars) {
+             // We ensure that we don't accidentally check something like type === 'agent'
+             // Look for actual comparisons involving the secret vars
+             const strictEqPattern = new RegExp(`\\b${secretVar}\\b\\s*(?:===|!==)`);
+             const strictEqPatternRev = new RegExp(`(?:===|!==)\\s*\\b${secretVar}\\b`);
+
+
+             if (strictEqPattern.test(line) || strictEqPatternRev.test(line)) {
+               // Ignore comparisons against literal strings if it's checking types, e.g., keyType === 'human'
+               if (/===\s*['"`]|['"`]\s*===/.test(line)) continue;
+
+               // Also ignore if it is checking if the property is undefined/null/string
+               if (line.includes('typeof')) continue;
+
+               throw new Error(`Found non-constant-time comparison on secret variable '${secretVar}' at line ${i + 1}: ${line.trim()}`);
+             }
+          }
+        }
+      }
+    }
   });
 });

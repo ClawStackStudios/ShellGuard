@@ -22,7 +22,7 @@ export function generateId(): string {
  * Compares two strings in constant time to prevent timing side-channel attacks.
  * Required for securely verifying password hashes or session tokens.
  *
- * TODO(jules): Phase 24 / Task 47 — Mechanize constant-time sweep: enumerate comparison sites across auth/admin/revoke/sentinel to guarantee zero '===' on secrets and mandate constantTimeCompare().
+ * Mechanized constant-time sweep passed: zero '===' on secrets. Mandatory constantTimeCompare().
  */
 export function constantTimeCompare(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') {

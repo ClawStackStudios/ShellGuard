@@ -26,5 +26,11 @@ ShellGuard's security model addresses modern web vault threats and adversarial s
 - **A03: Injection**: 100% parameterized SQLite prepared statements with strict Zod runtime schema validation.
 - **A04: Insecure Design**: Zero-knowledge mathematics render the server fundamentally incapable of revealing secrets.
 
-<!-- TODO(jules): Phase 24 / Task 48 — Write the Auditor's Addendum: explicitly narrate in-process rate limiting semantics (restart resets; multi-instance shares nothing), per-key LRU eviction, and redaction-regex coverage. -->
+### The Auditor's Addendum (Phase 24)
 
+For forensic and operational clarity, the following runtime realities are explicitly declared:
+
+- **In-process rate limiting**: The application utilizes in-memory rate limiters. A process restart (or container recreation) resets all limits to zero. Multi-instance or clustered deployments share no in-memory state; rate limits apply strictly per-node unless an external layer (like Redis or an L7 proxy) is introduced.
+- **Per-key LRU eviction**: The in-memory cache for agent key rate limits has a maximum capacity. If the cache exceeds this capacity, older key entries are evicted via Least Recently Used (LRU) policy. Evicted keys fall back safely to SQLite database lookups upon their next request, ensuring no bypass or crash occurs, though throughput drops marginally.
+- **Redaction-regex coverage**: Our audit logging mechanism utilizes strict regex patterns to redact sensitive substrings before they hit the `audit.sqlite` file. Tokens (`api-`), identities (`hu-`), and agent keys (`lb-`) are blanket redacted, replacing the sensitive key material with `[REDACTED]`.
+- **PBKDF2 iteration count**: Custom passphrase exports and derivation flows use exactly 600,000 iterations of PBKDF2-HMAC-SHA256, strictly matching the OWASP recommended iteration standard for password hashing.

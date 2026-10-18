@@ -1,6 +1,6 @@
 # Task 48: The Auditor's Battery & Threat-Model Addendum
 
-> **Milestone**: Stage 25 / Phase 24 (Task 48 of 52)
+> **Milestone**: Stage 25 / Phase 24 (Task 48 of 52) — **COMPLETED & SHIPPED in v0.0.2.6 (Build 28)**
 > **Domain**: Automated Verification Gates, Docs-as-Code & Threat Model
 > **Target Branch**: `stage/phase-24-crypto-hardening`
 > **Attribution**: Conventional Commits with Two-Layer Attribution (`User:` / `AI:`)

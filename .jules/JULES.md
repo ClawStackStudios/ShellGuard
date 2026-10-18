@@ -85,19 +85,17 @@ Before committing or submitting a PR, you **must** run all three verification ga
 
 ---
 
-## 🎯 Active Milestone: Stage 25 (Phase 24)
+## 🎯 Active Milestone: Stage 26 (Phase 25)
 
-> **Previous Milestone**: Stage 24 (Phase 23) — **COMPLETED & SHIPPED in v0.0.2.5 (Build 27)**.
+> **Previous Milestone**: Stage 25 (Phase 24) — **COMPLETED & SHIPPED in v0.0.2.6 (Build 28)**.
 
-You are tasked with executing **Stage 25 (Phase 24: Cryptographic Audit Hardening & Third-Party Auditability)** on target branch `stage/phase-24-crypto-hardening`:
+You are tasked with executing **Stage 26 (Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock)**:
 
-1. **Task 47 (`.jules/tasks/task-47.md`)**:
-   - WebCrypto fallback vector parity: run pure-TS engine against real standards vectors (FIPS 180-4 SHA-256, RFC 2104 HMAC, RFC 5869 HKDF, SP 800-38D AES-GCM) in `tests/unit/webCryptoFallback.test.ts`.
-   - Mechanize constant-time comparison sweep across `src/` to guarantee zero `===` on secrets, mandating `constantTimeCompare()` from `src/server/utils/crypto.ts`.
-   - Document side-channel boundary in `project/encryption-layers-spec.md` §5 (functional LAN parity vs. hardware side-channel parity).
+1. **Task 49**:
+   - Client-side streaming ZIP archive generator (`src/lib/habitatExport.ts`): fetch encrypted attachment BLOBs, decrypt in-memory, and package with deterministic directory structure (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`).
+   - Embedded `attachment_manifest` mapping ID, file name, parent item ID, size, and checksum.
+2. **Task 50**:
+   - Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock in `VaultShell.tsx` and `ImportExportView.tsx`.
+   - Stage 1 instant primary vault JSON ingestion (<2s) + Stage 2 non-blocking background streaming uploads.
 
-2. **Task 48 (`.jules/tasks/task-48.md`)**:
-   - Codify the executable claim battery in `tests/build-gates.test.ts` (rate limiters, schemas, identity shapes, AAD namespaces) to catch documentation drift in CI.
-   - Write the auditor's addendum across `SECURITY.md` and `docs/architecture/threat-model.md` (in-process rate limiting, per-key LRU eviction, redaction-regex coverage).
-
-**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against `stage/phase-24-crypto-hardening`.
+**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against the designated stage branch.

@@ -1,6 +1,6 @@
 # Task 47: WebCrypto Fallback Vector Parity & Constant-Time Guarantee
 
-> **Milestone**: Stage 25 / Phase 24 (Task 47 of 52)
+> **Milestone**: Stage 25 / Phase 24 (Task 47 of 52) — **COMPLETED & SHIPPED in v0.0.2.6 (Build 28)**
 > **Domain**: Cryptographic Engine, Standards Vectors & Side-Channel Boundaries
 > **Target Branch**: `stage/phase-24-crypto-hardening`
 > **Attribution**: Conventional Commits with Two-Layer Attribution (`User:` / `AI:`)

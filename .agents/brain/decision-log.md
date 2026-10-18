@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-18 — Phase 24 stage merge, sovereign boundary & release v0.0.2.6 preparation
+Merged Jules's PR #6 into `stage/phase-24-crypto-hardening`, mechanically restoring `.agents/` to maintain 100% boundary sovereignty. PR #6 verified in cloud CI (Run `39134249985` 100% green across 29 test suites, Vite build, and docs:build) and marked merged. Executed `/draft-release`: authored `RELEASE-v0.0.2.6.md`, purged old `RELEASE-v0.0.2.5.md`, retired Phase 21 into `ROADMAP-HISTORY.md`, advanced `ROADMAP.md` 3-version sliding window (Phases 22, 23, 24), and synchronized all central version anchors to `v0.0.2.6 (Build 28)`.
+
 ## 2026-10-18 — /learn protocol: Post-review verification & adjacency sweep ratified
 Lucas executed `/learn` on post-review verification mechanics preceding PR merge. Codified Phase 5.5 in `working-with-jules/SKILL.md`, enhanced `git-review-pr/SKILL.md` (target base alignment check and post-review checklist), and updated Gate 1 in `cadence-and-lifecycle-prompts.md`. Ratified the 4 Post-Review Gates: (1) Target base alignment (`gh pr edit --base stage/*`), (2) Live task tracker reconciliation (flagging omitted sub-tasks as candidate gaps), (3) 4-question adjacency & unarticulated operational sweep (OWASP vs YAGNI), and (4) Epistemic doubt ratification against native platform truth.
 
@@ -60,16 +63,4 @@ Lucas established a strict operational boundary mirroring ShellGuard-Mobile and 
 
 ## 2026-10-12 — PR #2 Phantom implementation audit & Jules co-pilot recursive feedback
 Physical diff inspection of Jules PR #2 revealed commit `9035b82` was a phantom implementation (+1452 / -303 across 12 files): zero lines of code in `src/`, `migrations/`, or `tests/` while encroaching into `.agents/workflows/` and targeting `main`. Realigned PR base to `stage/phase-23-item-integrity`, and posted an auditable review comment layering the original dispatch prompt with 6 granular memory units (Migration 0009, orphan quarantine, fail-closed parent linkage, note secret rejection, header add-menu removal, deterministic type-sorting, and test oracle). Jules acknowledged and transitioned to `Planning` to re-execute.
-
-## 2026-10-11 — Era 1 archival, Era 2 genesis & pre-walk-the-docs protocol
-Lucas refined the master sequence: stopping the active Era 1 meta-prompt and roadmap at Phase 26 (Import Lifecycle Quarantine), archiving both into `.agents/internal/` (`era-1-meta-prompt-ai-studio.md` and `era-1-ROADMAP.md`), and birthing Era 2 (`meta-prompt-ai-studio-era2.md` and `ROADMAP-ERA2.md`) with Phase 27 as flagship Stage 1. Executed a comprehensive pre-/walk-the-docs sweep across all 4 zones, baking 3 new VitePress pages (`https-tls.md`, `transport.md`, `pairing.md`), 5 updated docs, root docs, and skills directly into Task 54 acceptance criteria so documentation 100% bows to code without drift.
-
-## 2026-10-03 — Git Advanced Workflows skill synthesis & hygiene rule bolster
-Integrated the Git Advanced Workflows skill into our ecosystem. Formulated `.agents/skills/git-advanced-workflows/SKILL.md` covering interactive rebase, autosquash, worktrees, precision cherry-picking, automated bisect, and reflog recovery. Bolstered `git-hygiene.md` with explicit worktree isolation, pre-rebase safety branches, autosquash workflows, and the 90-day reflog safety net, and updated `project-hygiene.md` with worktree task branching and automated regression isolation.
-
-## 2026-10-03 — Living security contract & OpenSSF SECURITY.md governance
-Lucas requested adding a dedicated `SECURITY.md` pattern to our skills and rules. Codified Section 10 in `docs-hygiene.md`, Template 3 and Core Concept 5 in `doc-automation`, and `fix(security)` Conventional Commit mappings in `changelog-automation` and `git-hygiene.md`. Audited and upgraded root `SECURITY.md` with an OpenSSF-compliant Supported Versions matrix (`v0.0.2.x (Build 26+)`) and a CFAA/DMCA Safe Harbor legal clause for good-faith researchers, tying our documentation directly to code reality.
-
-## 2026-09-27 — Native Credit Card & Identity models, smart auto-spacing & checkout clipboard invariant
-Implemented first-class `card` and `identity` types across the entire vault stack using the polymorphic `vault_pearls` table. Engineered `cardUtils.ts` providing network-aware smart auto-spacing (Amex 4-6-5, others 4-4-4-4), real-time brand detection, length-truthful proportional masking, and clean digit copying to the clipboard so third-party payment forms never reject on spaces. Designed dedicated visual Credit Card and Identity Contact Sheet widgets in `ItemDetailPane` strictly maintaining the Eye-beside-Copy invariant on all sensitive fields.
 

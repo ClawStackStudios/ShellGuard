@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.0.2.6] - 2026-10-18
+
+### Added
+- **WebCrypto Fallback Vector Parity (Task 47):** Unskipped `tests/unit/webCryptoFallback.test.ts` (skipped since v0.0.1.2) and verified pure-TypeScript cryptographic engine against published standards vectors: FIPS 180-4 SHA-256, RFC 2104 HMAC-SHA256, RFC 5869 HKDF-SHA256, and NIST SP 800-38D AES-256-GCM. Confirmed byte-identical parity with Node.js native `crypto`.
+- **Mechanized Constant-Time Comparison Sweep (Task 47):** Introduced `constantTimeCompare(a, b)` utility in `src/server/utils/crypto.ts` utilizing `crypto.timingSafeEqual` with dummy comparison buffering on length mismatch. Refactored `auth.ts`, `admin.ts`, and `auth.ts` middleware to eliminate raw `===` and timing leaks on sensitive tokens and passwords. Added an automated AST/regex CI gate in `tests/build-gates.test.ts` scanning for raw equality checks on secrets.
+- **The Auditor's Claim Battery (Task 48):** Added executable Docs-as-Code assertions in `tests/build-gates.test.ts` verifying that documentation 100% bows to code truth across rate limiter counts (L1), key prefixes (L3), permission masks (L4), and AAD namespaces (L5).
+- **Threat Model Addendum (Task 48):** Updated `SECURITY.md` and `docs/architecture/threat-model.md` documenting runtime operational realities: in-process rate limiting container reset behavior, per-key LRU cache eviction with database fallback, and credential redaction-regex coverage. Documented the honest functional LAN side-channel boundary in `project/encryption-layers-spec.md` §5.
+
 ## [0.0.2.5] - 2026-10-17
 
 ### Added
@@ -255,7 +263,8 @@
 - Integration fixes: test wiring, schema validation, import paths
 - Test isolation: per-suite DATA_DIR and PORT allocation
 
-[Unreleased]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.5...HEAD
+[Unreleased]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.6...HEAD
+[0.0.2.6]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.5...v0.0.2.6
 [0.0.2.5]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.4...v0.0.2.5
 [0.0.2.4]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.3...v0.0.2.4
 [0.0.2.3]: https://github.com/ClawStackStudios/ShellGuard/compare/v0.0.2.2...v0.0.2.3

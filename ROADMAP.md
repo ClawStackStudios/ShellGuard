@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-10-17
-current_position: "v0.0.2.5 (Build 27) — released & live; next Phase 24: Cryptographic Audit Hardening (provisional v0.0.2.6 / Build 28) — queue 24 → 25 → 26 → 27"
+last_updated: 2026-10-18
+current_position: "v0.0.2.6 (Build 28) — released & live; next Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock (provisional v0.0.2.7 / Build 29) — queue 25 → 26 → 27"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "█████████████████████ 85% (22 of 26 formalized phases)"
+  features_completed: "██████████████████████ 88% (23 of 26 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,85 +13,22 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 24+) and the 3 most recent completed phases (Phases 21, 22, and 23).*
-> *Historical Phases 1 through 20 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 25+) and the 3 most recent completed phases (Phases 22, 23, and 24).*
+> *Historical Phases 1 through 21 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.5 (Build 27)`
-- **Next Planned Milestone**: `v0.0.2.6 (Build 28)` (Phase 24)
+- **Current Production Release**: `v0.0.2.6 (Build 28)`
+- **Next Planned Milestone**: `v0.0.2.7 (Build 29)` (Phase 25)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 24 completes, Phase 21 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 25 completes, Phase 22 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
-
-### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [work-driven version — provisional v0.0.2.6 (Build 28)]
-
-> Phase Feature Set Overview:
-> Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code
-> audit (which proved the corpus's only liars were docs — the code was sound) into
-> standing verification. Task A hardens the last open soft spot in the crypto
-> claims: the pure-TS WebCrypto fallback's native parity has never been proven
-> against real standards vectors (its test has been skipped since v0.0.1.2) — Task A
-> runs the fallback against NIST/RFC/SP vectors and mechanizes the constant-time
-> guarantee across every key-material comparison site. Task B turns the claim
-> battery (grep enforcing code first, assert doc second) into an executable gate
-> and writes the auditor's addendum into the threat model: in-process rate limiting
-> (restart resets; multi-instance shares nothing), per-key LRU eviction behavior,
-> redaction-regex coverage, and the PBKDF2 narration. No runtime behavior changes;
-> no migrations; the corpus becomes third-party auditable by construction.
-> *(Source: Lucas, 2026-09-16 — cryptologist-lens pass; docs bow to code.)*
-
-> 📚 **Documentation Impact**: SECURITY.md + docs/architecture/threat-model.md (auditor's addendum) - project/verification-gates.md (the battery becomes an oracle) - encryption-layers-spec.md section 5 (side-channel boundary)
-
-- [ ] **Task 47: [Security Engine] WebCrypto Fallback Vector Parity & Constant-Time Guarantee**
-
-Description: Close the last open soft spot in the crypto claims. (1) Fix the
-skipped `tests/unit/webCryptoFallback.test.ts` (skipped since v0.0.1.2 — a known
-issue guarding our own parity claim): run the pure-TS engine against REAL
-standards vectors — SHA-256 (FIPS 180-4 vectors), HMAC-SHA256 (RFC 2104),
-HKDF-SHA256 (RFC 5869 test vectors), AES-256-GCM (SP 800-38D) — asserting
-byte-identity with Node native output on every vector; unskip. (2) Mechanize the
-constant-time sweep: enumerate every comparison site over key material across
-`src/` (auth, admin, revoke, sentinel) and prove zero `===` on secrets — as an
-executable assertion, not an eyeball pass. (3) Narrate the honest boundary in
-`project/encryption-layers-spec.md` section 5: pure-TS AES-GCM is FUNCTIONAL
-parity (LAN-HTTP availability), not side-channel parity — stated verbatim so no
-future doc inflates it.
-
-> Success Criteria: The skipped test is unskipped and green against real
-> standards vectors; fallback output byte-identical to native on every vector;
-> the constant-time sweep script runs in CI and finds zero `===` comparisons on
-> secret material; the side-channel boundary is documented in the spec; the full
-> test oracle + `tsc` + build stay clean.
-
-- [ ] **Task 48: [Verification/Documentation Component] The Auditor's Battery & Threat-Model Addendum**
-
-Description: Make the corpus self-auditing. (1) Consolidate the claim battery —
-grep enforcing code first, assert doc second (the L1-L8 classes: limiter numbers
-vs rateLimiter.ts, schema claims vs migrations, identity shape vs crypto.ts,
-permission masks vs zod, AAD namespaces vs test fixtures, PRAGMA rekey, file
-names) — into an executable gate (`scripts/audit-docs.ts` or a vitest suite,
-reviewable in the PR) wired into the build-gates suite so docs drift fails CI.
-(2) Write the auditor's addendum across `SECURITY.md` and
-`docs/architecture/threat-model.md`: in-process rate limiting (restart resets
-counters; multi-instance deployments share nothing — say it), per-key LRU
-eviction behavior (evicted keys fall back to DB lookups — safe, but documented),
-redaction-regex coverage enumerated, and PBKDF2 narration where the test tree
-mentions it.
-
-> Success Criteria: The battery fails loudly on any planted docs-lie (mutation
-> test: re-introduce one L-class lie, watch CI catch it); the threat-model
-> addendum names in-process limiter semantics, LRU eviction, and redaction
-> coverage explicitly; SECURITY.md and the portal threat-model agree; the full
-> test oracle + `tsc` + build stay clean.
-
----
 
 ### Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [work-driven version — provisional v0.0.2.7 (Build 29)]
 
@@ -242,6 +179,69 @@ deletion or graduation.
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
+### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [v0.0.2.6 (Build 28)] ✅
+
+> Phase Feature Set Overview:
+> Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code
+> audit (which proved the corpus's only liars were docs — the code was sound) into
+> standing verification. Task A hardens the last open soft spot in the crypto
+> claims: the pure-TS WebCrypto fallback's native parity has never been proven
+> against real standards vectors (its test has been skipped since v0.0.1.2) — Task A
+> runs the fallback against NIST/RFC/SP vectors and mechanizes the constant-time
+> guarantee across every key-material comparison site. Task B turns the claim
+> battery (grep enforcing code first, assert doc second) into an executable gate
+> and writes the auditor's addendum into the threat model: in-process rate limiting
+> (restart resets; multi-instance shares nothing), per-key LRU eviction behavior,
+> redaction-regex coverage, and the PBKDF2 narration. No runtime behavior changes;
+> no migrations; the corpus becomes third-party auditable by construction.
+> *(Receipts: Phase 24 Tasks 47 & 48, PR #6, 2026-10-18. Released & live.)*
+
+> 📚 **Documentation Impact**: SECURITY.md + docs/architecture/threat-model.md (auditor's addendum) - project/verification-gates.md (the battery becomes an oracle) - encryption-layers-spec.md section 5 (side-channel boundary) — ✅ synced.
+
+- [x] **Task 47: [Security Engine] WebCrypto Fallback Vector Parity & Constant-Time Guarantee**
+
+Description: Close the last open soft spot in the crypto claims. (1) Fix the
+skipped `tests/unit/webCryptoFallback.test.ts` (skipped since v0.0.1.2 — a known
+issue guarding our own parity claim): run the pure-TS engine against REAL
+standards vectors — SHA-256 (FIPS 180-4 vectors), HMAC-SHA256 (RFC 2104),
+HKDF-SHA256 (RFC 5869 test vectors), AES-256-GCM (SP 800-38D) — asserting
+byte-identity with Node native output on every vector; unskip. (2) Mechanize the
+constant-time sweep: enumerate every comparison site over key material across
+`src/` (auth, admin, revoke, sentinel) and prove zero `===` on secrets — as an
+executable assertion, not an eyeball pass. (3) Narrate the honest boundary in
+`project/encryption-layers-spec.md` section 5: pure-TS AES-GCM is FUNCTIONAL
+parity (LAN-HTTP availability), not side-channel parity — stated verbatim so no
+future doc inflates it.
+
+> Success Criteria: The skipped test is unskipped and green against real
+> standards vectors; fallback output byte-identical to native on every vector;
+> the constant-time sweep script runs in CI and finds zero `===` comparisons on
+> secret material; the side-channel boundary is documented in the spec; the full
+> test oracle + `tsc` + build stay clean.
+
+- [x] **Task 48: [Verification/Documentation Component] The Auditor's Battery & Threat-Model Addendum**
+
+Description: Make the corpus self-auditing. (1) Consolidate the claim battery —
+grep enforcing code first, assert doc second (the L1-L8 classes: limiter numbers
+vs rateLimiter.ts, schema claims vs migrations, identity shape vs crypto.ts,
+permission masks vs zod, AAD namespaces vs test fixtures, PRAGMA rekey, file
+names) — into an executable gate (`scripts/audit-docs.ts` or a vitest suite,
+reviewable in the PR) wired into the build-gates suite so docs drift fails CI.
+(2) Write the auditor's addendum across `SECURITY.md` and
+`docs/architecture/threat-model.md`: in-process rate limiting (restart resets
+counters; multi-instance deployments share nothing — say it), per-key LRU
+eviction behavior (evicted keys fall back to DB lookups — safe, but documented),
+redaction-regex coverage enumerated, and PBKDF2 narration where the test tree
+mentions it.
+
+> Success Criteria: The battery fails loudly on any planted docs-lie (mutation
+> test: re-introduce one L-class lie, watch CI catch it); the threat-model
+> addendum names in-process limiter semantics, LRU eviction, and redaction
+> coverage explicitly; SECURITY.md and the portal threat-model agree; the full
+> test oracle + `tsc` + build stay clean.
+
+---
+
 ### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [v0.0.2.5 (Build 27)] ✅
 
 > Phase Feature Set Overview:
@@ -390,77 +390,9 @@ search consolidation.
 
 ---
 
-### Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)] ✅
+## 🏛️ Historical Archive (Phases 1 through 21)
 
-> Phase Feature Set Overview:
-> Empowers high-volume vault ingestion and enterprise data portability: transactional bulk import
-> endpoint with granular per-record 207 Multi-Status reporting, tri-state bulk selection actions,
-> confirmed batch deletion with cascading cleanup, universal Bitwarden JSON & CSV ingestion pipeline,
-> dynamic RFC 6238 TOTP engine, per-item password revision history, dual export suite (zero-knowledge
-> AES-256-GCM backups with PBKDF2/HKDF and sanitized CSV), Migration 0008 Note Attachments Parity
-> with cascading deletion, ghost pod purging, and sticky detail pane selection.
-> *(Receipts: Phase 21 Tasks 41/42 + Sub-Phases 21.1–21.4, 2026-09-22. Released & live.)*
-
-> 📚 **Documentation Impact**: ARCHITECTURE.md API routes table (new routes + 207 contract, Delta #26) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract) - docs/vault-features (bulk UI, encrypted attachments, import-export) - walk-the-docs workflow — ✅ synced.
-
-- [x] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
-
-Description: Implement `POST /api/vault/bulk-import` accepting an array of ShellCrypted
-items. Execute inside a database transaction with per-record validation: valid items are
-inserted, invalid items are skipped and returned in an `errors: [{index, reason}]` report.
-Update bulk delete endpoints to ensure atomic cascades across custom fields and attachments.
-
-> Success Criteria: Importing 100 items with 2 malformed records successfully persists
-> 98 items and returns an informative 207 Multi-Status / detailed error array; atomic deletes.
-
-- [x] **Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal**
-
-Description: Expand bulk selection controls across all vault item views: select-all checkbox
-with tri-state (none, some, all), floating bulk action bar (Move to Pod, Assign Tag, Delete),
-and dedicated Import wizard with preview table and error resolution chips.
-
-> Success Criteria: Floating action bar appears when items are checked; bulk moving items
-> updates local React state optimistically; import error modal highlights skipped items.
-
-#### 🌊 Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite
-
-> Sub-Phase Feature Set Overview:
-> Bridges enterprise vault mobility: native ingestion of Bitwarden JSON and CSV archives (including
-> compound SSH keys, custom fields, and folders converted to Pods), per-item password generation history,
-> dynamic TOTP configuration parity with Android companion, and dual Encrypted / Unencrypted export suite.
-
-- [x] **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
-  - Implement `src/lib/bitwarden.ts` multi-format sniffer hierarchy to prevent unhandled format errors.
-  - Convert Bitwarden Folders to ShellGuard Pods using `normalizePod()`.
-  - Translate Bitwarden items: Logins (with TOTP extraction), Secure Notes, SSH keypairs via `serializeSshKeySecret()`, and Custom Fields (`0: text`, `1: hidden`, `2: boolean`, `3: linked`).
-  - Provide clear user guidance when an encrypted Bitwarden export is uploaded.
-  - Unit test suite: `tests/unit/bitwarden-import.test.ts` verifying end-to-end mapping of all Bitwarden record types.
-
-- [x] **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
-  - Track per-item password generation history (`password_history`) with timestamps, expandable UI drawer in `ItemFormModal` and `ItemDetailPane`, and one-click password restore.
-  - Support multi-URI entries (`uris`) for login records.
-  - Implement dynamic TOTP configuration variables (`algorithm`: SHA1/SHA256/SHA512, `digits`: 6/8, `period`: 30/60) with form controls in `ItemFormModal` and dynamic live generation in `TotpDisplay.tsx`.
-  - Synchronize Android companion documentation in `compatibility_layer.md`.
-
-- [x] **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
-  - Implement `src/lib/vaultExport.ts` supporting full JSON and CSV exports across both Encrypted and Unencrypted modes.
-  - Encrypted exports sealed with AES-256-GCM via active ClawKey (`hu-`) or custom passphrase with confirmation.
-  - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.
-  - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
-  - Unit test suite: `tests/unit/vault-export.test.ts` verifying round-trip encryption, decryption, and CSV formatting.
-
-- [x] **Sub-Phase 21.4: [Hardening & UI Seams] Post-Verification Hardening, Note Attachments Parity & Sticky Detail Selection**
-  - Migration `0008_note_attachments.{up,down}.sql` adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`.
-  - Cascading deletion parity on `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
-  - Background lifecycle cleanups (`cleanupOrphanedFiles`, `deleteExpiredSharePods`) to purge temporary artifacts.
-  - Detail pane sticky selection preserving `selectedType` and `selectedId` during item edit/save.
-  - UI label polish: explicit `Attachments (max 500MB per attachment)` guidance in `ItemFormModal.tsx`.
-  - Established formal tiered verification templates in `.agents/templates/verification/`.
-  - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
-
-## 🏛️ Historical Archive (Phases 1 through 20)
-
-Earlier development phases (`v0.0.0.0` void through `v0.0.2.2` Build 24) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.2.3` Build 25) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -485,6 +417,8 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.2.2` Build 24) are per
 | **Phase 18** | `v0.0.2.0 (Build 20)` | Unified Bitwarden-Style Item Composition & In-Browser Keypair Generation | Tasks 35 & 36 |
 | **Phase 19** | `v0.0.2.1 (Build 22)` | Attachment SQLite BLOB Migration & Streaming Architecture | Tasks 37 & 38 |
 | **Phase 20** | `v0.0.2.2 (Build 24)` | Vault Tagging System & Granular Filter Bar | Tasks 39 & 40 |
+| **Phase 21** | `v0.0.2.3 (Build 25)` | Bulk Import Endpoint & Batch Operations | Tasks 41 & 42 |
 
 ---
+
 

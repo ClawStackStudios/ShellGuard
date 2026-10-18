@@ -102,6 +102,16 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Appended both patterns to `.agents/brain/long-term/patterns.md` and updated `systemPatterns.md` with pointer references.  
 **Pattern reference**: Link to `long-term/patterns.md § two-agent-co-pilot-orchestration` and `§ cloud-offloaded-ci-verification`.
 
+---
 
+## release-v0.0.2.6-draft-and-phase-21-retire — 2026-10-18 07:20
 
-
+**Context**: Phase 24 implementation completed and verified in cloud CI (Run `39134249985`). Lucas requested executing `/draft-release` to prepare release `v0.0.2.6 (Build 28)` and setup for the next release (Phase 25).  
+**Options considered**:
+- *Option A*: Retain Phase 21 in `ROADMAP.md` alongside Phases 22, 23, and 24 — Viable to show more completed phases in root, but violates the 3-version sliding-window protocol and increases context token load.
+- *Option B*: Retire Phase 21 into `.agents/brain/ROADMAP-HISTORY.md` and preserve strictly Phases 22, 23, and 24 in `ROADMAP.md` — Viable and strictly enforces the 3-version rolling window discipline while keeping root documents focused and concise.  
+**Chosen**: Option B (Retire Phase 21 into `ROADMAP-HISTORY.md` and maintain 3-phase active window).  
+**Why**: The felt reason is respecting the horizon. Old completed phases are solved terrain; keeping them in root bloats the map. Moving Phase 21 to the archive shard preserves full fidelity while keeping the active roadmap razor-sharp for Phase 25.  
+**Confidence**: high — Backed by established release protocol and previous successful phase rollouts.  
+**Outcome**: Authored `RELEASE-v0.0.2.6.md`, purged `RELEASE-v0.0.2.5.md`, retired Phase 21 into `ROADMAP-HISTORY.md`, updated `ROADMAP.md`, and synchronized version anchors across all manifests to `v0.0.2.6`.  
+**Pattern reference**: Link to `.agents/workflows/draft-release.md` & `ROADMAP.md § 🏷️ Work-Driven Versioning Policy`.

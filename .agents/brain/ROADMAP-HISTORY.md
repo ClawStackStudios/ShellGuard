@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 20 (`v0.0.0.0` → `v0.0.2.2`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 21 (`v0.0.0.0` → `v0.0.2.3`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 21, 22, and 23), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 22, 23, and 24), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -1079,4 +1079,74 @@ state alongside search keywords and pod selection.
 
 > Success Criteria: Users can add/remove tags via keyboard chips; clicking a tag in the
 > sidebar instantly filters the vault grid; multi-tag filters combine with AND/OR logic; SSH keys present clean PEM formatting without JSON leaks, and support direct .pem downloads and authorized_keys command copying.
+
+---
+
+## Phase 21: Bulk Import Endpoint & Batch Operations [v0.0.2.3 (Build 25)] ✅
+
+> Phase Feature Set Overview:
+> Empowers high-volume vault ingestion and enterprise data portability: transactional bulk import
+> endpoint with granular per-record 207 Multi-Status reporting, tri-state bulk selection actions,
+> confirmed batch deletion with cascading cleanup, universal Bitwarden JSON & CSV ingestion pipeline,
+> dynamic RFC 6238 TOTP engine, per-item password revision history, dual export suite (zero-knowledge
+> AES-256-GCM backups with PBKDF2/HKDF and sanitized CSV), Migration 0008 Note Attachments Parity
+> with cascading deletion, ghost pod purging, and sticky detail pane selection.
+> *(Receipts: Phase 21 Tasks 41/42 + Sub-Phases 21.1–21.4, 2026-09-22. Released & live.)*
+
+> 📚 **Documentation Impact**: ARCHITECTURE.md API routes table (new routes + 207 contract, Delta #26) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (agent-facing contract) - docs/vault-features (bulk UI, encrypted attachments, import-export) - walk-the-docs workflow — ✅ synced.
+
+- [x] **Task 41: [Functionality] Bulk Pearl Import Router & Partial-Failure Reporting Engine**
+
+Description: Implement `POST /api/vault/bulk-import` accepting an array of ShellCrypted
+items. Execute inside a database transaction with per-record validation: valid items are
+inserted, invalid items are skipped and returned in an `errors: [{index, reason}]` report.
+Update bulk delete endpoints to ensure atomic cascades across custom fields and attachments.
+
+> Success Criteria: Importing 100 items with 2 malformed records successfully persists
+> 98 items and returns an informative 207 Multi-Status / detailed error array; atomic deletes.
+
+- [x] **Task 42: [UI Component] Multi-Select Tri-State Actions & Batch Import Modal**
+
+Description: Expand bulk selection controls across all vault item views: select-all checkbox
+with tri-state (none, some, all), floating bulk action bar (Move to Pod, Assign Tag, Delete),
+and dedicated Import wizard with preview table and error resolution chips.
+
+> Success Criteria: Floating action bar appears when items are checked; bulk moving items
+> updates local React state optimistically; import error modal highlights skipped items.
+
+#### 🌊 Phase 21 Sub-Phase: Bitwarden Ingestion Parity, Item Password History & Dual Export Suite
+
+> Sub-Phase Feature Set Overview:
+> Bridges enterprise vault mobility: native ingestion of Bitwarden JSON and CSV archives (including
+> compound SSH keys, custom fields, and folders converted to Pods), per-item password generation history,
+> dynamic TOTP configuration parity with Android companion, and dual Encrypted / Unencrypted export suite.
+
+- [x] **Sub-Phase 21.1: [Engine & Parser] Bitwarden Universal Ingestion Engine & Resilient Import Pipeline**
+  - Implement `src/lib/bitwarden.ts` multi-format sniffer hierarchy to prevent unhandled format errors.
+  - Convert Bitwarden Folders to ShellGuard Pods using `normalizePod()`.
+  - Translate Bitwarden items: Logins (with TOTP extraction), Secure Notes, SSH keypairs via `serializeSshKeySecret()`, and Custom Fields (`0: text`, `1: hidden`, `2: boolean`, `3: linked`).
+  - Provide clear user guidance when an encrypted Bitwarden export is uploaded.
+  - Unit test suite: `tests/unit/bitwarden-import.test.ts` verifying end-to-end mapping of all Bitwarden record types.
+
+- [x] **Sub-Phase 21.2: [Composite Ergonomics] Item Password Generation History, Multi-URI Fields & Dynamic TOTP Variables**
+  - Track per-item password generation history (`password_history`) with timestamps, expandable UI drawer in `ItemFormModal` and `ItemDetailPane`, and one-click password restore.
+  - Support multi-URI entries (`uris`) for login records.
+  - Implement dynamic TOTP configuration variables (`algorithm`: SHA1/SHA256/SHA512, `digits`: 6/8, `period`: 30/60) with form controls in `ItemFormModal` and dynamic live generation in `TotpDisplay.tsx`.
+  - Synchronize Android companion documentation in `compatibility_layer.md`.
+
+- [x] **Sub-Phase 21.3: [Export Suite & UI] Dual Encrypted/Unencrypted Export Suite & Modernized Settings UI**
+  - Implement `src/lib/vaultExport.ts` supporting full JSON and CSV exports across both Encrypted and Unencrypted modes.
+  - Encrypted exports sealed with AES-256-GCM via active ClawKey (`hu-`) or custom passphrase with confirmation.
+  - Unencrypted CSV export includes passwords by default with an audit sanitization toggle.
+  - Modernize `ImportExportView.tsx` with format selection tabs, security badges, and enriched batch import preview.
+  - Unit test suite: `tests/unit/vault-export.test.ts` verifying round-trip encryption, decryption, and CSV formatting.
+
+- [x] **Sub-Phase 21.4: [Hardening & UI Seams] Post-Verification Hardening, Note Attachments Parity & Sticky Detail Selection**
+  - Migration `0008_note_attachments.{up,down}.sql` adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes`.
+  - Cascading deletion parity on `DELETE /api/notes/:id` to purge linked records in `vault_secure_attachments`.
+  - Background lifecycle cleanups (`cleanupOrphanedFiles`, `deleteExpiredSharePods`) to purge temporary artifacts.
+  - Detail pane sticky selection preserving `selectedType` and `selectedId` during item edit/save.
+  - UI label polish: explicit `Attachments (max 500MB per attachment)` guidance in `ItemFormModal.tsx`.
+  - Established formal tiered verification templates in `.agents/templates/verification/`.
+  - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
 

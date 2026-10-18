@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.5. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.6. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 
@@ -34,7 +34,7 @@
 ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
-├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.5)
+├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.6)
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
@@ -807,6 +807,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 26 | Note Attachments Parity, Ghost Pod Purging & Post-Verification Seam Hardening (Migration 0008 adding `attachments TEXT DEFAULT '[]'` to `vault_secure_notes`, `NoteSchemas` validation with cascade child deletion in `notes.ts`, `podUtils.ts` case-insensitive pod sanitization eliminating ghost `Attachment` pod, lifted `selectedItemId` and decoupled progress/error banners from view-routing `<AnimatePresence mode="wait">` preserving item selection focus, tiered verification templates `verificationChecklist-basic.md`/`verificationChecklist-advanced`, and 25-test `uiSeams.test.ts` suite) | Closes operational seams discovered during physical human verification, establishing 1:1 attachment parity across notes and logins while solidifying the live verification handshake protocol (Phase 21 Post-Verification Hardening, v0.0.2.3) |
 | 27 | Unified Search Engine & Ergonomic Control Surfaces (Pure client-side zero-knowledge search in `vaultSearch.ts` querying in-memory decrypted `vaultItems` across titles, usernames, URLs, secondary URIs, decrypted notes, custom field names/values, attachment filenames, and tags; automatic search term purge upon lock/logout; consolidation of search topology removing redundant Header and Sidebar global search bars while preserving dedicated pod tree search in `SidebarFolderTree.tsx`; verified Eye-beside-Copy unmask positioning across all masked rows; 10 unit tests in `vaultSearch.test.ts`) | Consolidates search into a single high-speed client-side engine with zero-network leakage and cleans up duplicate UI controls without sacrificing granular pod navigation (Phase 22, v0.0.2.4, Tasks 43 & 44) |
 | 28 | Bitwarden-Model Item Integrity & Attachment Relational Cascade (Migration 0009 enforcing mandatory parent linkage on `vault_secure_attachments`, strict rejection of standalone attachment creation via 400 Bad Request, boot-time & on-demand orphan quarantine `quarantineOrphanAttachments()` flagging unparented rows `is_quarantined = 1` with `audit.sqlite` logging, cascade cleanup removing deleted attachment IDs from parent `attachments` JSON arrays, `GET /api/attachments/quota` pre-flight capacity stats, and Secure Note credential rejection invariant preventing `secret` payloads in notes; paired with Vault Dashboard Add-Menu correction removing attachment creation and deterministic type ordering) | Establishes strict Bitwarden Item Integrity across data layer and UI surfaces, preventing orphaned attachment bloat while preserving user data through non-destructive quarantine (Phase 23, v0.0.2.5, Tasks 45 & 46 + Sub-Stage 25.1) |
+| 29 | Cryptographic Audit Hardening & Auditor's Battery (Pure-TS WebCrypto fallback parity proven against official NIST SP 800-38D, FIPS 180-4, RFC 2104, and RFC 5869 standards vectors with unskipped `webCryptoFallback.test.ts`; mechanized constant-time comparison sweep using `constantTimeCompare()` across `auth.ts`, `admin.ts`, and `auth.ts` middleware with automated AST/regex CI gate in `build-gates.test.ts`; standing Docs-as-Code claim battery verifying L1-L5 classes; and formalized threat model addendum for in-process rate limiting, LRU eviction, and redaction coverage) | Elevates cryptographic security from declarative assertions to executable mathematical proof, eliminates timing side-channel leaks, and binds documentation truth directly to code reality (Phase 24, v0.0.2.6, Tasks 47 & 48) |
 
 ---
 

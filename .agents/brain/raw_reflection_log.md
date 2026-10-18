@@ -1,4 +1,28 @@
 ---
+Date: 2026-10-18
+TaskRef: "Execute /draft-release for v0.0.2.6 (Build 28): Cryptographic Audit Hardening, Retire Phase 21 & Synchronize Anchors"
+
+Learnings:
+- Complete execution of the 4 Post-Review Gates: Target Base Alignment, Task Tracker Gap Analysis, Adjacency & Operational Sweep (OWASP vs YAGNI), and Epistemic Doubt Ratification against native platform truth.
+- WebCrypto Fallback Vector Parity: Proving pure-TS WebCrypto fallback parity against official NIST SP 800-38D, FIPS 180-4, RFC 2104, and RFC 5869 vectors with unskipped tests converts aspirational claims into hard mathematical guarantees.
+- Mechanized Constant-Time Comparison Sweep: Using AST/regex assertions in `build-gates.test.ts` to enforce zero raw `===` comparisons on secrets and key hashes across server routes and middleware.
+- Single Active Release Draft Invariant: Authored `RELEASE-v0.0.2.6.md` and immediately purged `RELEASE-v0.0.2.5.md` via `git rm`.
+- 3-Version Rolling Window: Retired Phase 21 into `.agents/brain/ROADMAP-HISTORY.md`, leaving Phases 22, 23, and 24 as the active 3 completed releases in `ROADMAP.md`, and advanced queue to Phase 25.
+
+Difficulties:
+- Managing multi-file version anchors without missing subtle internal references (e.g. `meta-prompt-ai-studio.md` flowchart node status, `JULES.md` milestones, `package-lock.json` packages array).
+
+Successes:
+- All 29 test suites passing 100% green (341 tests, 0 skipped).
+- 100% clean alignment across all root manifests and brain files.
+- Single release draft invariant preserved strictly.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Mechanized Constant-Time CI Audits for Cryptographic Operations.
+- General pattern: Pre-Flight Post-Review Adjacency Sweep before Merging.
+---
+
+---
 Date: 2026-10-17
 TaskRef: "Merge Phase 23 & Sub-Stage 25.1 to Main, Execute /draft-release for v0.0.2.5 (Build 27) and Retire Phase 20"
 

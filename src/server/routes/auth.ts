@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import db, { audit } from '../database/index.js';
 import { calculateExpiry } from '../utils/tokenExpiry.js';
-import { generateString } from '../utils/crypto.js';
+import { generateString, constantTimeCompare } from '../utils/crypto.js';
 import { requireAuth, requireHuman, AuthRequest } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
 import { validateBody } from '../middleware/validate.js';
@@ -65,11 +65,9 @@ router.post('/token', authLimiter, validateBody(AuthSchemas.token), (req, res) =
       }
 
       for (const a of activeAgents) {
-        try {
-          if (a.key_hash && crypto.timingSafeEqual(Buffer.from(a.key_hash, 'hex'), providedKeyHash)) {
-            agent = a;
-          }
-        } catch {}
+        if (a.key_hash && constantTimeCompare(a.key_hash, keyHash)) {
+          agent = a;
+        }
       }
     } else {
       if (!agentKey?.startsWith('lb-')) return res.status(400).json({ success: false, error: 'Invalid agent key' });
@@ -103,8 +101,7 @@ router.post('/token', authLimiter, validateBody(AuthSchemas.token), (req, res) =
     return res.status(404).json({ success: false, error: 'Identity not registered on this node', suggestion: 'Hatch an identity first, or check the UUID in your Vault Access File.' });
   }
 
-  let keyMatch = false;
-  try { keyMatch = crypto.timingSafeEqual(Buffer.from(lobster.key_hash), Buffer.from(keyHash)); } catch { keyMatch = false; }
+  const keyMatch = constantTimeCompare(lobster.key_hash, keyHash);
 
   if (!keyMatch) {
     audit.log('AUTH_FAILURE', { action: 'login', outcome: 'failure', actor_type: 'human', ip_address: req.ip, user_agent: req.headers['user-agent'] as string, details: { lobster_uuid: lobster.uuid } });

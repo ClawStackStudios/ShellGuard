@@ -43,8 +43,8 @@ flowchart TD
     Phase21["📥 Stage 22: Phase 21 — Bulk Import Endpoint & Batch Operations ✅<br/>(Task 41: Bulk Import Router & Partial-Failure Reporting · Task 42: Multi-Select & Import Wizard)"]
     Phase22["🧩 Stage 23: Phase 22 — Reef Polish Pass, Unified Search & Control Ergonomics ✅<br/>(Task 43: Unified Vault Search Engine · Task 44: Search Bar Consolidation & Ergonomics)"]
     Interlude235["🩹 Stage 23.5: Post-Phase-22 Interlude — Bitwarden Ingestion Parity & Native Models ✅<br/>(Sub-Phase 23.5.1: Zero-Loss Engine · Sub-Phase 23.5.2: Native Card/Identity Models & Widgets · Build 26)"]
-    Phase23["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ⬜<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
-    Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ⬜<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
+    Phase23["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ✅<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
+    Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ✅<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
     Phase25["📦 Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock ⬜<br/>(Task 49: Habitat ZIP Archive Engine & Streamed Packaging · Task 50: Two-Stage Ingestion & Reactive Dock)"]
     Phase26["⏱️ Stage 27: Phase 26 — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine ⬜<br/>(Task 51: Ephemeral Import Ledger & TTL Engine · Task 52: Config Settings Surface & Rapid Batch Purge)"]
     Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
@@ -1424,10 +1424,10 @@ three primary types with attachments only inside parents, sorting is
 deterministic, and the full test oracle + tsc + build stay clean!
 ```
 
-## 🩹 Stage 24.5 (Queued): Sub-Stage 25.1 / Phase 23.5 Prompt — Relational Integrity, Runtime Sweeper & Pre-Flight Quota Validation
+## 🩹 Stage 24.5 (Completed): Sub-Stage 25.1 / Phase 23.5 Prompt — Relational Integrity, Runtime Sweeper & Pre-Flight Quota Validation ✅
 
 > 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md) (Architectural Review Sub-Stage).
-> **Execution state**: QUEUED — executes immediately before Phase 24.
+> **Execution state**: COMPLETED ✅ — Shipped in v0.0.2.5 (Build 27).
 > 📚 **Documentation Impact**: docs/vault-features/attachments.md · docs/agent-integration/api-reference.md
 > **📖 Required Context Files for Phase 23.5**:
 > 1. [`database-schema.md`](./database-schema.md) — §3 (`vault_secure_attachments` parent fields vs `attachments` JSON arrays).
@@ -1455,12 +1455,11 @@ After code is complete, perform a `walk-the-docs` pass aligning API references. 
 ```
 
 
-## 🔬 Stage 25 (Queued): Phase 24 Prompt — Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 28)]
+## 🔬 Stage 25 (Completed): Phase 24 Prompt — Cryptographic Audit Hardening & Third-Party Auditability [work-driven — provisional v0.0.2.6 (Build 28)] ✅
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-24-cryptographic-audit-hardening--third-party-auditability-work-driven-version--provisional-v0026-build-28)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-24-cryptographic-audit-hardening--third-party-auditability-v0026-build-28-)
 > for complete specifications on **Task 47** and **Task 48**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 24; green-light from
-> Lucas still required.
+> **Execution state**: COMPLETED ✅ — Shipped in v0.0.2.6 (Build 28).
 > 📚 **Documentation Impact**: SECURITY.md + docs/architecture/threat-model.md · project/verification-gates.md · encryption-layers-spec.md §5
 > **📖 Required Context Files for Phase 24**:
 > 1. [`encryption-layers-spec.md`](./encryption-layers-spec.md) — §5 (WebCrypto fallback engine — the parity claim under test).

@@ -77,23 +77,25 @@ Before committing or submitting a PR, you **must** run all three verification ga
    User: <directive / intent>
    AI: <implementation details and test receipts>
    ```
+7. **The Epistemic Escape Hatch (Honest Uncertainty Annotation)**: If you implement a fix or refactor where you have lower confidence—where the code works and passes tests, but you suspect a subtle edge case, a potential performance issue, or an architectural compromise—**DO NOT disguise it**. Complete the fix, and immediately place an inline comment directly above it:
+   ```typescript
+   // TODO(uncertainty): [Explain your exact doubt, assumptions made, or edge cases]
+   ```
+   Then list your flagged uncertainty in your Pull Request description under `### ⚠️ Epistemic Flags & Surfaced Uncertainties`. Surfacing honest doubt is explicitly rewarded.
 
 ---
 
-## 🎯 Active Milestone: Stage 24 (Phase 23)
+## 🎯 Active Milestone: Stage 26 (Phase 25)
 
-You are tasked with executing **Stage 24 (Phase 23: Bitwarden-Model Item Integrity & Dashboard Type Truth)** on branch `stage/phase-23-item-integrity`:
+> **Previous Milestone**: Stage 25 (Phase 24) — **COMPLETED & SHIPPED in v0.0.2.6 (Build 28)**.
 
-1. **Task 45 (`.jules/tasks/task-45.md`)**:
-   - Migration `0009_attachment_integrity.{up,down}.sql`: add `parent_id`, `parent_type`, `is_quarantined`, `quarantined_at` to attachments, and `attachments` to `vault_ssh_keys`.
-   - In-code backfill `quarantineOrphanAttachments()`: relink orphan attachments or quarantine them (`is_quarantined = 1`) with audit logs.
-   - Route `POST /api/attachments`: enforce parent linkage; standalone fails closed (400).
-   - Note schemas: reject password credentials (`secret` payload).
-   - Test suite: `tests/attachment-integrity.test.ts`.
+You are tasked with executing **Stage 26 (Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock)**:
 
-2. **Task 46 (`.jules/tasks/task-46.md`)**:
-   - Header add-menu: remove `'📎 Attachment'` so only primary types appear.
-   - ItemFormModal: remove standalone attachment mode.
-   - ItemListPane & VaultShell: type-aware deterministic sorting (`password` → `card` → `identity` → `note` → `key`), contextual empty states.
+1. **Task 49**:
+   - Client-side streaming ZIP archive generator (`src/lib/habitatExport.ts`): fetch encrypted attachment BLOBs, decrypt in-memory, and package with deterministic directory structure (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`).
+   - Embedded `attachment_manifest` mapping ID, file name, parent item ID, size, and checksum.
+2. **Task 50**:
+   - Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock in `VaultShell.tsx` and `ImportExportView.tsx`.
+   - Stage 1 instant primary vault JSON ingestion (<2s) + Stage 2 non-blocking background streaming uploads.
 
-**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against `stage/phase-23-item-integrity`.
+**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against the designated stage branch.

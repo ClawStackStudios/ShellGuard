@@ -54,10 +54,10 @@
 
 - [x] **Phase 23 Implemented — Bitwarden-Model Item Integrity & Relational Molt (v0.0.2.5, Build 27)** — Tasks 45 & 46 + Sub-Stage 25.1: Aligns ShellGuard with the Bitwarden Item Integrity Model. Mandatory parent reference on attachment creation (`POST /api/attachments`), non-destructive orphan quarantine engine (`quarantineOrphanAttachments()`) flagging unparented rows `is_quarantined = 1` with `audit.sqlite` logging, transactional cascade removing deleted attachment IDs from parent `attachments` JSON arrays, on-demand sweeper `POST /api/attachments/quarantine/sweep`, pre-flight quota endpoint `GET /api/attachments/quota`, Secure Note credential rejection invariant in `NoteSchemas`, and frontend dashboard Add-Menu cleanup removing attachment creation with deterministic type sorting (Passwords → Cards → Identities → Notes → SSH Keys). Proven by `tests/attachment-integrity.test.ts` and all 29 test suites (341 tests passing 100% green).
 - [x] **Co-Pilot PR Hygiene & PR #3 Superseded Closure** — Audited lingering open PR #3 from the initial Phase 23 iteration. Confirmed PR #4 and PR #5 merged 100% of its valid changes into `main` along with Sub-Stage 25.1. Closed PR #3 via `gh pr close 3` with explanatory audit trail, achieving zero open pull requests across the repository.
+- [x] **Phase 24 Implemented — Cryptographic Audit Hardening & Third-Party Auditability (v0.0.2.6, Build 28)** — Tasks 47 & 48: Pure-TS WebCrypto fallback vector parity proven against official standards vectors (FIPS 180-4 SHA-256, RFC 2104 HMAC-SHA256, RFC 5869 HKDF-SHA256, NIST SP 800-38D AES-256-GCM) with byte-identical native parity and unskipped `tests/unit/webCryptoFallback.test.ts`; mechanized constant-time comparison sweep using `constantTimeCompare()` across `auth.ts`, `admin.ts`, and `auth.ts` middleware with automated AST/regex CI gate in `tests/build-gates.test.ts`; standing Docs-as-Code claim battery verifying L1-L5 classes; and formalized threat model addendum for in-process rate limiting container resets, per-key LRU eviction, and credential redaction coverage. Proven by all 29 test suites (341 tests passing 100% green).
 
 ## What's Left to Build (Era 1 Queue)
 
-- [ ] **Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [provisional v0.0.2.6 (Build 28)]** — Tasks 47 & 48: WebCrypto fallback vector parity against NIST/RFC/SP vectors (unskip test), mechanized constant-time sweep in CI, claim battery gate script, threat-model addendum.
 - [ ] **Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [provisional v0.0.2.7 (Build 29)]** — Tasks 49 & 50: Collision-proof client-side streaming ZIP export with decrypted attachments and embedded manifest; Two-Stage Ingestion Pipeline (<2s instant vault bulk-import + non-blocking reactive background Abyssal Ingestion Dock in VaultShell with live item badge synchronization).
 - [ ] **Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [provisional v0.0.2.8 (Build 30)]** — Tasks 51 & 52: Ephemeral import ledger, configurable TTL self-destruct (30m/60m/90m/manual), auto-graduation on edit, progressive disclosure UI, and instant batch purge/revert.
 
@@ -65,7 +65,7 @@
 
 ## Current Status
 
-**v0.0.2.5 (Build 27 — Bitwarden-Model Item Integrity & Relational Molt)** — released & live; next milestone in active queue: **Phase 24: Cryptographic Audit Hardening (provisional v0.0.2.6 / Build 28)**. Era 1 stops at Phase 26; Era 2 staged for seamless cutover.
+**v0.0.2.6 (Build 28 — Cryptographic Audit Hardening & Third-Party Auditability)** — released & live; next milestone in active queue: **Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock (provisional v0.0.2.7 / Build 29)**. Era 1 stops at Phase 26; Era 2 staged for seamless cutover.
 
 ## Known Issues
 

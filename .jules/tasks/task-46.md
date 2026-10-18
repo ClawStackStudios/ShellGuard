@@ -1,6 +1,6 @@
-# Task 46: Bitwarden-Model Dashboard — Add-Menu Correction & Type-Truthful Display
+# Task 46: Bitwarden-Model Dashboard — Add-Menu Correction & Type-Truthful Display [COMPLETED ✅]
 
-> **Milestone**: Stage 24 / Phase 23 (Task 46 of 52)
+> **Milestone**: Stage 24 / Phase 23 (Task 46 of 52) — **COMPLETED & SHIPPED in v0.0.2.5 (Build 27)**
 > **Domain**: Frontend UI Architecture, Dashboard List Stream & Form Ergonomics
 > **Target Branch**: `stage/phase-23-item-integrity`
 > **Attribution**: Conventional Commits with Two-Layer Attribution (`User:` / `AI:`)

@@ -5,6 +5,7 @@ import { deriveShellKey, encryptField, decryptField } from '../../src/lib/shellC
 import { hashToken } from '../../src/lib/crypto.ts';
 import { encryptBackupPayload, decryptBackupPayload } from '../../src/lib/vaultExport.ts';
 
+// TODO(jules): Phase 24 / Task 47 — Expand standard vector test cases against official RFC/NIST/SP published vectors (FIPS 180-4 SHA-256, RFC 2104 HMAC, RFC 5869 HKDF, SP 800-38D AES-GCM) and assert byte-exact identity with Node native crypto.
 describe('WebCrypto Fallback Engine for Non-Secure LAN HTTP', () => {
   it('computes byte-exact SHA-256 compared to Node crypto', () => {
     const inputs = [

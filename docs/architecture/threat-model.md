@@ -25,3 +25,6 @@ ShellGuard's security model addresses modern web vault threats and adversarial s
 - **A02: Cryptographic Failures**: Standardized Web Crypto API + Node.js native `crypto.createCipheriv` with random 96-bit IVs and unique HKDF salt bindings.
 - **A03: Injection**: 100% parameterized SQLite prepared statements with strict Zod runtime schema validation.
 - **A04: Insecure Design**: Zero-knowledge mathematics render the server fundamentally incapable of revealing secrets.
+
+<!-- TODO(jules): Phase 24 / Task 48 — Write the Auditor's Addendum: explicitly narrate in-process rate limiting semantics (restart resets; multi-instance shares nothing), per-key LRU eviction, and redaction-regex coverage. -->
+

@@ -271,6 +271,8 @@ The instance admin plane at `/superlobster` (URL-only entry — no UI links anyw
 | **Rate Limiting** | ✅ Mitigated | Three tiers | Global `apiLimiter` (100 req/min), `authLimiter` (10 attempts/15m default — `AUTH_RATE_LIMIT`-tunable, skips successful logins), per-agent LRU limiter honoring each key's configured rate limit (1–10000) |
 | **Audit Trail** | ✅ Mitigated | Segregated append-only `audit.sqlite` | Every mutation logged with extended redaction; daily retention prune; tamper-resistant isolation from live data |
 
+<!-- TODO(jules): Phase 24 / Task 48 — Auditor's Addendum: explicitly narrate in-process rate limiting semantics (restart resets; multi-instance shares nothing), per-key LRU eviction, and redaction-regex coverage. -->
+
 ### Key Leakage Vectors
 
 | Key Type | Storage | Risk | Mitigation |

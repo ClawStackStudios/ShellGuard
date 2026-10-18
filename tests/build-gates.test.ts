@@ -20,6 +20,7 @@ const readIfExists = (rel: string): string | null => {
   return fs.existsSync(p) ? fs.readFileSync(p, 'utf-8') : null;
 };
 
+// TODO(jules): Phase 24 / Task 48 — Wire executable claim battery gate (validating rateLimiter configs, schema claims vs migrations, identity shape, and AAD namespaces) to fail CI automatically on documentation drift.
 describe('Build gates — always-on repository shape', () => {
   it('has a package.json with lint and build scripts', () => {
     const pkg = JSON.parse(readIfExists('package.json') ?? 'null');

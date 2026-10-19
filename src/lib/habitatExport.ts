@@ -76,16 +76,16 @@ export function sanitizePathComponent(name: string, fallback: string = 'unknown'
   // 2. Prevent path traversal: strip ../ and ..\ sequences recursively
   clean = clean.replace(/(\.\.[\/\\])+/g, '').replace(/[\/\\]\.\./g, '');
 
-  // 3. Replace slashes, backslashes, and whitespace sequences with underscores
-  clean = clean.replace(/[/\\]+/g, '_').replace(/\s+/g, '_');
+  // 3. Replace slashes and backslashes with underscores to keep component flat
+  clean = clean.replace(/[/\\]+/g, '_');
 
-  // 4. If the result collapses to pure dots or empty, fallback
-  if (/^\.+$/.test(clean) || clean.length === 0) {
+  // 4. If the result collapses to pure dots or whitespace, fallback
+  if (/^\.+$/.test(clean) || clean.trim().length === 0) {
     return fallback;
   }
 
-  // 5. Trim whitespace and leading/trailing punctuation
-  clean = clean.replace(/^[\s._-]+|[\s._-]+$/g, '');
+  // 5. Trim leading/trailing whitespace
+  clean = clean.trim();
 
   return clean.length > 0 ? clean : fallback;
 }
@@ -101,7 +101,7 @@ export function buildHabitatAttachmentRelativePath(
   fileName: string
 ): string {
   const cleanPod = (pod && pod !== 'all') ? sanitizePathComponent(pod, 'Uncategorized') : 'Uncategorized';
-  const cleanTitle = sanitizePathComponent(itemTitle || '', 'Untitled');
+  const cleanTitle = sanitizePathComponent(itemTitle || '', 'Untitled').replace(/\s+/g, '_');
   const shortId = (itemId || '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, 8) || '00000000';
   const cleanFileName = sanitizePathComponent(fileName || '', 'attachment');
 

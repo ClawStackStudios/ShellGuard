@@ -198,6 +198,7 @@ describe('Habitat Ingestion Pipeline & Queue (Task 50)', () => {
 
       queue.enqueue([item1, item2]);
       queue.start(null);
+      await new Promise(r => setTimeout(r, 10));
 
       // In flight
       expect(queue.hasActiveUploads()).toBe(true);
@@ -217,6 +218,7 @@ describe('Habitat Ingestion Pipeline & Queue (Task 50)', () => {
 
       // Resume
       queue.resume();
+      await new Promise(r => setTimeout(r, 10));
       expect(item2.status).toBe('uploading');
     });
 
@@ -243,6 +245,7 @@ describe('Habitat Ingestion Pipeline & Queue (Task 50)', () => {
 
       queue.enqueue([item]);
       queue.start(null);
+      await new Promise(r => setTimeout(r, 10));
 
       expect(item.status).toBe('uploading');
       queue.cancelAll();

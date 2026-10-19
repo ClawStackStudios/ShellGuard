@@ -76,16 +76,16 @@ export function sanitizePathComponent(name: string, fallback: string = 'unknown'
   // 2. Prevent path traversal: strip ../ and ..\ sequences recursively
   clean = clean.replace(/(\.\.[\/\\])+/g, '').replace(/[\/\\]\.\./g, '');
 
-  // 3. Replace slashes and backslashes with underscores to keep component flat
-  clean = clean.replace(/[/\\]+/g, '_');
+  // 3. Replace slashes, backslashes, and whitespace sequences with underscores
+  clean = clean.replace(/[/\\]+/g, '_').replace(/\s+/g, '_');
 
-  // 4. If the result collapses to pure dots, fallback
-  if (clean === '..' || clean === '.') {
+  // 4. If the result collapses to pure dots or empty, fallback
+  if (/^\.+$/.test(clean) || clean.length === 0) {
     return fallback;
   }
 
   // 5. Trim whitespace and leading/trailing punctuation
-  clean = clean.trim().replace(/^[\s._-]+|[\s._-]+$/g, '');
+  clean = clean.replace(/^[\s._-]+|[\s._-]+$/g, '');
 
   return clean.length > 0 ? clean : fallback;
 }

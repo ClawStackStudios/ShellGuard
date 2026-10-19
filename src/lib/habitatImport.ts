@@ -271,6 +271,7 @@ export class AttachmentIngestionQueue {
   private queue: AttachmentQueueItem[] = [];
   private isPaused: boolean = false;
   private isProcessing: boolean = false;
+  private isStarted: boolean = false;
   private activeItem: AttachmentQueueItem | null = null;
   private activeHandle: MultipartUploadHandle | null = null;
   private shellKey: CryptoKey | any = null;
@@ -306,7 +307,7 @@ export class AttachmentIngestionQueue {
   public enqueue(items: AttachmentQueueItem[]) {
     this.queue.push(...items);
     this.notify();
-    if (!this.isPaused && !this.isProcessing && this.shellKey) {
+    if (!this.isPaused && !this.isProcessing && this.isStarted) {
       this.processNext();
     }
   }
@@ -316,6 +317,7 @@ export class AttachmentIngestionQueue {
    */
   public start(shellKey: CryptoKey | any) {
     this.shellKey = shellKey;
+    this.isStarted = true;
     this.isPaused = false;
     if (!this.isProcessing) {
       this.processNext();
@@ -336,7 +338,7 @@ export class AttachmentIngestionQueue {
    */
   public resume() {
     this.isPaused = false;
-    if (!this.isProcessing && this.shellKey) {
+    if (!this.isProcessing && this.isStarted) {
       this.processNext();
     }
     this.notify();
@@ -372,7 +374,7 @@ export class AttachmentIngestionQueue {
       item.bytesUploaded = 0;
       item.errorMessage = undefined;
       this.notify();
-      if (!this.isPaused && !this.isProcessing && this.shellKey) {
+      if (!this.isPaused && !this.isProcessing && this.isStarted) {
         this.processNext();
       }
     }
@@ -391,7 +393,7 @@ export class AttachmentIngestionQueue {
       }
     }
     this.notify();
-    if (!this.isPaused && !this.isProcessing && this.shellKey) {
+    if (!this.isPaused && !this.isProcessing && this.isStarted) {
       this.processNext();
     }
   }
@@ -502,6 +504,10 @@ export class AttachmentIngestionQueue {
     try {
       // 1. Extract raw bytes on-demand (O(largest single file) memory bound)
       const rawBytes = await nextItem.extractBytes();
+
+      if (this.activeItem !== nextItem || (nextItem.status as string) === 'error' || this.isPaused) {
+        return;
+      }
 
       // 2. Wrap as data: URL
       const mime = nextItem.mimeType || 'application/octet-stream';

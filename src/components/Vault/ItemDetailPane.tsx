@@ -1145,6 +1145,8 @@ export function ItemDetailPane({
             })()}
 
             {/* Attachments */}
+            {/* TODO(jules): Phase 25 / Task 50 — Reactive In-Flight Attachment State
+                Constraints: Render glowing pulsing chips (📎 filename (Uploading 45%...)) on items with in-flight uploads, transitioning reactively to (Verified) ready state upon completion. */}
             {item.attachments && (() => {
               let parsedIds: string[] = [];
               try {

@@ -325,8 +325,6 @@ ordering Passwords → Cards → Identities → Secure Notes → SSH Keys.
 
 ---
 
-### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [v0.0.2.4 (Build 26)] ✅
-
 > Phase Feature Set Overview:
 > A polish-and-ergonomics bracket in two movements: (1) **one search bar to
 > rule the reef** — the sidebar search and the top-right header search are

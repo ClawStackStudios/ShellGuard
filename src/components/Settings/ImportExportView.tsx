@@ -505,6 +505,9 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
         </p>
       </div>
 
+      {/* TODO(jules): Phase 25 / Task 49 & 50 — Habitat Full-Archive Mobility & Two-Stage Ingestion
+          Constraints: Add Habitat ZIP export with ClawKey challenge gate; add .zip & directory dropzone for Stage 1 instant primary bulk-import (<2s) with background Stage 2 attachment queue handoff. */}
+
       {/* ── EXPORT OPTIONS SECTION ── */}
       <div className="bg-theme-surface/50 rounded-3xl border border-theme-subtle overflow-hidden shadow-sm">
         <div className="p-6 border-b border-theme-subtle flex items-center justify-between">

@@ -1,10 +1,11 @@
 import React from 'react';
 import { VaultItem, VaultItemType } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
-import { Key, CreditCard, Contact, FileText, Binary, Search, ArrowUpDown, X, Tag as TagIcon } from 'lucide-react';
+import { Key, CreditCard, Contact, FileText, Binary, Search, ArrowUpDown, X, Tag as TagIcon, Paperclip } from 'lucide-react';
 import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
 import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
+import { globalIngestionQueue } from '../../lib/habitatImport.ts';
 
 interface ItemListPaneProps {
   items: VaultItem[];
@@ -39,6 +40,10 @@ export function ItemListPane({
   onToggleSelect,
   onToggleSelectAll
 }: ItemListPaneProps) {
+  const [, forceQueueUpdate] = React.useState(0);
+  React.useEffect(() => {
+    return globalIngestionQueue.subscribe(() => forceQueueUpdate(n => n + 1));
+  }, []);
   
   const getTypeIcon = (type?: VaultItemType) => {
     switch (type) {
@@ -201,6 +206,20 @@ export function ItemListPane({
                     {item.totp_secret && (
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Has TOTP" />
                     )}
+                    {(() => {
+                      const inFlight = globalIngestionQueue.getParentItemStatus(item.id);
+                      if (inFlight.hasActive) {
+                        return (
+                          <span
+                            className="inline-flex items-center text-claw-cyan animate-pulse shrink-0 ml-0.5"
+                            title={`Ingesting attachment: ${inFlight.fileName || ''} (${inFlight.progressPercent || 0}%)`}
+                          >
+                            <Paperclip size={11} className="animate-spin" />
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-theme-muted truncate">

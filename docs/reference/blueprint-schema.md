@@ -240,3 +240,31 @@ CREATE INDEX IF NOT EXISTS idx_audit_event_type ON audit_logs(event_type);
 CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_logs(actor);
 CREATE INDEX IF NOT EXISTS idx_audit_outcome ON audit_logs(outcome);
 ```
+
+## Habitat Manifest Schema (`shellguard_vault_export.json`)
+
+Inside Habitat Full-Archive Mobility ZIPs, ShellGuard emits `shellguard_vault_export.json`.
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "title": "GitHub",
+      "type": "password",
+      "attachments": "[\"att-uuid-1\"]"
+    }
+  ],
+  "attachment_manifest": [
+    {
+      "id": "att-uuid-1",
+      "file_name": "document.pdf",
+      "parent_item_id": "uuid",
+      "parent_type": "password",
+      "size_bytes": 1048576,
+      "sha256_checksum": "deadbeef1234567890abcdef...",
+      "relative_path": "attachments/Work/GitHub__[a1b2c3d4]/document.pdf"
+    }
+  ]
+}
+```

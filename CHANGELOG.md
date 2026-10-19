@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+## [0.0.2.7] - 2026-10-18 (Build 29)
+
+### Added
+- Habitat Full-Archive Mobility Engine (streaming zero-knowledge ZIP generator bounded to memory footprint).
+- Two-Stage Ingestion Pipeline with Abyssal Dropzone and `.zip` archive sniffer.
+- Abyssal Ingestion Dock: background queue processor with real-time UI tracking for massive attachment restores.
+- Reactive bioluminescent chips tracking in-flight attachment upload progress.
+- Auditor Battery Additions: Classes L2 & L6 schema vs codebase verification.
+
+### Changed
+- Enhanced ImportExportView.tsx to accept drop events for Habitat archives and Stage 1 manifest previews.
+
+### Fixed
+- Enforced strictly decoupled memory parsing on ZIP packaging by implementing Web Streams & `client-zip` async generators.
+
+
+## [0.0.2.7] - 2026-10-18 (Build 29)
+
+### Added
+- Habitat Full-Archive Mobility Engine (streaming zero-knowledge ZIP generator bounded to $O(file)$ memory footprint).
+- Two-Stage Ingestion Pipeline with Abyssal Dropzone and `.zip` archive sniffer.
+- Abyssal Ingestion Dock: background queue processor with real-time UI tracking for massive attachment restores.
+- Reactive bioluminescent chips tracking in-flight attachment upload progress.
+- Auditor Battery Additions: Classes L2 & L6 schema vs codebase verification.
+
+### Changed
+- Enhanced ImportExportView.tsx to accept drop events for Habitat archives and Stage 1 manifest previews.
+
+### Fixed
+- Enforced strictly decoupled memory parsing on ZIP packaging by implementing Web Streams & `client-zip` async generators.
+
+
 ## [0.0.2.6] - 2026-10-18
 
 ### Added

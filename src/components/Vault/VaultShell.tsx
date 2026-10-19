@@ -6,6 +6,8 @@ import { isItemInPod } from '../../lib/podUtils.ts';
 import { filterItemsByTags, extractAllTags } from '../../lib/tagUtils.ts';
 import { searchVaultItems } from '../../lib/vaultSearch.ts';
 import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
+import { AbyssalIngestionDock } from './AbyssalIngestionDock.tsx';
+import { globalIngestionQueue } from '../../lib/habitatImport.ts';
 
 interface VaultShellProps {
   items: VaultItem[];
@@ -68,6 +70,19 @@ export function VaultShell({
       setSearchQuery("");
     }
   }, [isLocked]);
+
+  // Browser Safety Guard: Warn user before tab closure if background ingestion is in-flight
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (globalIngestionQueue.hasActiveUploads()) {
+        e.preventDefault();
+        e.returnValue = 'Background attachment uploads are currently in progress. Navigating away may cause data loss.';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   // Teardown stale selections if items change or are deleted (only when items list is populated)
   useEffect(() => {
@@ -428,8 +443,8 @@ export function VaultShell({
         />
       </div>
 
-      {/* TODO(jules): Phase 25 / Task 50 — Abyssal Ingestion Dock Component
-          Constraints: Mount the floating Reef Modernist background ingestion dock in the bottom-right viewport with real-time progress bar, pause/resume, cancel, and per-item retry ergonomics. */}
+      {/* Abyssal Ingestion Dock: Floating Reef Modernist background queue status */}
+      <AbyssalIngestionDock />
     </div>
   );
 }

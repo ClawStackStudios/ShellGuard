@@ -310,3 +310,24 @@ describe('Build gates — Constant-Time Parity Sweep', () => {
     }
   });
 });
+
+describe('Build gates — Auditor Battery Additions (Classes L2 & L6)', () => {
+  it('Class L2: Database schema tables match active migration files', () => {
+    const initMigration = fs.readFileSync(path.join(PROJECT_ROOT, 'migrations/0001_initial.up.sql'), 'utf8');
+    const attachmentBlobsMigration = fs.readFileSync(path.join(PROJECT_ROOT, 'migrations/0005_attachment_blobs.up.sql'), 'utf8');
+
+    expect(initMigration).toContain('CREATE TABLE IF NOT EXISTS lobsters');
+    expect(initMigration).toContain('CREATE TABLE IF NOT EXISTS vault_pearls');
+    expect(attachmentBlobsMigration).toContain('CREATE TABLE vault_secure_attachments_new');
+  });
+
+  it('Class L6: Storage limits in documentation and code match', () => {
+    const attachmentUtils = fs.readFileSync(path.join(PROJECT_ROOT, 'src/lib/attachmentUtils.ts'), 'utf8');
+    expect(attachmentUtils).toContain('MAX_ATTACHMENT_BYTES = 500 * 1024 * 1024');
+    expect(attachmentUtils).toContain('GROTTO_QUOTA_BYTES = 1000 * 1024 * 1024');
+
+    const attachmentRoutes = fs.readFileSync(path.join(PROJECT_ROOT, 'src/server/routes/attachments.ts'), 'utf8');
+    expect(attachmentRoutes).toContain("ATTACHMENT_MAX_MB ?? '500'");
+    expect(attachmentRoutes).toContain("GROTTO_QUOTA_MB ?? '1000'");
+  });
+});

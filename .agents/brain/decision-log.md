@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-10-18 — Phase 25 Phase 4: Task 50 UI Surface Integration & Static Verification
+Completed the end-to-end UI integration for Task 50. Mounted floating Reef Modernist `AbyssalIngestionDock` in `VaultShell.tsx` and registered a `beforeunload` event listener guarding against browser tab closure when `globalIngestionQueue.hasActiveUploads()` is true. Integrated reactive bioluminescent in-flight upload chips (`📎 filename (Uploading 45%...)` ➔ `Verified`) in `ItemDetailPane.tsx` and item list spinning upload indicators in `ItemListPane.tsx`. Added Abyssal Ingestion Dropzone (drag-and-drop `.zip` or uncompressed directory), Stage 1 batch preview modal, and Habitat Export ClawKey challenge gate in `ImportExportView.tsx`. Preserved 1:1 parent item UUIDs on import (`item.id || generateUUID()`) to prevent relational attachment rejection. Verified with `npm run lint` (`tsc --noEmit` code 0).
+
+## 2026-10-18 — Phase 25 Phase 3: Task 50 Two-Stage Ingestion Pipeline & Queue Authored
+Authored `src/lib/habitatImport.ts` and `tests/unit/habitat-import.test.ts` implementing Task 50. Implemented `sniffHabitatArchive` (ZIP magic bytes, folders, JSON), `<2s` Stage 1 manifest extraction using `fflate.unzipSync` filter (reading only `shellguard_vault_export.json` without buffering binary attachments into memory), and the reactive `AttachmentIngestionQueue` managing background sequential multipart uploads via `uploadAttachmentMultipart`. Handled pause, resume, per-item retry, cancel-all, `hasActiveUploads()` beforeunload guard, and UI reactive chip synchronization (`getParentItemStatus`). Verified with unit tests and typecheck (`tsc --noEmit` code 0).
+
+## 2026-10-18 — Phase 25 Phase 2: Task 49 Streaming ZIP Export Engine & Unit Tests Authored
+Authored `src/lib/habitatExport.ts` and `tests/unit/habitat-export.test.ts` implementing Task 49. Architected memory-bounded streaming export using `client-zip`'s `downloadZip()` driven by an async generator that decrypts and yields attachments one-by-one, enforcing strict O(largest single file) RAM overhead. Implemented deterministic layout `attachments/<pod>/<item_title>__[<id_short>]/<file_name>` with path traversal sanitization, empty pod fallback to 'Uncategorized', intra-item duplicate deduplication, embedded `attachment_manifest` in `shellguard_vault_export.json`, and `verifyClawKeyChallenge`. Unit tests and full TypeScript typechecks (`tsc --noEmit`) verified 100% green (code 0).
+
+## 2026-10-18 — Phase 25 Phase 1: Jules artifact ingestion, dependencies installed & lint verified
+Executed Phase 1 of Phase 25 (Habitat Mobility & Reactive Ingestion Dock). Cherry-picked valid documentation, Class L2 & L6 build gates from `tests/build-gates.test.ts`, and release draft from Jules commit `de3cd54`. Installed `client-zip` (^2.5.1) and `fflate` (^0.8.3), updated `package.json` to version `0.0.2.7`, purged obsolete `RELEASE-v0.0.2.6.md`, and validated TypeScript compiler checks cleanly (`npm run lint` / `tsc --noEmit` exited code 0). Verified alignment against `phase-25-orchestrator-execution-plan.md` before initiating Phase 2.
+
+## 2026-10-18 — Socratic Invariable & git-review-pr skill invariant codified
+Lucas ratified the Socratic Review Protocol as a permanent invariant rather than rewriting existing skills: anchored "The Socratic Invariable (Default Co-Pilot Feedback Mode)" into `git-review-pr/SKILL.md` (mandating that co-pilot remediation always quotes literal git diff hunks against author claims rather than issuing imperative patches) and modernized workspace skill registration at `.agents/skills/git-review-pr/` with clean YAML frontmatter for instant slash command discovery.
+
 ## 2026-10-18 — Inter-session handoff protocol & root HANDOFF.md ratified
 Lucas approved the inter-session chain of custody protocol connecting independent Antigravity chat sessions across stage boundaries. Authored root `HANDOFF.md` recording Session Lineage, conversation ID (`2c8bcfef-ec4c-4646-ad4b-b0398a9748b9`), transcript links, and the 6-artifact predecessor trail (Domain Map, Launch Brief, Task Tracker, PR #6 Review, `/learn` Proposal, Phase 25 Scope) ensuring the incoming Phase 25 session has 100% epistemic continuity without starting cold.
 
@@ -48,19 +63,3 @@ Lucas paused the merge sequence to test Jules's independent cognitive perception
 
 ## 2026-10-12 — 100% Jules steering offload & complete Walk-the-Docs delegation
 Lucas directed fully steering by review comments on PR #3, offloading 100% of the remaining Phase 23 execution onto Jules: fixing both UI seams (Header Add Item dropdown menu array and App.tsx parent-before-attachment creation sequencing) and executing the full /walk-the-docs pass across VitePress (attachments.md, blueprint-schema.md, api-reference.md, the-grotto.md, glossary.md) and root manifests (ROADMAP.md, meta-prompt, CHANGELOG.md, README.md). We hold the sovereign orchestrator boundary, discarding all .agents/ modifications upon final merge.
-
-## 2026-10-12 — Sovereign .agents boundary & disregard Jules .agents modifications
-Lucas explicitly mandated that all modifications in `.agents/` on Jules's PR branch (specifically 9 legacy workflow files in `.agents/workflows/`) must be completely disregarded and never pulled or merged into stage. `.agents/` is orchestrator sovereign territory. When merging Jules's Phase 23 PR, `.agents/` is checked out clean from stage HEAD, preventing any cross-agent contamination.
-
-## 2026-10-12 — Dedicated PR CI runner workflow & universal test/build gate
-Codified `.github/workflows/pr-check.yml` establishing a dedicated cloud CI test and build gate for all pull requests matching sibling ShellGuard-Mobile architecture. Updated `.github/workflows/ci.yml` with `stage/*` branch pattern matching and offloaded PR events to `pr-check.yml`. Universal PR trigger without branch restrictions guarantees Jules's PRs and multi-agent stage branches run full Vitest suites, Vite builds, and VitePress docs compilation automatically.
-
-## 2026-10-12 — Pre-Work Assumptions workflow & anticipatory multi-agent orchestration
-Codified `.agents/workflows/pre-work-assumptions.md` establishing the anticipatory stance: when an in-flight stage is actively running (e.g. Jules on PR #3 or cloud CI), project forward into the assumed-complete state, trigger `/work-stage-reflection` for the next stage (Phase N+1), audit downstream seams early, and pre-stage reflection artifacts, test oracles, and micro-stages without idle waiting or conflicting code edits. Physical validation confirmed Jules responded to PR #3 inline feedback with commit `d69d11c` fixing parent-before-attachment creation sequencing in `App.tsx` and SQLite cipher type import in `attachmentIntegrity.ts`.
-
-## 2026-10-12 — Work Stage Reflection workflow & Jules PR #3 inline diff review
-Codified the Work Stage Reflection protocol in `.agents/workflows/work-stage-reflection.md` and `.agents/workflows/plan.md`, formalizing the 6-section structural completeness inspection and zero-touch mandate. Committed (`f974ffb`), pushed to stage, and verified via GitHub Actions CI (Run `38302734807` passed 100% green in 2m 19s). Conducted diff inspection of Jules PR #3 commit `f9e6b2a` and posted inline comments on `attachmentIntegrity.ts` (SQLite cipher import fix) and `routes/attachments.ts` (parent creation sequencing requirement) plus an auditable review summary guiding base branch sync (to enable cloud CI on PR #3) and Task 46 frontend requirements.
-
-## 2026-10-12 — Cloud-offloaded CI verification & zero local build/test mandate
-Lucas established a strict operational boundary mirroring ShellGuard-Mobile and ShellGuard-TOTP: host machine resources are tightly constrained, so all testing (`vitest`) and production building (`vite build`, `docs:build`) are strictly offloaded to GitHub Actions (`.github/workflows/ci.yml`). Never build or test locally on the development machine. Codified this across `git-hygiene.md`, `cadence-and-lifecycle-prompts.md`, and `project-hygiene.md` with a push-and-tail workflow via `gh run watch`.
-

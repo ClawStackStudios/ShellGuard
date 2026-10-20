@@ -1009,5 +1009,22 @@ Difficulties:
 Successes:
 - Synthesized and formalized Phase 25 across ROADMAP.md, meta-prompt-ai-studio.md, and cognitive brain with 100% green lint check.
 ---
+Date: 2026-10-20
+TaskRef: "Phase 25 Release v0.0.2.7 (Build 29) Sealing & Dev Server inotify Polling Fix"
+
+Learnings:
+- In containerized environments (Docker/LXC on Unraid), `ulimit -n` may report generous file descriptor allowances (e.g. 40960), but kernel `max_user_instances` in `/proc/sys/fs/inotify/` can be strictly throttled (128 instances). Long-running language servers or IDE processes can consume ~100 instances, leaving new file watchers to throw `EMFILE: too many open files`.
+- Configuring `server.watch.usePolling: true` in `vite.config.ts` bypasses `inotify_init()` completely in development mode by leveraging `fs.watchFile` stat polling, providing bulletproof dev server startup across any constrained container or sandbox without modifying kernel limits.
+- In production mode, `vite build` creates pre-compiled static assets in `dist/` served directly by Express via `express.static()`, meaning no inotify or file-watching overhead exists at all in deployed environments.
+- Streamed ZIP generation via `client-zip` and Web Streams bounds memory to $O(\text{largest single file})$, protecting browser environments during multi-gigabyte vault exports.
+
+Difficulties:
+- Diagnosing the root cause of `EMFILE` when `ulimit -n` was 40960 required checking kernel inotify counters in `/proc/sys/fs/inotify/` and recognizing container permission limits on `sysctl`.
+
+Successes:
+- Cloud CI Run #39203270400 passed 100% green on GitHub Actions across all 30 test suites (350+ assertions).
+- Expanded canonical RELEASE-v0.0.2.7.md, rolled ROADMAP.md sliding window (Phases 23, 24, 25 active; Phase 22 retired), and synchronized version anchors across README.md, CHANGELOG.md, and ARCHITECTURE.md.
+---
+
 
 

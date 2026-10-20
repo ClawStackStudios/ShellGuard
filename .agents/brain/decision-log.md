@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-10-20 — Step 2 of /draft-release: v0.0.2.7 expanded, sliding window rolled & manifests synced
+Lucas called `/draft-release` to expand and finalize Phase 25 (Build 29). Expanded `RELEASE-v0.0.2.7.md` to full canonical standard with topology map, sequence flow, and test receipts. Executed Roadmap 3-version sliding-window protocol in `ROADMAP.md`: Phase 25 moved into Completed Releases, Phase 22 retired into `ROADMAP-HISTORY.md` and added to the Historical Archive table, and Queue advanced to Phase 26+. Synchronized central version anchors across `README.md`, `CHANGELOG.md`, and `ARCHITECTURE.md` (Delta #30, 30 suites, 350+ tests).
+
+## 2026-10-20 — Dev server startup failure: EMFILE inotify exhaustion diagnosed & resolved
+Lucas flagged an error during dev server startup. Tail of the Vite startup log revealed `Error: EMFILE: too many open files, watch '.../vite.config.ts'`. Traced the Linux kernel inotify state: while `ulimit -n` was 40960, `/proc/sys/fs/inotify/max_user_instances` is hard-capped at 128 in this container, and the language server already consumed 99 instances. When Vite's default chokidar file watcher attempted native `inotify_init()` for `vite.config.ts` and source trees, it threw EMFILE. Configured `server.watch.usePolling: true` (with 1s interval and ignored paths) in `vite.config.ts`, switching chokidar to stat polling. Re-launched Vite: started in 2.8s on port 6464, proxying `/api` cleanly to backend port 6565 (both returning HTTP 200).
+
 ## 2026-10-18 — Phase 25 Phase 4: Task 50 UI Surface Integration & Static Verification
 Completed the end-to-end UI integration for Task 50. Mounted floating Reef Modernist `AbyssalIngestionDock` in `VaultShell.tsx` and registered a `beforeunload` event listener guarding against browser tab closure when `globalIngestionQueue.hasActiveUploads()` is true. Integrated reactive bioluminescent in-flight upload chips (`📎 filename (Uploading 45%...)` ➔ `Verified`) in `ItemDetailPane.tsx` and item list spinning upload indicators in `ItemListPane.tsx`. Added Abyssal Ingestion Dropzone (drag-and-drop `.zip` or uncompressed directory), Stage 1 batch preview modal, and Habitat Export ClawKey challenge gate in `ImportExportView.tsx`. Preserved 1:1 parent item UUIDs on import (`item.id || generateUUID()`) to prevent relational attachment rejection. Verified with `npm run lint` (`tsc --noEmit` code 0).
 
@@ -58,8 +64,3 @@ Executed /git-review-pr on Jules PR #4 and documented evidence-graded findings i
 ## 2026-10-14 — Actionable Sub-Stage codification from Jules's architectural findings
 Operationalized Jules's independent architectural discoveries into a formal 5-phase Sub-Stage for Stage 25 on PR #4 (issuecomment-6163022390). Rather than leaving insights on the floor or hand-crafting solutions ourselves, we directed Jules to execute Phase 1 (/walk-the-docs), Phase 2 (meta-prompt sub-stage definition & prompt draft), Phase 4 (relational array cascade purge, runtime quarantine sweeper, pre-flight quota endpoint, and test suite), and Phase 5 (final doc pass), while reserving Phase 3 for orchestrator branch merge and sovereign .agents/ protection.
 
-## 2026-10-13 — Autonomous deep architectural inquiry dispatched to Jules
-Lucas paused the merge sequence to test Jules's independent cognitive perception without spoon-fed steering. Dispatched a 4-part architectural inquiry on PR #4 (issuecomment-6162322896): (1) What is adjacent? (2) What does this imply that is unarticulated? (3) Unseen gaps across settings, feature debt, security, auth, and DB? (4) Does OWASP or YAGNI apply? We hold the orchestrator boundary while awaiting Jules's raw analytical findings to audit his system comprehension.
-
-## 2026-10-12 — 100% Jules steering offload & complete Walk-the-Docs delegation
-Lucas directed fully steering by review comments on PR #3, offloading 100% of the remaining Phase 23 execution onto Jules: fixing both UI seams (Header Add Item dropdown menu array and App.tsx parent-before-attachment creation sequencing) and executing the full /walk-the-docs pass across VitePress (attachments.md, blueprint-schema.md, api-reference.md, the-grotto.md, glossary.md) and root manifests (ROADMAP.md, meta-prompt, CHANGELOG.md, README.md). We hold the sovereign orchestrator boundary, discarding all .agents/ modifications upon final merge.

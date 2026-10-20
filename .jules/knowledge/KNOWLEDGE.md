@@ -1,5 +1,5 @@
 # 🧠 Jules Knowledge Store — Pre-Heated Domain Knowledge
-## Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability
+## Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock
 
 > This file is maintained by the ClawStack Studios project lead to pre-heat Jules's LLM inference with exact constants, published test vectors, boundary definitions, and architectural scars before task execution.
 
@@ -114,3 +114,47 @@ If you implement a fix or refactor where you have lower confidence—where the c
    // TODO(uncertainty): [Explain your exact doubt, assumptions made, or edge cases]
    ```
 4. List your flagged uncertainty in your Pull Request description under `### ⚠️ Epistemic Flags & Surfaced Uncertainties`. Surfacing honest doubt is explicitly rewarded.
+
+---
+
+## 📦 5. Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock Contracts
+
+### A. Attachment Streaming Routes & Wire Contracts
+- **Download**: `GET /api/attachments/:id/file` streams ciphertext chunks (1MB chunks via `substr(file_data, offset, length)`).
+- **Decryption**: In browser memory with active session `shellKey` and AAD string: `vault_secure_attachments:${id}`.
+- **Upload**: `POST /api/attachments` using `uploadAttachmentMultipart(file, { parent_id, parent_type, ... })` from `src/lib/attachmentUtils.ts`.
+- **Pre-Flight Quota Check**: `GET /api/attachments/quota` returns `{ used_bytes, quota_bytes, remaining_bytes }`.
+- **Storage Limits**: `ATTACHMENT_MAX_MB = 500` (per file), `GROTTO_QUOTA_MB = 1000` (per owner).
+
+### B. Streaming ZIP Packaging Patterns & Memory Boundedness
+- **Package Choice**: Use a lightweight zero-dependency streaming zip reader/writer (e.g. `client-zip` or `fflate`).
+- **Memory Ceiling**: $O(\text{largest single file})$. Do NOT buffer the entire multi-gigabyte ZIP in an `ArrayBuffer`. Stream chunks into download sink.
+- **Deterministic Collision-Free Layout**:
+  `attachments/<pod>/<item_title>__[<id_short>]/<file_name>`
+  - Empty or missing pod falls back to `Uncategorized`.
+  - Path sanitization: strip leading slashes, reject `..`, replace special characters.
+- **Embedded Manifest**: Root `shellguard_vault_export.json` embeds `attachment_manifest` mapping ID, file name, parent item ID, parent type, size, checksum, and relative path.
+- **ClawKey Challenge**: Gated behind user ClawKey (`hu-`) challenge confirmation.
+
+### C. Two-Stage Ingestion Pipeline
+- **Stage 1 (Instant Primary Ingestion, <2s)**:
+  - Sniff `.zip` or unzipped directory.
+  - Parse root `shellguard_vault_export.json`.
+  - Render Batch Import Preview modal with item counts and attachment metrics.
+  - Commit primary items via `POST /api/vault/bulk-import` ($<2\text{s}$) and immediately close modal to unlock the vault.
+- **Stage 2 (Background Abyssal Ingestion Dock)**:
+  - Mount persistent floating dock in bottom-right viewport of `VaultShell.tsx`.
+  - Stream multipart attachment uploads in background queue.
+  - Controls: expand/minimize, pause, resume, cancel, per-item retry.
+  - Reactive chips in `ItemDetailPane.tsx` and `ItemListPane.tsx`: `📎 filename (Uploading 45%...)` ➔ `📎 filename (Verified)`.
+  - Register `beforeunload` warning during active uploads.
+
+### D. LAN WebCrypto Fallback Invariant
+- On insecure LAN origins (plain HTTP), `window.crypto.subtle` is strictly `undefined`.
+- Route hash calculations and AES-GCM operations through `src/lib/webCryptoFallback.ts` when native WebCrypto is unavailable.
+
+### E. Auditor Battery Codification (L2 & L6)
+- In `tests/build-gates.test.ts`:
+  - **L2**: Assert all database tables in `src/server/db/schema.ts` match migration files.
+  - **L6**: Assert storage limits (`ATTACHMENT_MAX_MB = 500`, `GROTTO_QUOTA_MB = 1000`) match code and documentation.
+

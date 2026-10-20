@@ -26,7 +26,12 @@ import {
   Key,
   Folder,
   FileText,
-  RotateCcw
+  RotateCcw,
+  Waves,
+  Archive,
+  PackageCheck,
+  FolderArchive,
+  Paperclip
 } from "lucide-react";
 import { VaultItem, Lobster, VaultItemType } from "../../types.ts";
 import { hashToken, generateUUID } from "../../lib/crypto.ts";
@@ -49,14 +54,23 @@ import {
   decryptBackupPayload,
   isShellGuardEncryptedBackup
 } from "../../lib/vaultExport.ts";
+import { downloadHabitatArchive, verifyClawKeyChallenge } from "../../lib/habitatExport.ts";
+import {
+  sniffHabitatArchive,
+  extractHabitatStage1,
+  globalIngestionQueue,
+  Stage1ExtractionResult
+} from "../../lib/habitatImport.ts";
+import { formatBytes } from "../../lib/attachmentUtils.ts";
 
 interface ImportExportViewProps {
   items: VaultItem[];
   lobster: Lobster;
+  shellKey?: CryptoKey | any;
   onImportItems?: (importedItems: VaultItem[]) => Promise<{ inserted: string[]; errors?: { index: number; reason: string }[] } | void> | void;
 }
 
-export function ImportExportView({ items, lobster, onImportItems }: ImportExportViewProps) {
+export function ImportExportView({ items, lobster, shellKey, onImportItems }: ImportExportViewProps) {
   // ── Encrypted Archive Export States ──
   const [isEncryptedExportModalOpen, setIsEncryptedExportModalOpen] = useState(false);
   const [encryptedExportType, setEncryptedExportType] = useState<"clawkey" | "custom">("clawkey");
@@ -79,6 +93,20 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
   const [exportJSONError, setExportJSONError] = useState<string | null>(null);
   const [isExportingJSON, setIsExportingJSON] = useState(false);
   const [jsonExportSuccess, setJsonExportSuccess] = useState(false);
+
+  // ── Habitat Full-Archive Export (.ZIP) States ──
+  const [isHabitatExportModalOpen, setIsHabitatExportModalOpen] = useState(false);
+  const [habitatExportKey, setHabitatExportKey] = useState("");
+  const [habitatExportError, setHabitatExportError] = useState<string | null>(null);
+  const [isExportingHabitat, setIsExportingHabitat] = useState(false);
+  const [habitatExportSuccess, setHabitatExportSuccess] = useState(false);
+
+  // ── Stage 1 Habitat Archive Ingestion States ──
+  const [isStage1PreviewModalOpen, setIsStage1PreviewModalOpen] = useState(false);
+  const [stage1Pending, setStage1Pending] = useState<Stage1ExtractionResult | null>(null);
+  const [isCommittingStage1, setIsCommittingStage1] = useState(false);
+  const [stage1Error, setStage1Error] = useState<string | null>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   // ── Import Pipeline States ──
   const [importJsonText, setImportJsonText] = useState("");
@@ -235,6 +263,113 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
       setExportJSONError(err.message || "Identity verification failed. Invalid ClawKey©™.");
     } finally {
       setIsExportingJSON(false);
+    }
+  };
+
+  // ── Habitat Full-Archive Export Handler ──
+  const handleVerifyAndExportHabitat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!habitatExportKey.startsWith("hu-") || habitatExportKey.length !== 67) {
+      setHabitatExportError("Invalid ClawKey©™ format (must start with hu- and be 67 characters).");
+      return;
+    }
+
+    setIsExportingHabitat(true);
+    setHabitatExportError(null);
+
+    try {
+      await verifyClawKeyChallenge(habitatExportKey, lobster.uuid);
+      await downloadHabitatArchive({
+        items,
+        ownerUuid: lobster.uuid,
+        shellKey
+      });
+
+      setIsHabitatExportModalOpen(false);
+      setHabitatExportKey("");
+      setHabitatExportSuccess(true);
+      setTimeout(() => setHabitatExportSuccess(false), 5000);
+    } catch (err: any) {
+      setHabitatExportError(err.message || "Identity verification failed. Invalid ClawKey©™.");
+    } finally {
+      setIsExportingHabitat(false);
+    }
+  };
+
+  // ── Habitat Stage 1 Ingestion Handlers ──
+  const processHabitatSource = async (source: File | File[] | FileList) => {
+    setIsImporting(true);
+    setImportStatus("idle");
+    setImportMessage(null);
+    setStage1Error(null);
+
+    try {
+      const stage1 = await extractHabitatStage1(source);
+      setStage1Pending(stage1);
+      setIsStage1PreviewModalOpen(true);
+    } catch (err: any) {
+      setImportStatus("error");
+      setImportMessage(err.message || "Failed to extract Habitat archive.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files) as File[];
+      if (files.length === 1 && (files[0].name.toLowerCase().endsWith('.zip') || files[0].type.includes('zip'))) {
+        await processHabitatSource(files[0]);
+      } else {
+        await processHabitatSource(files);
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+  };
+
+  const handleCommitStage1 = async () => {
+    if (!stage1Pending) return;
+    setIsCommittingStage1(true);
+    setStage1Error(null);
+
+    try {
+      // 1. Instant Stage 1 Bulk Insert (<2s)
+      if (onImportItems) {
+        await onImportItems(stage1Pending.exportPayload.items);
+      }
+
+      // 2. Stage 2 Background Attachment Queue Handoff
+      const queueItems = stage1Pending.createQueueItems();
+      if (queueItems.length > 0) {
+        globalIngestionQueue.enqueue(queueItems);
+        if (shellKey) {
+          globalIngestionQueue.start(shellKey);
+        }
+      }
+
+      // 3. Immediately close modal and unlock vault
+      setIsStage1PreviewModalOpen(false);
+      const attCount = queueItems.length;
+      setStage1Pending(null);
+      setImportStatus("success");
+      setImportMessage(
+        `Primary records committed instantly! ${attCount > 0 ? `${attCount} attachments handed off to the Abyssal Ingestion Dock in the background.` : 'Vault updated.'}`
+      );
+    } catch (err: any) {
+      setStage1Error(err.message || "Stage 1 primary vault import failed.");
+    } finally {
+      setIsCommittingStage1(false);
     }
   };
 
@@ -505,6 +640,9 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
         </p>
       </div>
 
+      {/* TODO(jules): Phase 25 / Task 49 & 50 — Habitat Full-Archive Mobility & Two-Stage Ingestion
+          Constraints: Add Habitat ZIP export with ClawKey challenge gate; add .zip & directory dropzone for Stage 1 instant primary bulk-import (<2s) with background Stage 2 attachment queue handoff. */}
+
       {/* ── EXPORT OPTIONS SECTION ── */}
       <div className="bg-theme-surface/50 rounded-3xl border border-theme-subtle overflow-hidden shadow-sm">
         <div className="p-6 border-b border-theme-subtle flex items-center justify-between">
@@ -576,10 +714,47 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
           {/* Option 2: Unencrypted Exports Section */}
           <div className="pt-2">
             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
-              Plaintext Exports (For Migration & Audits)
+              Full-Archive & Migration Exports
             </h4>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Habitat Full-Archive (.ZIP) */}
+              <div className="p-4 rounded-2xl bg-theme-base border border-claw-cyan/40 shadow-sm flex flex-col justify-between relative overflow-hidden">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 rounded-xl bg-claw-cyan/15 text-claw-cyan flex-shrink-0">
+                    <FolderArchive size={18} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <label className="block text-sm font-bold text-theme-main">
+                        Habitat Archive (.ZIP)
+                      </label>
+                      <span className="text-[9px] uppercase tracking-wider font-bold bg-claw-cyan/20 text-claw-cyan px-1.5 py-0.5 rounded-full border border-claw-cyan/30">
+                        Binary + Attachments
+                      </span>
+                    </div>
+                    <p className="text-xs text-theme-muted mt-1 leading-relaxed">
+                      Complete pod hierarchy with all decrypted binary attachments, manifests, and item records in a portable ZIP structure.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-theme-subtle/50 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setHabitatExportError(null);
+                      setHabitatExportKey("");
+                      setIsHabitatExportModalOpen(true);
+                    }}
+                    disabled={items.length === 0}
+                    className="w-full px-4 py-2 bg-claw-cyan/15 hover:bg-claw-cyan hover:text-ocean-dark text-claw-cyan text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-claw-cyan/30 shadow-sm"
+                  >
+                    <Download size={14} />
+                    <span>Export Full Archive</span>
+                  </button>
+                </div>
+              </div>
+
               {/* CSV Spreadsheet Export */}
               <div className="p-4 rounded-2xl bg-theme-base border border-theme-subtle flex flex-col justify-between">
                 <div className="flex items-start gap-3">
@@ -646,6 +821,17 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
               </div>
             </div>
 
+            {habitatExportSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-3 p-3 bg-claw-cyan/10 border border-claw-cyan/30 rounded-xl text-claw-cyan text-xs font-semibold flex items-center gap-2"
+              >
+                <CheckCircle2 size={16} />
+                <span>Habitat Full-Archive (.ZIP) generated and downloaded with all attachments.</span>
+              </motion.div>
+            )}
+
             {csvExportSuccess && (
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
@@ -679,11 +865,72 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
             Universal Vault Ingestion Engine
           </h3>
           <p className="text-sm text-theme-muted mt-1">
-            Import records seamlessly from Bitwarden (JSON/CSV), ShellGuard Encrypted Archives, standard JSON backups, or Android sgtotp.bak files.
+            Import records seamlessly from Bitwarden (JSON/CSV), ShellGuard Encrypted Archives, standard JSON backups, Habitat Archives (.zip / directory), or Android sgtotp.bak files.
           </p>
         </div>
 
         <div className="p-6 space-y-5">
+          {/* Abyssal Ingestion Dropzone */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`p-6 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center gap-3 ${
+              isDraggingOver
+                ? "border-claw-cyan bg-claw-cyan/10 scale-[1.01]"
+                : "border-claw-cyan/30 hover:border-claw-cyan/60 bg-theme-base/60"
+            }`}
+          >
+            <div className="p-3.5 rounded-2xl bg-claw-cyan/15 text-claw-cyan">
+              <Archive size={28} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-theme-main">
+                Abyssal Habitat Ingestion Dropzone
+              </h4>
+              <p className="text-xs text-theme-muted mt-1 max-w-md">
+                Drop your Habitat Full-Archive <code className="text-claw-cyan font-mono">.zip</code> file or uncompressed directory folder here for instant Stage 1 extraction & background attachment streaming.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+              <label className="px-4 py-2 bg-claw-cyan hover:bg-cyan-500 text-ocean-dark font-bold text-xs rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-sm">
+                <FolderArchive size={15} />
+                <span>Select Archive (.ZIP)</span>
+                <input
+                  type="file"
+                  accept=".zip,application/zip,application/x-zip-compressed"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) processHabitatSource(file);
+                  }}
+                  className="hidden"
+                />
+              </label>
+
+              <label className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-theme-main font-bold text-xs rounded-xl transition-all flex items-center gap-2 cursor-pointer border border-theme-subtle">
+                <Folder size={15} className="text-claw-cyan" />
+                <span>Select Habitat Directory</span>
+                <input
+                  type="file"
+                  {...({ webkitdirectory: "", directory: "", multiple: true } as any)}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      processHabitatSource(e.target.files);
+                    }
+                  }}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px bg-theme-subtle flex-1" />
+            <span className="text-[11px] uppercase tracking-wider text-theme-muted font-bold">Or Standard File Ingestion</span>
+            <div className="h-px bg-theme-subtle flex-1" />
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
               Select Backup File (.json, .csv, .bak)
@@ -1394,6 +1641,178 @@ export function ImportExportView({ items, lobster, onImportItems }: ImportExport
                 >
                   {isImporting ? <Loader2 size={16} className="animate-spin" /> : <FolderSync size={16} />}
                   <span>Confirm & Import to Vault</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL: HABITAT FULL-ARCHIVE EXPORT ── */}
+      <AnimatePresence>
+        {isHabitatExportModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-theme-surface rounded-2xl shadow-2xl p-6 max-w-md w-full border border-theme-subtle space-y-4"
+            >
+              <div className="flex items-center gap-3 text-claw-cyan">
+                <div className="w-10 h-10 rounded-xl bg-claw-cyan/10 flex items-center justify-center">
+                  <FolderArchive size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-theme-main">Habitat Full-Archive Export</h3>
+                  <p className="text-xs text-theme-muted font-medium">Export vault records & binary attachments into ZIP</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-claw-cyan/10 border border-claw-cyan/30 rounded-xl text-theme-main text-xs leading-relaxed flex items-start gap-2">
+                <PackageCheck size={16} className="shrink-0 mt-0.5 text-claw-cyan" />
+                <span>
+                  This will generate a streaming ZIP archive containing all <strong>{items.length}</strong> items and their associated binary attachments organized by pod hierarchy. Confirm with your ClawKey©™ to authorize.
+                </span>
+              </div>
+
+              <form onSubmit={handleVerifyAndExportHabitat} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    Your ClawKey©™ Authorization
+                  </label>
+                  <input
+                    type="password"
+                    value={habitatExportKey}
+                    onChange={(e) => setHabitatExportKey(e.target.value)}
+                    placeholder="hu-..."
+                    className="w-full bg-theme-base border border-theme-subtle rounded-xl px-4 py-3 text-sm focus:border-claw-cyan focus:ring-1 focus:ring-claw-cyan outline-none transition-all text-theme-main font-mono"
+                    autoFocus
+                  />
+                </div>
+
+                {habitatExportError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle size={15} />
+                    <span>{habitatExportError}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsHabitatExportModalOpen(false);
+                      setHabitatExportError(null);
+                      setHabitatExportKey("");
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-xl font-bold border border-theme-subtle hover:bg-theme-base transition-colors cursor-pointer text-sm text-theme-main"
+                    disabled={isExportingHabitat}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isExportingHabitat || !habitatExportKey}
+                    className="flex-1 px-4 py-2.5 rounded-xl font-bold bg-claw-cyan hover:bg-cyan-500 text-ocean-dark transition-colors cursor-pointer flex justify-center items-center gap-2 disabled:opacity-50 text-sm shadow-sm"
+                  >
+                    {isExportingHabitat ? <Loader2 className="animate-spin w-4 h-4" /> : (
+                      <>
+                        <Download size={16} />
+                        <span>Authorize & Export</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL: STAGE 1 HABITAT INGESTION PREVIEW ── */}
+      <AnimatePresence>
+        {isStage1PreviewModalOpen && stage1Pending && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-theme-surface rounded-2xl shadow-2xl p-6 max-w-lg w-full border border-theme-subtle space-y-4"
+            >
+              <div className="flex items-center gap-3 text-claw-cyan">
+                <div className="w-10 h-10 rounded-xl bg-claw-cyan/10 flex items-center justify-center">
+                  <FolderSync size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-theme-main">Habitat Archive Detected</h3>
+                  <p className="text-xs text-theme-muted font-medium">Stage 1 Ingestion: Instant Record Import & Background Handoff</p>
+                </div>
+              </div>
+
+              {/* Breakdown Grid */}
+              <div className="grid grid-cols-2 gap-3 p-3 bg-theme-base rounded-xl border border-theme-subtle text-xs">
+                <div>
+                  <span className="text-theme-muted block">Vault Items:</span>
+                  <span className="text-sm font-bold text-theme-main">
+                    {stage1Pending.exportPayload.items.length} records
+                  </span>
+                </div>
+                <div>
+                  <span className="text-theme-muted block">Binary Attachments:</span>
+                  <span className="text-sm font-bold text-claw-cyan">
+                    {stage1Pending.summary.totalAttachments} files ({(stage1Pending.summary.totalBytes / (1024 * 1024)).toFixed(2)} MB)
+                  </span>
+                </div>
+                <div>
+                  <span className="text-theme-muted block">Pods Identified:</span>
+                  <span className="text-sm font-bold text-theme-main">
+                    {stage1Pending.summary.pods.length} pods
+                  </span>
+                </div>
+                <div>
+                  <span className="text-theme-muted block">Archive Format:</span>
+                  <span className="text-sm font-bold text-emerald-500 uppercase">
+                    {stage1Pending.format}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-theme-muted leading-relaxed">
+                Confirming will immediately insert all <strong>{stage1Pending.exportPayload.items.length}</strong> vault items into your database (&lt;2s) and hand off the <strong>{stage1Pending.summary.totalAttachments}</strong> attachments to the Abyssal Ingestion Dock to stream in the background without freezing your UI.
+              </p>
+
+              {stage1Error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle size={15} />
+                  <span>{stage1Error}</span>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsStage1PreviewModalOpen(false);
+                    setStage1Pending(null);
+                    setStage1Error(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl font-bold border border-theme-subtle hover:bg-theme-base transition-colors cursor-pointer text-sm text-theme-main"
+                  disabled={isCommittingStage1}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCommitStage1}
+                  disabled={isCommittingStage1}
+                  className="flex-1 px-4 py-2.5 rounded-xl font-bold bg-claw-cyan hover:bg-cyan-500 text-ocean-dark transition-colors cursor-pointer flex justify-center items-center gap-2 disabled:opacity-50 text-sm shadow-sm"
+                >
+                  {isCommittingStage1 ? <Loader2 className="animate-spin w-4 h-4" /> : (
+                    <>
+                      <PackageCheck size={16} />
+                      <span>Ingest & Start Stream</span>
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>

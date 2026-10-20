@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-10-18
-current_position: "v0.0.2.6 (Build 28) — released & live; next Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock (provisional v0.0.2.7 / Build 29) — queue 25 → 26 → 27"
+last_updated: 2026-10-20
+current_position: "v0.0.2.7 (Build 29) — released & live; next Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine (provisional v0.0.2.8 / Build 30) — queue 26 → 27 → 28"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "██████████████████████ 88% (23 of 26 formalized phases)"
+  features_completed: "███████████████████████ 92% (24 of 26 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,89 +13,22 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 25+) and the 3 most recent completed phases (Phases 22, 23, and 24).*
-> *Historical Phases 1 through 21 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 26+) and the 3 most recent completed phases (Phases 23, 24, and 25).*
+> *Historical Phases 1 through 22 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.6 (Build 28)`
-- **Next Planned Milestone**: `v0.0.2.7 (Build 29)` (Phase 25)
+- **Current Production Release**: `v0.0.2.7 (Build 29)`
+- **Next Planned Milestone**: `v0.0.2.8 (Build 30)` (Phase 26)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 25 completes, Phase 22 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 26 completes, Phase 23 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
-
-### Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [work-driven version — provisional v0.0.2.7 (Build 29)]
-
-> Phase Feature Set Overview:
-> Elevates vault portability and user sovereignty to first-class status, 1-upping industry standards
-> (such as Bitwarden's write-only attachment zip). Solves both halves of the attachment archive challenge:
-> (1) **Habitat Archive Packaging (Task 49)**: A client-side, zero-knowledge streamed export engine that
-> packages unencrypted or encrypted vault records alongside all decrypted binary attachments inside a
-> single `.zip` archive. Prevents filename collision bugs via deterministic, human-readable directory
-> structures (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`) backed by an embedded manifest
-> in the JSON export.
-> (2) **Two-Stage Ingestion Pipeline & Reactive Ingestion Dock (Task 50)**: Ingesting an archive splits
-> into two phases to completely eliminate browser freezing and chore-like upload modal traps:
->   - **Stage 1 (Instant Vault Ingestion, <2s)**: Reads the ZIP's central directory, extracts the primary
->     vault JSON, and bulk-inserts all records atomically via `POST /api/vault/bulk-import`. Items immediately
->     appear in the user's dashboard and folder tree.
->   - **Stage 2 (Non-Blocking Reactive Ingestion Dock)**: Hands off attachment payloads to a persistent,
->     floating "Abyssal Ingestion Dock" in `VaultShell.tsx` that streams encrypted multipart uploads in the
->     background. Items with in-flight uploads render bioluminescent pulsing chips (`📎 Uploading 45%...`) that
->     transition to `📎 Verified` upon completion, with pause, cancel, and per-item retry ergonomics.
-> *(Source: Lucas & Antigravity, 2026-09-23 — archive mobility & non-blocking ingestion architectural pass.)*
-
-> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP specification & ingestion dock) - docs/vault-features/attachments.md (archive mobility) - ARCHITECTURE.md (Two-Stage Ingestion Pipeline, Delta #30) - BLUEPRINT.md - README.md
-
-- [ ] **Task 49: [Functionality] Habitat ZIP Packaging Engine & Streamed Attachment Decryption**
-
-Description: Implement client-side ZIP archive creation and attachment decryption in
-`src/lib/habitatExport.ts`. When the user initiates a Habitat export, iterate through all
-vault items with linked attachments; fetch encrypted BLOBs via `GET /api/attachments/:id/file`
-using streamed chunking; decrypt each file in-memory using active session `shellKey`; stream
-files into a browser ZIP writer (e.g. `client-zip` / `fflate` streaming reader/writer) with
-constant bounded memory overhead (O(largest single file), never O(total archive)).
-Establish a deterministic collision-proof directory layout:
-`attachments/<pod>/<item_title>__[<id_short>]/<file_name>` with path-sanitization against path
-traversal (`../`). Generate an embedded `attachment_manifest` inside the root
-`shellguard_vault_export.json` mapping each attachment ID, file name, parent item ID, size,
-and checksum. Auth-gated behind ClawKey verification.
-
-> Success Criteria: Exporting a habitat with multiple attachments (including items sharing identical
-> filenames) packages cleanly into a valid ZIP; memory footprint stays bounded; server never sees
-> decrypted bytes (zero-knowledge); manifest accurately links every file to its parent; tests in
-> `tests/unit/habitat-export.test.ts` verify round-trip packaging and zero collision overwrites;
-> full test oracle + `tsc` + build stay clean.
-
-- [ ] **Task 50: [UI Component] Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock**
-
-Description: Deliver the universal archive ingestion interface in `ImportExportView.tsx` and
-`VaultShell.tsx`.
-(1) **Universal Zip Sniffer & Stage 1 Unpacker**: Dropzone accepts `.zip` or unzipped folders
-(via `webkitdirectory`). Detects Habitat ZIP, extracts root JSON, displays breakdown in Batch
-Import Preview modal (passwords, notes, keys, detected attachments count & total MB), and
-immediately commits primary items via `POST /api/vault/bulk-import` (<2s), closing the modal.
-(2) **Abyssal Ingestion Dock**: Minimized, floating Reef Modernist dock in `VaultShell.tsx`
-(bottom-right viewport) displaying real-time background ingestion queue (`Ingesting Attachments • 3 of 12 completed (28%) [████░░░░]`).
-Supports expand/collapse, pause, resume, cancel, and per-item retry.
-(3) **Reactive Item State Synchronization**: In `ItemDetailPane.tsx` and `ItemListPane.tsx`,
-items with attachments currently in the ingestion pipeline render glowing pulsing indicator
-chips (`📎 filename (Uploading 45%...)`). Once an attachment's multipart upload completes and
-links to the parent item, state updates reactively to verified ready state without page reload.
-(4) `beforeunload` guard warns user if navigating away while background ingestion is active.
-
-> Success Criteria: Dropping a Habitat ZIP restores primary vault items in under 2 seconds; background
-> dock smoothly processes queued attachment uploads without freezing the UI or blocking vault browsing;
-> in-flight attachment chips render real-time progress and transition to ready state; pause/cancel
-> controls function reliably; full test oracle + `tsc` + build pass 100% green.
-
----
 
 ### Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [work-driven version — provisional v0.0.2.8 (Build 30)]
 
@@ -178,6 +111,73 @@ deletion or graduation.
 ---
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
+
+### Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [v0.0.2.7 (Build 29)] ✅
+
+> Phase Feature Set Overview:
+> Elevates vault portability and user sovereignty to first-class status, 1-upping industry standards
+> (such as Bitwarden's write-only attachment zip). Solves both halves of the attachment archive challenge:
+> (1) **Habitat Archive Packaging (Task 49)**: A client-side, zero-knowledge streamed export engine that
+> packages unencrypted or encrypted vault records alongside all decrypted binary attachments inside a
+> single `.zip` archive. Prevents filename collision bugs via deterministic, human-readable directory
+> structures (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`) backed by an embedded manifest
+> in the JSON export.
+> (2) **Two-Stage Ingestion Pipeline & Reactive Ingestion Dock (Task 50)**: Ingesting an archive splits
+> into two phases to completely eliminate browser freezing and chore-like upload modal traps:
+>   - **Stage 1 (Instant Vault Ingestion, <2s)**: Reads the ZIP's central directory, extracts the primary
+>     vault JSON, and bulk-inserts all records atomically via `POST /api/vault/bulk-import`. Items immediately
+>     appear in the user's dashboard and folder tree.
+>   - **Stage 2 (Non-Blocking Reactive Ingestion Dock)**: Hands off attachment payloads to a persistent,
+>     floating "Abyssal Ingestion Dock" in `VaultShell.tsx` that streams encrypted multipart uploads in the
+>     background. Items with in-flight uploads render bioluminescent pulsing chips (`📎 Uploading 45%...`) that
+>     transition to `📎 Verified` upon completion, with pause, cancel, and per-item retry ergonomics.
+> *(Receipts: Phase 25 Tasks 49 & 50, 2026-10-20. Released & live.)*
+
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP specification & ingestion dock) - docs/vault-features/attachments.md (archive mobility) - ARCHITECTURE.md (Two-Stage Ingestion Pipeline, Delta #30) - BLUEPRINT.md - README.md — ✅ synced.
+
+- [x] **Task 49: [Functionality] Habitat ZIP Packaging Engine & Streamed Attachment Decryption**
+
+Description: Implement client-side ZIP archive creation and attachment decryption in
+`src/lib/habitatExport.ts`. When the user initiates a Habitat export, iterate through all
+vault items with linked attachments; fetch encrypted BLOBs via `GET /api/attachments/:id/file`
+using streamed chunking; decrypt each file in-memory using active session `shellKey`; stream
+files into a browser ZIP writer (e.g. `client-zip` / `fflate` streaming reader/writer) with
+constant bounded memory overhead (O(largest single file), never O(total archive)).
+Establish a deterministic collision-proof directory layout:
+`attachments/<pod>/<item_title>__[<id_short>]/<file_name>` with path-sanitization against path
+traversal (`../`). Generate an embedded `attachment_manifest` inside the root
+`shellguard_vault_export.json` mapping each attachment ID, file name, parent item ID, size,
+and checksum. Auth-gated behind ClawKey verification.
+
+> Success Criteria: Exporting a habitat with multiple attachments (including items sharing identical
+> filenames) packages cleanly into a valid ZIP; memory footprint stays bounded; server never sees
+> decrypted bytes (zero-knowledge); manifest accurately links every file to its parent; tests in
+> `tests/unit/habitat-export.test.ts` verify round-trip packaging and zero collision overwrites;
+> full test oracle + `tsc` + build stay clean.
+
+- [x] **Task 50: [UI Component] Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock**
+
+Description: Deliver the universal archive ingestion interface in `ImportExportView.tsx` and
+`VaultShell.tsx`.
+(1) **Universal Zip Sniffer & Stage 1 Unpacker**: Dropzone accepts `.zip` or unzipped folders
+(via `webkitdirectory`). Detects Habitat ZIP, extracts root JSON, displays breakdown in Batch
+Import Preview modal (passwords, notes, keys, detected attachments count & total MB), and
+immediately commits primary items via `POST /api/vault/bulk-import` (<2s), closing the modal.
+(2) **Abyssal Ingestion Dock**: Minimized, floating Reef Modernist dock in `VaultShell.tsx`
+(bottom-right viewport) displaying real-time background ingestion queue (`Ingesting Attachments • 3 of 12 completed (28%) [████░░░░]`).
+Supports expand/collapse, pause, resume, cancel, and per-item retry.
+(3) **Reactive Item State Synchronization**: In `ItemDetailPane.tsx` and `ItemListPane.tsx`,
+items with attachments currently in the ingestion pipeline render glowing pulsing indicator
+chips (`📎 filename (Uploading 45%...)`). Once an attachment's multipart upload completes and
+links to the parent item, state updates reactively to verified ready state without page reload.
+(4) `beforeunload` guard warns user if navigating away while background ingestion is active.
+
+> Success Criteria: Dropping a Habitat ZIP restores primary vault items in under 2 seconds; background
+> dock smoothly processes queued attachment uploads without freezing the UI or blocking vault browsing;
+> in-flight attachment chips render real-time progress and transition to ready state; pause/cancel
+> controls function reliably; full test oracle + `tsc` + build pass 100% green.
+
+---
 
 ### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [v0.0.2.6 (Build 28)] ✅
 
@@ -325,74 +325,9 @@ ordering Passwords → Cards → Identities → Secure Notes → SSH Keys.
 
 ---
 
-### Phase 22: Reef Polish Pass — Unified Search & Control Ergonomics [v0.0.2.4 (Build 26)] ✅
+## 🏛️ Historical Archive (Phases 1 through 22)
 
-> Phase Feature Set Overview:
-> A polish-and-ergonomics bracket in two movements: (1) **one search bar to
-> rule the reef** — the sidebar search and the top-right header search are
-> removed, the search above the password list becomes the single search
-> surface, and the engine behind it becomes robust (titles, keywords,
-> attachment file names, note contents — all client-side, zero-knowledge
-> preserved); (2) **control ergonomics verify-only** — the Eye-beside-Copy
-> relocation was FOLDED INTO Phase 19 Task 38 (2026-09-18); this phase only
-> re-verifies it after the search consolidation. No schema, no API contract changes; the server
-> NEVER receives a search query.
-> *(Receipts: Phase 22 Tasks 43 & 44, 2026-09-23. Released & live.)*
-
-> 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only — ✅ synced.
-
-- [x] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
-
-Description: Implement the unified search engine in the client over the
-**already-decrypted in-memory corpus** (`vaultItems` state — `App.tsx` decrypts
-pearls, note `content`, custom fields and attachment rows into state after
-every fetch; no new decryption path is required). One shared `searchQuery`
-single-source-of-truth (lifted from `ItemListPane` to `App.tsx`/`VaultShell`)
-drives matching across, case-insensitively: item **titles**, **keywords**
-(usernames, URLs, note text), **attachment file names**
-(`vault_secure_attachments.file_name` metadata), **note contents** (decrypted
-plaintext held in memory), and custom-field values. Substring matching on a
-decrypt-once corpus (O(n) per keystroke is acceptable at vault scale; memoize
-the corpus so it is not rebuilt per keystroke). 🛡️ Zero-knowledge
-invariants: the query NEVER leaves the browser (no `?q=` params, no server
-search endpoint — the server cannot search what it cannot read); the search
-state and any result cache live in memory only and are purged on lock/logout
-with the shellKey. Update `VaultShell`'s filter chain to consume the unified
-query; keep type-filter and pod-scope filters composing with it (AND).
-
-> Success Criteria: Searching from the single search bar surfaces matches by
-> title, keyword (username/url), attachment file name, and note content; the
-> network tab shows zero search requests (query never transmitted); results
-> compose with pod/type filters; lock purges the query; the full test oracle
-> + `tsc` + build stay clean.
-
-- [x] **Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics**
-
-Description: Reduce the vault to **one master search bar** (above the
-password list) while retaining dedicated pod-scoped search. (1) Remove the
-**top-right header search** from `Layout/Header.tsx` (input, dropdown,
-`searchInputRef`/`searchDropdownRef` props and their consumers in `App.tsx`).
-(2) Remove the **sidebar top search bar** from `Layout/Sidebar.tsx` (duplicate
-`headerSearchQuery` state, keydown bindings, and dropdown). (3) **Retain
-sidebar pod-search input** in `Vault/SidebarFolderTree.tsx` (`podSearch` state)
-for rapid filtering of large pod hierarchies directly where the user looks.
-(4) `ItemListPane`'s search becomes the single master vault search surface,
-wired to the unified engine. (5) **Control ergonomics — FOLDED INTO PHASE 19
-Task 38** (Lucas, 2026-09-18): the Eye-beside-Copy relocation ships earlier
-with the BLOB/preview pass, extended to every masked field row (password, SSH
-private key, hidden custom fields); this task verifies it still holds after the
-search consolidation.
-
-> Success Criteria: Exactly one search input renders in the vault UI (above
-> the list); sidebar and header contain no search controls; the Eye-beside-Copy
-> ergonomics delivered by Phase 19 still holds on every masked field row; the
-> full test oracle + `tsc` + build stay clean.
-
----
-
-## 🏛️ Historical Archive (Phases 1 through 21)
-
-Earlier development phases (`v0.0.0.0` void through `v0.0.2.3` Build 25) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.2.4` Build 26) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -418,6 +353,7 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.2.3` Build 25) are per
 | **Phase 19** | `v0.0.2.1 (Build 22)` | Attachment SQLite BLOB Migration & Streaming Architecture | Tasks 37 & 38 |
 | **Phase 20** | `v0.0.2.2 (Build 24)` | Vault Tagging System & Granular Filter Bar | Tasks 39 & 40 |
 | **Phase 21** | `v0.0.2.3 (Build 25)` | Bulk Import Endpoint & Batch Operations | Tasks 41 & 42 |
+| **Phase 22** | `v0.0.2.4 (Build 26)` | Search Consolidation & Control Ergonomics | Tasks 43 & 44 |
 
 ---
 

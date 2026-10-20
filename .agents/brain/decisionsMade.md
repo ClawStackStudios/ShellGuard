@@ -115,3 +115,17 @@ The story says how it felt. This says what was actually chosen and why.
 **Confidence**: high — Backed by established release protocol and previous successful phase rollouts.  
 **Outcome**: Authored `RELEASE-v0.0.2.6.md`, purged `RELEASE-v0.0.2.5.md`, retired Phase 21 into `ROADMAP-HISTORY.md`, updated `ROADMAP.md`, and synchronized version anchors across all manifests to `v0.0.2.6`.  
 **Pattern reference**: Link to `.agents/workflows/draft-release.md` & `ROADMAP.md § 🏷️ Work-Driven Versioning Policy`.
+
+---
+
+## socratic-invariable-git-review-pr — 2026-10-18 18:10
+
+**Context**: Lucas proposed codifying the "Socratic Diff-Anchored Review" philosophy as the default co-pilot reply mode within the `git-review-pr` skill and registering the skill properly for workspace slash command discovery.  
+**Options considered**:
+- *Option A*: Rewrite the `git-review-pr` skill from scratch with new sections and procedural steps — High churn, risk of regression on the proven intent-locking and self-question review ledger.
+- *Option B*: Add a single sovereign invariant line ("The Socratic Invariable") into Phase 5, strip legacy wrapping XML tags, and place the clean skill directly into `.agents/skills/git-review-pr/` with mirrored global configuration — 100% preservation of proven skill logic, zero token bloat, and instant slash command discovery.  
+**Chosen**: Option B (Sovereign Invariable Line + Clean Workspace Registration).  
+**Why**: The felt reason is honoring the "compress the constraint, not the procedure" law. When a protocol already holds its ground, adding an invariant anchor preserves its foundation while effortlessly elevating its communicative power.  
+**Confidence**: high — Verified against physical git tree and workspace discovery rules.  
+**Outcome**: Added `The Socratic Invariable` to `.agents/skills/git-review-pr/SKILL.md` and `~/.gemini/config/skills/git-review-pr/SKILL.md`, created workspace `assets/PR-REVIEW-template.md`, and recorded learning in `learning-socratic-pr-review-skill.md`.  
+**Pattern reference**: Link to `.agents/rules/brain.md` & `systemPatterns.md § Two-Agent Co-Pilot Orchestration Protocol`.

@@ -38,3 +38,19 @@ Instead of bloating credential rows with monolithic payloads, ShellGuard stores 
 6. **Client-Side Encryption & Decryption**: File bytes are encrypted in your browser before upload; the ShellCryption envelope streams as multipart bytes (no base64 inflation). The list endpoint never carries payloads — downloads stream the BLOB in 1MB chunks from `GET /api/attachments/:id/file` and decrypt in browser memory.
 7. **Inline Previews**: Common image types and PDFs render in an encrypted preview modal — PDFs load from a Blob object URL (never a `data:` URI, honoring the insecure-origin invariant).
 8. **Orphan Quarantine Engine**: During server boot (and on-demand at runtime via `POST /api/attachments/quarantine/sweep`), any unparented legacy or orphaned attachments are placed into quarantine (`is_quarantined = 1`). Quarantined attachments are hidden from lists and file streams but are never deleted to prevent data loss. Quarantine events are recorded in the audit logs.
+
+## Two-Stage Ingestion Pipeline
+
+Importing large archives with massive encrypted BLOBs requires an advanced ingestion pipeline to prevent browser lock-up.
+
+### Stage 1: Fast Manifest Commit
+When a `.zip` archive is dropped onto the Habitat Dropzone, ShellGuard uses the Web Streams API to sniff the contents, quickly extracting the JSON manifest and bypassing attachment parsing. Primary credentials (passwords, secure notes) are committed instantly (often in under 2 seconds) to unlock the Vault interface immediately.
+
+### Stage 2: Abyssal Ingestion Dock
+Attachments are placed in a background queue. The floating **Abyssal Ingestion Dock** appears in the bottom right of the vault interface, providing ergonomic controls:
+- **Pause/Resume**
+- **Cancel All**
+- **Retry** on network failure
+
+### Reactive bioluminescence
+Items associated with in-flight background uploads feature reactive UI indicators. You will see pulsing `(Uploading...)` chips inside the `ItemDetailPane.tsx` and spinning loader icons on the row in the `ItemListPane.tsx`. These transitions instantly lock into a `(Verified)` state as each file safely hits the underlying SQLite datastore.

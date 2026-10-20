@@ -1324,12 +1324,13 @@ export default function App() {
                   <ImportExportView 
                     items={vaultItems} 
                     lobster={lobster} 
+                    shellKey={shellKey}
                     onImportItems={async (imported) => {
                       if (!shellKey || isLocked) return;
 
                       const itemsToInsert = [];
                       for (const item of imported) {
-                        const id = generateUUID();
+                        const id = item.id || generateUUID();
                         let encryptedSecret = "";
                         let encryptedTotp = "";
                         let encryptedContent = "";

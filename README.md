@@ -19,7 +19,7 @@
 <br/>
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/Version-v0.0.2.6-blue?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.0.2.7-blue?style=for-the-badge)](CHANGELOG.md)
 [![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -93,6 +93,7 @@
 - 🐚 **The Grotto (Vault)** — Logins (with multi-URI support, dynamic RFC 6238 TOTP, client-side password generation history drawer, and encrypted attachments with 500 MB per file, 1000 MB quota), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods** and multi-dimensional **tags**.
 - 🏷️ **Custom Fields** — Bitwarden-style custom fields (Text, Hidden, Boolean, Linked) across logins, notes, and SSH keys. Hidden custom fields are sealed client-side via AES-GCM-256 with AAD integrity verification.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring, and client-side revision history sealed under Layer 1 ShellCryption.
+- 📦 **Habitat Full-Archive Mobility & Two-Stage Ingestion** — Streamed zero-knowledge ZIP export bounded to $O(\text{largest single file})$ RAM via Web Streams and `client-zip`, paired with an instant (<2s) Stage 1 ingestion pipeline and a persistent, floating **Abyssal Ingestion Dock** that manages massive attachment restores in the background with reactive bioluminescent status chips.
 - 📤 **Sovereign Exports & Imports** — Atomic bulk import engine (up to 1,000 items with HTTP 207 Multi-Status partial failure reporting), universal Bitwarden ingestion parity (unencrypted JSON and CSV with automatic folder-to-pod conversion and custom field translation), zero-knowledge AES-256-GCM encrypted backup archives (sealed via ClawKey HKDF or custom passphrase PBKDF2-100k), RFC 4180 CSV spreadsheet export with password sanitization controls, and native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
 - 📱 **ShellGuard-TOTP Android Companion** — Dedicated native Android 2FA authenticator with biometrics, hardware-backed KeyStore isolation, camera & gallery QR scanning, and 1-way mirror sync with the ShellGuard web vault. Releases: [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases).
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically without flushing offline recovery buffers.

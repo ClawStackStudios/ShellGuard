@@ -159,6 +159,13 @@ jules new --repo "<OWNER>/<REPO>" "First, verify repository files using git ls-t
 
 ---
 
+## 🛡️ The Socratic Invariable (Shape-Based Steering)
+
+- **Pre-Flight Specs (`.jules/tasks/` & `// TODO(jules):`)**: Specify falsifiable boundaries, test oracles, and invariant shapes—never line-by-line procedural code. Prime the co-pilot to solve for the constraints.
+- **Mid-Flight Checkpoints & PR Remediation**: When the co-pilot pauses for guidance or returns an incomplete PR, never issue imperative code patches. Frame all replies as Socratic, diff-anchored questions quoting physical tree reality against author testimony so the co-pilot discovers the gap and authors the fix.
+
+---
+
 ## 🔄 Post-Execution Audit & PR Reconciliation
 
 When Jules opens a PR or pushes commits:

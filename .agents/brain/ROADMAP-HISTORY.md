@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 21 (`v0.0.0.0` → `v0.0.2.3`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 22 (`v0.0.0.0` → `v0.0.2.4`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 22, 23, and 24), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 23, 24, and 25), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -1150,3 +1150,65 @@ and dedicated Import wizard with preview table and error resolution chips.
   - Established formal tiered verification templates in `.agents/templates/verification/`.
   - Expanded test coverage across `tests/uiSeams.test.ts` (25 tests) and `tests/vaultDelete.test.ts` (7 tests).
 
+## Phase 22: Unified Single Search & Control Ergonomics Polish [v0.0.2.4 (Build 26)]
+
+> Phase Feature Set Overview:
+> A polish-and-ergonomics bracket in two movements: (1) **one search bar to
+> rule the reef** — the sidebar search and the top-right header search are
+> removed, the search above the password list becomes the single search
+> surface, and the engine behind it becomes robust (titles, keywords,
+> attachment file names, note contents — all client-side, zero-knowledge
+> preserved); (2) **control ergonomics verify-only** — the Eye-beside-Copy
+> relocation was FOLDED INTO Phase 19 Task 38 (2026-09-18); this phase only
+> re-verifies it after the search consolidation. No schema, no API contract changes; the server
+> NEVER receives a search query.
+> *(Receipts: Phase 22 Tasks 43 & 44, 2026-09-23. Released & live.)*
+
+> 📚 **Documentation Impact**: docs/vault-features (single-search surface) - reference/design-system.md (eye+copy ergonomics) - shellcryption-spec.md section 6 verify-only — ✅ synced.
+
+- [x] **Task 43: [Functionality] Robust Unified Vault Search Engine (Client-Side, Zero-Knowledge)**
+
+Description: Implement the unified search engine in the client over the
+**already-decrypted in-memory corpus** (`vaultItems` state — `App.tsx` decrypts
+pearls, note `content`, custom fields and attachment rows into state after
+every fetch; no new decryption path is required). One shared `searchQuery`
+single-source-of-truth (lifted from `ItemListPane` to `App.tsx`/`VaultShell`)
+drives matching across, case-insensitively: item **titles**, **keywords**
+(usernames, URLs, note text), **attachment file names**
+(`vault_secure_attachments.file_name` metadata), **note contents** (decrypted
+plaintext held in memory), and custom-field values. Substring matching on a
+decrypt-once corpus (O(n) per keystroke is acceptable at vault scale; memoize
+the corpus so it is not rebuilt per keystroke). 🛡️ Zero-knowledge
+invariants: the query NEVER leaves the browser (no `?q=` params, no server
+search endpoint — the server cannot search what it cannot read); the search
+state and any result cache live in memory only and are purged on lock/logout
+with the shellKey. Update `VaultShell`'s filter chain to consume the unified
+query; keep type-filter and pod-scope filters composing with it (AND).
+
+> Success Criteria: Searching from the single search bar surfaces matches by
+> title, keyword (username/url), attachment file name, and note content; the
+> network tab shows zero search requests (query never transmitted); results
+> compose with pod/type filters; lock purges the query; the full test oracle
+> + `tsc` + build stay clean.
+
+- [x] **Task 44: [UI Component] Search Bar Consolidation & Control Ergonomics**
+
+Description: Reduce the vault to **one master search bar** (above the
+password list) while retaining dedicated pod-scoped search. (1) Remove the
+**top-right header search** from `Layout/Header.tsx` (input, dropdown,
+`searchInputRef`/`searchDropdownRef` props and their consumers in `App.tsx`).
+(2) Remove the **sidebar top search bar** from `Layout/Sidebar.tsx` (duplicate
+`headerSearchQuery` state, keydown bindings, and dropdown). (3) **Retain
+sidebar pod-search input** in `Vault/SidebarFolderTree.tsx` (`podSearch` state)
+for rapid filtering of large pod hierarchies directly where the user looks.
+(4) `ItemListPane`'s search becomes the single master vault search surface,
+wired to the unified engine. (5) **Control ergonomics — FOLDED INTO PHASE 19
+Task 38** (Lucas, 2026-09-18): the Eye-beside-Copy relocation ships earlier
+with the BLOB/preview pass, extended to every masked field row (password, SSH
+private key, hidden custom fields); this task verifies it still holds after the
+search consolidation.
+
+> Success Criteria: Exactly one search input renders in the vault UI (above
+> the list); sidebar and header contain no search controls; the Eye-beside-Copy
+> ergonomics delivered by Phase 19 still holds on every masked field row; the
+> full test oracle + `tsc` + build stay clean.

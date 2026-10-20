@@ -11,6 +11,7 @@ import { extractDomain } from '../../lib/urlUtils.ts';
 import { downloadAttachment, formatBytes } from '../../lib/attachmentUtils.ts';
 import { parseSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 import { formatCardNumber, maskCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
+import { globalIngestionQueue } from '../../lib/habitatImport.ts';
 
 interface ItemDetailPaneProps {
   item: VaultItem | null;
@@ -48,6 +49,11 @@ export function ItemDetailPane({
     setRevealedHiddenFields(new Set());
     setIsConfirmingDelete(false);
   }, [item?.id]);
+
+  const [, forceQueueUpdate] = useState(0);
+  useEffect(() => {
+    return globalIngestionQueue.subscribe(() => forceQueueUpdate(n => n + 1));
+  }, []);
 
   const downloadWithFetch = async (att: VaultItem) => {
     if (!onFetchAttachment) return;
@@ -1144,50 +1150,90 @@ export function ItemDetailPane({
               );
             })()}
 
-            {/* Attachments */}
-            {item.attachments && (() => {
+            {/* Attachments & Reactive In-Flight Ingestion State */}
+            {(() => {
               let parsedIds: string[] = [];
-              try {
-                parsedIds = JSON.parse(item.attachments);
-              } catch (e) {
-                // Ignore
+              if (item.attachments) {
+                try {
+                  parsedIds = JSON.parse(item.attachments);
+                } catch (e) {
+                  // Ignore
+                }
               }
               const actualAttachments = parsedIds.map(id => attachmentItemsById.get(id)).filter(Boolean) as VaultItem[];
-              
-              if (actualAttachments.length > 0) {
-                return (
-                  <div className="pt-4">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block ml-1">Attachments</span>
-                    <div className="flex flex-col gap-2">
-                      {actualAttachments.map(att => (
-                        <div key={att.id} className="flex items-center justify-between p-3 rounded-xl border border-theme-subtle bg-theme-surface hover:border-claw-cyan/40 transition-colors">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <FileText size={16} className="text-slate-400 flex-shrink-0" />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-sm font-semibold truncate text-theme-main">{att.title}</span>
-                              <span className="text-[10px] text-theme-muted uppercase tracking-wider">
-                                {typeof (att as any).size_bytes === 'number'
-                                  ? `${((att as any).size_bytes / 1024).toFixed(1)} KB`
-                                  : `${(att.mime_type || '').toUpperCase()}`}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <button
-                              onClick={() => downloadWithFetch(att)}
-                              className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                              title="Download"
-                            >
-                              <Download size={16} />
-                            </button>
+              const inFlight = globalIngestionQueue.getParentItemStatus(item.id);
+
+              if (actualAttachments.length === 0 && !inFlight.hasActive && inFlight.status !== 'verified') {
+                return null;
+              }
+
+              return (
+                <div className="pt-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block ml-1">Attachments</span>
+                  <div className="flex flex-col gap-2">
+                    {/* Glowing Pulsing Chip for in-flight background upload */}
+                    {inFlight.hasActive && (
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-claw-cyan/50 bg-claw-cyan/10 shadow-sm shadow-claw-cyan/10 animate-pulse">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Paperclip size={15} className="text-claw-cyan animate-spin shrink-0" />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-semibold text-claw-cyan truncate">
+                              {inFlight.fileName || 'Attachment'}
+                            </span>
+                            <span className="text-[10px] text-claw-cyan/80">
+                              Background Ingestion in progress...
+                            </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        <span className="text-[11px] font-mono font-bold text-claw-cyan bg-claw-cyan/20 px-2.5 py-1 rounded-full border border-claw-cyan/30">
+                          Uploading {inFlight.progressPercent || 0}%...
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Recently Verified Ready Chip */}
+                    {!inFlight.hasActive && inFlight.status === 'verified' && (
+                      <div className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Check size={14} className="text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold text-emerald-300 truncate">
+                            {inFlight.fileName || 'Attachment'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                          Verified
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Persisted Attachments */}
+                    {actualAttachments.map(att => (
+                      <div key={att.id} className="flex items-center justify-between p-3 rounded-xl border border-theme-subtle bg-theme-surface hover:border-claw-cyan/40 transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <FileText size={16} className="text-slate-400 flex-shrink-0" />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-semibold truncate text-theme-main">{att.title}</span>
+                            <span className="text-[10px] text-theme-muted uppercase tracking-wider">
+                              {typeof (att as any).size_bytes === 'number'
+                                ? `${((att as any).size_bytes / 1024).toFixed(1)} KB`
+                                : `${(att.mime_type || '').toUpperCase()}`}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => downloadWithFetch(att)}
+                            className="p-2 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
+                            title="Download"
+                          >
+                            <Download size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                );
-              }
-              return null;
+                </div>
+              );
             })()}
 
           </div>

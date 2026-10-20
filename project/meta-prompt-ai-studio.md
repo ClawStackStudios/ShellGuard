@@ -45,7 +45,7 @@ flowchart TD
     Interlude235["🩹 Stage 23.5: Post-Phase-22 Interlude — Bitwarden Ingestion Parity & Native Models ✅<br/>(Sub-Phase 23.5.1: Zero-Loss Engine · Sub-Phase 23.5.2: Native Card/Identity Models & Widgets · Build 26)"]
     Phase23["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ✅<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
     Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ✅<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
-    Phase25["📦 Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock ⬜<br/>(Task 49: Habitat ZIP Archive Engine & Streamed Packaging · Task 50: Two-Stage Ingestion & Reactive Dock)"]
+    Phase25["📦 Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock ✅<br/>(Task 49: Habitat ZIP Archive Engine & Streamed Packaging · Task 50: Two-Stage Ingestion & Reactive Dock)"]
     Phase26["⏱️ Stage 27: Phase 26 — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine ⬜<br/>(Task 51: Ephemeral Import Ledger & TTL Engine · Task 52: Config Settings Surface & Rapid Batch Purge)"]
     Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
 
@@ -1508,13 +1508,12 @@ full test oracle + tsc + build stay clean!
 
 ---
 
-## 📦 Stage 26 (Queued): Phase 25 Prompt — Habitat Full-Archive Mobility & Reactive Ingestion Dock [work-driven — provisional v0.0.2.7 (Build 29)]
+## 📦 Stage 26: Phase 25 Prompt — Habitat Full-Archive Mobility & Reactive Ingestion Dock [v0.0.2.7 (Build 29)] ✅
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-25-habitat-full-archive-mobility--reactive-ingestion-dock-work-driven-version--provisional-v0027-build-29)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-25-habitat-full-archive-mobility--reactive-ingestion-dock-v0027-build-29-)
 > for complete specifications on **Task 49** and **Task 50**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 24; green-light from
-> Lucas still required.
-> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP spec & dock) · docs/vault-features/attachments.md · ARCHITECTURE.md (Delta #27) · BLUEPRINT.md · README.md
+> **⚠️ Execution state**: SHIPPED & LIVE — released in `v0.0.2.7 (Build 29)`, 2026-10-20.
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (Habitat ZIP spec & dock) · docs/vault-features/attachments.md · ARCHITECTURE.md (Delta #30) · BLUEPRINT.md · README.md
 > **📖 Required Context Files for Phase 25**:
 > 1. [`import-export-spec.md`](./import-export-spec.md) — §1 (Export formats), §2 (Archive wire format), §3 (Import security invariants).
 > 2. [`shellcryption-spec.md`](./shellcryption-spec.md) — §1 (The firewall), §6 (Invariants — server never reads decrypted attachments).

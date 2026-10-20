@@ -104,10 +104,21 @@ To ensure a strict $O(\text{largest single file})$ bounded memory ceiling, Habit
 
 The archive contains an embedded manifest (`shellguard_vault_export.json`) that maps attachments dynamically. The file hierarchy is deterministically organized while stripping out potentially dangerous characters like `../` to prevent path traversal on ingestion:
 
-\`\`\`text
-attachments/&lt;pod&gt;/&lt;item_title&gt;__[&lt;id_short&gt;]/&lt;file_name&gt;
-\`\`\`
+```text
+attachments/<pod>/<item_title>__[<id_short>]/<file_name>
+```
 
 ### ClawKey Challenge Gate
 
 Full decrypted backup generation requires explicit confirmation of the user's `hu-` ClawKey to guarantee malicious JavaScript payloads cannot silently dump the vault in the background.
+
+---
+
+## 🌊 Two-Stage Habitat Ingestion Pipeline
+
+Importing large archives with dozens of encrypted attachments can traditionally freeze browser tabs. ShellGuard breaks this bottleneck with a **Two-Stage Ingestion Pipeline**:
+
+1. **Stage 1 (Instant Vault Ingestion, <2s)**: Dropping a `.zip` file onto the Abyssal Dropzone triggers `sniffHabitatArchive()`. Using `fflate`, the client extracts only `shellguard_vault_export.json` without decompressing binary attachments into memory. A Batch Import Preview modal displays item counts and attachment metrics. Upon user confirmation, primary items are committed atomically via `POST /api/vault/bulk-import` in under 2 seconds. The modal closes and the vault is immediately unlocked.
+2. **Stage 2 (Non-Blocking Abyssal Ingestion Dock)**: Binary attachment payloads are handed off to the persistent, floating `AbyssalIngestionDock` anchored in `VaultShell.tsx`. Attachments stream in the background via sequential multipart uploads (`POST /api/attachments`), allowing the user to continue searching, editing, and using their vault uninterrupted.
+3. **Reactive Status Tracking**: Vault items with in-flight uploads display glowing pulsing chips (`📎 filename (Uploading 45%...)`) that transition reactively to `📎 filename (Verified)` upon completion without requiring a page reload.
+4. **Lifecycle Protection**: A `beforeunload` listener warns the user if they attempt to navigate away while background uploads are active.

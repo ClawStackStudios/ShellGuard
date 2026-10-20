@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.0.2.7] - 2026-10-20 (Build 29)
+
+### Added
+- **Habitat Full-Archive Mobility Engine (Task 49):** Streaming zero-knowledge ZIP generator bounded to $O(\text{largest single file})$ memory footprint using Web Streams and `client-zip` async generators, preventing browser RAM exhaustion. Includes ClawKey challenge verification and deterministic, collision-proof path formatting (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`).
+- **Two-Stage Ingestion Pipeline (Task 50):** Built universal archive sniffer (`sniffHabitatArchive`) and Abyssal Dropzone in `ImportExportView.tsx`. Stage 1 delivers instantaneous `<2s` primary records extraction and atomic database commitment via `POST /api/vault/bulk-import`.
+- **Abyssal Ingestion Dock (Task 50):** Floating background queue processor in `VaultShell.tsx` for massive attachment restores, featuring real-time UI tracking, expand/collapse inspection, queue pause, resume, cancel-all, and per-item retry ergonomics.
+- **Reactive In-Flight State Chips (Task 50):** Bioluminescent progress indicators (`📎 Uploading 45%...` -> `📎 Verified`) across item detail and list views that update reactively without requiring a page reload. Added `beforeunload` protection against data loss during active uploads.
+- **Auditor Battery Additions (Classes L2 & L6):** Automated build gates in `tests/build-gates.test.ts` verifying database schema tables match active migrations (L2) and asserting storage limit parity (500MB per-file, 1000MB grotto quota) between code and docs (L6).
+
+### Fixed
+- **Container Inotify EMFILE Exhaustion:** Configured `server.watch.usePolling: true` (with 1,000ms stat poll interval and binary/git directory exclusions) in `vite.config.ts`, eliminating `EMFILE: too many open files` crashes under container inotify instance limits.
+- **Deterministic Path Sanitization:** Preserved spaces in `sanitizePathComponent` while normalizing cleanTitle spaces to underscores in `buildHabitatAttachmentRelativePath` to ensure 100% path safety and predictability.
+
 ## [0.0.2.6] - 2026-10-18
 
 ### Added

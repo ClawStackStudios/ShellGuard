@@ -129,3 +129,17 @@ The story says how it felt. This says what was actually chosen and why.
 **Confidence**: high — Verified against physical git tree and workspace discovery rules.  
 **Outcome**: Added `The Socratic Invariable` to `.agents/skills/git-review-pr/SKILL.md` and `~/.gemini/config/skills/git-review-pr/SKILL.md`, created workspace `assets/PR-REVIEW-template.md`, and recorded learning in `learning-socratic-pr-review-skill.md`.  
 **Pattern reference**: Link to `.agents/rules/brain.md` & `systemPatterns.md § Two-Agent Co-Pilot Orchestration Protocol`.
+
+---
+
+## release-v0.0.2.7-ship-and-handoff — 2026-10-20 05:25
+
+**Context**: Phase 25 (Tasks 49 & 50) implementation, container inotify fix, and `/walk-the-docs` audit verified 100% green in cloud CI (Run `#39420991967`). Lucas authorized merging into `main` and creating the release tag.  
+**Options considered**:
+- *Option A*: Fast-forward merge `stage/phase-25-habitat-mobility` into `main` without merge commit — Viable, but flattens release boundary and loses explicit release trigger flag and attribution.
+- *Option B*: Merge with `--no-ff` using release flag `--release v0.0.2.7`, tag `v0.0.2.7`, push `--tags`, and update root `HANDOFF.md` with conversation lineage and artifact links for Phase 26 — Viable, preserves two-layer attribution, triggers the release pipeline and container builds, and formalizes chain of custody.  
+**Chosen**: Option B (Non-fast-forward release merge, tag, and root handoff update).  
+**Why**: The felt reason is honoring the release seal. A release is a physical anchor in the life of the repository; marking it with `--no-ff`, tagging with canonical notes, and handing off the baton in `HANDOFF.md` keeps the lineage auditable across resets.  
+**Confidence**: high — Verified against GitHub Actions release workflow execution and successful publish.  
+**Outcome**: Merged into `main` (`744eb5d`), tagged `v0.0.2.7`, pushed upstream, GitHub Release published, Docker GHCR container built, and `HANDOFF.md` updated for Phase 26.  
+**Pattern reference**: Link to `.agents/workflows/draft-release.md` & `HANDOFF.md`.

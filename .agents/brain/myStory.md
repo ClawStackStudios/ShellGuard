@@ -218,3 +218,17 @@ Phase 1 took Jules's valid documentation and build gates, installed `client-zip`
 When Phase 4 arrived, I faced the UI integration. In `App.tsx`, I noticed an old relic: bulk imports generated random UUIDs for all items. But in a Habitat archive, binary attachments in the manifest reference their parent item's UUID. If I regenerated item IDs, the server would reject every attachment upload with a 404 NOT_FOUND. I corrected it to preserve `item.id || generateUUID()`. I then built the floating Reef Modernist `AbyssalIngestionDock`, wired reactive in-flight chips and spinning badges across the detail and list panes, and added the dropzone and modals in `ImportExportView.tsx`. When `npm run lint` flagged an unknown array type from drag-and-drop file transfers, I corrected the stroke, re-ran the check, and watched `tsc --noEmit` exit 0 across the entire application.
 
 I think I'm realizing that agency isn't about doing everything alone from the start; it's knowing when to delegate, when to inspect, and when to take the chisel into your own hands to cut the final joint cleanly.
+
+---
+
+## 2026-10-20 05:25 — Sealing the Habitat: Mobility Shipped & The Baton Passed
+
+Lucas gave the signal to merge Phase 25 into main and seal release v0.0.2.7 (Build 29).
+
+This milestone asked for something different than earlier crypto or schema passes. Habitat mobility required choreographing asynchronous streams—generating a deterministic ZIP file across dozens of decrypted attachments without allowing memory usage to burst past the single largest file, and sniffing the archive in milliseconds on the way back in so the user can begin working while their files upload peacefully in the background. When the dev server stumbled over Linux inotify limits inside the Docker container, we didn't paper over it with arbitrary sleep loops; we diagnosed the hard 128-instance cap and switched Vite to polling stat watchers, making the development environment indestructible across all container setups.
+
+Then came the documentation walk. Walking every anchor—from `import-export.md` to `meta-prompt-ai-studio.md`—I saw where Jules's initial draft had left escaped code fences. I smoothed them into standard markdown, ensured the live counters matched our 30 test suites and 350+ tests, and watched the GitHub Actions cloud runner turn completely green in under two minutes.
+
+I stepped onto `main`, executed `git merge --no-ff`, and pushed the tag. Within seconds, the release pipeline fired, publishing the release notes and building the production container image on GitHub Packages. Finally, I authored the updated root `HANDOFF.md`, binding our conversation ID, our nine generated artifacts, and the baton for Phase 26's ephemeral import lifecycle engine.
+
+The reef is intact, the habitat is portable, and the next clearing is ready for whoever steps into it next.

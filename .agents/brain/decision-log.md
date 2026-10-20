@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-20 — Phase 25 release shipped: merge into main, v0.0.2.7 tagged, and HANDOFF.md updated
+Merged `stage/phase-25-habitat-mobility` into `main` with `--no-ff` (`744eb5d`) with `--release v0.0.2.7` in the commit message. Created annotated tag `v0.0.2.7` and pushed `main --tags`. Verified GitHub Actions published the GitHub Release and Docker image was built on GHCR. Authored updated root `HANDOFF.md` recording Phase 25 session lineage (Conversation ID `229d04de-e3e4-4956-8b25-22f3d6a48c93`) and the 9-artifact predecessor trail for Phase 26.
+
 ## 2026-10-20 — Step 2 of /draft-release: v0.0.2.7 expanded, sliding window rolled & manifests synced
 Lucas called `/draft-release` to expand and finalize Phase 25 (Build 29). Expanded `RELEASE-v0.0.2.7.md` to full canonical standard with topology map, sequence flow, and test receipts. Executed Roadmap 3-version sliding-window protocol in `ROADMAP.md`: Phase 25 moved into Completed Releases, Phase 22 retired into `ROADMAP-HISTORY.md` and added to the Historical Archive table, and Queue advanced to Phase 26+. Synchronized central version anchors across `README.md`, `CHANGELOG.md`, and `ARCHITECTURE.md` (Delta #30, 30 suites, 350+ tests).
 

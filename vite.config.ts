@@ -22,7 +22,9 @@ export default defineConfig(({ mode }) => {
       // Dev mode defaults to safe loopback validation (undefined), Prod mode allows wide binds (true)
       allowedHosts: isDev ? undefined : true,
       watch: {
-        ignored: ['**/tests/**', '**/data*/**', '**/*.sqlite*', '**/*.wal', '**/*.shm', '**/.agents/**', '**/.clinerules/**']
+        usePolling: true,
+        interval: 1000,
+        ignored: ['**/tests/**', '**/data*/**', '**/*.sqlite*', '**/*.wal', '**/*.shm', '**/.agents/**', '**/.clinerules/**', '**/node_modules/**', '**/.git/**']
       },
       proxy: {
         '/api': 'http://localhost:6565'

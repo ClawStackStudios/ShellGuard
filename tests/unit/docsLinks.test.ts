@@ -99,7 +99,7 @@ describe('docs navigation-link integrity (all three link classes)', () => {
     const html = readFileSync(distIndex, 'utf-8');
     // Any href="/<section>" that ALSO exists base-prefixed is a Card leak.
     const base = '/ShellGuard/';
-    const unprefixed = [...html.matchAll(/href="(\/(?:getting-started|vault-features|architecture|agent-integration|superlobster|deployment|companion|reference)(?:\/[^"#]*)?)"/g)]
+    const unprefixed = [...html.matchAll(/href="(\/(?:getting-started|vault-features|architecture|agent-integration|superlobster|deployment|companion|reference|mobile)(?:\/[^"#]*)?)"/g)]
       .map((m) => m[1])
       .filter((u) => !u.startsWith(base));
     expect(unprefixed).toEqual([]);

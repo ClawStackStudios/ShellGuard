@@ -55,13 +55,28 @@ body {
 }
 
 /* Header & Nav */
-.VPNav {
+.VPNavBar {
   backdrop-filter: blur(16px) !important;
   border-bottom: 1px solid var(--vp-c-border) !important;
 }
 
-.dark .VPNav {
+.dark .VPNavBar {
   background-color: rgba(8, 12, 20, 0.85) !important;
+}
+
+/* Mobile Nav Screen Menu (Full Screen Viewport Overlay) */
+.VPNavScreen {
+  background-color: var(--vp-c-bg) !important;
+}
+
+.dark .VPNavScreen {
+  background-color: rgba(8, 12, 20, 0.96) !important;
+  backdrop-filter: blur(20px);
+}
+
+.VPNavScreenMenuLink.active,
+.VPNavScreenMenuLink:hover {
+  color: #e4048a !important;
 }
 
 /* Top Nav Links / Tabs */

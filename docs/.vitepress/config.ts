@@ -29,6 +29,8 @@ export default withMermaid(
   themeConfig: {
     logo: '/assets/shellguard-icon.svg',
     siteTitle: 'ShellGuard',
+    sidebarMenuLabel: 'Chapters',
+    returnToTopLabel: 'Return to top',
 
     search: {
       provider: 'local',

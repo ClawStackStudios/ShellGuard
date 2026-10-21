@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-21 — Mobile docs navigation: containing block trap resolved & live deployed
+Lucas noticed the top-right hamburger menu failed to open on mobile screens. Traced to a CSS containing-block trap: `backdrop-filter: blur(16px)` on the parent `<header class="VPNav">` created a containing block that crushed `.VPNavScreen`'s `position: fixed` height to $64\text{px} - 64\text{px} = 0\text{px}$ on mobile viewports (<960px). Retargeted `backdrop-filter` and translucent background to child `.VPNavBar`, styled `.VPNavScreen` with deep Abyssal glassmorphism, configured `sidebarMenuLabel: 'Chapters'` in `docs/.vitepress/config.ts`, and updated `tests/unit/docsLinks.test.ts`. Verified with 100% green tests locally, merged to `main` (`08e4a69`), pushed to `origin`, and verified GitHub Actions cloud CI (#39624909334) and docs deployment (#39624930469) both completed green.
+
 ## 2026-10-20 — Phase 25 release shipped: merge into main, v0.0.2.7 tagged, and HANDOFF.md updated
 Merged `stage/phase-25-habitat-mobility` into `main` with `--no-ff` (`744eb5d`) with `--release v0.0.2.7` in the commit message. Created annotated tag `v0.0.2.7` and pushed `main --tags`. Verified GitHub Actions published the GitHub Release and Docker image was built on GHCR. Authored updated root `HANDOFF.md` recording Phase 25 session lineage (Conversation ID `229d04de-e3e4-4956-8b25-22f3d6a48c93`) and the 9-artifact predecessor trail for Phase 26.
 
@@ -64,6 +67,5 @@ Audited Jules's physical git state and confirmed commit 2fc608b on stage/phase-2
 ## 2026-10-16 — Rigorous PR #4 Review, Base Branch Realignment & Remediation Dispatch
 Executed /git-review-pr on Jules PR #4 and documented evidence-graded findings in pr_review_4_2026_10_16_0545.md. Found that while implementation in ac5dfd2 passed cloud CI green, PR #4 misdirected its target base to main, breached sovereign .agents/ in commit 9035b82, and failed to push the promised Sub-Stage 25.1 prompt. Realigned PR base to stage/phase-23-item-integrity via GitHub CLI and dispatched a Lucas-approved invariable-centered remediation directive (issuecomment-6209118929) to collapse Jules's work into strict relational integrity and sovereign boundaries.
 
-## 2026-10-14 — Actionable Sub-Stage codification from Jules's architectural findings
-Operationalized Jules's independent architectural discoveries into a formal 5-phase Sub-Stage for Stage 25 on PR #4 (issuecomment-6163022390). Rather than leaving insights on the floor or hand-crafting solutions ourselves, we directed Jules to execute Phase 1 (/walk-the-docs), Phase 2 (meta-prompt sub-stage definition & prompt draft), Phase 4 (relational array cascade purge, runtime quarantine sweeper, pre-flight quota endpoint, and test suite), and Phase 5 (final doc pass), while reserving Phase 3 for orchestrator branch merge and sovereign .agents/ protection.
+
 

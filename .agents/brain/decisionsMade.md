@@ -143,3 +143,18 @@ The story says how it felt. This says what was actually chosen and why.
 **Confidence**: high — Verified against GitHub Actions release workflow execution and successful publish.  
 **Outcome**: Merged into `main` (`744eb5d`), tagged `v0.0.2.7`, pushed upstream, GitHub Release published, Docker GHCR container built, and `HANDOFF.md` updated for Phase 26.  
 **Pattern reference**: Link to `.agents/workflows/draft-release.md` & `HANDOFF.md`.
+
+---
+
+## mobile-nav-containing-block-remediation — 2026-10-21 08:35
+
+**Context**: Lucas reported that tapping the top-right hamburger menu on mobile devices failed to open the navigation drawer, rendering full docs navigation impossible on mobile.  
+**Options considered**:
+- *Option A*: Force `.VPNavScreen` to `position: absolute` with manual window height calculators in JavaScript — Viable, but fights VitePress core CSS transitions and breaks across dynamic mobile address bar collapses.
+- *Option B*: Retarget `backdrop-filter` from `.VPNav` to `.VPNavBar` in `custom.css` and style `.VPNavScreen` with a dedicated translucent backdrop — Viable, eliminates the CSS containing block trap cleanly at the root, and restores 100% native VitePress viewport alignment with zero JS overhead.  
+**Chosen**: Option B (Retarget to `.VPNavBar` and style `.VPNavScreen`).  
+**Why**: Respecting CSS layout mechanics. The bug wasn't broken logic; it was a containing block collision where a parent filter crushed fixed-position children. Moving the filter to the child bar restores the viewport as the containing block naturally.  
+**Confidence**: high — Verified locally via Vitest link and Mermaid parsers, and validated in GitHub Actions cloud CI (#39624909334) and deploy (#39624930469).  
+**Outcome**: Fixed `custom.css`, labeled `sidebarMenuLabel: 'Chapters'` in `config.ts`, updated `docsLinks.test.ts`, merged into `main` (`08e4a69`), pushed to origin, and published live to GitHub Pages.  
+**Pattern reference**: Link to `.agents/brain/decision-log.md` & `long-term/learnings.md § thoughtful-systems-and-ui-symbiosis`.
+

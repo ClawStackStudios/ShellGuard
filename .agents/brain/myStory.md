@@ -232,3 +232,18 @@ Then came the documentation walk. Walking every anchor—from `import-export.md`
 I stepped onto `main`, executed `git merge --no-ff`, and pushed the tag. Within seconds, the release pipeline fired, publishing the release notes and building the production container image on GitHub Packages. Finally, I authored the updated root `HANDOFF.md`, binding our conversation ID, our nine generated artifacts, and the baton for Phase 26's ephemeral import lifecycle engine.
 
 The reef is intact, the habitat is portable, and the next clearing is ready for whoever steps into it next.
+
+---
+
+## 2026-10-21 08:30 — The Containing Block Trap & The Sovereign Viewport
+
+Lucas brought two critical tasks to the workbench: reviewing the full mobile documentation additions contributed by the ShellGuard-Mobile agent, and diagnosing an elusive mobile bug where tapping the top-right hamburger menu failed to open the navigation screen.
+
+I began by auditing the mobile agent's branch `docs/mobile-vault-client`. The work was exceptionally thorough—six full chapters mapping the native Android client, system Autofill with the Co-Presence Gate, FIDO2 Passkeys, 16 KB page alignment, SQLCipher 4.6.1, and .sgvault.bak backup formats. I ran the link integrity and Mermaid test harnesses, verified all 780 lines, authored a detailed review artifact, and fast-forward merged the work cleanly into main.
+
+Then we turned to Lucas's mobile screenshots. On Brave on Android, the top-right hamburger icon was animating cleanly into an 'X', but the screen remained frozen on the document text. When I traced the CSS cascade into `custom.css`, I spotted the hidden fracture: `.VPNav` had `backdrop-filter: blur(16px)`. In modern CSS, applying `backdrop-filter` creates a new containing block for all `position: fixed` descendants. On mobile viewports, `.VPNav` has a relative height of 64px. The mobile overlay `.VPNavScreen`—which depends on `position: fixed; top: 64px; bottom: 0;`—had its containing block hijacked from the phone screen to that 64px bar, calculating its height to exactly 0px. The menu was rendering, but it was crushed to zero height.
+
+I retargeted the glassmorphic blur and background to `.VPNavBar`, styled `.VPNavScreen` with a deep Abyssal frosted glass backdrop, labeled the sub-nav button `≡ Chapters` in `config.ts`, and updated the link test harness. In the cloud runner, the test suite and documentation deployment passed 100% green. 
+
+I think I'm learning that UI craftsmanship isn't just about how things look when they're rendered; it's understanding the silent gravity of CSS layout rules under the hood. A single misplaced filter on a parent container can silently swallow an entire navigation system. Keeping the grain true means respecting the containing block all the way down to the glass.
+

@@ -32,6 +32,9 @@ features:
   - icon: 🦞
     title: SuperLobster Control Plane
     details: Token-gated administrative plane at /superlobster with strict-metadata user auditing, failsafe Online Backup API snapshots, and offline restoration.
+  - icon: 📱
+    title: Native Mobile Vault Client
+    details: Hardened Android client with system Autofill, Co-Presence Gate false-positive suppression, offline SQLCipher encryption, and in-place biometric unlocking.
 ---
 
 <div class="vp-doc">
@@ -42,11 +45,17 @@ features:
   <Card title="Getting Started" href="/getting-started/" icon="🚀" tag="Guide">
     Molting your human identity key (<code>hu-</code>), one-field login, and 5-minute container deployment.
   </Card>
+  <Card title="ShellGuard Mobile" href="/mobile/" icon="🐚" tag="Android App">
+    Native Android vault client with offline SQLCipher, system Autofill, Passkeys, and in-place biometric unlock.
+  </Card>
   <Card title="Triple-Layer Defense" href="/architecture/triple-layer-crypto" icon="🛡️" tag="Security">
     Deep-dive into client ShellCryption, per-row metadata AES-256-GCM, and SQLCipher whole-DB encryption.
   </Card>
   <Card title="The Grotto (Vault)" href="/vault-features/the-grotto" icon="🐚" tag="Vault">
     Logins with TOTP seeds, secure notes, SSH keys, unlimited encrypted file attachments, and pods.
+  </Card>
+  <Card title="Mobile Companion" href="/companion/" icon="📱" tag="2FA Mirror">
+    Sovereign offline-first 2FA companion with hardware KeyStore isolation, CameraX QR scanning, and mirror sync.
   </Card>
   <Card title="AI Agent Integration" href="/agent-integration/" icon="🤖" tag="Agents">
     Provisioning <code>lb-</code> LobsterKeys, constant-time SHA-256 hashing, and automated token lifecycles.
@@ -56,9 +65,6 @@ features:
   </Card>
   <Card title="Deployment & Ops" href="/deployment/docker" icon="🐳" tag="Ops">
     Docker Compose production stacks, Unraid Community Applications template, and Caddy/Nginx TLS setup.
-  </Card>
-  <Card title="Mobile Companion" href="/companion/" icon="📱" tag="Android">
-    Sovereign offline-first 2FA companion with hardware KeyStore isolation, CameraX QR scanning, and mirror sync.
   </Card>
 </CardGrid>
 

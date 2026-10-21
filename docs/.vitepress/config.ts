@@ -47,6 +47,7 @@ export default withMermaid(
       { text: 'Get Started', link: '/getting-started/' },
       { text: 'Architecture & Security', link: '/architecture/' },
       { text: 'Vault Features', link: '/vault-features/' },
+      { text: 'Mobile', link: '/mobile/', activeMatch: '/mobile/' },
       { text: 'Mobile Companion', link: '/companion/' },
       { text: 'Agent API', link: '/agent-integration/' },
       { text: 'SuperLobster', link: '/superlobster/' },
@@ -55,6 +56,28 @@ export default withMermaid(
     ],
 
     sidebar: {
+      '/mobile/': [
+        {
+          text: 'ShellGuard Mobile',
+          items: [
+            { text: 'Overview & Architecture', link: '/mobile/' },
+            { text: 'Onboarding & Gateway Setup', link: '/mobile/onboarding-and-gateway' },
+            { text: 'Vault Management & CRUD', link: '/mobile/vault-and-crud' },
+            { text: 'Autofill & System Integration', link: '/mobile/autofill-and-integration' },
+            { text: 'Security, Biometrics & PIN', link: '/mobile/security-and-lock' },
+            { text: 'Sync Engine, Offline & Backups', link: '/mobile/sync-offline-and-backups' },
+          ]
+        },
+        {
+          text: 'Ecosystem & Interop',
+          items: [
+            { text: 'ShellGuard-TOTP Companion', link: '/companion/' },
+            { text: 'Vault Import & Export', link: '/vault-features/import-export' },
+            { text: 'Threat Model & Hardening', link: '/architecture/threat-model' },
+            { text: 'Mobile Privacy Policy', link: '/privacy#shellguard-mobile-android-client' },
+          ]
+        }
+      ],
       '/companion/': [
         {
           text: 'Mobile Companion',

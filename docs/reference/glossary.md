@@ -60,4 +60,26 @@ The architectural model governing ShellGuard's key segregation:
 3. `SENSITIVE_KEY`: Held by the server; controls Layer 2 metadata encryption and Layer 3 SQLCipher whole-DB storage.
 
 ### 🛡️ `FLAG_SECURE`
-The Android window manager flag enforced across all activities in the ShellGuard-TOTP mobile companion. Blocks screenshots, screen recordings, and recent apps task-switcher snapshots from exposing sensitive 2FA seeds or rolling codes.
+The Android window manager flag enforced across all activities in ShellGuard Mobile and the ShellGuard-TOTP companion. Blocks screenshots, screen recordings, and recent apps task-switcher snapshots from exposing sensitive vault items, 2FA seeds, or rolling codes.
+
+### 📱 ShellGuard Mobile
+The official native Android sovereign vault client (`com.clawstack.shellguard`). Provides full bidirectional CRUD across 5 record domains (Logins, Secure Notes, Credit Cards, Identities, SSH Keys & Passkeys), Android Autofill, Credential Provider (Passkeys), and offline-first SQLCipher 4.6.1 encryption at rest.
+
+### 🚪 Autofill Co-Presence Gate
+The heuristic engine within `ShellGuardAutofillService` that inspects view tree siblings. If an input field matches only weak username heuristics and no password field is co-present within the form container, autofill suggestion chips are strictly suppressed to eliminate false positives on search and filter bars.
+
+### ⚠️ Amber Transport Warning
+A high-contrast visual status indicator rendered on the mobile Gateway screen and Settings whenever an unencrypted `http://` URL is configured or the in-app self-signed TLS consent toggle is active, transparently alerting users to transport-layer exposure.
+
+### 🔄 In-Place Re-Authentication
+The mobile architectural mechanism that allows users to unlock their vault via Class 3 Biometrics or Master PIN locally without contacting the remote server. Decouples volatile RAM memory zeroization from KeyStore-sealed session persistence.
+
+### 🧹 Volatile Heap Zeroization (`zeroizeMemory()`)
+The systematic overwriting of in-memory byte buffers, character arrays, and derived AES keys with `0x00` upon vault lock, eliminating persistent secret exposure in Android process heap memory (OWASP Mobile M2).
+
+### 📎 CursorWindow Chunking
+The hybrid attachment streaming architecture in ShellGuard Mobile that streams binary payloads in 64KB buffers to `filesDir/vault_attachments/{uuid}.enc`, completely bypassing Android Binder's 2MB `CursorWindowAllocationException` limit.
+
+### 📦 `.sgvault.bak`
+The portable encrypted mobile vault backup archive format. Packages all 5 record domains and custom fields in a GZIP-compressed envelope encrypted via AES-GCM-256 with PBKDF2-SHA256 key derivation.
+

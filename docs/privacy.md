@@ -116,6 +116,29 @@ This section serves as the formal **Data Safety & Regulatory Disclosure** for th
 
 ---
 
+## 5.1 ShellGuard Mobile Android Client Specification {#shellguard-mobile-android-client}
+
+This section serves as the formal **Data Safety & Regulatory Disclosure** for the full **ShellGuard Mobile Android client application** (`com.clawstack.shellguard`), published by ClawStack Studios on the Google Play Store and GitHub Releases.
+
+### Google Play Data Safety Fast-Card (Mobile Client)
+
+| Google Play Data Safety Requirement | ShellGuard Mobile Disclosed Status | Technical Verification |
+| :--- | :--- | :--- |
+| **Personal Data Collected** | **None (0 bytes)** | Zero user data, names, emails, telemetry, or diagnostic tracking collected. |
+| **Third-Party Data Sharing** | **None (0 bytes)** | Zero data shared with third parties, ad brokers, or analytical backends. |
+| **Data in Transit** | **Encrypted (TLS / LAN HTTP)** | Communicates exclusively with user-configured self-hosted endpoint. Supports LAN cleartext and consent-gated self-signed HTTPS. |
+| **Data at Rest** | **SQLCipher 4.6.1 AES-256** | All 5 record domains and attachments encrypted at rest with hardware KeyStore-anchored master key. |
+| **Autofill & Passkey Privacy** | **Local Ephemeral Matching** | System autofill requests match domains in local SQLite; credentials never leave device memory except into user-selected target input. |
+| **Heap Memory Security** | **Active Zeroization (`OWASP M2`)** | `zeroizeMemory()` scrubs all volatile secret buffers and derived symmetric keys upon app backgrounding or lock. |
+| **Data Deletion Mechanism** | **User-Directed Purge** | Clearing app data or uninstalling the app permanently purges all SQLCipher database files and encrypted attachments. |
+
+### System Integration Privacy Safeguards
+1. **Autofill Isolation**: The `ShellGuardAutofillService` receives `AssistStructure` node metadata strictly to identify domain and input field types. No user browsing history or non-credential form data is ever saved or logged.
+2. **Co-Presence Gate Protection**: The engine actively suppresses autofill suggestion popups when no password field is co-present, protecting users from inadvertent credential disclosure into search fields or tracking forms.
+3. **Chunked Attachment Sandbox**: Encrypted file attachments are stored in private internal app storage (`filesDir/vault_attachments/{uuid}.enc`) inaccessible to other installed applications.
+
+---
+
 ## 6. Autonomous AI Agent Delegation (LobsterKeys)
 
 ShellGuard provides an administrative mechanism to issue granular API keys (`lb-` LobsterKeys) to autonomous AI agents:

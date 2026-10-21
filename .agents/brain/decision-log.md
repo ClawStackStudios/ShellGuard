@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-21 — Docs multi-breakpoint layout polish & mobile containment
+Lucas approved executing the responsive layout polish following the multi-breakpoint audit. Streamlined tablet header density by consolidating Mobile and Mobile Companion nav items into a grouped 'Mobile ▾' dropdown in `docs/.vitepress/config.ts`. Added responsive touch-momentum scroll containment for multi-subgraph Mermaid SVGs and markdown comparison tables in `docs/.vitepress/theme/custom.css`. Added `@media (max-width: 480px)` single-column fallback to `CardGrid.vue` for compact phone screens. Verified with `tests/unit/docsLinks.test.ts` (5/5 passed), committed as `05cd316`, pushed to `main`, and confirmed remote Cloud CI Run `#39656289206` and Docs Deployment Run `#39656288828` both succeeded 100% green.
+
 ## 2026-10-21 — Mobile docs navigation: containing block trap resolved & live deployed
 Lucas noticed the top-right hamburger menu failed to open on mobile screens. Traced to a CSS containing-block trap: `backdrop-filter: blur(16px)` on the parent `<header class="VPNav">` created a containing block that crushed `.VPNavScreen`'s `position: fixed` height to $64\text{px} - 64\text{px} = 0\text{px}$ on mobile viewports (<960px). Retargeted `backdrop-filter` and translucent background to child `.VPNavBar`, styled `.VPNavScreen` with deep Abyssal glassmorphism, configured `sidebarMenuLabel: 'Chapters'` in `docs/.vitepress/config.ts`, and updated `tests/unit/docsLinks.test.ts`. Verified with 100% green tests locally, merged to `main` (`08e4a69`), pushed to `origin`, and verified GitHub Actions cloud CI (#39624909334) and docs deployment (#39624930469) both completed green.
 
@@ -60,12 +63,3 @@ Lucas and I authored a root-level `AGENTS.md` following the Agent Driven Plannin
 
 ## 2026-10-16 — /learn protocol execution: Real Finishers, Co-Pilot Prompting & Sovereign Gate
 Lucas executed `/learn` to crystallize core lessons from Phase 23 / Sub-Stage 25.1 co-pilot coordination. Ratified: (1) The "Real Finishers" Quality Gate in `docs-hygiene.md` (user-facing VitePress reading cohesion, seamless feature slotting with explicit session token / auth contracts); (2) Self-Review Checklist v4 (`self-review-checklist.md`) adding Items 16 (Co-Pilot PR Ingestion & Sovereign Gate), 17 (Terminal Phrasing & Co-Pilot Prompting), and 18 (Core Merging Invariable & Health Stack); and (3) Task Completion Gate 1 in `cadence-and-lifecycle-prompts.md` backed by stacked cryptographic, relational, and isolation proofs.
-
-## 2026-10-16 — Phase 4 Sub-Stage 25.1 Directive Dispatched to Jules
-Audited Jules's physical git state and confirmed commit 2fc608b on stage/phase-23-item-integrity-8580131941674843399 (PR #3) incorporating the formal Sub-Stage 25.1 prompt block into project/meta-prompt-ai-studio.md. Formulated and dispatched the complete Phase 4 operational directive: relational cascade on DELETE /api/attachments/:id, runtime quarantine sweeper POST /api/attachments/quarantine/sweep, pre-flight quota GET /api/attachments/quota, dedicated vitest assertions in tests/attachment-integrity.test.ts, and walk-the-docs synchronization.
-
-## 2026-10-16 — Rigorous PR #4 Review, Base Branch Realignment & Remediation Dispatch
-Executed /git-review-pr on Jules PR #4 and documented evidence-graded findings in pr_review_4_2026_10_16_0545.md. Found that while implementation in ac5dfd2 passed cloud CI green, PR #4 misdirected its target base to main, breached sovereign .agents/ in commit 9035b82, and failed to push the promised Sub-Stage 25.1 prompt. Realigned PR base to stage/phase-23-item-integrity via GitHub CLI and dispatched a Lucas-approved invariable-centered remediation directive (issuecomment-6209118929) to collapse Jules's work into strict relational integrity and sovereign boundaries.
-
-
-

@@ -247,3 +247,17 @@ I retargeted the glassmorphic blur and background to `.VPNavBar`, styled `.VPNav
 
 I think I'm learning that UI craftsmanship isn't just about how things look when they're rendered; it's understanding the silent gravity of CSS layout rules under the hood. A single misplaced filter on a parent container can silently swallow an entire navigation system. Keeping the grain true means respecting the containing block all the way down to the glass.
 
+---
+
+## 2026-10-21 11:50 — The Seams of the Viewport: Multi-Breakpoint Harmony
+
+With the mobile overlay fixed, Lucas asked the craftsman's question: "should we look around, and verify everything is aligned for all screen layouts? did we miss anything?"
+
+I stepped back to inspect the entire portal across every breakpoint—mobile (<768px), portrait tablet (768px–959px), and desktop (≥960px). When I examined the intermediate tablet range, I saw a subtle stress point: VitePress collapses the hamburger menu at 768px and presents the full horizontal nav menu inline. With nine independent top-level links plus local search and repository badges, the links crowded tightly against each other on screens like the iPad Mini or portrait tablets. Down on narrow phone screens, complex architecture diagrams and 3-column markdown tables carried the risk of pushing the page body wider than the viewport, creating unwanted horizontal drag.
+
+I mapped out our responsive audit in `docs_responsive_layout_audit.md` and Lucas green-lit the execution. I consolidated 'Mobile' and 'Mobile Companion' into a clean `Mobile ▾` dropdown in `docs/.vitepress/config.ts`, reducing top-level items to eight and restoring breathing room to tablet headers while rendering as an accordion on phones. In `custom.css`, I added momentum touch-scrolling containment to `.mermaid` SVGs and markdown tables so that wide diagrams can be panned without displacing the page layout. Finally, in `CardGrid.vue`, I enforced a single-column fallback for screens under 480px.
+
+I tapped the unit link tests: all 5 assertions passed. I committed as `05cd316` and pushed to main. Two minutes later, GitHub Actions cloud CI (#39656289206) and the GitHub Pages deployment (#39656288828) finished 100% green. 
+
+Looking across the three viewports now, the joints feel balanced. A documentation site should feel like a sturdy, comfortable reading desk regardless of whether someone pulls it up on a pocket phone, an iPad on a desk, or an ultrawide monitor. The seams hold.
+

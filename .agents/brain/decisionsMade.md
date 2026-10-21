@@ -158,3 +158,17 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Fixed `custom.css`, labeled `sidebarMenuLabel: 'Chapters'` in `config.ts`, updated `docsLinks.test.ts`, merged into `main` (`08e4a69`), pushed to origin, and published live to GitHub Pages.  
 **Pattern reference**: Link to `.agents/brain/decision-log.md` & `long-term/learnings.md § thoughtful-systems-and-ui-symbiosis`.
 
+---
+
+## docs-responsive-layout-polish — 2026-10-21 11:50
+
+**Context**: Following the mobile nav overlay fix, Lucas requested a full audit across all screen layouts to ensure nothing was missed for mobile, tablet, and desktop viewports.  
+**Options considered**:
+- *Option A*: Leave existing layouts as-is since desktop and mobile overlay functional gates pass — Viable, but leaves tablet headers crowded with 9 individual nav items and risks horizontal body drag on complex Mermaid charts on narrow phones.
+- *Option B*: Group `Mobile` and `Mobile Companion` into a `Mobile ▾` dropdown in `config.ts`, add momentum touch-scroll containment for `.mermaid` and `table` elements in `custom.css`, and add a 1-column `@media (max-width: 480px)` fallback in `CardGrid.vue` — Viable, streamlines header breathing room across 768px–1024px tablets, prevents horizontal page jank on phones, and preserves 100% link integrity.  
+**Chosen**: Option B (Consolidate Mobile dropdown, contain diagrams/tables, single-column phone grid).  
+**Why**: Respecting multi-device ergonomics. Documentation that flows naturally without horizontal clipping or header crowding builds user trust across every screen factor.  
+**Confidence**: high — Verified locally via `docsLinks.test.ts` (5/5 passing) and in GitHub Actions Cloud CI (#39656289206) and Docs Deploy (#39656288828).  
+**Outcome**: Committed as `05cd316`, pushed to `main`, and deployed live on GitHub Pages.  
+**Pattern reference**: Link to `.agents/brain/decision-log.md` & `docs_responsive_layout_audit.md`.
+

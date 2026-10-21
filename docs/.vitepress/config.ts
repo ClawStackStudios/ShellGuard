@@ -49,8 +49,14 @@ export default withMermaid(
       { text: 'Get Started', link: '/getting-started/' },
       { text: 'Architecture & Security', link: '/architecture/' },
       { text: 'Vault Features', link: '/vault-features/' },
-      { text: 'Mobile', link: '/mobile/', activeMatch: '/mobile/' },
-      { text: 'Mobile Companion', link: '/companion/' },
+      {
+        text: 'Mobile',
+        activeMatch: '^/(mobile|companion)/',
+        items: [
+          { text: 'Mobile Vault Client', link: '/mobile/' },
+          { text: 'Mobile Companion Protocol', link: '/companion/' },
+        ]
+      },
       { text: 'Agent API', link: '/agent-integration/' },
       { text: 'SuperLobster', link: '/superlobster/' },
       { text: 'Deployment', link: '/deployment/' },

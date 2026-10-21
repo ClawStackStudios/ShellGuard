@@ -40,4 +40,12 @@ defineProps<{
 .sg-card-grid.cols-4 {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
+
+@media (max-width: 480px) {
+  .sg-card-grid.cols-2,
+  .sg-card-grid.cols-3,
+  .sg-card-grid.cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

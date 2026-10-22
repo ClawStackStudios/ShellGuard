@@ -4,6 +4,9 @@
 
 ---
 
+## 2026-10-21 — Ghost PR #7 & #8 closure & stale remote branches pruned
+Lucas asked to investigate and resolve lingering open PRs. Confirmed PR #7 and PR #8 were Jules artifacts for Phase 25 whose code was already fully implemented in-house, tested (30 suites, 350+ tests), and merged into `main` (`744eb5d`) under `v0.0.2.7`. Closed PR #7 and PR #8 via `gh pr close` with auditable receipts citing supersede status. Deleted stale remote branches `stage-phase-25-habitat-mobility-2840519063013632610` and `stage/phase-25-habitat-mobility-2840519063013632610`, pruned local tracking references (`git fetch --prune`), and verified `gh pr list --state open` returns 0 open PRs.
+
 ## 2026-10-21 — Docs multi-breakpoint layout polish & mobile containment
 Lucas approved executing the responsive layout polish following the multi-breakpoint audit. Streamlined tablet header density by consolidating Mobile and Mobile Companion nav items into a grouped 'Mobile ▾' dropdown in `docs/.vitepress/config.ts`. Added responsive touch-momentum scroll containment for multi-subgraph Mermaid SVGs and markdown comparison tables in `docs/.vitepress/theme/custom.css`. Added `@media (max-width: 480px)` single-column fallback to `CardGrid.vue` for compact phone screens. Verified with `tests/unit/docsLinks.test.ts` (5/5 passed), committed as `05cd316`, pushed to `main`, and confirmed remote Cloud CI Run `#39656289206` and Docs Deployment Run `#39656288828` both succeeded 100% green.
 
@@ -61,5 +64,3 @@ Executed the final stage merge of Phase 23 / Sub-Stage 25.1 into main. Mechanica
 ## 2026-10-17 — High-agency root AGENTS.md skill-seed creation
 Lucas and I authored a root-level `AGENTS.md` following the Agent Driven Planning onboarding framework. Transformed a ~3,500-token verbose specification into a ~550-token generative invariant seed using the "compress the constraint, not the procedure" doctrine, assuming agent search competence and multi-agent delegation to replace fragile static trees with on-demand boundary mapping. Preserved `.agents/AGENTS.md` completely sovereign and untouched.
 
-## 2026-10-16 — /learn protocol execution: Real Finishers, Co-Pilot Prompting & Sovereign Gate
-Lucas executed `/learn` to crystallize core lessons from Phase 23 / Sub-Stage 25.1 co-pilot coordination. Ratified: (1) The "Real Finishers" Quality Gate in `docs-hygiene.md` (user-facing VitePress reading cohesion, seamless feature slotting with explicit session token / auth contracts); (2) Self-Review Checklist v4 (`self-review-checklist.md`) adding Items 16 (Co-Pilot PR Ingestion & Sovereign Gate), 17 (Terminal Phrasing & Co-Pilot Prompting), and 18 (Core Merging Invariable & Health Stack); and (3) Task Completion Gate 1 in `cadence-and-lifecycle-prompts.md` backed by stacked cryptographic, relational, and isolation proofs.

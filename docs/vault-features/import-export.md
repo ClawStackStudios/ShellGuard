@@ -91,3 +91,23 @@ ShellGuard includes an optimized transactional bulk import engine (`POST /api/va
 - **10MB Scoped Payload Parser**: Accommodates bulk imports of up to 1,000 items in a single HTTP request while preserving tight 1MB limits across other API endpoints.
 - **Transactional Atomicity**: All valid items are committed inside an atomic SQLite transaction.
 - **Interactive UI Error Resolution**: Skipped items are visually flagged in the Import view with warning badges and item chips detailing the zero-based index and field validation errors.
+
+## Habitat Full-Archive Mobility
+
+In Phase 25, ShellGuard introduced the **Habitat ZIP Engine**, enabling a truly portable, zero-knowledge, streaming full-archive packaging solution.
+
+### Streamed ZIP Generation
+
+To ensure a strict $O(\text{largest single file})$ bounded memory ceiling, Habitat export bypasses massive `ArrayBuffer` allocations. The generation relies on the `client-zip` web stream capability, lazily decrypting one attachment at a time directly to the browser's download manager.
+
+### Path Safety & Structure
+
+The archive contains an embedded manifest (`shellguard_vault_export.json`) that maps attachments dynamically. The file hierarchy is deterministically organized while stripping out potentially dangerous characters like `../` to prevent path traversal on ingestion:
+
+\`\`\`text
+attachments/&lt;pod&gt;/&lt;item_title&gt;__[&lt;id_short&gt;]/&lt;file_name&gt;
+\`\`\`
+
+### ClawKey Challenge Gate
+
+Full decrypted backup generation requires explicit confirmation of the user's `hu-` ClawKey to guarantee malicious JavaScript payloads cannot silently dump the vault in the background.

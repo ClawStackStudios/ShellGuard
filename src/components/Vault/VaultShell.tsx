@@ -427,6 +427,9 @@ export function VaultShell({
           onFetchAttachment={onFetchAttachment}
         />
       </div>
+
+      {/* TODO(jules): Phase 25 / Task 50 — Abyssal Ingestion Dock Component
+          Constraints: Mount the floating Reef Modernist background ingestion dock in the bottom-right viewport with real-time progress bar, pause/resume, cancel, and per-item retry ergonomics. */}
     </div>
   );
 }

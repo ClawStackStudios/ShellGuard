@@ -850,3 +850,8 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 ```
 
 </div>
+
+
+## Delta #30: Habitat Full-Archive Mobility & Reactive Ingestion Dock
+
+In Phase 25 (Task 49 & 50, Build 29), we introduced **Habitat Full-Archive Mobility**, establishing a zero-knowledge streaming pipeline for exporting complete Vaults without ever buffering multi-gigabyte ZIP structures in browser memory. By leveraging an asynchronous generator with `client-zip`, the client strictly maintains an bounded memory ceiling while applying deterministic directory hierarchy logic. The ingestion counterpart deployed the **Two-Stage Ingestion Pipeline**. Rather than paralyzing the UI parsing giant `.zip` files, the new `sniffHabitatArchive` engine instantly resolves Stage 1 extraction of the embedded `shellguard_vault_export.json` to commit all primary row credentials to the database transactionally. Stage 2 elegantly hands off attachments to the floating **Abyssal Ingestion Dock** inside `VaultShell.tsx`, processing file blobs lazily via background queue while rendering bioluminescent reactive state chips across `ItemDetailPane.tsx` and `ItemListPane.tsx`. Finally, `tests/build-gates.test.ts` was upgraded to run active Class L2 & L6 parity checks to prevent limit and configuration drift across the application suite.

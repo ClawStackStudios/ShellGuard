@@ -55,6 +55,7 @@ export function ItemListPane({
     }
   };
 
+  // TODO(jules): Phase 26 / Task 52 — Progressive Disclosure & Dynamic 'Imported' Filter: Render 'Imported' filter chip ONLY if active unexpired imported items exist in state. Display active count, live countdown, and pulsing bioluminescent badges with inline Graduate/Delete actions.
   return (
     <div className="flex flex-col h-full bg-theme-base lg:border-r border-theme-subtle">
       {/* Search Header */}

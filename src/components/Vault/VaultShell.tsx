@@ -445,6 +445,8 @@ export function VaultShell({
 
       {/* Abyssal Ingestion Dock: Floating Reef Modernist background queue status */}
       <AbyssalIngestionDock />
+
+      {/* TODO(jules): Phase 26 / Task 52 — Floating Batch Action Bar: Mount floating action bar when viewing imported items with 'Graduate All', 'Revert Import' (ConfirmDialog guarded), and countdown timer. Ensure zero visual collision with bottom-right AbyssalIngestionDock. */}
     </div>
   );
 }

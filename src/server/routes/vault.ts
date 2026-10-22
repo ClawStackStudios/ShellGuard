@@ -94,6 +94,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
  * 🐚 POST /api/vault/bulk-import — Bulk import pearls.
  * Executes inside a database transaction with per-record validation.
  */
+// TODO(jules): Phase 26 / Task 51 — Import Lifecycle Tracking: Generate unique import_batch_id ('imp_' + crypto.randomUUID()) and stamp imported_at ISO timestamp on all inserted items in the batch transaction. Return batch metadata in response.
 router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.bulkImport), async (req: AuthRequest, res) => {
   const { items } = req.body;
   const errors: { index: number; reason: string }[] = [];
@@ -292,9 +293,12 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
   }
 });
 
+// TODO(jules): Phase 26 / Task 51 — Batch Operations API: Implement POST /api/vault/import-batches/:id/graduate and DELETE /api/vault/import-batches/:id (atomic rollback cascading linked attachments in vault_secure_attachments).
+
 /**
  * 🐚 PUT /api/vault/:id — update an owned pearl.
  */
+// TODO(jules): Phase 26 / Task 51 — Auto-Graduate on Edit: Reset imported_at = NULL and import_batch_id = NULL in the UPDATE statement when modifying an owned item.
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
   const { title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields } = req.body;

@@ -580,6 +580,7 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems }: Im
           `Partially imported: ${result.inserted.length} record(s) saved, ${result.errors.length} record(s) failed validation.`
         );
       } else {
+        // TODO(jules): Phase 26 / Task 52 — Post-Import Action Hatch: Upon successful import, surface instant action hatch: 'Review Items', live countdown, 'Graduate All', and 'Revert Import' (backed by ConfirmDialog).
         setImportStatus("success");
         setImportMessage(`Successfully imported ${importPreviewList.length} vault record(s) into your session.`);
       }

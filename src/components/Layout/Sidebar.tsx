@@ -126,6 +126,8 @@ export function Sidebar({
               <ArrowUpDown className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
               {!isCollapsed && "Import & Export"}
             </button>
+
+            {/* TODO(jules): Phase 26 / Task 52 — 'Config' Settings Tab: Add navigation button under settings leading to ConfigSettingsView (Sliders/Settings icon, title 'Config'). */}
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto min-h-0 flex flex-col p-3 custom-scrollbar">

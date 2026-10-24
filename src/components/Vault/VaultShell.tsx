@@ -8,6 +8,7 @@ import { searchVaultItems } from '../../lib/vaultSearch.ts';
 import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
 import { AbyssalIngestionDock } from './AbyssalIngestionDock.tsx';
 import { globalIngestionQueue } from '../../lib/habitatImport.ts';
+import { restAdapter } from '../../services/api/restAdapter.ts';
 
 interface VaultShellProps {
   items: VaultItem[];
@@ -27,6 +28,7 @@ interface VaultShellProps {
   onBulkDelete?: (ids: string[]) => Promise<void> | void;
   selectedItemId?: string | null;
   onSelectItemId?: (id: string | null) => void;
+  onBatchAction?: () => Promise<void> | void;
 }
 
 export function VaultShell({
@@ -45,7 +47,8 @@ export function VaultShell({
   onBulkAssignTags,
   onBulkDelete,
   selectedItemId: controlledSelectedItemId,
-  onSelectItemId
+  onSelectItemId,
+  onBatchAction
 }: VaultShellProps) {
   const [internalSelectedItemId, setInternalSelectedItemId] = useState<string | null>(null);
   const selectedItemId = controlledSelectedItemId !== undefined ? controlledSelectedItemId : internalSelectedItemId;
@@ -63,11 +66,65 @@ export function VaultShell({
   const [bulkModalType, setBulkModalType] = useState<'movePod' | 'assignTag' | 'delete' | null>(null);
   const [bulkModalInput, setBulkModalInput] = useState('');
 
+  // Phase 26 / Task 52: Dynamic Quarantine Filter & Batch Operations
+  const [filterImportedOnly, setFilterImportedOnly] = useState(false);
+  const [isGraduatingAll, setIsGraduatingAll] = useState(false);
+  const [isRevertingBatch, setIsRevertingBatch] = useState(false);
+  const [isConfirmingRevertBatch, setIsConfirmingRevertBatch] = useState(false);
+
+  const importedItemsCount = useMemo(() => {
+    return items.filter(i => Boolean(i.import_batch_id && i.imported_at)).length;
+  }, [items]);
+
+  useEffect(() => {
+    if (importedItemsCount === 0 && filterImportedOnly) {
+      setFilterImportedOnly(false);
+    }
+  }, [importedItemsCount, filterImportedOnly]);
+
+  const handleGraduateAll = async () => {
+    setIsGraduatingAll(true);
+    try {
+      const batchIds = Array.from(new Set(filteredItems.map(i => i.import_batch_id).filter(Boolean) as string[]));
+      for (const bId of batchIds) {
+        await restAdapter.POST(`/api/vault/import-batches/${bId}/graduate`, {});
+      }
+      if (onBatchAction) await onBatchAction();
+    } catch (e) {
+      console.error('Failed to graduate batches:', e);
+    } finally {
+      setIsGraduatingAll(false);
+    }
+  };
+
+  const handleRevertAll = async () => {
+    setIsRevertingBatch(true);
+    try {
+      if (globalIngestionQueue.hasActiveUploads()) {
+        globalIngestionQueue.cancelAll();
+      }
+      const batchIds = Array.from(new Set(filteredItems.map(i => i.import_batch_id).filter(Boolean) as string[]));
+      for (const bId of batchIds) {
+        await restAdapter.DELETE(`/api/vault/import-batches/${bId}`);
+      }
+      if (selectedItemId && filteredItems.some(i => i.id === selectedItemId)) {
+        handleSelectItemId(null);
+      }
+      if (onBatchAction) await onBatchAction();
+    } catch (e) {
+      console.error('Failed to revert batches:', e);
+    } finally {
+      setIsRevertingBatch(false);
+      setIsConfirmingRevertBatch(false);
+    }
+  };
+
   useEffect(() => {
     if (isLocked) {
       setSelectedItems(new Set());
       setBulkModalType(null);
       setSearchQuery("");
+      setFilterImportedOnly(false);
     }
   }, [isLocked]);
 
@@ -135,6 +192,10 @@ export function VaultShell({
       result = filterItemsByTags(result, selectedTags, tagFilterMode);
     }
 
+    if (filterImportedOnly) {
+      result = result.filter(i => Boolean(i.import_batch_id && i.imported_at));
+    }
+
     if (searchQuery.trim()) {
       result = searchVaultItems(result, searchQuery);
     }
@@ -143,7 +204,7 @@ export function VaultShell({
     result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
     return result;
-  }, [items, activeTypeFilter, selectedFolder, selectedTags, tagFilterMode, searchQuery]);
+  }, [items, activeTypeFilter, selectedFolder, selectedTags, tagFilterMode, filterImportedOnly, searchQuery]);
 
   const selectedItem = useMemo(() => {
     return items.find(i => i.id === selectedItemId) || null;
@@ -195,6 +256,9 @@ export function VaultShell({
           selectedItems={selectedItems}
           onToggleSelect={handleToggleSelect}
           onToggleSelectAll={handleToggleSelectAll}
+          filterImportedOnly={filterImportedOnly}
+          onToggleFilterImported={() => setFilterImportedOnly(prev => !prev)}
+          importedCount={importedItemsCount}
         />
 
         {/* Floating Bulk Action Bar */}
@@ -440,13 +504,53 @@ export function VaultShell({
           isLocked={isLocked}
           attachmentItemsById={attachmentItemsById}
           onFetchAttachment={onFetchAttachment}
+          onBatchAction={onBatchAction}
         />
       </div>
 
       {/* Abyssal Ingestion Dock: Floating Reef Modernist background queue status */}
       <AbyssalIngestionDock />
 
-      {/* TODO(jules): Phase 26 / Task 52 — Floating Batch Action Bar: Mount floating action bar when viewing imported items with 'Graduate All', 'Revert Import' (ConfirmDialog guarded), and countdown timer. Ensure zero visual collision with bottom-right AbyssalIngestionDock. */}
+      {/* Phase 26 / Task 52 — Floating Batch Action Bar (Centered, with strict clearance from bottom-right dock) */}
+      {!isLocked && filterImportedOnly && filteredItems.length > 0 && (
+        <div className="fixed sm:absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-5 py-3 rounded-2xl bg-slate-900/95 text-white border border-claw-cyan/40 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="flex items-center gap-2 pr-2 border-r border-slate-700/80">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+            <span className="text-xs font-bold font-mono text-amber-400 whitespace-nowrap">
+              {filteredItems.length} Quarantined
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isGraduatingAll}
+              onClick={handleGraduateAll}
+              className="px-3.5 py-1.5 bg-claw-cyan hover:bg-cyan-400 text-ocean-dark text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
+            >
+              {isGraduatingAll ? 'Graduating...' : 'Graduate All'}
+            </button>
+            <button
+              type="button"
+              disabled={isRevertingBatch}
+              onClick={() => setIsConfirmingRevertBatch(true)}
+              className="px-3.5 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-white border border-red-500/40 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+            >
+              Revert Import
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Revert Quarantined Batches Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isConfirmingRevertBatch}
+        title="Revert Quarantined Items"
+        description={`Are you sure you want to revert all ${filteredItems.length} quarantined item(s)? All records and their associated attachments will be permanently deleted.`}
+        confirmText={isRevertingBatch ? "Reverting..." : "Revert Import"}
+        cancelText="Cancel"
+        onConfirm={handleRevertAll}
+        onCancel={() => setIsConfirmingRevertBatch(false)}
+      />
     </div>
   );
 }

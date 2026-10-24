@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { Router } from 'express';
 import db, { audit } from '../database/index.js';
 import { AuthRequest, requireAuth, requirePermission } from '../middleware/auth.js';
@@ -100,9 +101,12 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
   const errors: { index: number; reason: string }[] = [];
   const inserted: string[] = [];
 
+  const importBatchId = 'imp_' + crypto.randomUUID();
+  const importedAt = new Date().toISOString();
+
   const insertStmt = db.prepare(`
-    INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at, imported_at, import_batch_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Prepare all writes asynchronously before opening the transaction
@@ -160,7 +164,9 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
             p.original.password_history || '[]',
             p.original.attachments || '[]',
             p.original.custom_fields || '',
-            new Date().toISOString()
+            new Date().toISOString(),
+            importedAt,
+            importBatchId
           );
           inserted.push(p.original.id);
         } catch (err: any) {
@@ -177,7 +183,7 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
           action: 'vault_item_created',
           outcome: 'success',
           actor: req.userUuid,
-          details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true },
+          details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true, importBatchId },
         });
       }
     }
@@ -187,14 +193,18 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
         success: true,
         data: {
           inserted,
-          errors
+          errors,
+          import_batch_id: importBatchId,
+          imported_at: importedAt,
         }
       });
     } else {
       res.status(201).json({
         success: true,
         data: {
-          inserted
+          inserted,
+          import_batch_id: importBatchId,
+          imported_at: importedAt,
         }
       });
     }
@@ -293,12 +303,128 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
   }
 });
 
-// TODO(jules): Phase 26 / Task 51 — Batch Operations API: Implement POST /api/vault/import-batches/:id/graduate and DELETE /api/vault/import-batches/:id (atomic rollback cascading linked attachments in vault_secure_attachments).
+/**
+ * 🐚 POST /api/vault/import-batches/:id/graduate — Graduate an entire import batch to permanent status.
+ * Atomically clears imported_at and import_batch_id across pearls, notes, and SSH keys.
+ */
+router.post('/import-batches/:id/graduate', requireAuth, requirePermission('canEdit'), async (req: AuthRequest, res) => {
+  const { id } = req.params;
+
+  try {
+    let graduatedCount = 0;
+    const runGraduate = db.transaction(() => {
+      const pRes = db.prepare('UPDATE vault_pearls SET imported_at = NULL, import_batch_id = NULL WHERE import_batch_id = ? AND owner_uuid = ?').run(id, req.userUuid);
+      const nRes = db.prepare('UPDATE vault_secure_notes SET imported_at = NULL, import_batch_id = NULL WHERE import_batch_id = ? AND owner_uuid = ?').run(id, req.userUuid);
+      const kRes = db.prepare('UPDATE vault_ssh_keys SET imported_at = NULL, import_batch_id = NULL WHERE import_batch_id = ? AND owner_uuid = ?').run(id, req.userUuid);
+      graduatedCount = pRes.changes + nRes.changes + kRes.changes;
+    });
+
+    runGraduate();
+
+    audit.log('IMPORT_BATCH_GRADUATED', {
+      action: 'import_batch_graduated',
+      outcome: 'success',
+      actor: req.userUuid,
+      details: { batchId: id, graduatedCount },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        graduated_count: graduatedCount,
+      },
+    });
+  } catch (err: any) {
+    console.error('Import batch graduate error:', err);
+    res.status(500).json({ success: false, error: 'Bedrock failure graduating import batch.' });
+  }
+});
+
+/**
+ * 🐚 DELETE /api/vault/import-batches/:id — Transactionally revert an import batch.
+ * Purges all records and cascades to linked attachments.
+ */
+router.delete('/import-batches/:id', requireAuth, requirePermission('canDelete'), async (req: AuthRequest, res) => {
+  const { id } = req.params;
+
+  try {
+    let deletedCount = 0;
+    let deletedAttachments = 0;
+
+    const runRevert = db.transaction(() => {
+      const pearls = db.prepare('SELECT id, attachments FROM vault_pearls WHERE import_batch_id = ? AND owner_uuid = ?').all(id, req.userUuid) as { id: string; attachments?: string }[];
+      const notes = db.prepare('SELECT id, attachments FROM vault_secure_notes WHERE import_batch_id = ? AND owner_uuid = ?').all(id, req.userUuid) as { id: string; attachments?: string }[];
+      const keys = db.prepare('SELECT id, attachments FROM vault_ssh_keys WHERE import_batch_id = ? AND owner_uuid = ?').all(id, req.userUuid) as { id: string; attachments?: string }[];
+
+      const allItems = [...pearls, ...notes, ...keys];
+      if (allItems.length === 0) {
+        return;
+      }
+
+      const itemIds = allItems.map(i => i.id);
+
+      const attachmentIdSet = new Set<string>();
+      for (const item of allItems) {
+        try {
+          const parsed = JSON.parse(item.attachments || '[]');
+          if (Array.isArray(parsed)) {
+            for (const attId of parsed) {
+              if (typeof attId === 'string') attachmentIdSet.add(attId);
+            }
+          }
+        } catch { }
+      }
+
+      const delAttachmentStmt = db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?');
+      const delAttachmentByParentStmt = db.prepare('DELETE FROM vault_secure_attachments WHERE parent_id = ? AND owner_uuid = ?');
+
+      for (const attId of attachmentIdSet) {
+        const attRes = delAttachmentStmt.run(attId, req.userUuid);
+        deletedAttachments += attRes.changes;
+      }
+
+      for (const parentId of itemIds) {
+        const pRes = delAttachmentByParentStmt.run(parentId, req.userUuid);
+        deletedAttachments += pRes.changes;
+      }
+
+      const pDel = db.prepare('DELETE FROM vault_pearls WHERE import_batch_id = ? AND owner_uuid = ?').run(id, req.userUuid);
+      const nDel = db.prepare('DELETE FROM vault_secure_notes WHERE import_batch_id = ? AND owner_uuid = ?').run(id, req.userUuid);
+      const kDel = db.prepare('DELETE FROM vault_ssh_keys WHERE import_batch_id = ? AND owner_uuid = ?').run(id, req.userUuid);
+
+      deletedCount = pDel.changes + nDel.changes + kDel.changes;
+    });
+
+    runRevert();
+
+    if (deletedCount === 0) {
+      return res.status(404).json({ success: false, error: 'Import batch not found or already purged.' });
+    }
+
+    audit.log('IMPORT_BATCH_REVERTED', {
+      action: 'import_batch_reverted',
+      outcome: 'success',
+      actor: req.userUuid,
+      details: { batchId: id, deletedCount, deletedAttachments },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        deleted_count: deletedCount,
+        deleted_attachments: deletedAttachments,
+      },
+    });
+  } catch (err: any) {
+    console.error('Import batch revert error:', err);
+    res.status(500).json({ success: false, error: 'Bedrock failure reverting import batch.' });
+  }
+});
 
 /**
  * 🐚 PUT /api/vault/:id — update an owned pearl.
+ * Auto-graduates the item by clearing imported_at and import_batch_id to NULL.
  */
-// TODO(jules): Phase 26 / Task 51 — Auto-Graduate on Edit: Reset imported_at = NULL and import_batch_id = NULL in the UPDATE statement when modifying an owned item.
 router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.update), async (req: AuthRequest, res) => {
   const { id } = req.params;
   const { title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields } = req.body;
@@ -322,7 +448,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
 
     db.prepare(`
       UPDATE vault_pearls
-      SET title = ?, secret = ?, username = ?, url = ?, uris = ?, type = ?, category = ?, tags = ?, notes = ?, totp_secret = ?, password_history = ?, attachments = ?, custom_fields = ?
+      SET title = ?, secret = ?, username = ?, url = ?, uris = ?, type = ?, category = ?, tags = ?, notes = ?, totp_secret = ?, password_history = ?, attachments = ?, custom_fields = ?, imported_at = NULL, import_batch_id = NULL
       WHERE id = ? AND owner_uuid = ?
     `).run(
       toStore.title,

@@ -128,3 +128,28 @@ Importing large archives with dozens of encrypted attachments can traditionally 
 2. **Stage 2 (Non-Blocking Abyssal Ingestion Dock)**: Binary attachment payloads are handed off to the persistent, floating `AbyssalIngestionDock` anchored in `VaultShell.tsx`. Attachments stream in the background via sequential multipart uploads (`POST /api/attachments`), allowing the user to continue searching, editing, and using their vault uninterrupted.
 3. **Reactive Status Tracking**: Vault items with in-flight uploads display glowing pulsing chips (`📎 filename (Uploading 45%...)`) that transition reactively to `📎 filename (Verified)` upon completion without requiring a page reload.
 4. **Lifecycle Protection**: A `beforeunload` listener warns the user if they attempt to navigate away while background uploads are active.
+
+---
+
+## ⏳ Import Lifecycle Tracking & Ephemeral Quarantine
+
+In Phase 26, ShellGuard introduced the **Import Lifecycle & Quarantine Engine**, providing safety, traceability, and atomic rollback for newly migrated items:
+
+### 1. Batch Stamping (`imp_<uuid>`) & Atomic Auditability
+Every execution of `POST /api/vault/bulk-import` dynamically generates a batch identifier (`imp_` + UUIDv4) and stamps both `import_batch_id` and `imported_at` (ISO 8601 UTC) across all inserted pearls, notes, and SSH keys within the same database transaction.
+
+### 2. Auto-Graduation on Edit
+When any quarantined item is edited by the user via `PUT /api/vault/:id`, `PUT /api/notes/:id`, or `PUT /api/keys/:id`, the system automatically clears `import_batch_id` and `imported_at` to `NULL`. The act of intentional user modification signals explicit trust, graduating the record into permanent vault status.
+
+### 3. Ephemeral Quarantine & Progressive Disclosure
+Quarantined items feature bioluminescent countdown badges in the item list and an inline Quarantine Info card in the detail pane. To prevent UI clutter, quarantine filters and action bars follow strict **progressive disclosure**:
+- If no quarantined records exist, zero quarantine filter chips or batch action bars are rendered.
+- If ungraduated imported records exist, a dynamic **Quarantined (N)** filter chip appears in the list header, and a centered **Floating Batch Action Bar** surfaces when filtering to quarantined items.
+
+### 4. Atomic Rollback & Attachment Cascade
+If an import introduces duplicate or unwanted credentials, users can click **Revert Import** from the Settings view, detail pane, or the centered floating batch action bar. Reversion:
+- Cancels active in-flight uploads in the `globalIngestionQueue`.
+- Issues `DELETE /api/vault/import-batches/:id`.
+- Transactionally deletes all linked records and cascades to any associated binary attachments in `vault_secure_attachments`.
+- Records an auditable `IMPORT_BATCH_REVERTED` security event in `audit_logs`.
+

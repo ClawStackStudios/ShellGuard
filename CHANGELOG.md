@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Added
+- **Import Lifecycle & Ephemeral Quarantine Engine (Phase 26 / Tasks 51 & 52):**
+  - **Database Migration 0010 (`0010_import_lifecycle.up.sql` / `.down.sql`):** Added indexed relational columns `import_batch_id TEXT DEFAULT NULL` and `imported_at TEXT DEFAULT NULL` across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys` with dedicated indices (`idx_pearls_import_batch`, `idx_notes_import_batch`, `idx_keys_import_batch`), keeping columns out of `METADATA_COLUMNS` to maintain indexed SQLite search performance.
+  - **Atomic Batch Stamping:** Updated `POST /api/vault/bulk-import` to generate `imp_<uuid>` and stamp UTC timestamp across all inserted records atomically within the transaction.
+  - **Auto-Graduation on Edit:** `PUT /api/vault/:id`, `PUT /api/notes/:id`, and `PUT /api/keys/:id` automatically clear `import_batch_id` and `imported_at` to `NULL`, promoting modified records to permanent status.
+  - **Batch Operations REST API:**
+    - `POST /api/vault/import-batches/:id/graduate`: Atomically clears import flags across all records for the authenticated owner.
+    - `DELETE /api/vault/import-batches/:id`: Transactionally purges imported items, cascades to associated attachments in `vault_secure_attachments`, and records `IMPORT_BATCH_REVERTED` in `audit_logs`.
+  - **Progressive Disclosure Vault UI:**
+    - `ItemListPane.tsx`: Dynamic `Quarantined (N)` filter chip rendered exclusively when active quarantined records exist in state, alongside bioluminescent status badges.
+    - `VaultShell.tsx`: Centered floating batch action bar with `Graduate All` and `ConfirmDialog`-guarded `Revert Import`, preserving clearance from the bottom-right `AbyssalIngestionDock`.
+    - `ItemDetailPane.tsx`: Inline quarantine banner with one-click graduation and batch revert confirmation modal.
+    - `ConfigSettingsView.tsx`: System preferences for retention window (30m/60m/90m/manual) and auto-graduation rules with dedicated sidebar navigation.
+  - **Integration Test Battery (`tests/vault-imported-tracking.test.ts`):** 9 new test cases covering batch stamping, auto-graduation on edit, cross-owner isolation, attachment cascade deletion, and permission gates.
+
 ## [0.0.2.7] - 2026-10-20 (Build 29)
 
 ### Added

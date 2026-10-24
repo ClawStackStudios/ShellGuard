@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Terminal, History, Paperclip, CreditCard, Contact, Shield, MapPin, Phone, Mail } from 'lucide-react';
+import { X, Copy, Check, Lock, Eye, EyeOff, User, Globe, ExternalLink, Download, FileText, Key as KeyIcon, Edit, Trash2, Binary, Terminal, History, Paperclip, CreditCard, Contact, Shield, MapPin, Phone, Mail, Clock, ShieldAlert, GraduationCap } from 'lucide-react';
 import { VaultItem, VaultItemType, CustomField, CustomFieldLinkedProperty, PasswordHistoryEntry } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
 import { TotpDisplay } from './TotpDisplay.tsx';
@@ -12,6 +12,7 @@ import { downloadAttachment, formatBytes } from '../../lib/attachmentUtils.ts';
 import { parseSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 import { formatCardNumber, maskCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
 import { globalIngestionQueue } from '../../lib/habitatImport.ts';
+import { restAdapter } from '../../services/api/restAdapter.ts';
 
 interface ItemDetailPaneProps {
   item: VaultItem | null;
@@ -22,6 +23,7 @@ interface ItemDetailPaneProps {
   attachmentItemsById: Map<string, VaultItem>;
   /** Phase 19: streams + decrypts an attachment payload on demand. */
   onFetchAttachment?: (id: string) => Promise<string>;
+  onBatchAction?: () => Promise<void> | void;
 }
 
 export function ItemDetailPane({
@@ -31,7 +33,8 @@ export function ItemDetailPane({
   onDelete,
   isLocked,
   attachmentItemsById,
-  onFetchAttachment
+  onFetchAttachment,
+  onBatchAction
 }: ItemDetailPaneProps) {
   const [revealed, setRevealed] = useState(false);
   const [revealedCvv, setRevealedCvv] = useState(false);
@@ -48,7 +51,43 @@ export function ItemDetailPane({
     setCopyFeedback(null);
     setRevealedHiddenFields(new Set());
     setIsConfirmingDelete(false);
+    setIsConfirmingRevertBatch(false);
   }, [item?.id]);
+
+  const [isGraduatingThisBatch, setIsGraduatingThisBatch] = useState(false);
+  const [isRevertingThisBatch, setIsRevertingThisBatch] = useState(false);
+  const [isConfirmingRevertBatch, setIsConfirmingRevertBatch] = useState(false);
+
+  const handleGraduateThisBatch = async () => {
+    if (!item?.import_batch_id) return;
+    setIsGraduatingThisBatch(true);
+    try {
+      await restAdapter.POST(`/api/vault/import-batches/${item.import_batch_id}/graduate`, {});
+      if (onBatchAction) await onBatchAction();
+    } catch (e) {
+      console.error('Failed to graduate batch:', e);
+    } finally {
+      setIsGraduatingThisBatch(false);
+    }
+  };
+
+  const handleRevertThisBatch = async () => {
+    if (!item?.import_batch_id) return;
+    setIsRevertingThisBatch(true);
+    try {
+      if (globalIngestionQueue.hasActiveUploads()) {
+        globalIngestionQueue.cancelAll();
+      }
+      await restAdapter.DELETE(`/api/vault/import-batches/${item.import_batch_id}`);
+      onClose();
+      if (onBatchAction) await onBatchAction();
+    } catch (e) {
+      console.error('Failed to revert batch:', e);
+    } finally {
+      setIsRevertingThisBatch(false);
+      setIsConfirmingRevertBatch(false);
+    }
+  };
 
   const [, forceQueueUpdate] = useState(0);
   useEffect(() => {
@@ -304,6 +343,45 @@ export function ItemDetailPane({
                 )}
               </div>
             </div>
+
+            {/* Ephemeral Import Quarantine Banner */}
+            {item.import_batch_id && item.imported_at && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 shadow-sm space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400">
+                    <ShieldAlert size={18} className="shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-bold">Ephemeral Import Quarantine</h4>
+                      <p className="text-xs text-theme-muted mt-0.5">
+                        Imported on {new Date(item.imported_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30 shrink-0">
+                    {item.import_batch_id}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    disabled={isGraduatingThisBatch}
+                    onClick={handleGraduateThisBatch}
+                    className="px-3 py-1.5 bg-claw-cyan hover:bg-cyan-400 text-ocean-dark font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <GraduationCap size={13} />
+                    {isGraduatingThisBatch ? 'Graduating...' : 'Graduate to Vault'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isRevertingThisBatch}
+                    onClick={() => setIsConfirmingRevertBatch(true)}
+                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold rounded-xl text-xs border border-red-500/30 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Revert Batch
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Click to Copy Fields */}
             <div className="space-y-3 bg-theme-surface p-1 rounded-2xl border border-theme-subtle shadow-sm">
@@ -1293,6 +1371,17 @@ export function ItemDetailPane({
           }
         }}
         onCancel={() => setIsConfirmingDelete(false)}
+      />
+
+      {/* Revert Batch Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isConfirmingRevertBatch}
+        title="Revert Import Batch"
+        description={`Are you sure you want to revert import batch "${item?.import_batch_id}"? All records and attachments belonging to this batch will be permanently removed.`}
+        confirmText={isRevertingThisBatch ? "Reverting..." : "Revert Batch"}
+        cancelText="Cancel"
+        onConfirm={handleRevertThisBatch}
+        onCancel={() => setIsConfirmingRevertBatch(false)}
       />
     </>
   );

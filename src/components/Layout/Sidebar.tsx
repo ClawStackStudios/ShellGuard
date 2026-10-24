@@ -127,7 +127,14 @@ export function Sidebar({
               {!isCollapsed && "Import & Export"}
             </button>
 
-            {/* TODO(jules): Phase 26 / Task 52 — 'Config' Settings Tab: Add navigation button under settings leading to ConfigSettingsView (Sliders/Settings icon, title 'Config'). */}
+            <button 
+              onClick={() => { setView('settings_config'); if (window.innerWidth < 1024) onClose(); }}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-3 md:py-2.5'} rounded-xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] ${view === "settings_config" ? "bg-claw-cyan/10 dark:bg-claw-cyan/20 text-claw-cyan shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+              title={isCollapsed ? "Config" : undefined}
+            >
+              <Settings className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
+              {!isCollapsed && "Config"}
+            </button>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto min-h-0 flex flex-col p-3 custom-scrollbar">

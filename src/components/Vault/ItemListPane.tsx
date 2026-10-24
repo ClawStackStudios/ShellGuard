@@ -1,7 +1,7 @@
 import React from 'react';
 import { VaultItem, VaultItemType } from '../../types.ts';
 import { Favicon } from './Favicon.tsx';
-import { Key, CreditCard, Contact, FileText, Binary, Search, ArrowUpDown, X, Tag as TagIcon, Paperclip } from 'lucide-react';
+import { Key, CreditCard, Contact, FileText, Binary, Search, ArrowUpDown, X, Tag as TagIcon, Paperclip, Clock } from 'lucide-react';
 import { getPodColor, getTagColor } from '../../lib/podUtils.ts';
 import { parseTags } from '../../lib/tagUtils.ts';
 import { extractDomain } from '../../lib/urlUtils.ts';
@@ -22,6 +22,9 @@ interface ItemListPaneProps {
   selectedItems?: Set<string>;
   onToggleSelect?: (id: string) => void;
   onToggleSelectAll?: () => void;
+  filterImportedOnly?: boolean;
+  onToggleFilterImported?: () => void;
+  importedCount?: number;
 }
 
 export function ItemListPane({
@@ -38,7 +41,10 @@ export function ItemListPane({
   onToggleFilterMode,
   selectedItems = new Set(),
   onToggleSelect,
-  onToggleSelectAll
+  onToggleSelectAll,
+  filterImportedOnly = false,
+  onToggleFilterImported,
+  importedCount = 0
 }: ItemListPaneProps) {
   const [, forceQueueUpdate] = React.useState(0);
   React.useEffect(() => {
@@ -77,6 +83,33 @@ export function ItemListPane({
           <ArrowUpDown size={16} />
         </button>
       </div>
+
+      {/* Progressive Disclosure: Dynamic Imported / Quarantine Filter Tab */}
+      {importedCount > 0 && onToggleFilterImported && (
+        <div className="px-3 py-1.5 border-b border-theme-subtle bg-amber-500/5 dark:bg-amber-950/20 flex items-center justify-between shrink-0">
+          <button
+            type="button"
+            onClick={onToggleFilterImported}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              filterImportedOnly
+                ? "bg-amber-500 text-slate-950 font-bold shadow-xs"
+                : "text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+            }`}
+          >
+            <Clock size={12} className={filterImportedOnly ? "text-slate-950 animate-pulse" : "text-amber-500"} />
+            <span>Quarantined ({importedCount})</span>
+          </button>
+          {filterImportedOnly && (
+            <button
+              type="button"
+              onClick={onToggleFilterImported}
+              className="text-[11px] font-semibold text-theme-muted hover:text-theme-main transition-colors"
+            >
+              Show all
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Granular Tag Filter Bar */}
       {selectedTags.length > 0 && (
@@ -231,6 +264,15 @@ export function ItemListPane({
 
                 {/* Right Edge Badges */}
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  {item.import_batch_id && item.imported_at && (
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-xs shrink-0"
+                      title={`Quarantine import: ${new Date(item.imported_at).toLocaleTimeString()}`}
+                    >
+                      <Clock size={9} className="animate-pulse" />
+                      Quarantine
+                    </span>
+                  )}
                   {item.category && item.category !== "all" && (
                     <div className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getPodColor(item.category) }} />

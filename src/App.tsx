@@ -53,6 +53,7 @@ import { SuperLobsterLogin } from "./components/Admin/SuperLobsterLogin.tsx";
 import { SuperLobsterPanel } from "./components/Admin/SuperLobsterPanel.tsx";
 import { GeneratorToolView } from "./components/Generator/GeneratorToolView.tsx";
 import { ImportExportView } from "./components/Settings/ImportExportView.tsx";
+import { ConfigSettingsView } from "./components/Settings/ConfigSettingsView.tsx";
 import { LobsterKeysTab } from "./components/LobsterKeys/LobsterKeysTab.tsx";
 import { 
   generateUUID, 
@@ -107,7 +108,7 @@ export default function App() {
   }, [lobsters, activeLobsterId, shellKey]);
 
   const isLocked = Boolean(lobster && !shellKey);
-  const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export">("landing");
+  const [view, setView] = useState<"landing" | "vault" | "agents" | "setup" | "login" | "settings" | "generator" | "settings_generator" | "settings_agents" | "settings_import_export" | "settings_config">("landing");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
@@ -1265,6 +1266,9 @@ export default function App() {
                         setError(err.message || 'Failed to assign tags.');
                       }
                     }}
+                    onBatchAction={async () => {
+                      if (shellKey) await scuttleVault(shellKey);
+                    }}
                   />
                   <ItemFormModal
                     isOpen={isAddingVaultItem || !!editingVaultItem}
@@ -1325,6 +1329,9 @@ export default function App() {
                     items={vaultItems} 
                     lobster={lobster} 
                     shellKey={shellKey}
+                    onBatchAction={async () => {
+                      if (shellKey) await scuttleVault(shellKey);
+                    }}
                     onImportItems={async (imported) => {
                       if (!shellKey || isLocked) return;
 
@@ -1417,6 +1424,11 @@ export default function App() {
                       return result;
                     }}
                   />
+                </motion.div>
+              )}
+              {view === "settings_config" && (
+                <motion.div key="settings_config" className="w-full">
+                  <ConfigSettingsView />
                 </motion.div>
               )}
             </AnimatePresence>

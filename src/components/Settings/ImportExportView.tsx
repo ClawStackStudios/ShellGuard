@@ -31,9 +31,12 @@ import {
   Archive,
   PackageCheck,
   FolderArchive,
-  Paperclip
+  Paperclip,
+  Trash2,
+  GraduationCap
 } from "lucide-react";
 import { VaultItem, Lobster, VaultItemType } from "../../types.ts";
+import { ConfirmDialog } from "../ui/ConfirmDialog.tsx";
 import { hashToken, generateUUID } from "../../lib/crypto.ts";
 import { restAdapter } from "../../services/api/restAdapter.ts";
 import {
@@ -116,6 +119,8 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems }: Im
   const [isImporting, setIsImporting] = useState(false);
   const [detectedFormatName, setDetectedFormatName] = useState<string>("Standard Import");
   const [importPreviewList, setImportPreviewList] = useState<VaultItem[] | null>(null);
+  const [revertingBatchId, setRevertingBatchId] = useState<string | null>(null);
+  const [isRevertingBatch, setIsRevertingBatch] = useState(false);
 
   // ── ShellGuard Encrypted Backup Decryption States ──
   const [isEncryptedBackupModalOpen, setIsEncryptedBackupModalOpen] = useState(false);
@@ -621,6 +626,35 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems }: Im
     }
   };
 
+  const activeBatches = React.useMemo(() => {
+    const batches = new Map<string, { count: number; importedAt: string }>();
+    for (const item of items) {
+      if (item.import_batch_id && item.imported_at) {
+        const batch = batches.get(item.import_batch_id) || { count: 0, importedAt: item.imported_at };
+        batch.count++;
+        batches.set(item.import_batch_id, batch);
+      }
+    }
+    return Array.from(batches.entries()).map(([id, info]) => ({ id, ...info })).sort((a, b) => new Date(b.importedAt).getTime() - new Date(a.importedAt).getTime());
+  }, [items]);
+
+  const handleRevertBatch = async (batchId: string) => {
+    setIsRevertingBatch(true);
+    try {
+      if (globalIngestionQueue.hasActiveUploads()) {
+        globalIngestionQueue.cancelAll();
+      }
+      await restAdapter.DELETE(`/api/vault/import-batches/${batchId}`);
+      // Force reload or wait for next sync to clear UI
+      window.location.reload();
+    } catch (err: any) {
+      alert("Failed to revert batch: " + err.message);
+    } finally {
+      setIsRevertingBatch(false);
+      setRevertingBatchId(null);
+    }
+  };
+
   // Breakdown statistics for preview
   const passwordCount = importPreviewList?.filter(i => i.type === 'password' || !i.type).length || 0;
   const cardCount = importPreviewList?.filter(i => i.type === 'card').length || 0;
@@ -642,6 +676,101 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems }: Im
 
       {/* TODO(jules): Phase 25 / Task 49 & 50 — Habitat Full-Archive Mobility & Two-Stage Ingestion
           Constraints: Add Habitat ZIP export with ClawKey challenge gate; add .zip & directory dropzone for Stage 1 instant primary bulk-import (<2s) with background Stage 2 attachment queue handoff. */}
+
+      {activeBatches.length > 0 && (
+        <div className="bg-theme-surface/50 rounded-3xl border border-theme-subtle overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-theme-subtle">
+            <h3 className="text-lg font-bold flex items-center gap-2 text-amber-600 dark:text-amber-500">
+              <ShieldAlert size={20} />
+              Active Import Quarantines
+            </h3>
+            <p className="text-sm text-theme-muted mt-1">
+              Recently imported batches currently within the ephemeral quarantine window.
+            </p>
+          </div>
+          <div className="p-0">
+            {activeBatches.map(batch => (
+              <div key={batch.id} className="p-4 border-b border-theme-subtle last:border-0 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-theme-main font-mono">{batch.id}</div>
+                  <div className="text-xs text-slate-500">{batch.count} records imported on {new Date(batch.importedAt).toLocaleString()}</div>
+                </div>
+                <button
+                  onClick={() => setRevertingBatchId(batch.id)}
+                  disabled={isRevertingBatch}
+                  className="px-4 py-2 bg-lobster-red/10 hover:bg-lobster-red/20 text-lobster-red font-semibold rounded-lg transition-colors text-xs flex items-center gap-1.5"
+                >
+                  <Trash2 size={14} />
+                  Revert Import
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={!!revertingBatchId}
+        title="Revert & Purge Import Batch"
+        description={
+          globalIngestionQueue.hasActiveUploads()
+            ? "Warning: In-flight attachment uploads are still streaming. Reverting this batch will cancel pending uploads and permanently purge all imported items and attachments. This cannot be undone."
+            : "Are you sure you want to revert this import batch? All records and associated attachments imported in this batch will be permanently removed from your vault."
+        }
+        confirmText={isRevertingBatch ? "Reverting..." : "Revert & Purge"}
+        cancelText="Keep Items"
+        onConfirm={() => revertingBatchId && handleRevertBatch(revertingBatchId)}
+        onCancel={() => setRevertingBatchId(null)}
+      />
+
+
+      {/* ── POST-IMPORT ACTION HATCH ── */}
+      {importStatus === "success" && activeBatches.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-emerald-500/10 border border-emerald-500/30 rounded-3xl p-6 shadow-sm"
+        >
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-emerald-500/20 rounded-full text-emerald-600 dark:text-emerald-400 mt-1 shrink-0">
+                <CheckCircle2 size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-emerald-700 dark:text-emerald-300">Import Successful</h3>
+                <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1 font-medium">{importMessage}</p>
+                <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-2">
+                  These records are currently held in ephemeral quarantine. They feature bioluminescent countdown badges in the Grotto and will automatically graduate upon manual editing, or you can purge the batch instantly.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={async () => {
+                  if (activeBatches.length > 0) {
+                    try {
+                      await restAdapter.POST(`/api/vault/import-batches/${activeBatches[0].id}/graduate`);
+                      window.location.reload();
+                    } catch (err: any) {
+                      alert("Failed to graduate batch: " + err.message);
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-colors text-sm flex items-center gap-2 shadow-sm"
+              >
+                <GraduationCap size={16} />
+                Graduate Batch
+              </button>
+              <button
+                onClick={() => activeBatches.length > 0 && setRevertingBatchId(activeBatches[0].id)}
+                className="px-4 py-2 bg-white/50 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 text-emerald-700 dark:text-emerald-300 font-bold rounded-xl transition-colors text-sm border border-emerald-500/30"
+              >
+                Revert Import
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── EXPORT OPTIONS SECTION ── */}
       <div className="bg-theme-surface/50 rounded-3xl border border-theme-subtle overflow-hidden shadow-sm">
@@ -960,7 +1089,7 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems }: Im
             />
           </div>
 
-          {importStatus === "success" && (
+          {importStatus === "success" && activeBatches.length === 0 && (
             <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
               <ShieldCheck size={16} />
               <span>{importMessage}</span>

@@ -105,9 +105,10 @@ Engineered to comply with Android 15 and Android 16 requirements for 16 KB ELF s
 - **Target SDK**: SDK 36.
 - **Architectures**: `arm64-v8a`, `armeabi-v7a`, `x86_64` (16 KB page-aligned).
 - **Distribution Formats**:
-  - **APK (Universal / Architecture-split)**: Available on GitHub Releases.
+  - **APK (Universal & Architecture-Split)**: Download directly from [**GitHub Releases (Latest Stable)**](https://github.com/clawstackstudios/shellguard/releases/latest). To install, open the downloaded `.apk` on your device and tap **Install** (ensure *Install unknown apps* is permitted for your browser/file manager).
   - **AAB (Android App Bundle)**: Signed for Google Play Store distribution.
   - **F-Droid**: Planned reproducible sovereign build repository.
+
 
 ---
 

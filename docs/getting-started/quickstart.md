@@ -61,7 +61,7 @@ ShellGuard compiles into a single multi-stage container (`node:20-alpine`) runni
 2. Verify that the server is healthy and the database is initialized:
    ```bash
    curl http://localhost:6464/api/health
-   # {"success":true,"service":"ShellGuard API","version":"0.0.2.3","mode":"sqlite","uptime":14.2,"counts":{"vaultPearls":0,"secureNotes":0,"sshKeys":0,"attachments":0,"agentKeys":0}}
+   # {"success":true,"service":"ShellGuard API","version":"0.0.2.8","mode":"sqlite","uptime":14.2,"counts":{"vaultPearls":0,"secureNotes":0,"sshKeys":0,"attachments":0,"agentKeys":0}}
    ```
 
 ### Step 3: Launch Vault & First-Time Molting
@@ -70,6 +70,10 @@ ShellGuard compiles into a single multi-stage container (`node:20-alpine`) runni
 2. Click **Molt New Identity** to generate your sovereign 67-character `hu-` master key.
 3. Download and securely store your identity recovery JSON kit. **There are no central passwords, reset emails, or account recovery links.**
 4. Enter your vault dashboard (**The Grotto**) to begin storing secrets and issuing agent delegation keys.
+
+> [!TIP]
+> **Connecting from ShellGuard Mobile**: If you plan to pair [ShellGuard Mobile](/mobile/) from your Android phone on the same local network, connect using your server's host LAN IP (e.g. `http://192.168.1.100:6464`). Ensure your host firewall allows inbound TCP traffic on port `6464`.
+
 
 ---
 

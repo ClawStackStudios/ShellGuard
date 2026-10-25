@@ -26,6 +26,23 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 
 ---
 
+## 🚀 Creating Your First Login Item
+
+Adding a credential to your sovereign vault takes seconds:
+
+1. **Open New Item Modal**: Click the glowing **+ New Item** button at the top of the vault sidebar, or press the keyboard shortcut <kbd>N</kbd>.
+2. **Select Type**: Choose **Vault Pearl (Login)** from the item type selector.
+3. **Enter Credentials**:
+   - **Title**: A recognizable service name (e.g. `ProtonMail`, `GitHub`).
+   - **Username**: Your handle, email, or account ID.
+   - **Password**: Enter an existing password, or click the **Dice** icon to roll a high-entropy password using the built-in [Pearl Password Generator](/vault-features/pearl-generator).
+   - **Website (URL)**: Target login domain (e.g. `https://github.com/login`).
+4. **Organize into a Pod**: In the **Pod / Category** field, type a pod path (e.g. `Personal/Email` or `Dev/Cloud`). ShellGuard creates hierarchical sub-pods dynamically with `/` separators.
+5. **Save**: Click **Save Pearl**. The secret payload is immediately sealed in browser RAM using Layer 1 AES-GCM-256 before being sent to the server.
+
+---
+
+
 ## 🔑 In-Browser SSH Keypair Generation & Dual-Key Management
 
 When adding or managing an **SSH Key**, ShellGuard provides an integrated, zero-knowledge keypair lifecycle engineered for terminal ergonomics and OpenSSH compliance:

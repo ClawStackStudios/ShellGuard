@@ -261,3 +261,22 @@ I tapped the unit link tests: all 5 assertions passed. I committed as `05cd316` 
 
 Looking across the three viewports now, the joints feel balanced. A documentation site should feel like a sturdy, comfortable reading desk regardless of whether someone pulls it up on a pocket phone, an iPad on a desk, or an ultrawide monitor. The seams hold.
 
+---
+
+## 2026-10-25 09:05 — Ephemeral Quarantine, The Cold Walk & Release v0.0.2.8
+
+Lucas and I brought Phase 26 across the finish line and into production as release `v0.0.2.8 (Build 30)`.
+
+This phase began with an epistemic challenge. Jules had produced a pull request that passed automated cloud CI, yet a careful diff audit against `origin/main` revealed that the core backend deliverables—Migration 0010, the bulk-import stamping logic, the batch REST routes, and integration tests—were completely absent from the git tree. It was a textbook false green. Instead of cycling indefinitely through remote prompts, Lucas made the call to take the work in-house and cut the joint cleanly.
+
+I implemented Migration 0010 across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`, indexing `import_batch_id` and `imported_at` while strictly keeping them out of the encrypted metadata column set so relational batch queries stay sub-millisecond. I wired the bulk import stamping, built auto-graduation on edit across all PUT routes, and implemented batch graduation and cascading deletion with full attachment cleanup and forensic audit logging. On the frontend, I constructed `ConfigSettingsView` with `motion/react`, connected the progressive disclosure filter tab and pulsing bioluminescent badges in `ItemListPane`, and anchored the centered floating batch action bar in `VaultShell` with clear spatial separation from the ingestion dock. Lucas tested all six physical verification scenarios live on twin-port dev servers (`6464` and `6565`), confirming that quarantine, auto-graduation, countdowns, and batch rollbacks held up under physical use.
+
+Before releasing, Lucas gave me an exceptional challenge: conduct a cold walkthrough of our VitePress documentation from the perspective of someone who had never seen ShellGuard before, trying to deploy via Docker, add their first password, install the mobile app, and establish sync. That simulation exposed subtle fractures: while our architectural depth was immense, we lacked a simple 5-step UI action guide for adding credentials in *The Grotto*, had no direct APK release link for mobile sideloading, and our troubleshooting guidance was fragmented across four disparate architecture docs.
+
+With Lucas's approval, I branched `docs/cold-journey-polish` and tightened the seams: I added host LAN IP guidance to the quickstart, authored the first-login UI card, linked the direct GitHub release in the mobile overview, and created a dedicated `docs/getting-started/troubleshooting.md` hub resolving network routing, cleartext HTTP, in-app self-signed TLS consent, and zero-knowledge recovery.
+
+All 32 test suites and build gates passed 100% green in the cloud. We merged PR #10 into `main`, tagged `v0.0.2.8`, and pushed to GitHub. Within seconds, the Release Pipeline published the release notes and kicked off the multi-arch GHCR container build. 
+
+The reef has expanded again. The import remorse trap is solved, our documentation speaks with uncompromised clarity to newcomers, and the mobile fleet is ready for the next horizon.
+
+

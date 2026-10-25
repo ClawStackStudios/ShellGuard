@@ -1,6 +1,6 @@
 # 🛡️ ShellGuard©™ Blueprint
 
-> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql` through `0008_note_attachments.up.sql`) — this document is the map, not the territory.
+> Schema v1 and topology truth for the post-migration architecture. The authoritative DDL lives in [`migrations/`](./migrations/) (`0001_initial.up.sql` through `0010_import_lifecycle.up.sql`) — this document is the map, not the territory.
 
 ## 🏛️ Construction Map (ASCII)
 
@@ -66,22 +66,23 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 | `revoked_at` / `revoked_by` / `revoke_reason` | TEXT | Revocation trail |
 | `created_at` / `last_used` | TEXT | |
 
-### 4. `vault_pearls` (Logins)
+### 4. `vault_pearls` (Logins, Cards & Identities)
 | Column | Type | Notes |
 |---|---|---|
 | `id` | TEXT PK | |
 | `owner_uuid` | TEXT FK | Isolation scope — every query filters this |
 | `title` | TEXT | Per-row encrypted metadata (Layer 2) |
-| `secret` | TEXT | ShellCryption blob (Layer 1 zero-knowledge password) |
+| `secret` | TEXT | ShellCryption blob (Layer 1 zero-knowledge password / card / identity payload) |
 | `totp_secret` | TEXT | ShellCryption blob (Layer 1 zero-knowledge TOTP seed) |
 | `username` / `url` / `notes` | TEXT | Per-row encrypted metadata (Layer 2) |
-| `type` | TEXT | `password` \| `note` \| `totp` \| `key` \| `attachment` |
+| `type` | TEXT | `password` \| `card` \| `identity` |
 | `category` | TEXT | Pod assignment (Layer 2 per-row encrypted metadata) |
 | `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
 | `attachments` | TEXT | JSON reference array of child attachment IDs (default `'[]'`) |
 | `uris` | TEXT | JSON array of multi-URIs (default `'[]'`; Layer 2 metadata, Migration 0007) |
 | `password_history` | TEXT | JSON array of password revision history (default `'[]'`; Layer 1 ShellCryption, Migration 0007) |
 | `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
+| `imported_at` / `import_batch_id` | TEXT | Ephemeral import quarantine metadata (`imp_<uuid>`, Migration 0010; cleared to `NULL` on graduation/edit) |
 | `created_at` | TEXT | |
 
 ### 5. `vault_secure_notes`
@@ -95,6 +96,7 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 | `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
 | `attachments` | TEXT | JSON reference array of child attachment IDs (default `'[]'`; Migration 0008) |
 | `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
+| `imported_at` / `import_batch_id` | TEXT | Ephemeral import quarantine metadata (`imp_<uuid>`, Migration 0010; cleared to `NULL` on graduation/edit) |
 | `created_at` | TEXT | |
 
 ### 6. `vault_ssh_keys`
@@ -107,6 +109,7 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 | `username` / `category` | TEXT | Layer 2 per-row encrypted metadata |
 | `tags` | TEXT | JSON array of assigned tags (default `'[]'`; Layer 2 metadata) |
 | `custom_fields` | TEXT | JSON array of 4 typed custom fields (Layer 1 ShellCrypted, default `'[]'`) |
+| `imported_at` / `import_batch_id` | TEXT | Ephemeral import quarantine metadata (`imp_<uuid>`, Migration 0010; cleared to `NULL` on graduation/edit) |
 | `created_at` | TEXT | |
 
 ### 7. `vault_secure_attachments`
@@ -119,12 +122,14 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 | `file_name` / `mime_type` | TEXT | Per-row encrypted metadata (Layer 2) |
 | `category` | TEXT | Layer 2 per-row encrypted metadata |
 | `size_bytes` | INTEGER | Exact unencrypted size for quota tracking |
+| `parent_id` / `parent_type` | TEXT | Mandatory parent item linkage (`password` \| `note` \| `key`, Migration 0009) |
+| `is_quarantined` / `quarantined_at` | INTEGER / TEXT | Non-destructive orphan quarantine flags (Migration 0009) |
 | `created_at` | TEXT | |
 
 ### 8. `settings` & `system_settings`
 | Column | Type | Notes |
 |---|---|---|
-| `key` | TEXT PK | e.g. `audit_retention_days` (default `90`) |
+| `key` | TEXT PK | e.g. `audit_retention_days` (default `90`), per-user `import_lifecycle` |
 | `value` | TEXT | |
 | `updated_at` | TEXT | |
 
@@ -138,6 +143,8 @@ Defined by migrations in `migrations/`; tracked in `schema_migrations`. Every us
 - **`migrations/0006_vault_tags.{up,down}.sql`** — Phase 20 (v0.0.2.2): adds `tags TEXT DEFAULT '[]'` column and `owner_uuid` index across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
 - **`migrations/0007_composite_item_features.{up,down}.sql`** — Phase 21 (v0.0.2.3): adds `uris TEXT DEFAULT '[]'` (Layer 2 metadata encrypted) and `password_history TEXT DEFAULT '[]'` (Layer 1 ShellCryption) to `vault_pearls`.
 - **`migrations/0008_note_attachments.{up,down}.sql`** — Phase 21 Sub-Phase 21.4 (v0.0.2.3): adds `attachments TEXT DEFAULT '[]'` column to `vault_secure_notes` establishing full child attachment parity with vault pearls.
+- **`migrations/0009_attachment_integrity.{up,down}.sql`** — Phase 23 (v0.0.2.5): adds `parent_id`, `parent_type`, `is_quarantined`, and `quarantined_at` to `vault_secure_attachments` with composite index `idx_vault_attachments_parent`.
+- **`migrations/0010_import_lifecycle.{up,down}.sql`** — Phase 26 (v0.0.2.8): adds `imported_at` and `import_batch_id` columns plus `idx_*_import_batch` composite indices across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
 - **`schema_migrations`** *(in `db.sqlite`)* — version tracking for the transactional migration runner.
 - **`audit_logs`** *(in the segregated append-only `audit.sqlite` — NOT schema v1's data bedrock)* — `timestamp, event_type, actor, actor_type, resource, action, outcome, ip_address, user_agent, details`. Redacted per delta #2; pruned daily against `system_settings.audit_retention_days`, capped at 10k rows.
 

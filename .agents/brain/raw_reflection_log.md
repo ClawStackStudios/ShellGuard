@@ -1,4 +1,28 @@
 ---
+Date: 2026-10-24
+TaskRef: "Execute /draft-release & /walk-the-docs for Phase 26 v0.0.2.8 (Build 30): Import Lifecycle Tracking, Ephemeral Quarantine & Documentation Truth Parity"
+
+Learnings:
+- False-Green Co-Pilot PR Detection: Even when cloud CI passes 100% green on a co-pilot PR (as in PR #9), line-by-line diff reconciliation against the pre-flight Live Task Tracker is essential—a PR that omits the new test suite and backend migrations will pass existing CI tests by doing nothing on the backend.
+- Documentation Truth Traps Caught by `/walk-the-docs`:
+  1. `docs/deployment/forensic-auditing.md` had drifted to table `audit_log` with column `target_uuid`, whereas `src/server/database/schema.ts` defines `audit_logs` with `actor_type` and `resource`.
+  2. `docs/index.md` claimed "unlimited encrypted file attachments" and `README.md` mentioned "standalone attachments", contradicting the 500MB/1000MB quota and Bitwarden Item Integrity Model.
+  3. `docs/reference/blueprint-schema.md` and `BLUEPRINT.md` required full synchronization through `0010_import_lifecycle`.
+- Indexed Relational Quarantine Columns: Keeping `imported_at` and `import_batch_id` out of `METADATA_COLUMNS` (`metadataGuard.ts`) allows instant indexed SQL batch graduation (`POST /api/vault/import-batches/:id/graduate`) and transactional batch rollback (`DELETE /api/vault/import-batches/:id`) without full-table decryption scans.
+
+Difficulties:
+- Jules struggled with multi-file backend + frontend edits and omitted backend migrations/routes in PR #9. Resolved decisively by taking over in-house on `stage/phase-26-import-lifecycle`, authoring 16 comprehensive integration tests in `tests/vault-imported-tracking.test.ts`, and verifying on Cloud CI (PR #10).
+
+Successes:
+- Lucas tested live on twin-port dev servers (6464 & 6565) and verified all quarantine, auto-graduation, countdown, and atomic rollback behaviors work seamlessly.
+- 100% documentation truth alignment across VitePress (`docs/**`), root manifests (`README.md`, `ARCHITECTURE.md`, `BLUEPRINT.md`, `CHANGELOG.md`, `ROADMAP.md`, `RELEASE-v0.0.2.8.md`), and `project/` specs.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Diff-vs-Tracker Reconciliation against False-Green CI runs.
+- General pattern: Unencrypted Relational Batch Keys alongside Zero-Knowledge Payloads.
+---
+
+---
 Date: 2026-10-18
 TaskRef: "Execute /draft-release for v0.0.2.6 (Build 28): Cryptographic Audit Hardening, Retire Phase 21 & Synchronize Anchors"
 

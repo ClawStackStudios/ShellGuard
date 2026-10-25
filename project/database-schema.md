@@ -70,6 +70,13 @@ $DATA_DIR/
 >
 > **Migration 0008 (Phase 21 Post-Verification Hardening, v0.0.2.3)** adds `attachments TEXT DEFAULT '[]'`
 > to `vault_secure_notes` to provide 1:1 attachment feature parity between Secure Notes and Passwords.
+>
+> **Migration 0009 (Phase 23, v0.0.2.5)** adds `parent_id`, `parent_type`, `is_quarantined`, and `quarantined_at`
+> to `vault_secure_attachments` enforcing Bitwarden-model mandatory parent linkage and non-destructive orphan quarantine.
+>
+> **Migration 0010 (Phase 26, v0.0.2.8)** adds `imported_at TEXT DEFAULT NULL` and `import_batch_id TEXT DEFAULT NULL`
+> (with `idx_*_import_batch` composite indices) across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys` to power
+> ephemeral import quarantine, auto-graduation on edit, and atomic batch rollback.
 
 ```sql
 CREATE TABLE IF NOT EXISTS lobsters (
@@ -103,31 +110,37 @@ CREATE TABLE IF NOT EXISTS vault_pearls (
   tags             TEXT DEFAULT '[]',        -- Phase 20: Migration 0006
   uris             TEXT DEFAULT '[]',        -- Phase 21: Migration 0007 (Layer 2 metadata encrypted)
   password_history TEXT DEFAULT '[]',        -- Phase 21: Migration 0007 (Layer 1 ShellCryption)
+  imported_at      TEXT DEFAULT NULL,        -- Phase 26: Migration 0010
+  import_batch_id  TEXT DEFAULT NULL,        -- Phase 26: Migration 0010 (imp_<uuid>)
   created_at       TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 
 CREATE TABLE IF NOT EXISTS vault_secure_notes (
-  id          TEXT PRIMARY KEY,
-  owner_uuid  TEXT NOT NULL,
-  title       TEXT NOT NULL,
-  content     TEXT NOT NULL,             -- ShellCryption blob (opaque)
-  category    TEXT DEFAULT '',           -- Phase 17: default purged to uncategorized ''
-  attachments TEXT DEFAULT '[]',         -- Phase 21: Migration 0008
-  tags        TEXT DEFAULT '[]',         -- Phase 20: Migration 0006
-  created_at  TEXT NOT NULL,
+  id              TEXT PRIMARY KEY,
+  owner_uuid      TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  content         TEXT NOT NULL,             -- ShellCryption blob (opaque)
+  category        TEXT DEFAULT '',           -- Phase 17: default purged to uncategorized ''
+  attachments     TEXT DEFAULT '[]',         -- Phase 21: Migration 0008
+  tags            TEXT DEFAULT '[]',         -- Phase 20: Migration 0006
+  imported_at     TEXT DEFAULT NULL,         -- Phase 26: Migration 0010
+  import_batch_id TEXT DEFAULT NULL,         -- Phase 26: Migration 0010 (imp_<uuid>)
+  created_at      TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 
 CREATE TABLE IF NOT EXISTS vault_ssh_keys (
-  id         TEXT PRIMARY KEY,
-  owner_uuid TEXT NOT NULL,
-  title      TEXT NOT NULL,
-  key_value  TEXT NOT NULL,             -- ShellCryption blob (opaque)
-  username   TEXT DEFAULT '',
-  category   TEXT DEFAULT '',           -- Phase 17: default purged to uncategorized ''
-  tags       TEXT DEFAULT '[]',         -- Phase 20: Migration 0006
-  created_at TEXT NOT NULL,
+  id              TEXT PRIMARY KEY,
+  owner_uuid      TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  key_value       TEXT NOT NULL,             -- ShellCryption blob (opaque)
+  username        TEXT DEFAULT '',
+  category        TEXT DEFAULT '',           -- Phase 17: default purged to uncategorized ''
+  tags            TEXT DEFAULT '[]',         -- Phase 20: Migration 0006
+  imported_at     TEXT DEFAULT NULL,         -- Phase 26: Migration 0010
+  import_batch_id TEXT DEFAULT NULL,         -- Phase 26: Migration 0010 (imp_<uuid>)
+  created_at      TEXT NOT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 ```

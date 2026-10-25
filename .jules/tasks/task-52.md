@@ -1,6 +1,6 @@
 # Task 52: "Config" Settings Surface, Ephemeral Import Badges & Rapid Batch Purge
 
-> **Milestone**: Stage 27 / Phase 26 (Task 52 of 52) — **ACTIVE**  
+> **Milestone**: Stage 27 / Phase 26 (Task 52 of 52) — **COMPLETED ✅ (v0.0.2.8 / Build 30)**  
 > **Domain**: Progressive Disclosure UI, Retention Configuration, Bioluminescent Chips & Batch Rollback Modal  
 > **Target Branch**: `stage/phase-26-import-lifecycle`  
 > **Attribution**: Conventional Commits with Two-Layer Attribution (`User:` / `AI:`)  

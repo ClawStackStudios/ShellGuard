@@ -85,23 +85,21 @@ Before committing or submitting a PR, you **must** run all three verification ga
 
 ---
 
-## 🎯 Active Milestone: Stage 27 (Phase 26)
+## 🎯 Latest Completed Milestone: Stage 27 (Phase 26) — ✅ SHIPPED in v0.0.2.8 (Build 30)
 
 > **Previous Milestone**: Stage 26 (Phase 25) — **COMPLETED & SHIPPED in v0.0.2.7 (Build 29)**.
 
-You are tasked with executing **Stage 27 (Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine)**:
+**Stage 27 (Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine)** has been completed and verified in `v0.0.2.8 (Build 30)`:
 
-1. **Task 51**:
-   - Migration `0010_import_lifecycle.up.sql` & `.down.sql`: add `imported_at TEXT DEFAULT NULL` and `import_batch_id TEXT DEFAULT NULL` across pearls, notes, and SSH keys.
+1. **Task 51** ✅:
+   - Migration `0010_import_lifecycle.up.sql` & `.down.sql`: added `imported_at TEXT DEFAULT NULL` and `import_batch_id TEXT DEFAULT NULL` across pearls, notes, and SSH keys.
    - Batch fingerprinting (`imp_<uuid>`) and stamping in `POST /api/vault/bulk-import`.
    - "Auto-Graduate on Edit" on item updates (`PUT /api/vault/:id`, `PUT /api/notes/:id`, `PUT /api/keys/:id`).
    - Batch operations API (`POST .../graduate`, `DELETE .../:id` with attachment cascade).
-   - Test oracle in `tests/vault-imported-tracking.test.ts`.
-2. **Task 52**:
+   - Test oracle in `tests/vault-imported-tracking.test.ts` (16/16 passing).
+2. **Task 52** ✅:
    - Progressive disclosure invariant: ZERO import UI when 0 active imported items.
    - "Config" settings surface (`ConfigSettingsView.tsx` & `Sidebar.tsx`) with retention selector (`[30m | 60m | 90m | Manual]`).
    - Dynamic "Imported" filter in `ItemListPane.tsx` with countdown badges (`📥 Imported (42) • 58m left`).
    - Post-import action hatch in `ImportExportView.tsx` and floating bar in `VaultShell.tsx` with `ConfirmDialog` rollback.
-
-**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against the designated stage branch (`stage/phase-26-import-lifecycle`).
 

@@ -46,8 +46,8 @@ flowchart TD
     Phase23["🧩 Stage 24: Phase 23 — Bitwarden-Model Item Integrity ✅<br/>(Task 45: Attachment Parent Enforcement & Orphan Quarantine · Task 46: Type-Truthful Dashboard)"]
     Phase24["🔬 Stage 25: Phase 24 — Cryptographic Audit Hardening & Third-Party Auditability ✅<br/>(Task 47: Fallback Vector Parity & Constant-Time Sweep · Task 48: The Auditor's Battery & Threat-Model Addendum)"]
     Phase25["📦 Stage 26: Phase 25 — Habitat Full-Archive Mobility & Reactive Ingestion Dock ✅<br/>(Task 49: Habitat ZIP Archive Engine & Streamed Packaging · Task 50: Two-Stage Ingestion & Reactive Dock)"]
-    Phase26["⏱️ Stage 27: Phase 26 — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine ⬜<br/>(Task 51: Ephemeral Import Ledger & TTL Engine · Task 52: Config Settings Surface & Rapid Batch Purge)"]
-    Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.1.9 SHIPPED<br/>(17 phases · 34 task pairs · 10 oracles · receipts = tag v0.0.1.9) + post-summit hotfix stage"]
+    Phase26["⏱️ Stage 27: Phase 26 — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine ✅<br/>(Task 51: Ephemeral Import Ledger & TTL Engine · Task 52: Config Settings Surface & Rapid Batch Purge)"]
+    Summit["🏔️ SUMMIT — v0.0.1.8 parity reached, v0.0.2.8 SHIPPED<br/>(26 phases · 52 task pairs · 32 test suites · receipts = tag v0.0.2.8)"]
 
     Step0 --> UploadContext
     UploadContext --> Phase1
@@ -81,16 +81,14 @@ flowchart TD
     Phase26 --> Summit
 ```
 
-> **Transcription state**: **23 phases transcribed** (Stage 0 → 23, `v0.0.0.0`
-> void → `v0.0.2.4` parity) — the walk and the codebase occupy the same commit
-> through the summit tag. **Phases 17–22 (`v0.0.1.9` → `v0.0.2.4`) are SHIPPED.**
+> **Transcription state**: **26 phases transcribed** (Stage 0 → 27, `v0.0.0.0`
+> void → `v0.0.2.8` parity) — the walk and the codebase occupy the same commit
+> through the summit tag. **Phases 17–26 (`v0.0.1.9` → `v0.0.2.8`) are SHIPPED.**
 > **Stage 18.5** records the post-summit hotfix receipt (`07ccd61`).
-> **Stages 24–27 (Phases 23–26) are QUEUED** in the
-> active forward queue; each stage prompt is transcribed when its phase becomes
-> the next molt. Execution order is strictly chronological:
+> Execution order is strictly chronological:
 > Phase 21 → 22 → 23 → 24 → 25 → 26 — the `Stage N = Phase N−1` invariant
 > holds across the whole spine, with the unphased hotfix at the decimal slot. Each
-> queued stage's **Documentation Impact** line is part of that phase's definition
+> stage's **Documentation Impact** line is part of that phase's definition
 > of done (docs-hygiene): the executing agent syncs every listed doc before the
 > verify line, or the phase is incomplete.
 
@@ -1567,12 +1565,11 @@ updates, and the full test oracle + tsc + build stay clean!
 
 ---
 
-## ⏱️ Stage 27 (Queued): Phase 26 Prompt — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [work-driven — provisional v0.0.2.8 (Build 30)]
+## ⏱️ Stage 27: Phase 26 Prompt — Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [v0.0.2.8 (Build 30)] ✅
 
-> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-26-import-lifecycle-tracking-ephemeral-retention-window--batch-ingestion-quarantine-work-driven-version--provisional-v0028-build-30)
+> 🗺️ **Master Roadmap Reference**: See [`../ROADMAP.md`](../ROADMAP.md#phase-26-import-lifecycle-tracking-ephemeral-retention-window--batch-ingestion-quarantine-v0028-build-30-)
 > for complete specifications on **Task 51** and **Task 52**.
-> **⚠️ Execution state**: QUEUED — executes after Phase 25; green-light from
-> Lucas still required.
+> **✅ Execution state**: SHIPPED & LIVE — released in `v0.0.2.8 (Build 30)`, 2026-10-24 (PR #10).
 > 📚 **Documentation Impact**: docs/vault-features/import-export.md (import lifecycle, batch fingerprinting & TTL self-destruct) · docs/vault-features/the-grotto.md (progressive disclosure & batch purge) · ARCHITECTURE.md (Import Ledger & Delta #31) · BLUEPRINT.md · reference/blueprint-schema.md · README.md
 > **📖 Required Context Files for Phase 26**:
 > 1. [`database-schema.md`](./database-schema.md) — §3 (separated item tables; pearls, notes, SSH keys).
@@ -1652,8 +1649,6 @@ at Stage 18** with its security-hardening receipts (`7faf51d`, `027506a`,
 merge `9b5ec31`), followed by the post-summit hotfix recorded at **Stage 18.5**
 (`07ccd61`).
 
-The walk does not end at the summit — it molts. **Stages 24–27 (Phases 23–26)
-are queued** in the active forward queue of [`../ROADMAP.md`](../ROADMAP.md);
-each stage prompt is transcribed when its phase becomes the next molt. Receipts
+The walk does not end at the summit — it molts. **Stages 19–27 (Phases 18–26, `v0.0.2.0` → `v0.0.2.8`) are SHIPPED & LIVE**. Receipts
 accrue per phase, the sliding window keeps the roadmap honest, and this spine
 grows with the roadmap — built for the delete key, severable without collapse.

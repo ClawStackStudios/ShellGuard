@@ -95,7 +95,6 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
  * 🐚 POST /api/vault/bulk-import — Bulk import pearls.
  * Executes inside a database transaction with per-record validation.
  */
-// TODO(jules): Phase 26 / Task 51 — Import Lifecycle Tracking: Generate unique import_batch_id ('imp_' + crypto.randomUUID()) and stamp imported_at ISO timestamp on all inserted items in the batch transaction. Return batch metadata in response.
 router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.bulkImport), async (req: AuthRequest, res) => {
   const { items } = req.body;
   const errors: { index: number; reason: string }[] = [];

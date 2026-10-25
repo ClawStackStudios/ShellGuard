@@ -584,7 +584,6 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems, onBa
           `Partially imported: ${result.inserted.length} record(s) saved, ${result.errors.length} record(s) failed validation.`
         );
       } else {
-        // TODO(jules): Phase 26 / Task 52 — Post-Import Action Hatch: Upon successful import, surface instant action hatch: 'Review Items', live countdown, 'Graduate All', and 'Revert Import' (backed by ConfirmDialog).
         setImportStatus("success");
         setImportMessage(`Successfully imported ${importPreviewList.length} vault record(s) into your session.`);
       }
@@ -813,9 +812,6 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems, onBa
         onConfirm={() => revertingBatchId && handleConfirmRevert(revertingBatchId)}
         onCancel={() => setRevertingBatchId(null)}
       />
-
-      {/* TODO(jules): Phase 25 / Task 49 & 50 — Habitat Full-Archive Mobility & Two-Stage Ingestion
-          Constraints: Add Habitat ZIP export with ClawKey challenge gate; add .zip & directory dropzone for Stage 1 instant primary bulk-import (<2s) with background Stage 2 attachment queue handoff. */}
 
       {/* ── EXPORT OPTIONS SECTION ── */}
       <div className="bg-theme-surface/50 rounded-3xl border border-theme-subtle overflow-hidden shadow-sm">

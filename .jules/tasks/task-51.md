@@ -1,6 +1,6 @@
 # Task 51: Ephemeral Import Ledger, Time-to-Live (TTL) Engine & Multi-Batch Tracking
 
-> **Milestone**: Stage 27 / Phase 26 (Task 51 of 52) — **ACTIVE**  
+> **Milestone**: Stage 27 / Phase 26 (Task 51 of 52) — **COMPLETED ✅ (v0.0.2.8 / Build 30)**  
 > **Domain**: Backend Schema, Ingestion Fingerprinting, Auto-Graduation & Atomic Batch Rollback  
 > **Target Branch**: `stage/phase-26-import-lifecycle`  
 > **Attribution**: Conventional Commits with Two-Layer Attribution (`User:` / `AI:`)  

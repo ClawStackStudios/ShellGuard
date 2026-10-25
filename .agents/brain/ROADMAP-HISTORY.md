@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 22 (`v0.0.0.0` → `v0.0.2.4`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 23 (`v0.0.0.0` → `v0.0.2.5`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 23, 24, and 25), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 24, 25, and 26), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -1212,3 +1212,87 @@ search consolidation.
 > the list); sidebar and header contain no search controls; the Eye-beside-Copy
 > ergonomics delivered by Phase 19 still holds on every masked field row; the
 > full test oracle + `tsc` + build stay clean.
+
+---
+
+## Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [v0.0.2.5 (Build 27)] ✅
+
+> Phase Feature Set Overview:
+> Aligns ShellGuard's item model fully with the Bitwarden pattern (verified
+> against Bitwarden's documentation): vault items are ciphers of fixed types
+> (Password, Secure Note, SSH Key, Card, Identity) and **attachments are NEVER standalone items** —
+> they are encrypted children bound to a parent. Migration 0009 enforces parent linkage
+> at the database layer; unparented/orphaned attachments are swept into a safe,
+> non-destructive quarantine ledger (`is_quarantined = 1`) with forensic audit logging in
+> `audit.sqlite`; relational cascades automatically strip deleted attachment IDs from parent
+> items; pre-flight quota inspection endpoint exposes capacity stats; Secure Notes strictly reject
+> secret payloads; and the Vault Dashboard Add-Menu and item lists strictly display primary types
+> in deterministic sort order.
+> *(Receipts: Phase 23 Tasks 45 & 46 + Sub-Stage 25.1, 2026-10-17. Released & live.)*
+
+> 📚 **Documentation Impact**: SECURITY.md (form-contract: notes reject secret payloads) - ARCHITECTURE.md (attachments route table, Delta #28) - reference/blueprint-schema.md (quarantine semantics) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (standalone creation rejected, sweeper & quota) - docs/vault-features — ✅ synced.
+
+- [x] **Task 45: [Functionality] Attachment Parent Enforcement, Orphan Quarantine & Form-Contract Rules**
+
+Description: Enforce parent linkage at the Bedrock. (1) `attachments.ts`:
+the POST route requires a parent item reference — reject standalone
+attachment creation with a validation error (zod schema gains a required
+parent linkage; keep the reference model: the parent's `attachments` JSON ID
+array gains the child id in the same transaction). PUT/DELETE unchanged.
+(2) Migration `0009_attachment_integrity.{up,down}.sql` + backfill: resolve
+orphan standalone attachment rows (the `category: 'Attachment'` rows written
+by `uploadAttachmentRecord` without a parent) — relink where a parent can be
+determined, otherwise QUARANTINE (flagged hidden from lists, never deleted;
+user data is sacred). Audit the quarantine events. (3) Form-contract rules in
+`src/server/validation/schemas.ts`: Secure Notes CANNOT carry password
+credentials (no `secret` payload on notes — rejected server-side);
+attachments are allowed on pearls, notes, and SSH keys per the locked domain
+rules. (4) Keep zero-knowledge: `file_data` remains an opaque ShellCryption
+blob — the server enforces LINKAGE, never content. Prove it in
+`tests/attachment-integrity.test.ts` (standalone creation rejected, orphan
+quarantine, relink path, note-with-password rejected).
+
+> Success Criteria: Standalone attachment creation fails closed with a clear
+> validation error; every attachment row is either parent-linked or
+> quarantined (never silently deleted); a Secure Note with a `secret` payload
+> is rejected; quarantine events are audited; zero-knowledge untouched (the
+> server still never reads `file_data`); the full test oracle + `tsc` + build
+> stay clean.
+
+- [x] **Task 46: [UI Component] Bitwarden-Model Dashboard — Add-Menu Correction & Type-Truthful Display**
+
+Description: Make the UI tell the item-model truth. (1) Remove the
+'📎 Attachment' entry from the '+' add-item menu (`Layout/Header.tsx`
+~line 202, the `['password', 'note', 'key', 'attachment']` map) —
+attachments enter only through an item's create/edit form (`ItemFormModal`
+attachment section, which already implements the drag-and-drop + linked-
+attachment model). Sweep `VaultItemType` consumers (add-flow, filters, empty
+states) so 'attachment' never surfaces as a creatable type. (2) Dashboard
+display correctness: `ItemListPane` shows exactly primary types
+(Passwords, Secure Notes, SSH Keys, Cards, Identities) with correct icons/labels;
+attachments render ONLY inside their parent's detail pane (the existing `VaultShell`
+exclusion becomes a guarantee, not a filter accident). (3) Sorting:
+deterministic type-aware ordering — recency within type, with the type
+ordering Passwords → Cards → Identities → Secure Notes → SSH Keys.
+(4) Empty states per type-filter reflect the real item model.
+
+> Success Criteria: No 'Attachment' option in any add surface; the list
+> contains exactly Passwords/Secure Notes/SSH Keys/Cards/Identities; attachments appear only
+> within their parent's detail; sorting is deterministic and type-aware;
+> the full test oracle + `tsc` + build stay clean.
+
+#### 🌊 Phase 23 Sub-Stage: Relational Cascade Deletion, Runtime Sweeper & Pre-Flight Quota (Sub-Stage 25.1)
+
+> Sub-Stage Feature Set Overview:
+> Hardens attachment operational mechanics across runtime and API layers: transactional
+> relational cascade on `DELETE /api/attachments/:id` stripping child IDs from parent item
+> `attachments` JSON arrays across pearls, notes, and keys; on-demand runtime orphan quarantine
+> sweeper endpoint `POST /api/attachments/quarantine/sweep`; and pre-flight storage capacity
+> quota endpoint `GET /api/attachments/quota` returning `{ used_bytes, quota_bytes, remaining_bytes }`.
+
+- [x] **Sub-Stage 25.1: [Relational & Runtime Hardening] Attachment Cascade, Sweeper & Quota**
+  - Transactional cascade cleanup removing deleted attachment ID from parent item `attachments` arrays.
+  - On-demand runtime quarantine sweeper `POST /api/attachments/quarantine/sweep`.
+  - Pre-flight quota capacity endpoint `GET /api/attachments/quota`.
+  - Expanded test coverage in `tests/attachment-integrity.test.ts` (341 tests passing).
+

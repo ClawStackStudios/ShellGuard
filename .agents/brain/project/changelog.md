@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.0.2.8] - 2026-10-24 (Build 30)
+
+### Added
+- **Ephemeral Import Ledger & Migration 0010 (Task 51):** Added `imported_at TEXT DEFAULT NULL` and `import_batch_id TEXT DEFAULT NULL` columns with `idx_pearls_import_batch`, `idx_notes_import_batch`, and `idx_keys_import_batch` composite indices across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+- **Atomic Batch Fingerprinting (Task 51):** Updated `POST /api/vault/bulk-import` to stamp all imported records with `import_batch_id` (`imp_<uuid>`) and `imported_at` ISO timestamp, returning both in the 201/207 response payload.
+- **Auto-Graduate on Edit & Batch Operations API (Task 51):** Updating any quarantined record via `PUT /api/vault/:id`, `PUT /api/notes/:id`, or `PUT /api/keys/:id` automatically clears `imported_at` and `import_batch_id` to `NULL` (with optional `keep_quarantine` override). Added `POST /api/vault/import-batches/:id/graduate` and `DELETE /api/vault/import-batches/:id` (cascading linked attachments and logging `IMPORT_BATCH_GRADUATED` / `IMPORT_BATCH_REVERTED` to `audit.sqlite`). Proven by 16 integration tests in `tests/vault-imported-tracking.test.ts`.
+- **Progressive Disclosure Quarantine UI & Config Surface (Task 52):** Added `ConfigSettingsView.tsx` with segmented retention window selector (`30m`, `60m`, `90m`, `Manual / Never`) and Auto-Graduate toggle; dynamic `⏳ Quarantine (N)` filter tab and pulsing row badges in `ItemListPane.tsx`; centered floating batch action bar in `VaultShell.tsx`; inline quarantine banner in `ItemDetailPane.tsx`; and Post-Import Action Hatch with `ConfirmDialog` rollback in `ImportExportView.tsx`.
+- **ShellGuard Mobile Documentation Suite & VitePress Truth Alignment:** Added 6-chapter `/mobile/` documentation suite and synchronized `forensic-auditing.md`, `blueprint-schema.md`, `api-reference.md`, `glossary.md`, `vault-features/index.md`, and `docs/index.md` with runtime ground truth.
+
 ## [0.0.2.7] - 2026-10-20 (Build 29)
 
 ### Added

@@ -215,6 +215,7 @@ router.get('/settings', requireAdmin, (_req, res) => {
 });
 
 const SETTINGS_WHITELIST = [
+  'allow_signups',
   'audit_retention_days',
   'uptime_retention_days',
   'backup_enabled',
@@ -318,6 +319,45 @@ router.post('/backup', requireAdmin, async (req, res) => {
 router.get('/backups', requireAdmin, (_req, res) => {
   res.json({ success: true, data: listBackups() });
 });
+
+
+// ─── Invites Management (Phase 27) ───────────────────────────────────────────
+
+router.get('/invites', requireAdmin, (req, res) => {
+  const invites = db.prepare("SELECT * FROM api_tokens WHERE owner_type = 'invite' ORDER BY created_at DESC").all();
+  res.json({ success: true, data: invites });
+});
+
+router.post('/invites', requireAdmin, (req, res) => {
+  const ttl = req.body.ttl || '24h'; // '1h'|'6h'|'24h'|'7d'
+  const label = req.body.label || 'Invite';
+
+  let expiresAt = new Date();
+  const now = new Date();
+  if (ttl === '1h') expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
+  else if (ttl === '6h') expiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+  else if (ttl === '24h') expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  else if (ttl === '7d') expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  else expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const crypto = require('crypto');
+  const inviteToken = 'inv_' + crypto.randomBytes(24).toString('hex');
+  const hashedInvite = crypto.createHash('sha256').update(inviteToken).digest('hex');
+
+  db.prepare('INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)')
+    .run(hashedInvite, label, 'invite', now.toISOString(), expiresAt.toISOString());
+
+  adminAudit('INVITE_CREATED', req, { resource: 'invite', details: { ttl, label } });
+  res.status(201).json({ success: true, data: { inviteToken, label, expiresAt: expiresAt.toISOString() } });
+});
+
+router.delete('/invites/:hash', requireAdmin, (req, res) => {
+  const info = db.prepare("DELETE FROM api_tokens WHERE key = ? AND owner_type = 'invite'").run(req.params.hash);
+  if (info.changes === 0) return res.status(404).json({ success: false, error: 'Invite not found' });
+  adminAudit('INVITE_REVOKED', req, { resource: 'invite', details: { hash: req.params.hash } });
+  res.json({ success: true });
+});
+
 
 export default router;
 

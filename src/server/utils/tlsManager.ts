@@ -1,3 +1,4 @@
+import { signWithInstanceKey } from './instanceKey.js';
 /**
  * TLS certificate manager — self-signed cert generation for LAN HTTPS.
  *
@@ -32,6 +33,7 @@ export interface TlsMaterials {
 const CERT_DIR = path.join(DATA_DIR, 'certs');
 const DEFAULT_CERT_PATH = path.join(CERT_DIR, 'cert.pem');
 const DEFAULT_KEY_PATH = path.join(CERT_DIR, 'key.pem');
+const MANIFEST_PATH = path.join(CERT_DIR, 'manifest.json');
 const TEN_YEARS_MS = 10 * 365.25 * 24 * 60 * 60 * 1000;
 
 /** SHA-256 fingerprint of a PEM cert, colon-separated hex (browser style). */
@@ -125,8 +127,18 @@ export async function ensureTlsMaterials(): Promise<TlsMaterials> {
 
   const { cert, key, fingerprint } = await generateCertificate();
   persist(cert, key, DEFAULT_CERT_PATH, DEFAULT_KEY_PATH);
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = signWithInstanceKey(fingerprint + timestamp);
+  const manifest = { certFingerprint: fingerprint, timestamp, signature };
+  fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), { mode: 0o600 });
   console.log(`[TLS] 🔐 Self-signed certificate generated at ${DEFAULT_CERT_PATH}`);
   console.log(`[TLS]    Fingerprint: ${fingerprint}`);
   console.log(`[TLS]    SANs: ${collectSubjectAltNames().map(n => n.ip ?? n.value).join(', ')}`);
   return { key, cert, certPath: DEFAULT_CERT_PATH, keyPath: DEFAULT_KEY_PATH, fingerprint, generated: true };
+}
+export function getRotationManifest(): { certFingerprint: string; timestamp: number; signature: string } | null {
+  if (!fs.existsSync(MANIFEST_PATH)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+  } catch { return null; }
 }

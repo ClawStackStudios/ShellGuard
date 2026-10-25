@@ -33,7 +33,7 @@ export function InteractiveBrand({
 
   const isProminent = variant === 'prominent';
 
-  const letterVariants = {
+  const letterany = {
     initial: { y: 0, scale: 1 },
     hover: { 
       y: isProminent ? -8 : -4, 
@@ -66,7 +66,7 @@ export function InteractiveBrand({
             "w-9 h-9 bg-gradient-to-br from-[#e4048a] to-[#ef4444] rounded-xl flex items-center justify-center shadow-lg shadow-[#e4048a]/20 origin-bottom flex-shrink-0",
             iconClassName
           )}
-          variants={letterVariants}
+          variants={letterany}
           initial="initial"
           whileHover="hover"
         >
@@ -78,7 +78,7 @@ export function InteractiveBrand({
           {shell.map((letter, i) => (
             <motion.span
               key={`shell-${i}`}
-              variants={letterVariants}
+              variants={letterany}
               initial="initial"
               whileHover="hover"
               className="text-[#e4048a] inline-block origin-bottom transition-colors"
@@ -91,7 +91,7 @@ export function InteractiveBrand({
           {guard.map((letter, i) => (
             <motion.span
               key={`guard-${i}`}
-              variants={letterVariants}
+              variants={letterany}
               initial="initial"
               whileHover="hover"
               className="text-[#ef4444] inline-block origin-bottom transition-colors"
@@ -106,7 +106,7 @@ export function InteractiveBrand({
             {suffixLetters.map((letter, i) => (
               <motion.span
                 key={`suffix-${i}`}
-                variants={letterVariants}
+                variants={letterany}
                 initial="initial"
                 whileHover="hover"
                 className="inline-block origin-bottom transition-colors"

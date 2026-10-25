@@ -17,6 +17,13 @@ function detectKeyType(key: string) {
   return null;
 }
 
+// TODO(jules): Phase 27 - Enforce Genesis User #1 immunity and invite token verification:
+// 1. If SELECT COUNT(*) FROM lobsters is 0, allow registration unconditionally (Genesis Rule).
+// 2. If lobsters > 0 and signups closed (DISABLE_SIGNUPS=true or system_settings.allow_signups='false'),
+//    require valid req.body.inviteToken.
+// 3. Atomically verify and burn invite in synchronous db.transaction():
+//    DELETE FROM api_tokens WHERE key = sha256(inviteToken) AND owner_type = 'invite' AND expires_at > datetime('now');
+//    If changes === 0, abort with 403 Forbidden. See .jules/tasks/task-53.md.
 /** POST /api/auth/register */
 router.post('/register', authLimiter, validateBody(AuthSchemas.register), (req, res) => {
   const { uuid, username, displayName, keyHash } = req.body;

@@ -319,6 +319,12 @@ router.get('/backups', requireAdmin, (_req, res) => {
   res.json({ success: true, data: listBackups() });
 });
 
+// TODO(jules): Phase 27 - Implement TLS control plane endpoints:
+// GET /api/admin/tls/status, POST /api/admin/tls/generate, GET /api/admin/tls/cert (public PEM only, never private key!)
+// Implement invite endpoints reusing api_tokens table (owner_type = 'invite'):
+// GET /api/admin/invites, POST /api/admin/invites (ttl: '1h'|'6h'|'24h'|'7d'), DELETE /api/admin/invites/:hash
+// Add 'allow_signups' to SETTINGS_WHITELIST. See .jules/tasks/task-53.md.
+
 export default router;
 
 

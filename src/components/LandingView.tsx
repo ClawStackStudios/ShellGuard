@@ -35,6 +35,10 @@ function KeyPill({ prefix, label, color }: { prefix: string; label: string; colo
   );
 }
 
+// TODO(jules): Phase 27 - In LandingView / AuthGateway, query /api/public/signup-status.
+// If signupsAllowed is false, lock/hide the "Hatch" button and show "Registration is invite-only on this instance" badge.
+// If an invite token was captured from ?invite= in App.tsx, automatically unlock Hatch or navigate to SetupView.
+// See .jules/tasks/task-54.md.
 // ── Compact Auth Gateway (ClawChives Pattern Port) ──────────────────────────────
 function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () => void }) {
   const [gatewayMode, setGatewayMode] = useState<"human" | "agent">("human");

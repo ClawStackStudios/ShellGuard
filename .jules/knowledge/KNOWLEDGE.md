@@ -188,4 +188,61 @@ If you implement a fix or refactor where you have lower confidence—where the c
 - **Progressive Disclosure Invariant**: If no items have unexpired `imported_at` timestamps, ZERO import-related filters, chips, or action hatches render.
 - **Floating Bar Adjacency**: The floating batch action bar in `VaultShell.tsx` must NOT collide with or obscure the floating `AbyssalIngestionDock` in the bottom-right viewport.
 
+---
+
+## 8. Phase 27 Domain Knowledge: TLS Control Plane, Root Identity & Share Signups
+
+### A. Root Identity Key Invariants (`instance.key`)
+- **Key Curve & Permissions**: Strictly EC P-256 (`prime256v1`). File permissions on `DATA_DIR/instance.key` MUST be `0o600` (`-rw-------`).
+- **Uncompressed Hex Format**: `getInstancePublicKeyHex()` returns a 130-hex-character uncompressed EC public key (`04` prefix + 64-hex X coordinate + 64-hex Y coordinate).
+- **Immutability Contract**: `instance.key` is generated ONCE on first boot. It is NEVER rotated or overwritten when leaf TLS certificates regenerate. It serves as the immutable trust anchor pinned by mobile companion apps.
+- **ECDSA Sign / Verify**: Signed data is `${certFingerprint}:${timestamp}` using ECDSA-SHA256, encoded as Base64. Verification checks signature against `instance.key` public key.
+
+### B. Rotation Manifest Schema (`manifest.json`)
+```json
+{
+  "tlsEnabled": true,
+  "certFingerprint": "SHA256:xx:xx:...",
+  "instancePublicKey": "04...",
+  "timestamp": "ISO-8601",
+  "signature": "<Base64-ECDSA-SHA256-signature>"
+}
+```
+- Attached to `GET /api/public/tls-manifest` with response header:
+  `X-ShellGuard-Rotation-Proof: <base64-encoded-manifest-json>`
+
+### C. Zero-Downtime TLS Hot-Reload
+- When `POST /api/admin/tls/generate` reforges a certificate:
+  ```ts
+  (server as https.Server).setSecureContext({ key: newKeyPem, cert: newCertPem });
+  ```
+  This immediately updates the TLS certificate served on port 3000/6565 without restarting Node.js or dropping active WebSocket/SSE connections.
+
+### D. Zero-Migration Invite Storage Contract (`api_tokens` reuse)
+- **Table Structure Reused**: `api_tokens (key TEXT PRIMARY KEY, owner_uuid TEXT, owner_type TEXT, created_at TEXT, expires_at TEXT)`.
+- **Token Format**: Cleartext token is `inv_<32 base62 chars>`.
+- **Database Storage**: `key` stores `SHA-256(token)` (64-hex). `owner_type` is strictly `'invite'`. `owner_uuid` stores optional admin label.
+- **Single-Use Burn Invariant**: Verification and deletion must execute inside a synchronous `db.transaction()`:
+  ```sql
+  DELETE FROM api_tokens WHERE key = ? AND owner_type = 'invite' AND expires_at > datetime('now');
+  ```
+  If `changes === 0`, registration is aborted with `403 Invalid or expired invite`.
+- **Automatic Expiry Cleanup**: Existing `purgeExpiredTokens()` automatically cleans expired invites alongside session tokens.
+
+### E. Genesis User #1 Immunity Rule
+- If `SELECT COUNT(*) FROM lobsters === 0`, registration is **unconditionally allowed** regardless of `DISABLE_SIGNUPS=true` or `system_settings.allow_signups = 'false'`.
+- This guarantees a server owner can never lock themselves out of a fresh installation.
+
+### F. Decoupled SuperLobster Invite Sovereignty
+- `DISABLE_SIGNUPS=true` (or `system_settings.allow_signups = 'false'`) ONLY blocks spontaneous, uninvited public registrations from the web gateway.
+- The SuperLobster administrator can ALWAYS mint single-use invites at any time. Bespoke invites provide an authorized bypass token for friends/family/teammates.
+
+### G. Zero-XSS QR & Address Bar Sanitization
+- **QR Rendering**: Render QR codes exclusively via `QRCode.toDataURL()` inside `<img src={dataUrl} />`. NEVER inject raw SVG or use `dangerouslySetInnerHTML`.
+- **URL Sanitization**: When a user arrives with `/?invite=inv_...`, extract the token into React state and scrub the URL bar immediately on mount:
+  ```ts
+  window.history.replaceState({}, '', window.location.pathname);
+  ```
+
+
 

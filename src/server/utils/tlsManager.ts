@@ -98,6 +98,9 @@ function persist(cert: string, key: string, certPath: string, keyPath: string): 
   fs.chmodSync(keyPath, 0o600);
 }
 
+// TODO(jules): Phase 27 - Implement certs/manifest.json rotation proof signed by instanceKey.ts,
+// and export regenerateTlsCertificate(extraHosts?: string[]) with server.setSecureContext() hot-reload.
+// See .jules/tasks/task-53.md and .jules/knowledge/KNOWLEDGE.md § 8.
 /**
  * Resolve TLS materials in priority order:
  *   1. BYO: TLS_CERT_PATH + TLS_KEY_PATH (both required when either is set)

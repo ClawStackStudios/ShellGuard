@@ -40,11 +40,14 @@ ShellGuard solves this with three non-negotiable architectural anchors:
 
 ## Next Steps
 
-<CardGrid cols="2">
+<CardGrid cols="3">
   <Card title="5-Minute Quickstart" href="/getting-started/quickstart" icon="⚡">
     Deploy with Docker Compose or run Node.js locally.
   </Card>
   <Card title="Key Molting & Identity" href="/getting-started/key-molting" icon="🗝️">
     Understand the ClawKey (<code>hu-</code>) - your human identity key - and the zero-knowledge identity model.
+  </Card>
+  <Card title="Troubleshooting & FAQ" href="/getting-started/troubleshooting" icon="🛠️">
+    Find solutions for network gateway connectivity, self-signed TLS, and mobile sync.
   </Card>
 </CardGrid>

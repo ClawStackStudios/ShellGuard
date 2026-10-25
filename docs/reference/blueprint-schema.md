@@ -7,7 +7,7 @@ description: Authoritative SQLite Schema Definitions for ShellGuard & Forensic A
 
 <CopyPage />
 
-The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.4 (migrations 0001-0009).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`), migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`), migration `0006_vault_tags` adds `tags` JSON columns and owner indices, migration `0007_composite_item_features` adds secondary login URIs (`uris`) and password generation revision history (`password_history`) to `vault_pearls`, migration `0008_note_attachments` adds child binary attachment support (`attachments TEXT DEFAULT '[]'`) to `vault_secure_notes`, and migration `0009_attachment_integrity` enforces Bitwarden-style item integrity (adding `attachments` to `vault_ssh_keys` and parent linkage/quarantine columns to `vault_secure_attachments`).
+The database tables are initialized via versioned SQLite migrations located in `migrations/` and executed at server boot by `MigrationRunner`. **Ground truth as of v0.0.2.8 (migrations 0001-0010).** Note that migration `0004_key_ledger` performs its SHA-256 key backfill in code (`src/server/database/keyLedger.ts`), migration `0005_attachment_blobs` migrates legacy attachment payloads to native SQLite BLOB storage (`src/server/database/attachmentBlobs.ts`), migration `0006_vault_tags` adds `tags` JSON columns and owner indices, migration `0007_composite_item_features` adds secondary login URIs (`uris`) and password generation revision history (`password_history`) to `vault_pearls`, migration `0008_note_attachments` adds child binary attachment support (`attachments TEXT DEFAULT '[]'`) to `vault_secure_notes`, migration `0009_attachment_integrity` enforces Bitwarden-style item integrity (adding `attachments` to `vault_ssh_keys` and parent linkage/quarantine columns to `vault_secure_attachments`), and migration `0010_import_lifecycle` adds ephemeral import tracking columns (`imported_at`, `import_batch_id`) and batch indices across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
 
 ShellGuard maintains two separate SQLite database files:
 1. **`DATA_DIR/db.sqlite`**: The primary operational database, encrypted whole-DB with SQLCipher (Layer 3) and per-row metadata encryption (Layer 2).
@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_api_tokens_owner ON api_tokens(owner_uuid, owner_
 ```
 
 ### 3. `vault_pearls` (Logins & Credentials)
-Stores login credentials. `secret`, `totp_secret`, `attachments`, `custom_fields`, and `password_history` contain client-side ShellCryption ciphertext envelopes. `uris` is sealed under Layer 2 metadata encryption.
+Stores login credentials. `secret`, `totp_secret`, `attachments`, `custom_fields`, and `password_history` contain client-side ShellCryption ciphertext envelopes. `uris` is sealed under Layer 2 metadata encryption. `imported_at` and `import_batch_id` remain unencrypted relational columns for indexed batch queries (Migration 0010).
 
 ```sql
 CREATE TABLE IF NOT EXISTS vault_pearls (
@@ -69,10 +69,13 @@ CREATE TABLE IF NOT EXISTS vault_pearls (
   uris             TEXT DEFAULT '[]',
   password_history TEXT DEFAULT '[]',
   created_at       TEXT NOT NULL,
+  imported_at      TEXT DEFAULT NULL,
+  import_batch_id  TEXT DEFAULT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 
 CREATE INDEX IF NOT EXISTS idx_vault_pearls_owner_created ON vault_pearls(owner_uuid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pearls_import_batch ON vault_pearls(owner_uuid, import_batch_id);
 ```
 
 ### 4. `vault_secure_notes` (Markdown Notes)
@@ -80,19 +83,22 @@ Encrypted free-form text and markdown documentation. Linked child binary attachm
 
 ```sql
 CREATE TABLE IF NOT EXISTS vault_secure_notes (
-  id            TEXT PRIMARY KEY,
-  owner_uuid    TEXT NOT NULL,
-  title         TEXT NOT NULL,
-  content       TEXT NOT NULL,
-  category      TEXT DEFAULT '',
-  custom_fields TEXT DEFAULT '',
-  tags          TEXT DEFAULT '[]',
-  attachments   TEXT DEFAULT '[]',
-  created_at    TEXT NOT NULL,
+  id              TEXT PRIMARY KEY,
+  owner_uuid      TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  content         TEXT NOT NULL,
+  category        TEXT DEFAULT '',
+  custom_fields   TEXT DEFAULT '',
+  tags            TEXT DEFAULT '[]',
+  attachments     TEXT DEFAULT '[]',
+  created_at      TEXT NOT NULL,
+  imported_at     TEXT DEFAULT NULL,
+  import_batch_id TEXT DEFAULT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 
 CREATE INDEX IF NOT EXISTS idx_vault_secure_notes_owner_created ON vault_secure_notes(owner_uuid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notes_import_batch ON vault_secure_notes(owner_uuid, import_batch_id);
 ```
 
 ### 5. `vault_ssh_keys` (SSH Private Keys)
@@ -100,20 +106,23 @@ Encrypted SSH keys and certificates.
 
 ```sql
 CREATE TABLE IF NOT EXISTS vault_ssh_keys (
-  id            TEXT PRIMARY KEY,
-  owner_uuid    TEXT NOT NULL,
-  title         TEXT NOT NULL,
-  key_value     TEXT NOT NULL,
-  username      TEXT DEFAULT '',
-  category      TEXT DEFAULT '',
-  custom_fields TEXT DEFAULT '',
-  tags          TEXT DEFAULT '[]',
-  attachments   TEXT DEFAULT '[]',
-  created_at    TEXT NOT NULL,
+  id              TEXT PRIMARY KEY,
+  owner_uuid      TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  key_value       TEXT NOT NULL,
+  username        TEXT DEFAULT '',
+  category        TEXT DEFAULT '',
+  custom_fields   TEXT DEFAULT '',
+  tags            TEXT DEFAULT '[]',
+  attachments     TEXT DEFAULT '[]',
+  created_at      TEXT NOT NULL,
+  imported_at     TEXT DEFAULT NULL,
+  import_batch_id TEXT DEFAULT NULL,
   FOREIGN KEY (owner_uuid) REFERENCES lobsters(uuid)
 );
 
 CREATE INDEX IF NOT EXISTS idx_vault_ssh_keys_owner_created ON vault_ssh_keys(owner_uuid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_keys_import_batch ON vault_ssh_keys(owner_uuid, import_batch_id);
 ```
 
 ### 6. `vault_secure_attachments` (File Attachments)

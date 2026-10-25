@@ -19,7 +19,7 @@
 <br/>
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/Version-v0.0.2.7-blue?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.0.2.8-blue?style=for-the-badge)](CHANGELOG.md)
 [![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -90,10 +90,11 @@
 
 ### 🐚 The Grotto (Vault)
 
-- 🐚 **The Grotto (Vault)** — Logins (with multi-URI support, dynamic RFC 6238 TOTP, client-side password generation history drawer, and encrypted attachments with 500 MB per file, 1000 MB quota), secure notes, SSH keys and standalone attachments, organized into color-coded nested **pods** and multi-dimensional **tags**.
+- 🐚 **The Grotto (Vault)** — Logins (with multi-URI support, dynamic RFC 6238 TOTP, client-side password generation history drawer, and encrypted attachments with 500 MB per file, 1000 MB quota), secure notes, and SSH keys (all supporting child encrypted attachments), organized into color-coded nested **pods** and multi-dimensional **tags**.
 - 🏷️ **Custom Fields** — Bitwarden-style custom fields (Text, Hidden, Boolean, Linked) across logins, notes, and SSH keys. Hidden custom fields are sealed client-side via AES-GCM-256 with AAD integrity verification.
 - 🎲 **Pearl Generator** — Cryptographically random password generator with configurable length/character sets, complexity scoring, and client-side revision history sealed under Layer 1 ShellCryption.
 - 📦 **Habitat Full-Archive Mobility & Two-Stage Ingestion** — Streamed zero-knowledge ZIP export bounded to $O(\text{largest single file})$ RAM via Web Streams and `client-zip`, paired with an instant (<2s) Stage 1 ingestion pipeline and a persistent, floating **Abyssal Ingestion Dock** that manages massive attachment restores in the background with reactive bioluminescent status chips.
+- ⏳ **Ephemeral Import Quarantine & Auto-Graduation** — Bulk imports stamp every inserted record with an atomic batch identifier (`imp_<uuid>`) and UTC timestamp (`imported_at`). Quarantined records obey strict progressive disclosure (zero quarantine UI renders when no active quarantined items exist), auto-graduate to permanent status immediately upon user edit (`PUT`), and support 1-click atomic batch graduation or full rollback (`DELETE /api/vault/import-batches/:id`) with attachment cascade and forensic audit logging (`IMPORT_BATCH_REVERTED`).
 - 📤 **Sovereign Exports & Imports** — Atomic bulk import engine (up to 1,000 items with HTTP 207 Multi-Status partial failure reporting), universal Bitwarden ingestion parity (unencrypted JSON and CSV with automatic folder-to-pod conversion and custom field translation), zero-knowledge AES-256-GCM encrypted backup archives (sealed via ClawKey HKDF or custom passphrase PBKDF2-100k), RFC 4180 CSV spreadsheet export with password sanitization controls, and native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
 - 📱 **ShellGuard-TOTP Android Companion** — Dedicated native Android 2FA authenticator with biometrics, hardware-backed KeyStore isolation, camera & gallery QR scanning, and 1-way mirror sync with the ShellGuard web vault. Releases: [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases).
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically without flushing offline recovery buffers.
@@ -375,14 +376,16 @@ npm run start:api
 | `GET` | `/api/auth/me` | Bearer | Fetch current profile *(ShellGuard-only endpoint)* |
 | `PUT` | `/api/auth/profile` | Bearer | Update display name *(ShellGuard-only endpoint)* |
 
-### Vault Pearls (Logins)
+### Vault Pearls & Import Batches
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/vault` | canRead | List all pearl logins (owner-scoped; supports `?tags=a,b`) |
+| `GET` | `/api/vault` | canRead | List all pearl logins (owner-scoped; supports `?tags=a,b`; returns `imported_at` & `import_batch_id`) |
 | `POST` | `/api/vault` | canWrite | Create a login (title, secret, username, url, TOTP seed…) |
-| `POST` | `/api/vault/bulk-import` | canWrite | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, returns HTTP 207 Multi-Status with `{ inserted, errors }`) |
-| `PUT` | `/api/vault/:id` | canEdit | Update a login |
+| `POST` | `/api/vault/bulk-import` | canWrite | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, stamps `import_batch_id` (`imp_<uuid>`) and `imported_at`; returns HTTP 201 or 207 Multi-Status) |
+| `POST` | `/api/vault/import-batches/:id/graduate` | canEdit | Atomically graduate an import batch across pearls, notes, and SSH keys by clearing `imported_at` and `import_batch_id` |
+| `DELETE` | `/api/vault/import-batches/:id` | canDelete | Atomically revert an import batch across pearls, notes, and SSH keys, cascading to linked attachments and logging `IMPORT_BATCH_REVERTED` |
+| `PUT` | `/api/vault/:id` | canEdit | Update a login (auto-graduates quarantined items by clearing `imported_at` and `import_batch_id`) |
 | `DELETE` | `/api/vault/bulk` | canDelete | Batch delete pearls by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
 | `DELETE` | `/api/vault/:id` | canDelete | Delete a login (cascades linked attachments) |
 
@@ -390,19 +393,19 @@ npm run start:api
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/notes` | canRead | List secure notes (supports `?tags=a,b`) |
+| `GET` | `/api/notes` | canRead | List secure notes (supports `?tags=a,b`; returns `imported_at` & `import_batch_id`) |
 | `POST` | `/api/notes` | canWrite | Create a secure note (supports `tags` and `attachments`) |
-| `PUT` | `/api/notes/:id` | canEdit | Update a secure note |
+| `PUT` | `/api/notes/:id` | canEdit | Update a secure note (auto-graduates quarantined items) |
 | `DELETE` | `/api/notes/:id` | canDelete | Delete a secure note (cascades linked attachments) |
 
 ### SSH Keys
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/keys` | canRead | List SSH keys (supports `?tags=a,b`) |
-| `POST` | `/api/keys` | canWrite | Store an SSH key |
-| `PUT` | `/api/keys/:id` | canEdit | Update an SSH key |
-| `DELETE` | `/api/keys/:id` | canDelete | Delete an SSH key |
+| `GET` | `/api/keys` | canRead | List SSH keys (supports `?tags=a,b`; returns `imported_at` & `import_batch_id`) |
+| `POST` | `/api/keys` | canWrite | Store an SSH key (supports `tags` and `attachments`) |
+| `PUT` | `/api/keys/:id` | canEdit | Update an SSH key (auto-graduates quarantined items) |
+| `DELETE` | `/api/keys/:id` | canDelete | Delete an SSH key (cascades linked attachments) |
 
 ### Secure Attachments
 
@@ -414,7 +417,7 @@ npm run start:api
 | `PUT` | `/api/attachments/:id` | canEdit | Update attachment metadata |
 | `DELETE` | `/api/attachments/:id` | canDelete | Delete attachment and release quota |
 
-Password and Secure Note entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the parent's `attachments` column holds only a JSON array of attachment IDs (unlimited attachments, one file each, 500 MB max per attachment, 1000 MB grotto quota). Deleting a login or secure note cascade-deletes its linked attachments.
+Password, Secure Note, and SSH Key entries link attachments by reference: each uploaded file is stored as its own encrypted attachment record, and the parent's `attachments` column holds only a JSON array of attachment IDs (500 MB max per attachment, 1000 MB grotto quota). Deleting a login, secure note, or SSH key cascade-deletes its linked attachments.
 
 ### Agent Keys (LobsterKeys©™)
 
@@ -449,7 +452,7 @@ Token-gated via `ADMIN_TOKEN` (503 when unset). Cookie-session auth (`sg_admin_s
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| `GET` | `/api/settings/:key` | human-only | Read a synced preference (`appearance/theme`, `generator`, `pods`, `security`) |
+| `GET` | `/api/settings/:key` | human-only | Read a synced preference (`appearance/theme`, `generator`, `pods`, `security`, `import_lifecycle`) |
 | `PUT` | `/api/settings/:key` | human-only | Write a synced preference (JSON ≤ 256KB) |
 | `GET` | `/api/health` | – | Health check + record counts |
 | `GET` | `/skill.md` | – | AI-agent skill documentation (Markdown) |

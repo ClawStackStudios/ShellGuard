@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.7. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.8. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 
@@ -34,7 +34,7 @@
 ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
-├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.7)
+├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.8)
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
@@ -88,19 +88,23 @@ ShellGuard/
 │   ├── 0008_note_attachments.up.sql          # Phase 21 Post-Verification: note attachments column
 │   ├── 0008_note_attachments.down.sql        # Rollback note attachments (safe no-op)
 │   ├── 0009_attachment_integrity.up.sql      # Phase 23 (v0.0.2.5): attachment parent enforcement & quarantine
-│   └── 0009_attachment_integrity.down.sql    # Rollback attachment parent integrity
+│   ├── 0009_attachment_integrity.down.sql    # Rollback attachment parent integrity
+│   ├── 0010_import_lifecycle.up.sql          # Phase 26 (v0.0.2.8): imported_at, import_batch_id & batch indices
+│   └── 0010_import_lifecycle.down.sql        # Rollback import lifecycle tracking
 │
 ├── 🔧 scripts/
 │   ├── scuttle-reset.ts               # Scuttles data-dev/ or data/ (--env production|development)
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # 29 Vitest + supertest suites (341 tests), per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 32 Vitest + supertest suites (360+ tests), per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
 │   ├── vault-crud.test.ts             # Envelope shapes + opacity invariant
 │   ├── vault-bulk-import.test.ts      # Phase 21 bulk import (207 Multi-Status) & bulk delete
+│   ├── vault-imported-tracking.test.ts # Phase 26 import batch stamping, auto-graduation & cascade revert
+│   ├── attachment-integrity.test.ts   # Phase 23 attachment parent enforcement & orphan quarantine
 │   ├── agent-key-hash.test.ts         # Hash-only LobsterKey ledger invariant
 │   ├── attachments-blob.test.ts       # Phase 19 BLOB streaming, 500MB ceiling, 1000MB quota
 │   ├── vault-tags.test.ts             # Phase 20 tag filtering, metadata encryption & API CRUD
@@ -111,8 +115,11 @@ ShellGuard/
 │   ├── build-gates.test.ts            # Asserts Dockerfile/config shape before CI does
 │   └── unit/                          # Isolated unit test suites
 │       ├── bitwarden-import.test.ts   # Phase 21 Bitwarden JSON/CSV parser & folder-to-pod sniffer
+│       ├── cardUtils.test.ts          # Payment card spacing, brand detection & masking
 │       ├── customFields.test.ts       # 4 custom field types & client AAD namespaces
 │       ├── docsLinks.test.ts          # Documentation link validation CI gate
+│       ├── habitat-export.test.ts     # Phase 25 Habitat streaming ZIP export & manifest
+│       ├── habitat-import.test.ts     # Phase 25 Two-Stage Habitat sniffer & attachment queue
 │       ├── keyGen.test.ts             # In-browser Ed25519 & RSA-4096 SSH keypair generator
 │       ├── mermaidDiagrams.test.ts    # Mermaid diagram syntax integrity CI gate
 │       ├── sessionManager.test.ts     # Multi-account session & reload navigation intent
@@ -121,6 +128,7 @@ ShellGuard/
 │       ├── uiSeams.test.ts            # 25 unit tests covering UI action seams & ghost pod filtering
 │       ├── vault-export.test.ts       # Encrypted backup envelopes & sanitized CSV export
 │       ├── vaultDelete.test.ts        # Single & bulk item deletion routing parity
+│       ├── vaultSearch.test.ts        # Client-side zero-knowledge search engine
 │       ├── version.test.ts            # Ground-truth version resolver test
 │       ├── webCryptoFallback.test.ts  # Pure TS WebCrypto primitives for plain-HTTP LAN
 │       └── middleware/errorHandler.test.ts # Zod, UNIQUE, FK, and prod masking gates
@@ -725,6 +733,7 @@ Events written to the segregated `audit.sqlite` (never to `db.sqlite`):
 | `AUTH_*` | `AUTH_REGISTERED`, `AUTH_TOKEN_ISSUED`, `AUTH_LOGIN_FAILED` | Actor uuid + outcome only; never hashes or tokens |
 | `AGENT_KEY_*` | `AGENT_KEY_CREATED`, `AGENT_KEY_REVOKED`, `AGENT_KEY_DELETED` | Key id/name only; never the `lb-` value |
 | `VAULT_ITEM_*` | `VAULT_ITEM_CREATED/UPDATED/DELETED` | type + id + category only — **never title/url/username/secret/ciphertext** |
+| `IMPORT_BATCH_*` | `IMPORT_BATCH_GRADUATED`, `IMPORT_BATCH_REVERTED` | Batch id + item count + cascaded attachment count only |
 | `ATTACHMENT_UPLOADED` | byte size + mime type | Never filename contents beyond metadata, never blob |
 | `SETTINGS_UPDATED` | key name only | Never values |
 | `SYSTEM_*` | retention prune, startup | Operational metadata |
@@ -769,8 +778,10 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `attachment-integrity.test.ts` | Phase 23 Bitwarden Item Integrity: mandatory parent linkage, standalone creation rejection, boot & runtime orphan quarantine, cascade deletion, pre-flight quota inspection, and note credential rejection |
 | `unit/cardUtils.test.ts` | Native payment card spacing (Amex 4-6-5, standard 4-4-4-4), brand auto-detection, proportional masking, and digit extraction |
 | `unit/habitat-export.test.ts` | Phase 25 Habitat streaming ZIP export, Web Streams client-zip packing, attachment manifest embedding, and path traversal sanitization |
+| `unit/habitat-import.test.ts` | Phase 25 Two-Stage Habitat ZIP & directory sniffer, central directory extraction via `fflate`, and reactive Abyssal Ingestion Dock queue orchestration |
+| `vault-imported-tracking.test.ts` | Phase 26 Import Lifecycle Tracking: batch stamping, auto-graduation on edit, mass graduation, transactional batch revert with attachment cascade, and permission gates |
 
-Run them: `npm test` (all 30 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 32 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 
@@ -810,6 +821,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 28 | Bitwarden-Model Item Integrity & Attachment Relational Cascade (Migration 0009 enforcing mandatory parent linkage on `vault_secure_attachments`, strict rejection of standalone attachment creation via 400 Bad Request, boot-time & on-demand orphan quarantine `quarantineOrphanAttachments()` flagging unparented rows `is_quarantined = 1` with `audit.sqlite` logging, cascade cleanup removing deleted attachment IDs from parent `attachments` JSON arrays, `GET /api/attachments/quota` pre-flight capacity stats, and Secure Note credential rejection invariant preventing `secret` payloads in notes; paired with Vault Dashboard Add-Menu correction removing attachment creation and deterministic type ordering) | Establishes strict Bitwarden Item Integrity across data layer and UI surfaces, preventing orphaned attachment bloat while preserving user data through non-destructive quarantine (Phase 23, v0.0.2.5, Tasks 45 & 46 + Sub-Stage 25.1) |
 | 29 | Cryptographic Audit Hardening & Auditor's Battery (Pure-TS WebCrypto fallback parity proven against official NIST SP 800-38D, FIPS 180-4, RFC 2104, and RFC 5869 standards vectors with unskipped `webCryptoFallback.test.ts`; mechanized constant-time comparison sweep using `constantTimeCompare()` across `auth.ts`, `admin.ts`, and `auth.ts` middleware with automated AST/regex CI gate in `build-gates.test.ts`; standing Docs-as-Code claim battery verifying L1-L5 classes; and formalized threat model addendum for in-process rate limiting, LRU eviction, and redaction coverage) | Elevates cryptographic security from declarative assertions to executable mathematical proof, eliminates timing side-channel leaks, and binds documentation truth directly to code reality (Phase 24, v0.0.2.6, Tasks 47 & 48) |
 | 30 | Habitat Full-Archive Mobility & Reactive Ingestion Dock (streaming zero-knowledge ZIP generator with client-zip bounded to memory ceiling, deterministic collision-proof path sanitization, Two-Stage Ingestion Pipeline with Abyssal Dropzone, and background Abyssal Ingestion Dock in VaultShell with reactive chips) | Eliminates memory crashes on large vault exports and prevents UI freezing during massive attachment restores (Phase 25, v0.0.2.7, Tasks 49 & 50) |
+| 31 | Import Lifecycle Tracking & Ephemeral Quarantine (Migration 0010 adding indexed `import_batch_id` and `imported_at` across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`; atomic batch stamping on `POST /api/vault/bulk-import`; auto-graduation on edit clearing import metadata on `PUT /:id`; Batch Operations API with `POST .../:id/graduate` and `DELETE .../:id` cascading linked attachments and logging `IMPORT_BATCH_REVERTED`; progressive disclosure quarantine filter tab in `ItemListPane.tsx`, centered floating batch action bar in `VaultShell.tsx`, and inline quarantine banner with revert dialog in `ItemDetailPane.tsx`) | Prevents silent clutter from bulk credential imports, enforces transparent batch traceability, and provides instant, atomic rollback with attachment cascade (Phase 26, v0.0.2.8, Tasks 51 & 52) |
 
 ---
 

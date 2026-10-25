@@ -158,3 +158,34 @@ If you implement a fix or refactor where you have lower confidence—where the c
   - **L2**: Assert all database tables in `src/server/db/schema.ts` match migration files.
   - **L6**: Assert storage limits (`ATTACHMENT_MAX_MB = 500`, `GROTTO_QUOTA_MB = 1000`) match code and documentation.
 
+---
+
+## 7. Phase 26 Domain Knowledge: Import Lifecycle, Ephemeral Retention & Adjacencies
+
+### A. Database Migration & Schema Contract (Migration 0010)
+- Add `imported_at TEXT DEFAULT NULL` and `import_batch_id TEXT DEFAULT NULL` across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`.
+- Indices: `idx_pearls_import_batch`, `idx_notes_import_batch`, `idx_keys_import_batch`.
+- ⚠️ **CRITICAL ADJACENCY RULE**: DO NOT add `import_batch_id` or `imported_at` to `METADATA_COLUMNS` in `src/server/utils/metadataGuard.ts`. These columns MUST remain queryable relational SQL columns so SQLite can perform indexed queries (`WHERE import_batch_id = ?`) and TTL filtering without encryption.
+
+### B. Ingestion Fingerprinting & Auto-Graduation Semantics
+- In `POST /api/vault/bulk-import`:
+  - Generate an atomic `import_batch_id = 'imp_' + crypto.randomUUID()`.
+  - Timestamp `imported_at = new Date().toISOString()`.
+  - Stamp both values on all inserted pearls, notes, and keys.
+- **Auto-Graduate on Edit**:
+  - Updating any imported item via `PUT /api/vault/:id`, `PUT /api/notes/:id`, or `PUT /api/keys/:id` sets `imported_at = NULL` and `import_batch_id = NULL`.
+  - Modifying an item represents user adoption into the permanent vault.
+
+### C. Batch Operations API
+- `POST /api/vault/import-batches/:id/graduate`:
+  - Updates all items matching `import_batch_id = :id` across pearls, notes, and keys to set `imported_at = NULL, import_batch_id = NULL`.
+- `DELETE /api/vault/import-batches/:id`:
+  - Transactionally deletes all items matching `import_batch_id = :id`.
+  - Cascades deletion of linked attachments in `vault_secure_attachments` along with BLOB data.
+  - Writes audit event to `audit.sqlite`.
+
+### D. Progressive Disclosure & Viewport Ergonomics
+- **Progressive Disclosure Invariant**: If no items have unexpired `imported_at` timestamps, ZERO import-related filters, chips, or action hatches render.
+- **Floating Bar Adjacency**: The floating batch action bar in `VaultShell.tsx` must NOT collide with or obscure the floating `AbyssalIngestionDock` in the bottom-right viewport.
+
+

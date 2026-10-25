@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-10-20
-current_position: "v0.0.2.7 (Build 29) — released & live; next Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine (provisional v0.0.2.8 / Build 30) — queue 26 → 27 → 28"
+last_updated: 2026-10-24
+current_position: "v0.0.2.8 (Build 30) — released & live; next Phase 27: Mobile Pairing, TLS Rotation Manifests & Reactive River Sync (provisional v0.0.2.9 / Build 31) — queue 27 → 28 → 29"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "███████████████████████ 92% (24 of 26 formalized phases)"
+  features_completed: "█████████████████████████ 100% (26 of 26 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,24 +13,42 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 26+) and the 3 most recent completed phases (Phases 23, 24, and 25).*
-> *Historical Phases 1 through 22 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 27+) and the 3 most recent completed phases (Phases 24, 25, and 26).*
+> *Historical Phases 1 through 23 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.7 (Build 29)`
-- **Next Planned Milestone**: `v0.0.2.8 (Build 30)` (Phase 26)
+- **Current Production Release**: `v0.0.2.8 (Build 30)`
+- **Next Planned Milestone**: `v0.0.2.9 (Build 31)` (Phase 27)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 26 completes, Phase 23 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 27 completes, Phase 24 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
 
-### Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [work-driven version — provisional v0.0.2.8 (Build 30)]
+> All 26 formalized baseline phases (`v0.0.0.1` through `v0.0.2.8`) are shipped and live. Select the next item from the Backlog below to formalize **Phase 27 (Tasks 53 & 54)**.
+
+---
+
+## 🔬 Queue — Backlog & Distant Shores (Vision)
+
+> Prioritized backlog items captured for future formalization into paired phases.
+
+- [ ] **Auto-Lock "Retract" Animation** — Latch-closing visual confirmation and biometric iris animation when locking manually.
+- [ ] **Monolith Decomposition** — Decompose `PasswordVaultView.tsx` (~2150 lines) and `App.tsx` (~1100 lines) into modular domain hooks and sub-components.
+- [ ] **ShellCryption©™ v2 (Hardware Enclave)** — Hardware-backed key storage via WebAuthn PRF (Pseudo-Random Function) extension and Android StrongBox / Apple Secure Enclave.
+- [ ] **Audit Reef Security Timeline** — Interactive user-facing security timeline visualizing agent access, secret usage, and anomalous patterns.
+- [ ] **P2P Direct Sync** — Synchronize grottos across reefs without a central intermediary.
+
+---
+
+## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
+
+### Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [v0.0.2.8 (Build 30)] ✅
 
 > Phase Feature Set Overview:
 > Introduces an underlying organizational lifecycle and ephemeral tracking system for imported records
@@ -44,11 +62,11 @@ statistics:
 > bioluminescent countdown chips, quick filter toggles, a post-import action hatch in the import view, and one-click
 > atomic batch revert/purge backed by Reef Modernist `ConfirmDialog` controls. Configurable via a dedicated "Config"
 > settings surface.
-> *(Source: Lucas & Antigravity, 2026-09-23 — import lifecycle & ephemeral quarantine pass.)*
+> *(Receipts: Phase 26 Tasks 51 & 52, PR #10, 2026-10-24. Released & live.)*
 
-> 📚 **Documentation Impact**: docs/vault-features/import-export.md (import lifecycle, batch fingerprinting & TTL self-destruct) - docs/vault-features/the-grotto.md (progressive disclosure & batch purge) - ARCHITECTURE.md (Import Ledger & Delta #31) - BLUEPRINT.md - reference/blueprint-schema.md - README.md
+> 📚 **Documentation Impact**: docs/vault-features/import-export.md (import lifecycle, batch fingerprinting & TTL self-destruct) - docs/vault-features/the-grotto.md (progressive disclosure & batch purge) - ARCHITECTURE.md (Import Ledger & Delta #31) - BLUEPRINT.md - reference/blueprint-schema.md - README.md — ✅ synced.
 
-- [ ] **Task 51: [Functionality] Ephemeral Import Ledger, Time-to-Live (TTL) Engine & Multi-Batch Tracking**
+- [x] **Task 51: [Functionality] Ephemeral Import Ledger, Time-to-Live (TTL) Engine & Multi-Batch Tracking**
 
 Description: Establish the Bedrock data layer and lifecycle engine for imported items.
 (1) Database Migration `0010_import_lifecycle.{up,down}.sql`: add `imported_at TEXT` (ISO timestamp) and
@@ -72,7 +90,7 @@ attachments with audit logging).
 > clears its imported status; batch revert completely purges all batch records and linked attachments in a single
 > transaction; full test oracle + `tsc` + build stay clean.
 
-- [ ] **Task 52: [UI Component] "Config" Settings Surface, Ephemeral Import Badges & Rapid Batch Purge**
+- [x] **Task 52: [UI Component] "Config" Settings Surface, Ephemeral Import Badges & Rapid Batch Purge**
 
 Description: Deliver the progressive-disclosure UI layer across Settings, VaultShell, and ImportExportView.
 (1) Progressive Disclosure Invariant: The UI is strictly silent with ZERO import-related filter chips, banners,
@@ -97,20 +115,6 @@ deletion or graduation.
 > ConfirmDialog confirmation; full test oracle + `tsc` + build pass 100% green.
 
 ---
-
-## 🔬 Queue — Backlog & Distant Shores (Vision)
-
-> Prioritized backlog items captured for future formalization into paired phases.
-
-- [ ] **Auto-Lock "Retract" Animation** — Latch-closing visual confirmation and biometric iris animation when locking manually.
-- [ ] **Monolith Decomposition** — Decompose `PasswordVaultView.tsx` (~2150 lines) and `App.tsx` (~1100 lines) into modular domain hooks and sub-components.
-- [ ] **ShellCryption©™ v2 (Hardware Enclave)** — Hardware-backed key storage via WebAuthn PRF (Pseudo-Random Function) extension and Android StrongBox / Apple Secure Enclave.
-- [ ] **Audit Reef Security Timeline** — Interactive user-facing security timeline visualizing agent access, secret usage, and anomalous patterns.
-- [ ] **P2P Direct Sync** — Synchronize grottos across reefs without a central intermediary.
-
----
-
-## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
 
 ### Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock [v0.0.2.7 (Build 29)] ✅
 
@@ -242,92 +246,9 @@ mentions it.
 
 ---
 
-### Phase 23: Bitwarden-Model Item Integrity — Attachment Parent Enforcement & Dashboard Type Truth [v0.0.2.5 (Build 27)] ✅
+## 🏛️ Historical Archive (Phases 1 through 23)
 
-> Phase Feature Set Overview:
-> Aligns ShellGuard's item model fully with the Bitwarden pattern (verified
-> against Bitwarden's documentation): vault items are ciphers of fixed types
-> (Password, Secure Note, SSH Key, Card, Identity) and **attachments are NEVER standalone items** —
-> they are encrypted children bound to a parent. Migration 0009 enforces parent linkage
-> at the database layer; unparented/orphaned attachments are swept into a safe,
-> non-destructive quarantine ledger (`is_quarantined = 1`) with forensic audit logging in
-> `audit.sqlite`; relational cascades automatically strip deleted attachment IDs from parent
-> items; pre-flight quota inspection endpoint exposes capacity stats; Secure Notes strictly reject
-> secret payloads; and the Vault Dashboard Add-Menu and item lists strictly display primary types
-> in deterministic sort order.
-> *(Receipts: Phase 23 Tasks 45 & 46 + Sub-Stage 25.1, 2026-10-17. Released & live.)*
-
-> 📚 **Documentation Impact**: SECURITY.md (form-contract: notes reject secret payloads) - ARCHITECTURE.md (attachments route table, Delta #28) - reference/blueprint-schema.md (quarantine semantics) - docs/agent-integration/api-reference.md + skills/shellguard/SKILL.md (standalone creation rejected, sweeper & quota) - docs/vault-features — ✅ synced.
-
-- [x] **Task 45: [Functionality] Attachment Parent Enforcement, Orphan Quarantine & Form-Contract Rules**
-
-Description: Enforce parent linkage at the Bedrock. (1) `attachments.ts`:
-the POST route requires a parent item reference — reject standalone
-attachment creation with a validation error (zod schema gains a required
-parent linkage; keep the reference model: the parent's `attachments` JSON ID
-array gains the child id in the same transaction). PUT/DELETE unchanged.
-(2) Migration `0009_attachment_integrity.{up,down}.sql` + backfill: resolve
-orphan standalone attachment rows (the `category: 'Attachment'` rows written
-by `uploadAttachmentRecord` without a parent) — relink where a parent can be
-determined, otherwise QUARANTINE (flagged hidden from lists, never deleted;
-user data is sacred). Audit the quarantine events. (3) Form-contract rules in
-`src/server/validation/schemas.ts`: Secure Notes CANNOT carry password
-credentials (no `secret` payload on notes — rejected server-side);
-attachments are allowed on pearls, notes, and SSH keys per the locked domain
-rules. (4) Keep zero-knowledge: `file_data` remains an opaque ShellCryption
-blob — the server enforces LINKAGE, never content. Prove it in
-`tests/attachment-integrity.test.ts` (standalone creation rejected, orphan
-quarantine, relink path, note-with-password rejected).
-
-> Success Criteria: Standalone attachment creation fails closed with a clear
-> validation error; every attachment row is either parent-linked or
-> quarantined (never silently deleted); a Secure Note with a `secret` payload
-> is rejected; quarantine events are audited; zero-knowledge untouched (the
-> server still never reads `file_data`); the full test oracle + `tsc` + build
-> stay clean.
-
-- [x] **Task 46: [UI Component] Bitwarden-Model Dashboard — Add-Menu Correction & Type-Truthful Display**
-
-Description: Make the UI tell the item-model truth. (1) Remove the
-'📎 Attachment' entry from the '+' add-item menu (`Layout/Header.tsx`
-~line 202, the `['password', 'note', 'key', 'attachment']` map) —
-attachments enter only through an item's create/edit form (`ItemFormModal`
-attachment section, which already implements the drag-and-drop + linked-
-attachment model). Sweep `VaultItemType` consumers (add-flow, filters, empty
-states) so 'attachment' never surfaces as a creatable type. (2) Dashboard
-display correctness: `ItemListPane` shows exactly primary types
-(Passwords, Secure Notes, SSH Keys, Cards, Identities) with correct icons/labels;
-attachments render ONLY inside their parent's detail pane (the existing `VaultShell`
-exclusion becomes a guarantee, not a filter accident). (3) Sorting:
-deterministic type-aware ordering — recency within type, with the type
-ordering Passwords → Cards → Identities → Secure Notes → SSH Keys.
-(4) Empty states per type-filter reflect the real item model.
-
-> Success Criteria: No 'Attachment' option in any add surface; the list
-> contains exactly Passwords/Secure Notes/SSH Keys/Cards/Identities; attachments appear only
-> within their parent's detail; sorting is deterministic and type-aware;
-> the full test oracle + `tsc` + build stay clean.
-
-#### 🌊 Phase 23 Sub-Stage: Relational Cascade Deletion, Runtime Sweeper & Pre-Flight Quota (Sub-Stage 25.1)
-
-> Sub-Stage Feature Set Overview:
-> Hardens attachment operational mechanics across runtime and API layers: transactional
-> relational cascade on `DELETE /api/attachments/:id` stripping child IDs from parent item
-> `attachments` JSON arrays across pearls, notes, and keys; on-demand runtime orphan quarantine
-> sweeper endpoint `POST /api/attachments/quarantine/sweep`; and pre-flight storage capacity
-> quota endpoint `GET /api/attachments/quota` returning `{ used_bytes, quota_bytes, remaining_bytes }`.
-
-- [x] **Sub-Stage 25.1: [Relational & Runtime Hardening] Attachment Cascade, Sweeper & Quota**
-  - Transactional cascade cleanup removing deleted attachment ID from parent item `attachments` arrays.
-  - On-demand runtime quarantine sweeper `POST /api/attachments/quarantine/sweep`.
-  - Pre-flight quota capacity endpoint `GET /api/attachments/quota`.
-  - Expanded test coverage in `tests/attachment-integrity.test.ts` (341 tests passing).
-
----
-
-## 🏛️ Historical Archive (Phases 1 through 22)
-
-Earlier development phases (`v0.0.0.0` void through `v0.0.2.4` Build 26) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.2.5` Build 27) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -354,7 +275,6 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.2.4` Build 26) are per
 | **Phase 20** | `v0.0.2.2 (Build 24)` | Vault Tagging System & Granular Filter Bar | Tasks 39 & 40 |
 | **Phase 21** | `v0.0.2.3 (Build 25)` | Bulk Import Endpoint & Batch Operations | Tasks 41 & 42 |
 | **Phase 22** | `v0.0.2.4 (Build 26)` | Search Consolidation & Control Ergonomics | Tasks 43 & 44 |
+| **Phase 23** | `v0.0.2.5 (Build 27)` | Bitwarden-Model Item Integrity & Attachment Relational Cascade | Tasks 45 & 46 |
 
 ---
-
-

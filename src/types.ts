@@ -45,6 +45,8 @@ export interface VaultItem {
   file_name?: string;
   mime_type?: string;
   created_at: string;
+  imported_at?: string | null;
+  import_batch_id?: string | null;
 }
 
 

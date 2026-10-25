@@ -77,7 +77,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKe
       tags: normalizedTags,
     }, fieldCipher);
 
-    db.prepare('UPDATE vault_ssh_keys SET title = ?, key_value = ?, username = ?, category = ?, tags = ?, custom_fields = ?, attachments = ? WHERE id = ? AND owner_uuid = ?')
+    db.prepare('UPDATE vault_ssh_keys SET title = ?, key_value = ?, username = ?, category = ?, tags = ?, custom_fields = ?, attachments = ?, imported_at = NULL, import_batch_id = NULL WHERE id = ? AND owner_uuid = ?')
       .run(toStore.title, key_value, toStore.username, toStore.category, toStore.tags, custom_fields || '', finalAttachments, id, req.userUuid);
 
     audit.log('SSH_KEY_UPDATED', {

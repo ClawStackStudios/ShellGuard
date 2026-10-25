@@ -81,6 +81,7 @@ export default withMermaid(
           items: [
             { text: 'ShellGuard-TOTP Companion', link: '/companion/' },
             { text: 'Vault Import & Export', link: '/vault-features/import-export' },
+            { text: 'Troubleshooting & FAQ', link: '/getting-started/troubleshooting' },
             { text: 'Threat Model & Hardening', link: '/architecture/threat-model' },
             { text: 'Mobile Privacy Policy', link: '/privacy#shellguard-mobile-android-client' },
           ]
@@ -113,8 +114,10 @@ export default withMermaid(
             { text: 'Overview & Philosophy', link: '/getting-started/' },
             { text: '5-Minute Quickstart', link: '/getting-started/quickstart' },
             { text: 'Key Molting & hu- Identity', link: '/getting-started/key-molting' },
+            { text: 'Troubleshooting & FAQ', link: '/getting-started/troubleshooting' },
           ]
         },
+
         {
           text: 'Next Steps',
           items: [

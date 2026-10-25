@@ -93,12 +93,14 @@ Request bodies are validated by zod schemas in `src/server/validation/schemas.ts
 (`VaultSchemas.create`, `VaultSchemas.update`, …) — a route without a schema
 does not ship.
 
-**Batch Operations (Phase 21, Tasks 41 & 42):**
+**Batch Operations (Phases 21 & 26):**
 
 | HTTP Verb | Middleware chain | Permission | Purpose |
 |:---|:---|:---|:---|
-| `POST /bulk-import` | `requireAuth` → `requirePermission('canWrite')` → `validateBody(VaultSchemas.bulkImport)` | write | Atomic batch import (up to 1000 items, scoped 10MB parser, per-record Zod validation, HTTP 207 Multi-Status partial success envelope `{ inserted, errors }`) |
+| `POST /bulk-import` | `requireAuth` → `requirePermission('canWrite')` → `validateBody(VaultSchemas.bulkImport)` | write | Atomic batch import (up to 1000 items, scoped 10MB parser, stamps `import_batch_id` & `imported_at`, HTTP 207 Multi-Status partial success envelope `{ inserted, errors, import_batch_id, imported_at }`) |
 | `DELETE /bulk` | `requireAuth` → `requirePermission('canDelete')` → `validateBody(VaultSchemas.bulkDelete)` | delete | Batch pearl deletion by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
+| `POST /import-batches/:id/graduate` | `requireAuth` → `requirePermission('canEdit')` | update | Promotes all quarantined records matching `import_batch_id = :id` across pearls, notes, and SSH keys by clearing `imported_at` and `import_batch_id` to `NULL` (`{ graduated_count }`) |
+| `DELETE /import-batches/:id` | `requireAuth` → `requirePermission('canDelete')` | delete | Atomic batch rollback purging all records matching `import_batch_id = :id` across pearls, notes, and SSH keys and cascading linked attachments (`{ deleted_count, deleted_attachments }`) |
 
 ---
 

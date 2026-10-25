@@ -83,3 +83,12 @@ The hybrid attachment streaming architecture in ShellGuard Mobile that streams b
 ### 📦 `.sgvault.bak`
 The portable encrypted mobile vault backup archive format. Packages all 5 record domains and custom fields in a GZIP-compressed envelope encrypted via AES-GCM-256 with PBKDF2-SHA256 key derivation.
 
+### 🌊 Habitat Full-Archive Mobility
+The client-side streaming ZIP packaging and restoration architecture (`src/lib/habitatExport.ts` & `src/lib/habitatImport.ts`). Exports the complete decrypted vault manifest (`shellguard_vault_export.json`) alongside all decrypted binary attachments in a collision-proof directory hierarchy (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`) with strict $O(\text{largest single file})$ RAM bounds.
+
+### ⚓ Abyssal Ingestion Dock
+The persistent floating background queue manager in `VaultShell.tsx` powering Stage 2 of the Two-Stage Habitat Ingestion Pipeline. Streams binary attachments asynchronously after primary credentials commit in under 2 seconds, providing pause, resume, cancel-all, per-item retry, and reactive in-flight status chips (`📎 Uploading...` ➔ `📎 Verified`).
+
+### ⏳ Ephemeral Import Quarantine (`imp_<uuid>`)
+The relational import lifecycle tracking mechanism introduced in Migration `0010_import_lifecycle`. Bulk imports stamp every inserted record with an atomic batch identifier (`imp_<uuid>`) and UTC timestamp (`imported_at`). Quarantined records obey strict progressive disclosure (zero quarantine UI renders when no active quarantined items exist), auto-graduate to permanent status immediately upon user edit (`PUT`), and support 1-click atomic batch graduation or full rollback (`DELETE /api/vault/import-batches/:id`) with attachment cascade and forensic audit logging (`IMPORT_BATCH_REVERTED`).
+

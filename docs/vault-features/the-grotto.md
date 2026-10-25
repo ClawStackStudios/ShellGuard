@@ -26,6 +26,23 @@ description: Vault Dashboard, Custom Fields, Hierarchical Pods, and In-Memory TO
 
 ---
 
+## 🚀 Creating Your First Login Item
+
+Adding a credential to your sovereign vault takes seconds:
+
+1. **Open New Item Modal**: Click the glowing **+ New Item** button at the top of the vault sidebar, or press the keyboard shortcut <kbd>N</kbd>.
+2. **Select Type**: Choose **Vault Pearl (Login)** from the item type selector.
+3. **Enter Credentials**:
+   - **Title**: A recognizable service name (e.g. `ProtonMail`, `GitHub`).
+   - **Username**: Your handle, email, or account ID.
+   - **Password**: Enter an existing password, or click the **Dice** icon to roll a high-entropy password using the built-in [Pearl Password Generator](/vault-features/pearl-generator).
+   - **Website (URL)**: Target login domain (e.g. `https://github.com/login`).
+4. **Organize into a Pod**: In the **Pod / Category** field, type a pod path (e.g. `Personal/Email` or `Dev/Cloud`). ShellGuard creates hierarchical sub-pods dynamically with `/` separators.
+5. **Save**: Click **Save Pearl**. The secret payload is immediately sealed in browser RAM using Layer 1 AES-GCM-256 before being sent to the server.
+
+---
+
+
 ## 🔑 In-Browser SSH Keypair Generation & Dual-Key Management
 
 When adding or managing an **SSH Key**, ShellGuard provides an integrated, zero-knowledge keypair lifecycle engineered for terminal ergonomics and OpenSSH compliance:
@@ -150,3 +167,16 @@ ShellGuard provides rich batch management tools to organize, migrate, and prune 
 - **Bulk Tag Assignment**: Add tags across multiple selected items without wiping pre-existing tags.
 - **Bulk Delete with Safe Cascade**: Batch remove selected items with a Reef Modernist confirmation modal (`ConfirmDialog`); automatically cascades deletions to linked file attachments without orphan records.
 - **Bulk Import with 207 Multi-Status**: Import up to 1,000 items in a single atomic transaction. Any malformed records are reported with granular error resolution chips indicating item index, title, and validation reason while valid items persist cleanly.
+
+---
+
+## 📥 Progressive Disclosure Quarantine & Floating Batch Actions
+
+In Phase 26, The Grotto gained native support for ephemeral import quarantine management:
+
+- **Progressive Disclosure Invariant**: If no quarantined records exist, zero quarantine filter chips or batch action bars are rendered, preserving a clean workspace.
+- **Dynamic Quarantine Filter Chip**: When active ungraduated records exist in state, a glowing `Quarantined (N)` filter tab appears directly under the search bar in `ItemListPane`.
+- **Bioluminescent Badges**: Each quarantined record displays an amber bioluminescent status badge indicating its active quarantine state.
+- **Centered Floating Batch Bar**: When filtered to quarantined records, a centered action bar surfaces with instant **Graduate All** and `ConfirmDialog`-guarded **Revert Import** controls, maintaining strict spatial separation from the bottom-right `AbyssalIngestionDock`.
+- **Inline Detail Pane Quarantine Card**: Selecting any quarantined item surfaces an inspection banner in the detail pane with one-click **Graduate to Vault** and **Revert Batch** operations.
+

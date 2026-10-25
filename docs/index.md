@@ -35,6 +35,9 @@ features:
   - icon: 📱
     title: Native Mobile Vault Client
     details: Hardened Android client with system Autofill, Co-Presence Gate false-positive suppression, offline SQLCipher encryption, and in-place biometric unlocking.
+  - icon: ⏳
+    title: Habitat Mobility & Quarantine
+    details: Stream full-archive ZIP exports with attachments in constant memory, ingest in two stages via the Abyssal Dock, and manage imports with Ephemeral Quarantine and 1-click atomic rollback.
 ---
 
 <div class="vp-doc">
@@ -52,7 +55,10 @@ features:
     Deep-dive into client ShellCryption, per-row metadata AES-256-GCM, and SQLCipher whole-DB encryption.
   </Card>
   <Card title="The Grotto (Vault)" href="/vault-features/the-grotto" icon="🐚" tag="Vault">
-    Logins with TOTP seeds, secure notes, SSH keys, unlimited encrypted file attachments, and pods.
+    Logins with TOTP seeds, secure notes, SSH keys, 500 MB encrypted file attachments, pods, and tags.
+  </Card>
+  <Card title="Import & Quarantine" href="/vault-features/import-export" icon="📦" tag="Portability">
+    Habitat full-archive ZIP streaming, Bitwarden migration, Ephemeral Import Quarantine (<code>imp_</code>), and 1-click batch rollback.
   </Card>
   <Card title="Mobile Companion" href="/companion/" icon="📱" tag="2FA Mirror">
     Sovereign offline-first 2FA companion with hardware KeyStore isolation, CameraX QR scanning, and mirror sync.

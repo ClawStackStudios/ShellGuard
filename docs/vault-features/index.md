@@ -27,9 +27,12 @@ The ShellGuard vault is an offline-capable, sovereign secrets engine engineered 
     Generate cryptographically strong passwords using browser CSPRNG with real-time entropy scoring and session history.
   </Card>
   <Card title="Import & Sovereign Export" href="/vault-features/import-export" icon="📦" tag="Data Portability">
-    Export full decrypted/encrypted JSON backups, CSV audit catalogs, and import <code>.sgtotp.bak</code> mobile companion archives.
+    Stream full Habitat ZIP archives with binary attachments, export encrypted JSON/CSV catalogs, and ingest Bitwarden or <code>.sgtotp.bak</code> backups.
   </Card>
-  <Card title="Built-In TOTP Authenticator" href="/vault-features/the-grotto#built-in-totp-authenticator-engine" icon="⏱️" tag="2FA">
+  <Card title="Ephemeral Import Quarantine" href="/vault-features/import-export#⏳-import-lifecycle-tracking-ephemeral-quarantine" icon="⏳" tag="Lifecycle">
+    Stamp bulk imports with <code>imp_&lt;uuid&gt;</code> batch tags, auto-graduate on edit, and execute 1-click atomic batch rollbacks.
+  </Card>
+  <Card title="Built-In TOTP Authenticator" href="/vault-features/the-grotto#⏱️-dynamic-rfc-6238-totp-authenticator-engine" icon="⏱️" tag="2FA">
     Generate RFC 6238 two-factor authentication codes in-memory with real-time rolling countdown tickers.
   </Card>
   <Card title="Unified Vault & Pod Search" href="/vault-features/search" icon="🔍" tag="Ergonomics">

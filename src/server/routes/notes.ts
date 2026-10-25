@@ -75,7 +75,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(NoteS
       tags: normalizedTags,
     }, fieldCipher);
 
-    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, tags = ?, custom_fields = ?, attachments = ? WHERE id = ? AND owner_uuid = ?')
+    db.prepare('UPDATE vault_secure_notes SET title = ?, content = ?, category = ?, tags = ?, custom_fields = ?, attachments = ?, imported_at = NULL, import_batch_id = NULL WHERE id = ? AND owner_uuid = ?')
       .run(toStore.title, content, toStore.category, toStore.tags, custom_fields || '', finalAttachments, id, req.userUuid);
 
     audit.log('NOTE_UPDATED', {

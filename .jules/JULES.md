@@ -85,17 +85,21 @@ Before committing or submitting a PR, you **must** run all three verification ga
 
 ---
 
-## 🎯 Active Milestone: Stage 26 (Phase 25)
+## 🎯 Latest Completed Milestone: Stage 27 (Phase 26) — ✅ SHIPPED in v0.0.2.8 (Build 30)
 
-> **Previous Milestone**: Stage 25 (Phase 24) — **COMPLETED & SHIPPED in v0.0.2.6 (Build 28)**.
+> **Previous Milestone**: Stage 26 (Phase 25) — **COMPLETED & SHIPPED in v0.0.2.7 (Build 29)**.
 
-You are tasked with executing **Stage 26 (Phase 25: Habitat Full-Archive Mobility & Reactive Ingestion Dock)**:
+**Stage 27 (Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine)** has been completed and verified in `v0.0.2.8 (Build 30)`:
 
-1. **Task 49**:
-   - Client-side streaming ZIP archive generator (`src/lib/habitatExport.ts`): fetch encrypted attachment BLOBs, decrypt in-memory, and package with deterministic directory structure (`attachments/<pod>/<item_title>__[<id_short>]/<file_name>`).
-   - Embedded `attachment_manifest` mapping ID, file name, parent item ID, size, and checksum.
-2. **Task 50**:
-   - Two-Stage Ingestion Pipeline & Reactive Abyssal Ingestion Dock in `VaultShell.tsx` and `ImportExportView.tsx`.
-   - Stage 1 instant primary vault JSON ingestion (<2s) + Stage 2 non-blocking background streaming uploads.
+1. **Task 51** ✅:
+   - Migration `0010_import_lifecycle.up.sql` & `.down.sql`: added `imported_at TEXT DEFAULT NULL` and `import_batch_id TEXT DEFAULT NULL` across pearls, notes, and SSH keys.
+   - Batch fingerprinting (`imp_<uuid>`) and stamping in `POST /api/vault/bulk-import`.
+   - "Auto-Graduate on Edit" on item updates (`PUT /api/vault/:id`, `PUT /api/notes/:id`, `PUT /api/keys/:id`).
+   - Batch operations API (`POST .../graduate`, `DELETE .../:id` with attachment cascade).
+   - Test oracle in `tests/vault-imported-tracking.test.ts` (16/16 passing).
+2. **Task 52** ✅:
+   - Progressive disclosure invariant: ZERO import UI when 0 active imported items.
+   - "Config" settings surface (`ConfigSettingsView.tsx` & `Sidebar.tsx`) with retention selector (`[30m | 60m | 90m | Manual]`).
+   - Dynamic "Imported" filter in `ItemListPane.tsx` with countdown badges (`📥 Imported (42) • 58m left`).
+   - Post-import action hatch in `ImportExportView.tsx` and floating bar in `VaultShell.tsx` with `ConfirmDialog` rollback.
 
-**Remember these repository rules and invariants** as you craft your implementation. Run the verification gates, commit with Two-Layer Attribution, and open your Pull Request against the designated stage branch.

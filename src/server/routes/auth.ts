@@ -26,29 +26,34 @@ function detectKeyType(key: string) {
 //    If changes === 0, abort with 403 Forbidden. See .jules/tasks/task-53.md.
 /** POST /api/auth/register */
 router.post('/register', authLimiter, validateBody(AuthSchemas.register), (req, res) => {
-  const { uuid, username, displayName, keyHash } = req.body;
+  const { uuid, username, displayName, keyHash, inviteToken } = req.body;
+  const isSignupsDisabled = process.env.DISABLE_SIGNUPS === 'true';
+
   try {
-    db.prepare('INSERT INTO lobsters (uuid, username, display_name, key_hash, created_at) VALUES (?, ?, ?, ?, ?)')
-      .run(uuid, username, displayName ?? null, keyHash, new Date().toISOString());
-    audit.log('AUTH_REGISTER', {
-      actor: uuid, actor_type: 'human', action: 'register', outcome: 'success', resource: 'lobster',
-      details: { username, lobster_uuid: uuid },
-      ip_address: req.ip, user_agent: req.headers['user-agent'] as string,
-    });
+    db.transaction(() => {
+      const lobsterCount = (db.prepare('SELECT COUNT(*) as count FROM lobsters').get() as { count: number }).count;
+      if (lobsterCount > 0 && isSignupsDisabled) {
+        if (!inviteToken) throw new Error('SIGNUPS_DISABLED');
+        const hashedInvite = crypto.createHash('sha256').update(inviteToken).digest('hex');
+        const info = db.prepare("DELETE FROM api_tokens WHERE key = ? AND owner_type = 'invite' AND expires_at > datetime('now')").run(hashedInvite);
+        if (info.changes === 0) throw new Error('INVALID_INVITE');
+      }
+      db.prepare('INSERT INTO lobsters (uuid, username, display_name, key_hash, created_at) VALUES (?, ?, ?, ?, ?)')
+        .run(uuid, username, displayName ?? null, keyHash, new Date().toISOString());
+    })();
+
+    audit.log('AUTH_REGISTER', { actor: uuid, actor_type: 'human', action: 'register', outcome: 'success', resource: 'lobster', details: { username, lobster_uuid: uuid }, ip_address: req.ip, user_agent: req.headers['user-agent'] as string });
     res.status(201).json({ success: true });
   } catch (err: any) {
-    if (err.message?.includes('UNIQUE constraint failed: lobsters.username')) {
-      return res.status(409).json({ success: false, error: 'Username already taken.' });
+    if (err.message === 'SIGNUPS_DISABLED' || err.message === 'INVALID_INVITE') {
+      audit.log('AUTH_REGISTER', { actor: uuid, actor_type: 'human', action: 'register', outcome: 'failure', resource: 'lobster', details: { reason: err.message }, ip_address: req.ip, user_agent: req.headers['user-agent'] as string });
+      return res.status(403).json({ success: false, error: err.message === 'SIGNUPS_DISABLED' ? 'Registration is invite-only.' : 'Invalid or expired invite token.' });
     }
-    audit.log('AUTH_REGISTER', {
-      actor: uuid, actor_type: 'human', action: 'register', outcome: 'failure', resource: 'lobster',
-      details: { reason: 'Registration failed' },
-      ip_address: req.ip, user_agent: req.headers['user-agent'] as string,
-    });
+    if (err.message?.includes('UNIQUE constraint failed: lobsters.username')) return res.status(409).json({ success: false, error: 'Username already taken.' });
+    audit.log('AUTH_REGISTER', { actor: uuid, actor_type: 'human', action: 'register', outcome: 'failure', resource: 'lobster', details: { reason: 'Registration failed' }, ip_address: req.ip, user_agent: req.headers['user-agent'] as string });
     return res.status(409).json({ success: false, error: 'Failed to register identity.' });
   }
 });
-
 /** POST /api/auth/token */
 router.post('/token', authLimiter, validateBody(AuthSchemas.token), (req, res) => {
   const { type, uuid, keyHash, ownerKey } = req.body;

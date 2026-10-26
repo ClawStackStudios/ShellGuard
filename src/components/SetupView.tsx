@@ -31,7 +31,7 @@ interface SetupViewProps {
   onCancel?: () => void;
 }
 
-export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
+export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken }: any) {
   const [step, setStep] = useState<"hatching" | "verification" | "success">("hatching");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");

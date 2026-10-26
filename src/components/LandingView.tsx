@@ -35,6 +35,10 @@ function KeyPill({ prefix, label, color }: { prefix: string; label: string; colo
   );
 }
 
+// TODO(jules): Phase 27 - In LandingView / AuthGateway, query /api/public/signup-status.
+// If signupsAllowed is false, lock/hide the "Hatch" button and show "Registration is invite-only on this instance" badge.
+// If an invite token was captured from ?invite= in App.tsx, automatically unlock Hatch or navigate to SetupView.
+// See .jules/tasks/task-54.md.
 // ── Compact Auth Gateway (ClawChives Pattern Port) ──────────────────────────────
 function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () => void }) {
   const [gatewayMode, setGatewayMode] = useState<"human" | "agent">("human");
@@ -184,7 +188,7 @@ function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () 
   );
 }
 
-export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
+export function LandingView({ onClawIn, onHatch, signupStatus }: any) {
   const handleScrollToFeatures = () => {
     const element = document.getElementById("features");
     if (element) {
@@ -617,21 +621,31 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
             <p className="text-white/90 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
               Join the Reef. Let your <span className="font-bold text-pink-200">Lobsters</span> keep your secrets secure, rotated, and under your sovereign control.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button 
-                onClick={onHatch}
-                className="w-full sm:w-auto px-8 py-4 bg-white text-[#e4048a] hover:bg-slate-100 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl cursor-pointer text-sm"
-              >
-                <span>Hatch Your ShellGuard</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={onClawIn}
-                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer text-sm"
-              >
-                <span>Login with Key</span>
-              </button>
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                <button
+                  onClick={onHatch}
+                  disabled={signupStatus?.signupsAllowed === false}
+                  className={`w-full sm:w-auto px-8 py-4 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl cursor-pointer text-sm ${signupStatus?.signupsAllowed === false ? 'bg-white/5 text-white/50 cursor-not-allowed' : 'bg-white text-[#e4048a] hover:bg-slate-100 active:scale-95'}`}
+                >
+                  <span>Hatch Your ShellGuard</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={onClawIn}
+                  className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer text-sm"
+                >
+                  <span>Login with Key</span>
+                </button>
+              </div>
+              {signupStatus?.signupsAllowed === false && (
+                <div className="text-xs font-medium text-white/70 bg-black/20 px-4 py-2 rounded-full border border-white/10">
+                  Registration is invite-only on this instance
+                </div>
+              )}
             </div>
+
           </div>
         </section>
       </main>

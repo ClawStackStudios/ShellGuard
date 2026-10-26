@@ -33,7 +33,7 @@ export interface TlsMaterials {
 const CERT_DIR = path.join(DATA_DIR, 'certs');
 const DEFAULT_CERT_PATH = path.join(CERT_DIR, 'cert.pem');
 const DEFAULT_KEY_PATH = path.join(CERT_DIR, 'key.pem');
-const MANIFEST_PATH = path.join(CERT_DIR, 'manifest.json');
+const MANIFEST_PATH = path.join(DATA_DIR, 'certs', 'manifest.json');
 const TEN_YEARS_MS = 10 * 365.25 * 24 * 60 * 60 * 1000;
 
 /** SHA-256 fingerprint of a PEM cert, colon-separated hex (browser style). */
@@ -100,12 +100,25 @@ function persist(cert: string, key: string, certPath: string, keyPath: string): 
   fs.chmodSync(keyPath, 0o600);
 }
 
+// TODO(jules): Phase 27 - Implement certs/manifest.json rotation proof signed by instanceKey.ts,
+// and export regenerateTlsCertificate(extraHosts?: string[]) with server.setSecureContext() hot-reload.
+// See .jules/tasks/task-53.md and .jules/knowledge/KNOWLEDGE.md § 8.
 /**
  * Resolve TLS materials in priority order:
  *   1. BYO: TLS_CERT_PATH + TLS_KEY_PATH (both required when either is set)
  *   2. Existing generated pair in DATA_DIR/certs/ (reused — stable fingerprint)
  *   3. Generate a new self-signed pair and persist it
  */
+export async function generateAndPersistCertificate(): Promise<{ cert: string; key: string; fingerprint: string }> {
+  const { cert, key, fingerprint } = await generateCertificate();
+  persist(cert, key, DEFAULT_CERT_PATH, DEFAULT_KEY_PATH);
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = signWithInstanceKey(fingerprint + timestamp);
+  const manifest = { certFingerprint: fingerprint, timestamp, signature };
+  fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), { mode: 0o600 });
+  return { cert, key, fingerprint };
+}
+
 export async function ensureTlsMaterials(): Promise<TlsMaterials> {
   const byoCert = process.env.TLS_CERT_PATH;
   const byoKey = process.env.TLS_KEY_PATH;
@@ -125,12 +138,7 @@ export async function ensureTlsMaterials(): Promise<TlsMaterials> {
     return { key, cert, certPath: DEFAULT_CERT_PATH, keyPath: DEFAULT_KEY_PATH, fingerprint: certFingerprint(cert), generated: false };
   }
 
-  const { cert, key, fingerprint } = await generateCertificate();
-  persist(cert, key, DEFAULT_CERT_PATH, DEFAULT_KEY_PATH);
-  const timestamp = Math.floor(Date.now() / 1000);
-  const signature = signWithInstanceKey(fingerprint + timestamp);
-  const manifest = { certFingerprint: fingerprint, timestamp, signature };
-  fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), { mode: 0o600 });
+  const { cert, key, fingerprint } = await generateAndPersistCertificate();
   console.log(`[TLS] 🔐 Self-signed certificate generated at ${DEFAULT_CERT_PATH}`);
   console.log(`[TLS]    Fingerprint: ${fingerprint}`);
   console.log(`[TLS]    SANs: ${collectSubjectAltNames().map(n => n.ip ?? n.value).join(', ')}`);

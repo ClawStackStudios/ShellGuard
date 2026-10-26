@@ -1931,13 +1931,13 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems, onBa
                 <div>
                   <span className="text-theme-muted block">Binary Attachments:</span>
                   <span className="text-sm font-bold text-claw-cyan">
-                    {(stage1Pending.summary as any).totalAttachments} files ({((stage1Pending.summary as any).totalBytes / (1024 * 1024)).toFixed(2)} MB)
+                    {stage1Pending.summary.totalAttachments} files ({(stage1Pending.summary.totalBytes / (1024 * 1024)).toFixed(2)} MB)
                   </span>
                 </div>
                 <div>
                   <span className="text-theme-muted block">Pods Identified:</span>
                   <span className="text-sm font-bold text-theme-main">
-                    {(stage1Pending.summary as any).pods.length} pods
+                    {stage1Pending.summary.pods.length} pods
                   </span>
                 </div>
                 <div>
@@ -1949,7 +1949,7 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems, onBa
               </div>
 
               <p className="text-xs text-theme-muted leading-relaxed">
-                Confirming will immediately insert all <strong>{stage1Pending.exportPayload.items.length}</strong> vault items into your database (&lt;2s) and hand off the <strong>{(stage1Pending.summary as any).totalAttachments}</strong> attachments to the Abyssal Ingestion Dock to stream in the background without freezing your UI.
+                Confirming will immediately insert all <strong>{stage1Pending.exportPayload.items.length}</strong> vault items into your database (&lt;2s) and hand off the <strong>{stage1Pending.summary.totalAttachments}</strong> attachments to the Abyssal Ingestion Dock to stream in the background without freezing your UI.
               </p>
 
               {stage1Error && (

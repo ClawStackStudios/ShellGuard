@@ -32,6 +32,12 @@ import { AdminSchemas } from '../validation/schemas.js';
 import { adminAuthLimiter } from '../middleware/rateLimiter.js';
 import { performBackup, listBackups } from '../utils/backupManager.js';
 import { getAppVersion } from '../utils/version.js';
+import { ensureTlsMaterials, collectSubjectAltNames, generateAndPersistCertificate } from '../utils/tlsManager.js';
+import { getInstancePublicKeyHex } from '../utils/instanceKey.js';
+import os from 'os';
+import fs from 'fs';
+import path from 'path';
+import { DATA_DIR } from '../database/connection.js';
 
 const router = Router();
 
@@ -320,18 +326,56 @@ router.get('/backups', requireAdmin, (_req, res) => {
   res.json({ success: true, data: listBackups() });
 });
 
+// TODO(jules): Phase 27 - Implement TLS control plane endpoints:
+// GET /api/admin/tls/status, POST /api/admin/tls/generate, GET /api/admin/tls/cert (public PEM only, never private key!)
+// Implement invite endpoints reusing api_tokens table (owner_type = 'invite'):
+// GET /api/admin/invites, POST /api/admin/invites (ttl: '1h'|'6h'|'24h'|'7d'), DELETE /api/admin/invites/:hash
+// Add 'allow_signups' to SETTINGS_WHITELIST. See .jules/tasks/task-53.md.
+
+
+// ─── TLS Management (Phase 27) ────────────────────────────────────────────────
+router.get('/tls/status', requireAdmin, async (req, res) => {
+  const tlsEnabled = process.env.TLS_ENABLED === 'true';
+  const port = process.env.PORT || '6565';
+  if (!tlsEnabled) return res.json({ success: true, data: { enabled: false, protocol: 'HTTP', port } });
+  const materials = await ensureTlsMaterials();
+  const sans = collectSubjectAltNames();
+  const lan = `https://${sans.find(s => s.ip && s.ip.startsWith('192.168.'))?.ip || sans.find(s => s.ip && s.ip.startsWith('10.'))?.ip || '127.0.0.1'}:${port}`;
+  const ts = sans.find(s => s.value && s.value.endsWith('.ts.net'))?.value ? `https://${sans.find(s => s.value && s.value.endsWith('.ts.net')).value}:${port}` : '';
+  const ik = getInstancePublicKeyHex();
+  const alias = os.hostname();
+  const pairingUri = `shellguard://pair?v=1&lan=${encodeURIComponent(lan)}&ts=${encodeURIComponent(ts)}&fp=${materials.fingerprint}&ik=${ik}&alias=${encodeURIComponent(alias)}`;
+  res.json({ success: true, data: { enabled: true, protocol: 'TLS 1.3', port, fingerprint: materials.fingerprint, instancePublicKey: ik, subjectAltNames: sans, certExpiresAt: new Date(Date.now() + 10 * 365.25 * 24 * 60 * 60 * 1000).toISOString(), pairingUri } });
+});
+
+router.post('/tls/generate', requireAdmin, async (req, res) => {
+  const tlsEnabled = process.env.TLS_ENABLED === 'true';
+  if (!tlsEnabled) return res.status(400).json({ success: false, error: 'TLS is not enabled.' });
+  try {
+    const materials = await generateAndPersistCertificate();
+    adminAudit('TLS_CERT_GENERATED', req, { resource: 'tls', details: { fingerprint: materials.fingerprint } });
+    res.json({ success: true, data: { fingerprint: materials.fingerprint } });
+  } catch (err: any) {
+    adminAudit('TLS_CERT_GENERATE_FAILED', req, { resource: 'tls', details: { error: err.message } }, 'failure');
+    res.status(500).json({ success: false, error: 'Failed to generate certificate.' });
+  }
+});
+
+router.get('/tls/cert', requireAdmin, (req, res) => {
+  const certPath = path.join(DATA_DIR, 'certs', 'cert.pem');
+  if (!fs.existsSync(certPath)) return res.status(404).json({ success: false, error: 'Certificate not found' });
+  res.download(certPath, 'cert.pem');
+});
 
 // ─── Invites Management (Phase 27) ───────────────────────────────────────────
-
 router.get('/invites', requireAdmin, (req, res) => {
   const invites = db.prepare("SELECT * FROM api_tokens WHERE owner_type = 'invite' ORDER BY created_at DESC").all();
   res.json({ success: true, data: invites });
 });
 
 router.post('/invites', requireAdmin, (req, res) => {
-  const ttl = req.body.ttl || '24h'; // '1h'|'6h'|'24h'|'7d'
+  const ttl = req.body.ttl || '24h';
   const label = req.body.label || 'Invite';
-
   let expiresAt = new Date();
   const now = new Date();
   if (ttl === '1h') expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
@@ -343,10 +387,7 @@ router.post('/invites', requireAdmin, (req, res) => {
   const crypto = require('crypto');
   const inviteToken = 'inv_' + crypto.randomBytes(24).toString('hex');
   const hashedInvite = crypto.createHash('sha256').update(inviteToken).digest('hex');
-
-  db.prepare('INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)')
-    .run(hashedInvite, label, 'invite', now.toISOString(), expiresAt.toISOString());
-
+  db.prepare('INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(hashedInvite, label, 'invite', now.toISOString(), expiresAt.toISOString());
   adminAudit('INVITE_CREATED', req, { resource: 'invite', details: { ttl, label } });
   res.status(201).json({ success: true, data: { inviteToken, label, expiresAt: expiresAt.toISOString() } });
 });
@@ -357,7 +398,6 @@ router.delete('/invites/:hash', requireAdmin, (req, res) => {
   adminAudit('INVITE_REVOKED', req, { resource: 'invite', details: { hash: req.params.hash } });
   res.json({ success: true });
 });
-
 
 export default router;
 

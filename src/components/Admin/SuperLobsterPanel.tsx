@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SuperLobsterPanel.tsx — ShellGuard©™
  *
@@ -31,7 +30,7 @@ const SECTIONS: Array<{ id: Section; label: string; icon: React.ReactNode; count
   { id: 'users', label: 'Lobsters', icon: <Users size={16} /> },
   { id: 'settings', label: 'Settings', icon: <Settings2 size={16} /> },
   { id: 'backups', label: 'Backups', icon: <DatabaseBackup size={16} /> },
-  { id: 'tls', label: 'Transport', icon: <Shield size={16} /> },
+  { id: 'transport', label: 'Transport', icon: <Shield size={16} /> },
   { id: 'audit', label: 'Audit Reef', icon: <ScrollText size={16} /> },
 ];
 
@@ -119,7 +118,7 @@ export function SuperLobsterPanel() {
             {section === 'users' && <SuperLobsterUsers />}
             {section === 'settings' && <SuperLobsterSettings />}
             {section === 'backups' && <SuperLobsterBackups />}
-            {section === 'tls' && <TlsManagementTab />}
+            {section === 'transport' && <TlsManagementTab />}
             {section === 'audit' && <SuperLobsterAudit />}
           </motion.div>
         </AnimatePresence>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, RefreshCw, Download, Copy, Check, Server, Network } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'qrcode';
 import { restAdapter } from '../../services/api/restAdapter.ts';
 import { useToast } from '../../context/ToastContext.tsx';
 import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
@@ -24,6 +24,7 @@ export function TlsManagementTab() {
   const [generating, setGenerating] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   useEffect(() => {
     fetchStatus();
@@ -34,7 +35,13 @@ export function TlsManagementTab() {
     setLoading(true);
     try {
       const res = await restAdapter.GET<{ success: boolean; data: TlsStatus }>('/admin/tls/status');
-      if (res.success && res.data) setStatus(res.data);
+      if (res.success && res.data) {
+        setStatus(res.data);
+        try {
+          const url = await QRCode.toDataURL(res.data.pairingUri, { width: 200, margin: 1 });
+          setQrDataUrl(url);
+        } catch (e) { console.error('QR generation failed:', e); }
+      }
     } catch (e) {
       console.error(e);
     }
@@ -108,14 +115,7 @@ export function TlsManagementTab() {
             {/* Pairing Card */}
             <div className="flex flex-col items-center">
               <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
-                <QRCodeSVG
-                  value={status.pairingUri}
-                  size={200}
-                  bgColor="#ffffff"
-                  fgColor="#000000"
-                  level="Q"
-                  includeMargin={false}
-                />
+                {qrDataUrl ? <img src={qrDataUrl} alt="Reef Handshake QR" className="rounded-lg" /> : <div className="w-[200px] h-[200px] bg-slate-100 animate-pulse rounded-lg" />}
               </div>
               <div className="flex gap-2 mb-4">
                 <div className="px-2 py-1 bg-theme-base border border-theme-border rounded text-xs text-theme-muted flex items-center gap-1">

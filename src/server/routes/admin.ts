@@ -384,7 +384,6 @@ router.post('/invites', requireAdmin, (req, res) => {
   else if (ttl === '7d') expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   else expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-  const crypto = require('crypto');
   const inviteToken = 'inv_' + crypto.randomBytes(24).toString('hex');
   const hashedInvite = crypto.createHash('sha256').update(inviteToken).digest('hex');
   db.prepare('INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(hashedInvite, label, 'invite', now.toISOString(), expiresAt.toISOString());

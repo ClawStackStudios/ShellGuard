@@ -256,11 +256,6 @@ function onListening(protocol: 'http' | 'https', tls?: { generated: boolean; fin
   console.log(`   Health: ${protocol}://localhost:${PORT}/api/health\n`);
 }
 
-// TODO(jules): Phase 27 - Initialize ensureInstanceKey() on boot, mount /api/public (publicRouter),
-// attach X-ShellGuard-Rotation-Proof header middleware, and export updateServerTlsContext(key, cert)
-// to call (server as https.Server).setSecureContext({ key, cert }) on cert hot-regeneration.
-// See .jules/tasks/task-53.md.
-
 let server: http.Server | https.Server;
 
 if (tlsEnabled) {

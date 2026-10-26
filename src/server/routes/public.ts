@@ -12,9 +12,18 @@ router.get('/tls-manifest', (_req, res) => {
   res.json({ success: true, data: { certFingerprint: manifest.certFingerprint, instancePublicKey: getInstancePublicKeyHex(), timestamp: manifest.timestamp, signature: manifest.signature } });
 });
 
+function areSignupsDisabled(): boolean {
+  if (process.env.DISABLE_SIGNUPS === 'true') return true;
+  try {
+    const row = db.prepare("SELECT value FROM system_settings WHERE key = 'allow_signups'").get() as { value: string } | undefined;
+    if (row && row.value === 'false') return true;
+  } catch {}
+  return false;
+}
+
 router.get('/signup-status', (req, res) => {
   const invite = req.query.invite as string;
-  const isSignupsDisabled = process.env.DISABLE_SIGNUPS === 'true';
+  const isSignupsDisabled = areSignupsDisabled();
 
   const lobsterCountRow = db.prepare('SELECT COUNT(*) as count FROM lobsters').get() as { count: number };
   if (lobsterCountRow.count === 0) return res.json({ success: true, data: { signupsAllowed: true, reason: 'genesis' } });

@@ -93,6 +93,8 @@ export default function App() {
   const [authModalConfig, setAuthModalConfig] = useState<AuthModalConfig | null>(null);
   const [pendingSwitchTarget, setPendingSwitchTarget] = useState<Lobster | null>(null);
   const [isUnlockDismissed, setIsUnlockDismissed] = useState(false);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [signupStatus, setSignupStatus] = useState<{ signupsAllowed: boolean; reason: string } | null>(null);
 
   const lobster = useMemo(() => {
     return lobsters.find(l => l.uuid === activeLobsterId) || null;
@@ -469,6 +471,41 @@ export default function App() {
     setLobsters(migratedLobsters);
     setActiveLobsterIdState(activeId);
     const navIntent = getNavIntent();
+
+    // Check for ?invite= in URL query parameters
+    let detectedInvite: string | null = null;
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const inviteParam = urlParams.get('invite');
+      if (inviteParam) {
+        detectedInvite = inviteParam;
+        setInviteToken(inviteParam);
+        // Address bar scrubber: scrub token from address bar so it's not leaked in bookmarks / history / screenshots
+        const cleanUrl = window.location.pathname + (window.location.hash || '');
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+
+    // Query signup status
+    const statusUrl = detectedInvite 
+      ? `/api/public/signup-status?invite=${encodeURIComponent(detectedInvite)}`
+      : '/api/public/signup-status';
+
+    restAdapter.GET<{ success: boolean; data: { signupsAllowed: boolean; reason: string } }>(statusUrl)
+      .then(res => {
+        if (res.success && res.data) {
+          setSignupStatus(res.data);
+        }
+      })
+      .catch(() => {
+        setSignupStatus({ signupsAllowed: true, reason: 'open' });
+      });
+
+    if (detectedInvite) {
+      setView("setup");
+      setIsMolting(false);
+      return;
+    }
 
     if (activeId) {
       const session = activateUserSession(activeId);
@@ -950,6 +987,7 @@ export default function App() {
       <LandingView 
         onClawIn={() => setView("login")} 
         onHatch={() => setView("setup")} 
+        signupStatus={signupStatus}
       />
     );
   }
@@ -996,6 +1034,7 @@ export default function App() {
                     setView("landing");
                   }
                 }}
+                inviteToken={inviteToken || undefined}
               />
             )}
             {view === "login" && (

@@ -35,12 +35,16 @@ function KeyPill({ prefix, label, color }: { prefix: string; label: string; colo
   );
 }
 
-// TODO(jules): Phase 27 - In LandingView / AuthGateway, query /api/public/signup-status.
-// If signupsAllowed is false, lock/hide the "Hatch" button and show "Registration is invite-only on this instance" badge.
-// If an invite token was captured from ?invite= in App.tsx, automatically unlock Hatch or navigate to SetupView.
-// See .jules/tasks/task-54.md.
 // ── Compact Auth Gateway (ClawChives Pattern Port) ──────────────────────────────
-function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () => void }) {
+function AuthGateway({ 
+  onHatch, 
+  onClawIn, 
+  signupStatus 
+}: { 
+  onHatch: () => void; 
+  onClawIn: () => void; 
+  signupStatus?: { signupsAllowed: boolean; reason: string } | null;
+}) {
   const [gatewayMode, setGatewayMode] = useState<"human" | "agent">("human");
   const [copied, setCopied] = useState(false);
 
@@ -108,10 +112,20 @@ function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () 
                 </div>
                 <button
                   onClick={onHatch}
-                  className="w-full mt-8 py-3.5 bg-[#e4048a] hover:bg-[#be185d] text-white font-bold rounded-2xl shadow-lg shadow-[#e4048a]/20 transition-all active:scale-95 cursor-pointer text-sm"
+                  disabled={signupStatus?.signupsAllowed === false}
+                  className={`w-full mt-8 py-3.5 font-bold rounded-2xl shadow-lg transition-all text-sm ${
+                    signupStatus?.signupsAllowed === false
+                      ? "bg-theme-base border border-theme-subtle text-theme-muted cursor-not-allowed shadow-none"
+                      : "bg-[#e4048a] hover:bg-[#be185d] text-white shadow-[#e4048a]/20 active:scale-95 cursor-pointer"
+                  }`}
                 >
-                  Hatch Your ShellGuard
+                  {signupStatus?.signupsAllowed === false ? "Registration is Invite-Only" : "Hatch Your ShellGuard"}
                 </button>
+                {signupStatus?.signupsAllowed === false && (
+                  <p className="text-[11px] text-center text-theme-muted mt-2">
+                    Open registration is disabled on this Reef. An invite link is required to hatch.
+                  </p>
+                )}
                 <div className="mt-4 text-center">
                   <button
                     onClick={onClawIn}
@@ -303,7 +317,7 @@ export function LandingView({ onClawIn, onHatch, signupStatus }: any) {
         </section>
 
         {/* ── CLAWCHIVES AUTH GATEWAY PORT ── */}
-        <AuthGateway onHatch={onHatch} onClawIn={onClawIn} />
+        <AuthGateway onHatch={onHatch} onClawIn={onClawIn} signupStatus={signupStatus} />
 
         {/* CARABASE-ALIGNED FEATURE GRID */}
         <section className="py-24 bg-theme-surface/40 border-y border-theme-subtle px-4 sm:px-6 lg:px-8 relative" id="features">

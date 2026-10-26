@@ -20,9 +20,6 @@ import { TlsManagementTab } from './TlsManagementTab.tsx';
 import { SuperLobsterAudit } from './SuperLobsterAudit.tsx';
 import { BouncyBrand } from '../ui/BouncyBrand.tsx';
 
-// TODO(jules): Phase 27 - Add 'transport' tab to SECTIONS and render TlsManagementTab.tsx
-// (incorporating Reef Handshake mobile pairing card, active TLS cert status, and Share Signups invite engine).
-// See .jules/tasks/task-54.md.
 type Section = 'status' | 'users' | 'settings' | 'backups' | 'audit' | 'transport';
 
 const SECTIONS: Array<{ id: Section; label: string; icon: React.ReactNode; count?: string }> = [

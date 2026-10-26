@@ -29,9 +29,10 @@ interface SetupViewProps {
   onSuccess: (lobster: { uuid: string; username: string; displayName?: string }, token: string, shellKey: CryptoKey, rk: string) => void;
   onSwitch: () => void;
   onCancel?: () => void;
+  inviteToken?: string;
 }
 
-export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken }: any) {
+export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken }: SetupViewProps) {
   const [step, setStep] = useState<"hatching" | "verification" | "success">("hatching");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -86,7 +87,8 @@ export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken }: any) {
         username, 
         displayName: displayName || undefined,
         keyHash, 
-        uuid: wizardState.uuid 
+        uuid: wizardState.uuid,
+        inviteToken: inviteToken || undefined
       });
       
       // 2. Exchange key hash for an API token (Login)

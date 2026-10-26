@@ -256,10 +256,16 @@ export function TlsManagementTab() {
                   try {
                     const res = await restAdapter.POST<{success: boolean; data: {inviteToken: string}}>('/admin/invites', { label, ttl });
                     if (res.success && res.data) {
-                      success('Invite generated');
                       const uri = window.location.origin + '/?invite=' + res.data.inviteToken;
-                      prompt('Copy Invite Link:', uri);
+                      try {
+                        await navigator.clipboard.writeText(uri);
+                        success('Invite created and copied to clipboard!');
+                      } catch {
+                        info(`Invite created: ${uri}`);
+                      }
                       fetchInvites();
+                      const labelInput = document.getElementById('invite-label') as HTMLInputElement;
+                      if (labelInput) labelInput.value = '';
                     } else {
                       error('Failed to generate invite');
                     }

@@ -77,7 +77,7 @@ router.post('/auth', adminAuthLimiter, validateBody(AdminSchemas.auth), (req, re
   const sessionToken = createAdminSession();
   res.cookie('sg_admin_session', sessionToken, {
     httpOnly: true,
-    secure: process.env.ENFORCE_HTTPS === 'true',
+    secure: process.env.TLS_ENABLED === 'true' || process.env.ENFORCE_HTTPS === 'true',
     sameSite: 'strict',
     maxAge: 20 * 60 * 1000,
   });
@@ -206,7 +206,7 @@ router.get('/status', requireAdmin, (_req, res) => {
       dbType: 'sqlite (better-sqlite3-multiple-ciphers)',
       sqlcipherActive: Boolean(process.env.DB_ENCRYPTION_KEY),
       metadataEncryptionActive: Boolean(process.env.DB_ENCRYPTION_KEY),
-      httpsEnforced: process.env.ENFORCE_HTTPS === 'true',
+      httpsEnforced: process.env.TLS_ENABLED === 'true' || process.env.ENFORCE_HTTPS === 'true',
       systemSettings: settings,
     },
   });

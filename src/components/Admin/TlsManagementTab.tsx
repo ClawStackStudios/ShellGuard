@@ -34,13 +34,16 @@ export function TlsManagementTab() {
   const fetchStatus = async () => {
     setLoading(true);
     try {
-      const res = await restAdapter.GET<{ success: boolean; data: TlsStatus }>('/admin/tls/status');
-      if (res.success && res.data) {
-        setStatus(res.data);
-        try {
-          const url = await QRCode.toDataURL(res.data.pairingUri, { width: 200, margin: 1 });
-          setQrDataUrl(url);
-        } catch (e) { console.error('QR generation failed:', e); }
+      const res: any = await restAdapter.GET<TlsStatus>('/admin/tls/status');
+      const data: TlsStatus = (res && typeof res.enabled === 'boolean') ? res : res?.data;
+      if (data && typeof data.enabled === 'boolean') {
+        setStatus(data);
+        if (data.pairingUri) {
+          try {
+            const url = await QRCode.toDataURL(data.pairingUri, { width: 200, margin: 1 });
+            setQrDataUrl(url);
+          } catch (e) { console.error('QR generation failed:', e); }
+        }
       }
     } catch (e) {
       console.error(e);
@@ -50,21 +53,18 @@ export function TlsManagementTab() {
 
   const fetchInvites = async () => {
     try {
-      const res = await restAdapter.GET<{success: boolean; data: any[]}>('/admin/invites');
-      if (res.success && res.data) setInvites(res.data.filter(i => new Date(i.expires_at).getTime() > Date.now()));
+      const res: any = await restAdapter.GET<any[]>('/admin/invites');
+      const data: any[] = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      setInvites(data.filter(i => new Date(i.expires_at).getTime() > Date.now()));
     } catch(e){}
   };
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const res = await restAdapter.POST<{ success: boolean; data?: { fingerprint: string }; error?: string }>('/admin/tls/generate', {});
-      if (res.success) {
-        success('Certificate regenerated successfully. Clients must re-accept it.');
-        await fetchStatus();
-      } else {
-        error(res.error || 'Failed to regenerate certificate.');
-      }
+      await restAdapter.POST('/admin/tls/generate', {});
+      success('Certificate regenerated successfully. Clients must re-accept it.');
+      await fetchStatus();
     } catch (e: any) {
       error(e.message || 'Failed to regenerate certificate.');
     }
@@ -254,9 +254,10 @@ export function TlsManagementTab() {
                   const label = (document.getElementById('invite-label') as HTMLInputElement).value || 'Invite';
                   const ttl = (document.getElementById('invite-ttl') as HTMLSelectElement).value;
                   try {
-                    const res = await restAdapter.POST<{success: boolean; data: {inviteToken: string}}>('/admin/invites', { label, ttl });
-                    if (res.success && res.data) {
-                      const uri = window.location.origin + '/?invite=' + res.data.inviteToken;
+                    const res: any = await restAdapter.POST('/admin/invites', { label, ttl });
+                    const token = res?.inviteToken || res?.data?.inviteToken;
+                    if (token) {
+                      const uri = window.location.origin + '/?invite=' + token;
                       try {
                         await navigator.clipboard.writeText(uri);
                         success('Invite created and copied to clipboard!');

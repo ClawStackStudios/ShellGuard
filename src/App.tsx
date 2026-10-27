@@ -491,10 +491,11 @@ export default function App() {
       ? `/api/public/signup-status?invite=${encodeURIComponent(detectedInvite)}`
       : '/api/public/signup-status';
 
-    restAdapter.GET<{ success: boolean; data: { signupsAllowed: boolean; reason: string } }>(statusUrl)
-      .then(res => {
-        if (res.success && res.data) {
-          setSignupStatus(res.data);
+    restAdapter.GET<{ signupsAllowed: boolean; reason: string }>(statusUrl)
+      .then((res: any) => {
+        const data = (res && typeof res.signupsAllowed === 'boolean') ? res : res?.data;
+        if (data && typeof data.signupsAllowed === 'boolean') {
+          setSignupStatus(data);
         }
       })
       .catch(() => {
@@ -986,7 +987,10 @@ export default function App() {
     return (
       <LandingView 
         onClawIn={() => setView("login")} 
-        onHatch={() => setView("setup")} 
+        onHatch={() => {
+          if (signupStatus?.signupsAllowed === false && !inviteToken) return;
+          setView("setup");
+        }} 
         signupStatus={signupStatus}
       />
     );
@@ -1035,6 +1039,7 @@ export default function App() {
                   }
                 }}
                 inviteToken={inviteToken || undefined}
+                signupStatus={signupStatus}
               />
             )}
             {view === "login" && (

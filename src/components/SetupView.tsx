@@ -30,9 +30,10 @@ interface SetupViewProps {
   onSwitch: () => void;
   onCancel?: () => void;
   inviteToken?: string;
+  signupStatus?: { signupsAllowed: boolean; reason: string } | null;
 }
 
-export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken }: SetupViewProps) {
+export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken, signupStatus }: SetupViewProps) {
   const [step, setStep] = useState<"hatching" | "verification" | "success">("hatching");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -210,6 +211,13 @@ export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken }: SetupV
                 Choose your handle in the reef. This will be anchored to your cryptographic key.
               </p>
 
+              {signupStatus?.signupsAllowed === false && !inviteToken && (
+                <div className="mb-4 p-3 bg-lobster-red/10 border border-lobster-red/30 rounded-xl flex items-center gap-2.5 text-lobster-red text-xs">
+                  <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                  <span>Public registration is closed on this instance. An administrator invite link is required to hatch.</span>
+                </div>
+              )}
+
               {/* Form Input: USERNAME * */}
               <div className="space-y-1 mb-3">
                 <label className="text-[10px] font-headline font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1">
@@ -245,7 +253,7 @@ export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken }: SetupV
               {/* Action Button: HATCH IDENTITY */}
               <button 
                 onClick={startHatching}
-                disabled={!validateUsername(username) || isHatching}
+                disabled={!validateUsername(username) || isHatching || (signupStatus?.signupsAllowed === false && !inviteToken)}
                 className="w-full py-4 px-6 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#0e7490] text-white font-headline font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-[#06b6d4]/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               >
                 {!isHatching ? (

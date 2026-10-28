@@ -349,6 +349,7 @@ router.post('/tls/generate', requireAdmin, async (req, res) => {
   try {
     const materials = await generateAndPersistCertificate();
     adminAudit('TLS_CERT_GENERATED', req, { resource: 'tls', details: { fingerprint: materials.fingerprint } });
+    res.setHeader('Connection', 'close');
     res.json({ success: true, data: { fingerprint: materials.fingerprint } });
   } catch (err: any) {
     adminAudit('TLS_CERT_GENERATE_FAILED', req, { resource: 'tls', details: { error: err.message } }, 'failure');
@@ -383,7 +384,7 @@ router.post('/invites', requireAdmin, (req, res) => {
   const hashedInvite = crypto.createHash('sha256').update(inviteToken).digest('hex');
   db.prepare('INSERT INTO api_tokens (key, owner_uuid, owner_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(hashedInvite, label, 'invite', now.toISOString(), expiresAt.toISOString());
   adminAudit('INVITE_CREATED', req, { resource: 'invite', details: { ttl, label } });
-  res.status(201).json({ success: true, data: { inviteToken, label, expiresAt: expiresAt.toISOString() } });
+  res.status(201).json({ success: true, data: { inviteToken, key: hashedInvite, label, expiresAt: expiresAt.toISOString() } });
 });
 
 router.delete('/invites/:hash', requireAdmin, (req, res) => {

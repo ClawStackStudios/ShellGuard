@@ -353,6 +353,7 @@ export default function App() {
     setActiveLobsterIdState(null);
     setSelectedItemId(null);
     setAuthModalConfig(null);
+    setInviteToken(null);
     setNavIntent("landing");
     setView("landing");
   }, [activeLobsterId]);
@@ -496,15 +497,19 @@ export default function App() {
         const data = (res && typeof res.signupsAllowed === 'boolean') ? res : res?.data;
         if (data && typeof data.signupsAllowed === 'boolean') {
           setSignupStatus(data);
+        } else {
+          setSignupStatus({ signupsAllowed: false, reason: 'error' });
         }
       })
       .catch(() => {
-        setSignupStatus({ signupsAllowed: true, reason: 'open' });
+        setSignupStatus({ signupsAllowed: false, reason: 'error' });
+      })
+      .finally(() => {
+        setIsMolting(false);
       });
 
     if (detectedInvite) {
       setView("setup");
-      setIsMolting(false);
       return;
     }
 
@@ -537,7 +542,6 @@ export default function App() {
     } else {
       setView("landing");
     }
-    setIsMolting(false);
   }, []);
 
   /**
@@ -939,6 +943,7 @@ export default function App() {
     });
 
     setShellKey(sk);
+    setInviteToken(null);
     setView("vault");
   };
 
@@ -988,7 +993,7 @@ export default function App() {
       <LandingView 
         onClawIn={() => setView("login")} 
         onHatch={() => {
-          if (signupStatus?.signupsAllowed === false && !inviteToken) return;
+          if (signupStatus?.signupsAllowed === false) return;
           setView("setup");
         }} 
         signupStatus={signupStatus}
@@ -1029,8 +1034,12 @@ export default function App() {
             {view === "setup" && (
               <SetupView 
                 onSuccess={handleLoginSuccess} 
-                onSwitch={() => setView("login")} 
+                onSwitch={() => {
+                  setInviteToken(null);
+                  setView("login");
+                }} 
                 onCancel={() => {
+                  setInviteToken(null);
                   if (lobster && getNavIntent() === "dashboard") {
                     setView("vault");
                   } else {

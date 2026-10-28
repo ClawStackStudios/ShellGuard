@@ -30,7 +30,7 @@ import settingsRoutes    from './src/server/routes/settings.js';
 import adminRoutes       from './src/server/routes/admin.js';
 import publicRoutes      from './src/server/routes/public.js';
 import { performBackup } from './src/server/utils/backupManager.js';
-import { ensureTlsMaterials } from './src/server/utils/tlsManager.js';
+import { ensureTlsMaterials, registerTlsReloadListener } from './src/server/utils/tlsManager.js';
 import { getAppVersion } from './src/server/utils/version.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -261,7 +261,13 @@ let server: http.Server | https.Server;
 if (tlsEnabled) {
   try {
     const tls = await ensureTlsMaterials();
-    server = https.createServer({ key: tls.key, cert: tls.cert }, app).listen(PORT, HOST, () =>
+    const httpsServer = https.createServer({ key: tls.key, cert: tls.cert }, app);
+    registerTlsReloadListener(({ key, cert, fingerprint }) => {
+      httpsServer.setSecureContext({ key, cert });
+      httpsServer.closeIdleConnections?.();
+      console.log(`[TLS] 🔄 Hot-reloaded TLS context on active HTTPS server (fingerprint: ${fingerprint})`);
+    });
+    server = httpsServer.listen(PORT, HOST, () =>
       onListening('https', { generated: tls.generated, fingerprint: tls.fingerprint, certPath: tls.certPath }),
     );
   } catch (err: any) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, RefreshCw, Download, Copy, Check, Server, Network } from 'lucide-react';
+import { Shield, RefreshCw, Download, Copy, Check, Server, Network, QrCode, X } from 'lucide-react';
 import QRCode from 'qrcode';
-import { restAdapter } from '../../services/api/restAdapter.ts';
+import { useSuperLobster } from './SuperLobsterContext.tsx';
 import { useToast } from '../../context/ToastContext.tsx';
 import { ConfirmDialog } from '../ui/ConfirmDialog.tsx';
 
@@ -16,10 +16,21 @@ interface TlsStatus {
   pairingUri: string;
 }
 
+interface ShareableInvite {
+  key?: string;
+  label: string;
+  token: string;
+  uri: string;
+  qrDataUrl: string;
+}
+
 export function TlsManagementTab() {
+  const { adminApi } = useSuperLobster();
   const { success, error, info } = useToast();
   const [status, setStatus] = useState<TlsStatus | null>(null);
   const [invites, setInvites] = useState<any[]>([]);
+  const [sessionInvites, setSessionInvites] = useState<Record<string, ShareableInvite>>({});
+  const [activeShareInvite, setActiveShareInvite] = useState<ShareableInvite | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -34,8 +45,7 @@ export function TlsManagementTab() {
   const fetchStatus = async () => {
     setLoading(true);
     try {
-      const res: any = await restAdapter.GET<TlsStatus>('/admin/tls/status');
-      const data: TlsStatus = (res && typeof res.enabled === 'boolean') ? res : res?.data;
+      const data = await adminApi<TlsStatus>('/api/admin/tls/status');
       if (data && typeof data.enabled === 'boolean') {
         setStatus(data);
         if (data.pairingUri) {
@@ -46,23 +56,25 @@ export function TlsManagementTab() {
         }
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to fetch TLS status:', e);
     }
     setLoading(false);
   };
 
   const fetchInvites = async () => {
     try {
-      const res: any = await restAdapter.GET<any[]>('/admin/invites');
-      const data: any[] = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
-      setInvites(data.filter(i => new Date(i.expires_at).getTime() > Date.now()));
-    } catch(e){}
+      const data = await adminApi<any[]>('/api/admin/invites');
+      const list = Array.isArray(data) ? data : [];
+      setInvites(list.filter((i: any) => new Date(i.expires_at).getTime() > Date.now()));
+    } catch (e) {
+      console.error('Failed to fetch invites:', e);
+    }
   };
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      await restAdapter.POST('/admin/tls/generate', {});
+      await adminApi('/api/admin/tls/generate', { method: 'POST', body: JSON.stringify({}) });
       success('Certificate regenerated successfully. Clients must re-accept it.');
       await fetchStatus();
     } catch (e: any) {
@@ -251,27 +263,48 @@ export function TlsManagementTab() {
             <div className="flex items-end">
               <button
                 onClick={async () => {
-                  const label = (document.getElementById('invite-label') as HTMLInputElement).value || 'Invite';
-                  const ttl = (document.getElementById('invite-ttl') as HTMLSelectElement).value;
+                  const labelInput = document.getElementById('invite-label') as HTMLInputElement;
+                  const label = labelInput?.value || 'Invite';
+                  const ttl = (document.getElementById('invite-ttl') as HTMLSelectElement)?.value || '24h';
                   try {
-                    const res: any = await restAdapter.POST('/admin/invites', { label, ttl });
-                    const token = res?.inviteToken || res?.data?.inviteToken;
+                    const res = await adminApi<{ inviteToken: string; key?: string }>('/api/admin/invites', {
+                      method: 'POST',
+                      body: JSON.stringify({ label, ttl }),
+                    });
+                    const token = res?.inviteToken;
                     if (token) {
                       const uri = window.location.origin + '/?invite=' + token;
+                      let inviteQr = '';
+                      try {
+                        inviteQr = await QRCode.toDataURL(uri, { width: 220, margin: 1 });
+                      } catch (e) {
+                        console.error('Invite QR generation failed:', e);
+                      }
+                      const shareData: ShareableInvite = {
+                        key: res.key,
+                        label,
+                        token,
+                        uri,
+                        qrDataUrl: inviteQr,
+                      };
+                      if (res.key) {
+                        setSessionInvites(prev => ({ ...prev, [res.key!]: shareData }));
+                      }
+                      setActiveShareInvite(shareData);
+
                       try {
                         await navigator.clipboard.writeText(uri);
                         success('Invite created and copied to clipboard!');
                       } catch {
-                        info(`Invite created: ${uri}`);
+                        info('Invite created! Copy the link or scan the QR code below.');
                       }
                       fetchInvites();
-                      const labelInput = document.getElementById('invite-label') as HTMLInputElement;
                       if (labelInput) labelInput.value = '';
                     } else {
                       error('Failed to generate invite');
                     }
                   } catch (e: any) {
-                    error(e.message);
+                    error(e.message || 'Failed to create invite');
                   }
                 }}
                 className="px-6 py-2 bg-[#e4048a] hover:bg-[#c90378] text-white rounded-lg text-sm font-medium transition-colors"
@@ -280,6 +313,92 @@ export function TlsManagementTab() {
               </button>
             </div>
           </div>
+
+          {/* Active Share Card (Modal / Banner with QR Code & One-Click Copy) */}
+          {activeShareInvite && (
+            <div className="p-6 bg-theme-base/80 border-2 border-[#e4048a]/40 rounded-xl relative overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 mt-6 shadow-lg">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#e4048a]/15 border border-[#e4048a]/30 flex items-center justify-center text-[#e4048a]">
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-theme-main flex items-center gap-2">
+                      Share Invite: <span className="text-[#e4048a]">{activeShareInvite.label}</span>
+                    </h3>
+                    <p className="text-xs text-theme-muted">
+                      Scan the QR code directly with mobile or send the single-use link to hatch a new vault.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveShareInvite(null)}
+                  className="p-1.5 text-theme-muted hover:text-theme-main rounded-lg hover:bg-theme-panel transition-colors"
+                  title="Close Share Card"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex flex-col md:flex-row items-center gap-6 pt-4 border-t border-theme-border">
+                {activeShareInvite.qrDataUrl && (
+                  <div className="bg-white p-3.5 rounded-xl shadow-md border border-slate-200 shrink-0 text-center">
+                    <img
+                      src={activeShareInvite.qrDataUrl}
+                      alt="Invite QR Code"
+                      className="w-40 h-40 rounded"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-2 font-medium">Scan to Hatch</p>
+                  </div>
+                )}
+
+                <div className="flex-1 w-full space-y-4">
+                  <div>
+                    <label className="text-xs font-medium text-theme-muted uppercase tracking-wider mb-1.5 block">
+                      Invite Link (Full URL)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={activeShareInvite.uri}
+                        className="text-xs bg-theme-panel border border-theme-border px-3 py-2.5 rounded-lg text-theme-main font-mono flex-1 select-all focus:outline-none"
+                      />
+                      <button
+                        onClick={() => copyText(activeShareInvite.uri, 'share-uri')}
+                        className="px-4 py-2.5 bg-[#e4048a] hover:bg-[#c90378] text-white rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5 shadow-sm"
+                      >
+                        {copied === 'share-uri' ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
+                        {copied === 'share-uri' ? 'Copied URL!' : 'Copy URL'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-theme-muted uppercase tracking-wider mb-1.5 block">
+                      Raw Invite Token
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-theme-panel border border-theme-border px-3 py-2 rounded-lg text-theme-muted font-mono flex-1 truncate select-all">
+                        {activeShareInvite.token}
+                      </code>
+                      <button
+                        onClick={() => copyText(activeShareInvite.token, 'share-token')}
+                        className="px-3 py-2 bg-theme-base border border-theme-border hover:bg-theme-panel text-theme-main rounded-lg text-xs transition-colors shrink-0 flex items-center gap-1"
+                      >
+                        {copied === 'share-token' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copied === 'share-token' ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-amber-400/90 flex items-center gap-1.5">
+                    <span>⚠️</span> This invite token is only accessible while this browser tab stays open.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="mt-8">
             <h3 className="text-sm font-medium text-theme-main mb-4">Active Invites</h3>
@@ -292,30 +411,57 @@ export function TlsManagementTab() {
                     <tr>
                       <th className="px-4 py-2 font-medium">Label</th>
                       <th className="px-4 py-2 font-medium">Expires At</th>
+                      <th className="px-4 py-2 font-medium">Share & QR</th>
                       <th className="px-4 py-2 font-medium text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-theme-border">
-                    {invites.map((inv: any) => (
-                      <tr key={inv.key}>
-                        <td className="px-4 py-3 text-theme-main">{inv.owner_uuid}</td>
-                        <td className="px-4 py-3 text-theme-muted">{new Date(inv.expires_at).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={async () => {
-                              try {
-                                await restAdapter.DELETE(`/admin/invites/${inv.key}`);
-                                success('Invite revoked');
-                                fetchInvites();
-                              } catch(e: any) { error(e.message); }
-                            }}
-                            className="text-coral-500 hover:text-coral-400 text-xs font-medium"
-                          >
-                            Revoke
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {invites.map((inv: any) => {
+                      const sessionInvite = sessionInvites[inv.key];
+                      return (
+                        <tr key={inv.key}>
+                          <td className="px-4 py-3 text-theme-main font-medium">{inv.owner_uuid}</td>
+                          <td className="px-4 py-3 text-theme-muted">{new Date(inv.expires_at).toLocaleString()}</td>
+                          <td className="px-4 py-3">
+                            {sessionInvite ? (
+                              <button
+                                onClick={() => setActiveShareInvite(sessionInvite)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#e4048a]/10 hover:bg-[#e4048a]/20 text-[#e4048a] border border-[#e4048a]/20 rounded text-xs font-medium transition-colors"
+                              >
+                                <QrCode className="w-3.5 h-3.5" />
+                                Show QR & Link
+                              </button>
+                            ) : (
+                              <span className="text-xs text-theme-muted italic">
+                                Encrypted (Single-reveal)
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await adminApi(`/api/admin/invites/${inv.key}`, { method: 'DELETE' });
+                                  success('Invite revoked');
+                                  setSessionInvites(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[inv.key];
+                                    return updated;
+                                  });
+                                  if (activeShareInvite?.key === inv.key) {
+                                    setActiveShareInvite(null);
+                                  }
+                                  fetchInvites();
+                                } catch(e: any) { error(e.message || 'Failed to revoke invite'); }
+                              }}
+                              className="text-coral-500 hover:text-coral-400 text-xs font-medium"
+                            >
+                              Revoke
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

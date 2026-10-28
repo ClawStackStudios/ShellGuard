@@ -100,6 +100,13 @@ function persist(cert: string, key: string, certPath: string, keyPath: string): 
   fs.chmodSync(keyPath, 0o600);
 }
 
+type TlsReloadListener = (materials: { key: string; cert: string; fingerprint: string }) => void;
+let tlsReloadListener: TlsReloadListener | null = null;
+
+export function registerTlsReloadListener(listener: TlsReloadListener): void {
+  tlsReloadListener = listener;
+}
+
 /**
  * Resolve TLS materials in priority order:
  *   1. BYO: TLS_CERT_PATH + TLS_KEY_PATH (both required when either is set)
@@ -113,6 +120,13 @@ export async function generateAndPersistCertificate(): Promise<{ cert: string; k
   const signature = signWithInstanceKey(fingerprint + timestamp);
   const manifest = { certFingerprint: fingerprint, timestamp, signature };
   fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), { mode: 0o600 });
+  if (tlsReloadListener) {
+    try {
+      tlsReloadListener({ cert, key, fingerprint });
+    } catch (e: any) {
+      console.error('[TLS] Failed to hot-reload TLS context:', e.message);
+    }
+  }
   return { cert, key, fingerprint };
 }
 

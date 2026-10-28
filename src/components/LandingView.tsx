@@ -21,6 +21,7 @@ import {
 interface LandingViewProps {
   onClawIn: () => void;
   onHatch: () => void;
+  signupStatus?: { signupsAllowed: boolean; reason: string } | null;
 }
 
 // ── Key Badge Pill Helper (CaraBase Pattern) ───────────────────────────────────
@@ -36,7 +37,15 @@ function KeyPill({ prefix, label, color }: { prefix: string; label: string; colo
 }
 
 // ── Compact Auth Gateway (ClawChives Pattern Port) ──────────────────────────────
-function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () => void }) {
+function AuthGateway({ 
+  onHatch, 
+  onClawIn, 
+  signupStatus 
+}: { 
+  onHatch: () => void; 
+  onClawIn: () => void; 
+  signupStatus?: { signupsAllowed: boolean; reason: string } | null;
+}) {
   const [gatewayMode, setGatewayMode] = useState<"human" | "agent">("human");
   const [copied, setCopied] = useState(false);
 
@@ -104,10 +113,20 @@ function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () 
                 </div>
                 <button
                   onClick={onHatch}
-                  className="w-full mt-8 py-3.5 bg-[#e4048a] hover:bg-[#be185d] text-white font-bold rounded-2xl shadow-lg shadow-[#e4048a]/20 transition-all active:scale-95 cursor-pointer text-sm"
+                  disabled={signupStatus?.signupsAllowed === false}
+                  className={`w-full mt-8 py-3.5 font-bold rounded-2xl shadow-lg transition-all text-sm ${
+                    signupStatus?.signupsAllowed === false
+                      ? "bg-theme-base border border-theme-subtle text-theme-muted cursor-not-allowed shadow-none"
+                      : "bg-[#e4048a] hover:bg-[#be185d] text-white shadow-[#e4048a]/20 active:scale-95 cursor-pointer"
+                  }`}
                 >
-                  Hatch Your ShellGuard
+                  {signupStatus?.signupsAllowed === false ? "Registration is Invite-Only" : "Hatch Your ShellGuard"}
                 </button>
+                {signupStatus?.signupsAllowed === false && (
+                  <p className="text-[11px] text-center text-theme-muted mt-2">
+                    Open registration is disabled on this Reef. An invite link is required to hatch.
+                  </p>
+                )}
                 <div className="mt-4 text-center">
                   <button
                     onClick={onClawIn}
@@ -171,9 +190,14 @@ function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () 
                 </button>
                 <button
                   onClick={onHatch}
-                  className="w-full mt-4 py-3.5 bg-[#06b6d4] hover:bg-[#0891b2] text-white font-bold rounded-2xl shadow-lg shadow-[#06b6d4]/20 transition-all active:scale-95 cursor-pointer text-sm"
+                  disabled={signupStatus?.signupsAllowed === false}
+                  className={`w-full mt-4 py-3.5 font-bold rounded-2xl shadow-lg transition-all text-sm ${
+                    signupStatus?.signupsAllowed === false
+                      ? "bg-theme-base border border-theme-subtle text-theme-muted cursor-not-allowed shadow-none"
+                      : "bg-[#06b6d4] hover:bg-[#0891b2] text-white shadow-[#06b6d4]/20 active:scale-95 cursor-pointer"
+                  }`}
                 >
-                  Secure Agent Identity
+                  {signupStatus?.signupsAllowed === false ? "Registration is Invite-Only" : "Secure Agent Identity"}
                 </button>
               </motion.div>
             )}
@@ -184,7 +208,7 @@ function AuthGateway({ onHatch, onClawIn }: { onHatch: () => void; onClawIn: () 
   );
 }
 
-export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
+export function LandingView({ onClawIn, onHatch, signupStatus }: LandingViewProps) {
   const handleScrollToFeatures = () => {
     const element = document.getElementById("features");
     if (element) {
@@ -224,9 +248,15 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
             </button>
             <button 
               onClick={onHatch}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-white bg-gradient-to-r from-[#e4048a] to-[#06b6d4] shadow-lg shadow-[#e4048a]/20 hover:opacity-90 transition-all cursor-pointer active:scale-95 border border-transparent"
+              disabled={signupStatus?.signupsAllowed === false}
+              title={signupStatus?.signupsAllowed === false ? "Registration is invite-only on this instance" : "Hatch Vault"}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+                signupStatus?.signupsAllowed === false
+                  ? "bg-theme-surface/50 border border-theme-subtle text-theme-muted cursor-not-allowed shadow-none"
+                  : "text-white bg-gradient-to-r from-[#e4048a] to-[#06b6d4] shadow-lg shadow-[#e4048a]/20 hover:opacity-90 cursor-pointer active:scale-95 border border-transparent"
+              }`}
             >
-              Hatch Vault
+              {signupStatus?.signupsAllowed === false ? "Invite Only" : "Hatch Vault"}
             </button>
           </div>
         </div>
@@ -282,9 +312,14 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
               <button 
                 onClick={onHatch}
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#e4048a] to-[#be185d] hover:from-[#d0037c] hover:to-[#a2134e] text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-[#e4048a]/20 cursor-pointer text-sm tracking-wide"
+                disabled={signupStatus?.signupsAllowed === false}
+                className={`w-full sm:w-auto px-8 py-4 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all text-sm tracking-wide ${
+                  signupStatus?.signupsAllowed === false
+                    ? "bg-theme-surface border border-theme-subtle text-theme-muted cursor-not-allowed shadow-none"
+                    : "bg-gradient-to-r from-[#e4048a] to-[#be185d] hover:from-[#d0037c] hover:to-[#a2134e] text-white active:scale-95 shadow-xl shadow-[#e4048a]/20 cursor-pointer"
+                }`}
               >
-                <span>Hatch Your ShellGuard</span>
+                <span>{signupStatus?.signupsAllowed === false ? "Registration is Invite-Only" : "Hatch Your ShellGuard"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button 
@@ -295,11 +330,17 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
                 <span>How Keys Work</span>
               </button>
             </div>
+            {signupStatus?.signupsAllowed === false && (
+              <div className="mt-4 inline-flex items-center gap-2 bg-[#e4048a]/10 border border-[#e4048a]/30 px-4 py-1.5 rounded-full text-[#e4048a] text-xs font-semibold shadow-sm">
+                <Lock className="w-3.5 h-3.5" />
+                <span>Registration is invite-only on this instance. An invite link is required to hatch.</span>
+              </div>
+            )}
           </div>
         </section>
 
         {/* ── CLAWCHIVES AUTH GATEWAY PORT ── */}
-        <AuthGateway onHatch={onHatch} onClawIn={onClawIn} />
+        <AuthGateway onHatch={onHatch} onClawIn={onClawIn} signupStatus={signupStatus} />
 
         {/* CARABASE-ALIGNED FEATURE GRID */}
         <section className="py-24 bg-theme-surface/40 border-y border-theme-subtle px-4 sm:px-6 lg:px-8 relative" id="features">
@@ -617,21 +658,31 @@ export function LandingView({ onClawIn, onHatch }: LandingViewProps) {
             <p className="text-white/90 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
               Join the Reef. Let your <span className="font-bold text-pink-200">Lobsters</span> keep your secrets secure, rotated, and under your sovereign control.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button 
-                onClick={onHatch}
-                className="w-full sm:w-auto px-8 py-4 bg-white text-[#e4048a] hover:bg-slate-100 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl cursor-pointer text-sm"
-              >
-                <span>Hatch Your ShellGuard</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={onClawIn}
-                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer text-sm"
-              >
-                <span>Login with Key</span>
-              </button>
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                <button
+                  onClick={onHatch}
+                  disabled={signupStatus?.signupsAllowed === false}
+                  className={`w-full sm:w-auto px-8 py-4 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl cursor-pointer text-sm ${signupStatus?.signupsAllowed === false ? 'bg-white/5 text-white/50 cursor-not-allowed' : 'bg-white text-[#e4048a] hover:bg-slate-100 active:scale-95'}`}
+                >
+                  <span>Hatch Your ShellGuard</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={onClawIn}
+                  className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer text-sm"
+                >
+                  <span>Login with Key</span>
+                </button>
+              </div>
+              {signupStatus?.signupsAllowed === false && (
+                <div className="text-xs font-medium text-white/70 bg-black/20 px-4 py-2 rounded-full border border-white/10">
+                  Registration is invite-only on this instance
+                </div>
+              )}
             </div>
+
           </div>
         </section>
       </main>

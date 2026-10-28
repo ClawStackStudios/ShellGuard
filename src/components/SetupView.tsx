@@ -29,9 +29,11 @@ interface SetupViewProps {
   onSuccess: (lobster: { uuid: string; username: string; displayName?: string }, token: string, shellKey: CryptoKey, rk: string) => void;
   onSwitch: () => void;
   onCancel?: () => void;
+  inviteToken?: string;
+  signupStatus?: { signupsAllowed: boolean; reason: string } | null;
 }
 
-export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
+export function SetupView({ onSuccess, onSwitch, onCancel, inviteToken, signupStatus }: SetupViewProps) {
   const [step, setStep] = useState<"hatching" | "verification" | "success">("hatching");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -86,7 +88,8 @@ export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
         username, 
         displayName: displayName || undefined,
         keyHash, 
-        uuid: wizardState.uuid 
+        uuid: wizardState.uuid,
+        inviteToken: inviteToken || undefined
       });
       
       // 2. Exchange key hash for an API token (Login)
@@ -208,6 +211,17 @@ export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
                 Choose your handle in the reef. This will be anchored to your cryptographic key.
               </p>
 
+              {signupStatus?.signupsAllowed === false && (
+                <div className="mb-4 p-3 bg-lobster-red/10 border border-lobster-red/30 rounded-xl flex items-center gap-2.5 text-lobster-red text-xs">
+                  <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    {signupStatus.reason === 'invalid_invite'
+                      ? 'This invite link is invalid or has already been used. Please request a new invite from the administrator.'
+                      : 'Public registration is closed on this instance. An administrator invite link is required to hatch.'}
+                  </span>
+                </div>
+              )}
+
               {/* Form Input: USERNAME * */}
               <div className="space-y-1 mb-3">
                 <label className="text-[10px] font-headline font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1">
@@ -217,10 +231,11 @@ export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
                   type="text"
                   autoComplete="off" 
                   maxLength={32}
+                  disabled={signupStatus?.signupsAllowed === false}
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase())}
                   placeholder="larry_lobster" 
-                  className="w-full bg-slate-50/80 dark:bg-surf-lowest/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all font-mono placeholder:text-slate-400 dark:placeholder:text-slate-600" 
+                  className="w-full bg-slate-50/80 dark:bg-surf-lowest/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all font-mono placeholder:text-slate-400 dark:placeholder:text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed" 
                 />
               </div>
 
@@ -233,23 +248,26 @@ export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
                   type="text"
                   autoComplete="off" 
                   maxLength={48}
+                  disabled={signupStatus?.signupsAllowed === false}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Larry Lobster" 
-                  className="w-full bg-slate-50/80 dark:bg-surf-lowest/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600" 
+                  className="w-full bg-slate-50/80 dark:bg-surf-lowest/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed" 
                 />
               </div>
 
               {/* Action Button: HATCH IDENTITY */}
               <button 
                 onClick={startHatching}
-                disabled={!validateUsername(username) || isHatching}
+                disabled={!validateUsername(username) || isHatching || signupStatus?.signupsAllowed === false}
                 className="w-full py-4 px-6 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#0e7490] text-white font-headline font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-[#06b6d4]/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               >
                 {!isHatching ? (
                   <>
-                    HATCH IDENTITY
-                    <ArrowRight className="w-4 h-4" />
+                    {signupStatus?.signupsAllowed === false
+                      ? (signupStatus.reason === 'invalid_invite' ? 'INVITE LINK EXPIRED OR USED' : 'REGISTRATION CLOSED')
+                      : 'HATCH IDENTITY'}
+                    {signupStatus?.signupsAllowed !== false && <ArrowRight className="w-4 h-4" />}
                   </>
                 ) : (
                   <>
@@ -392,7 +410,7 @@ export function SetupView({ onSuccess, onSwitch, onCancel }: SetupViewProps) {
           <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/5">
             <div className="flex items-center justify-center gap-6 text-[11px] font-headline font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <button 
-                onClick={onSwitch}
+                onClick={onCancel || onSwitch}
                 className="hover:text-[#e4048a] dark:hover:text-[#e4048a] transition-colors flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 focus:outline-none"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />

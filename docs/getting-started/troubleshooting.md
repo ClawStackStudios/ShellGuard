@@ -33,20 +33,33 @@ Solutions to common configuration, network, and operational questions when setti
 
 ---
 
-## 🔒 2. TLS Certificates & WebCrypto Origins
+## 🔒 2. TLS Certificates, Invites & WebCrypto Origins
 
-### 📜 Mobile App connection over Self-Signed HTTPS fails
-- **Symptom**: When connecting to a homelab HTTPS server using an internal certificate, Android rejects the handshake.
-- **Resolution**: 
-  1. On the **Gateway Connection Screen**, enable the toggle: **"Trust self-signed certificates"**.
-  2. This instructs ShellGuard Mobile's isolated OkHttp client to accept your server's certificate. **You do not need to install untrusted root CAs into Android OS system settings.**
+### 📜 Browser warning: "Your connection is not private" (`NET::ERR_CERT_AUTHORITY_INVALID`)
+- **Symptom**: When visiting `https://<server-ip>:6565`, Chrome or Firefox displays a full-page red security warning.
+- **Root Cause**: ShellGuard uses a self-signed EC P-256 certificate for local LAN transport encryption. Because it is not signed by a commercial public Certificate Authority (CA), browsers warn by default.
+- **Resolution**:
+  1. **Trust on First Use (TOFU)**: Click **Advanced ➔ Proceed to [host] (unsafe)**. ShellGuard persists the certificate on disk (`DATA_DIR/certs/cert.pem`), so you only need to accept this once per device.
+  2. **Install Root Certificate**: Log into SuperLobster at `/superlobster` ➔ **Transport & Mobile Pairing** ➔ click **Download Certificate (.pem)**. Install this `.pem` file into your OS or browser's "Trusted Root Certification Authorities" store to permanently silence warnings across all local devices.
+
+### 🚫 "This invite link is invalid or has already been used"
+- **Symptom**: Opening `/?invite=inv_...` displays a red error banner and permanently locks the Hatch Identity button with **`INVITE LINK EXPIRED OR USED`**.
+- **Root Cause**: ShellGuard enforces atomic single-use invite burning:
+  1. Once an identity is registered with an invite, the token is permanently deleted from SQLite (`api_tokens`).
+  2. If the invite's Time-to-Live (TTL: 1h, 6h, 24h, 7d) has passed, the token is expired.
+- **Resolution**: Request a fresh invite link or QR code from the instance operator via the SuperLobster **Transport & Mobile Pairing** tab.
+
+### 🔄 Why didn't certificate regeneration prompt me to accept the warning again?
+- **Symptom**: After clicking **Regenerate Certificate** in SuperLobster, refreshing the page loaded immediately without asking to re-accept the self-signed cert.
+- **Root Cause**: Browsers cache active TLS socket connections via HTTP Keep-Alive. While the server immediately updates its in-memory context via `server.setSecureContext({ key, cert })` and closes idle sockets, active browser tabs may hold lingering HTTP/2 or Keep-Alive tunnels.
+- **Resolution**: Open an Incognito window, perform a hard refresh (`Ctrl + Shift + R` or `Cmd + Shift + R`), or verify the new fingerprint in your browser's security inspector (Padlock icon ➔ Connection is secure ➔ Certificate viewer).
 
 ### ⚠️ Web Browser displays "WebCrypto requires secure origin"
-- **Symptom**: Features like in-browser SSH key generation or WebCrypto operations display an warning when accessing ShellGuard Web from another computer over `http://192.168.x.x:6464`.
+- **Symptom**: Features like in-browser SSH key generation or WebCrypto operations display a warning when accessing ShellGuard Web from another computer over `http://192.168.x.x:6565`.
 - **Root Cause**: The W3C WebCrypto API (`crypto.subtle`) is restricted by modern browsers strictly to **Secure Contexts** (`https://` or `http://localhost`).
 - **Resolution**:
-  - For local development, access via `http://localhost:6464`.
-  - For remote access across your network, place ShellGuard behind a reverse proxy providing HTTPS (e.g. Caddy, Traefik, or Nginx with Let's Encrypt or internal CA), or access via Tailscale HTTPS. See the [Reverse Proxy & TLS Guide](/deployment/reverse-proxy).
+  - Run ShellGuard with `TLS_ENABLED=true` and access via **`https://<server-ip>:6565`**. See the [First-Class HTTPS & TLS Guide](/deployment/https-tls).
+  - Alternatively, place ShellGuard behind a reverse proxy terminating TLS (Caddy, Traefik, Cloudflare Tunnels). See the [Reverse Proxy & TLS Guide](/deployment/reverse-proxy).
 
 ---
 
@@ -98,14 +111,14 @@ Solutions to common configuration, network, and operational questions when setti
 ### 🔍 How do I verify the server is healthy?
 - Run a curl check against the health endpoint:
   ```bash
-  curl -s http://localhost:6464/api/health | jq .
+  curl -k -s https://localhost:6565/api/health | jq .
   ```
   Expected output:
   ```json
   {
     "success": true,
     "service": "ShellGuard API",
-    "version": "0.0.2.8",
+    "version": "0.0.2.9",
     "mode": "sqlite",
     "uptime": 45.2,
     "counts": {

@@ -7,6 +7,7 @@ export const AuthSchemas = {
     // Optional ShellGuard display name (never used as an auth factor)
     displayName: z.string().max(48).optional(),
     keyHash: z.string().length(64),
+    inviteToken: z.string().optional(),
   }),
   token: z.object({
     type: z.enum(['human', 'agent']).optional(),

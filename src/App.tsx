@@ -93,6 +93,8 @@ export default function App() {
   const [authModalConfig, setAuthModalConfig] = useState<AuthModalConfig | null>(null);
   const [pendingSwitchTarget, setPendingSwitchTarget] = useState<Lobster | null>(null);
   const [isUnlockDismissed, setIsUnlockDismissed] = useState(false);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [signupStatus, setSignupStatus] = useState<{ signupsAllowed: boolean; reason: string } | null>(null);
 
   const lobster = useMemo(() => {
     return lobsters.find(l => l.uuid === activeLobsterId) || null;
@@ -351,6 +353,7 @@ export default function App() {
     setActiveLobsterIdState(null);
     setSelectedItemId(null);
     setAuthModalConfig(null);
+    setInviteToken(null);
     setNavIntent("landing");
     setView("landing");
   }, [activeLobsterId]);
@@ -470,6 +473,46 @@ export default function App() {
     setActiveLobsterIdState(activeId);
     const navIntent = getNavIntent();
 
+    // Check for ?invite= in URL query parameters
+    let detectedInvite: string | null = null;
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const inviteParam = urlParams.get('invite');
+      if (inviteParam) {
+        detectedInvite = inviteParam;
+        setInviteToken(inviteParam);
+        // Address bar scrubber: scrub token from address bar so it's not leaked in bookmarks / history / screenshots
+        const cleanUrl = window.location.pathname + (window.location.hash || '');
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+
+    // Query signup status
+    const statusUrl = detectedInvite 
+      ? `/api/public/signup-status?invite=${encodeURIComponent(detectedInvite)}`
+      : '/api/public/signup-status';
+
+    restAdapter.GET<{ signupsAllowed: boolean; reason: string }>(statusUrl)
+      .then((res: any) => {
+        const data = (res && typeof res.signupsAllowed === 'boolean') ? res : res?.data;
+        if (data && typeof data.signupsAllowed === 'boolean') {
+          setSignupStatus(data);
+        } else {
+          setSignupStatus({ signupsAllowed: false, reason: 'error' });
+        }
+      })
+      .catch(() => {
+        setSignupStatus({ signupsAllowed: false, reason: 'error' });
+      })
+      .finally(() => {
+        setIsMolting(false);
+      });
+
+    if (detectedInvite) {
+      setView("setup");
+      return;
+    }
+
     if (activeId) {
       const session = activateUserSession(activeId);
       if (session) {
@@ -499,7 +542,6 @@ export default function App() {
     } else {
       setView("landing");
     }
-    setIsMolting(false);
   }, []);
 
   /**
@@ -901,6 +943,7 @@ export default function App() {
     });
 
     setShellKey(sk);
+    setInviteToken(null);
     setView("vault");
   };
 
@@ -949,7 +992,11 @@ export default function App() {
     return (
       <LandingView 
         onClawIn={() => setView("login")} 
-        onHatch={() => setView("setup")} 
+        onHatch={() => {
+          if (signupStatus?.signupsAllowed === false) return;
+          setView("setup");
+        }} 
+        signupStatus={signupStatus}
       />
     );
   }
@@ -987,8 +1034,12 @@ export default function App() {
             {view === "setup" && (
               <SetupView 
                 onSuccess={handleLoginSuccess} 
-                onSwitch={() => setView("login")} 
+                onSwitch={() => {
+                  setInviteToken(null);
+                  setView("login");
+                }} 
                 onCancel={() => {
+                  setInviteToken(null);
                   if (lobster && getNavIntent() === "dashboard") {
                     setView("vault");
                   } else {
@@ -996,6 +1047,8 @@ export default function App() {
                     setView("landing");
                   }
                 }}
+                inviteToken={inviteToken || undefined}
+                signupStatus={signupStatus}
               />
             )}
             {view === "login" && (

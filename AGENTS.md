@@ -27,6 +27,8 @@
 2. **Never Execute Data:** User inputs and decrypted attachment payloads must never be evaluated dynamically (`eval`, shell execution, or unsanitized HTML).
 3. **Fail Closed:** On missing key material, rate exhaustion, or crypto errors, fail immediately with a secure terminal response.
 4. **Two-Layer Commit Attribution:** Conventional Commits with mandatory `User: <name>` and `AI: <agent>` trailers.
+5. **Fix the Gap, Not the Error:** Expected output is the invariant. Restate it before each fix. Expected vs actual is the gap. Fix the gap, not the error.
+6. **Confirm Before Building:** Unverified is not known. Confirm before you build.
 
 ---
 

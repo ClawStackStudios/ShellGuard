@@ -92,6 +92,7 @@ export default withMermaid(
           text: 'Mobile Companion',
           items: [
             { text: 'Overview & Mirror Sync', link: '/companion/' },
+            { text: 'The Reef Handshake Pairing', link: '/companion/pairing' },
             { text: 'Security & Hardware Enclaves', link: '/companion/security' },
             { text: 'Sync & Encrypted Backups', link: '/companion/sync-and-backups' },
             { text: 'RFC 6238 TOTP Engine', link: '/companion/totp-engine' },
@@ -178,6 +179,7 @@ export default withMermaid(
           text: 'SuperLobster Control Plane',
           items: [
             { text: 'Admin Plane Overview', link: '/superlobster/' },
+            { text: 'Transport & Pairing Hub', link: '/superlobster/transport' },
             { text: 'Lobster Ledger & Cascades', link: '/superlobster/management' },
             { text: 'Failsafe Backups', link: '/superlobster/backups' },
             { text: 'Offline Database Restoration', link: '/superlobster/restoration' },
@@ -191,6 +193,7 @@ export default withMermaid(
           items: [
             { text: 'Deployment Overview', link: '/deployment/' },
             { text: 'Docker & Compose Stacks', link: '/deployment/docker' },
+            { text: 'First-Class HTTPS & TLS', link: '/deployment/https-tls' },
             { text: 'Unraid Community Apps', link: '/deployment/unraid' },
             { text: 'Reverse Proxy & TLS', link: '/deployment/reverse-proxy' },
             { text: 'Forensic Auditing (audit.sqlite)', link: '/deployment/forensic-auditing' },

@@ -19,7 +19,7 @@
 <br/>
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/Version-v0.0.2.8-blue?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.0.2.9-blue?style=for-the-badge)](CHANGELOG.md)
 [![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -85,7 +85,7 @@
 
 - 🔐 **Zero-Knowledge ShellCryption©™** — Secrets are sealed client-side with AES-GCM-256 derived from your `hu-` key via HKDF. The server stores only opaque `{v, alg, iv, ct, aad}` blobs and mathematically cannot decrypt them.
 - 🔒 **Per-Row Metadata Encryption©™** — Server-side AES-256-GCM encrypts metadata fields (title, username, URL, category, notes, file name) in-place using `DB_ENCRYPTION_KEY`. Backward-compatible: legacy plaintext passes through; new/updated items encrypt automatically.
-- 🔒 **Native LAN TLS & WebCrypto Fallback** — Automatic EC P-256 self-signed certificates with SANs (`TLS_ENABLED=true`) for instant browser WebCrypto support on LAN IPs, plus a pure-TypeScript WebCrypto fallback engine (`webCryptoFallback.ts`) for plain HTTP LAN setups.
+- 🔒 **Native LAN TLS & Zero-Downtime Control Plane** — Built-in zero-command TLS 1.3 engine (`TLS_ENABLED=true`) forging 10-year EC P-256 self-signed leaf certificates with dynamic LAN IP SAN reflection, backed by an immutable root host key (`DATA_DIR/instance.key` `0o600`), ECDSA rotation proofs (`manifest.json`), zero-downtime socket context hot-reloading (`server.setSecureContext`), and a pure-TypeScript WebCrypto fallback engine (`webCryptoFallback.ts`) for plain HTTP reverse proxy parity.
 - 🩺 **Segregated Auditing** — Every mutation lands in an append-only `audit.sqlite` reef, redacted so titles, usernames and secrets never touch the log.
 
 ### 🐚 The Grotto (Vault)
@@ -103,7 +103,7 @@
 
 - 🗝️ **ClawKeys©™ Identity** — Passwordless login with a generated `hu-` identity key; short-lived `api-` bearer tokens carry every request.
 - 🤖 **LobsterKeys©™** — Issue granular, revocable, rate-limited `lb-` API keys so your AI agents can fetch exactly what they need — and nothing more.
-- 🦞 **SuperLobster Panel** — Token-gated instance admin plane at `/superlobster`: strict-metadata lobster management (cascade delete with type-to-confirm), read-only diagnostics, whitelist-only settings, and failsafe database backups (SQLCipher-consistent Online Backup API snapshots with manifest + rotation). Restores stay offline by design. See [ADMIN.md](./ADMIN.md).
+- 🦞 **SuperLobster Panel** — Token-gated instance admin plane at `/superlobster`: strict-metadata lobster management (cascade delete with type-to-confirm), read-only diagnostics, whitelist-only settings, failsafe database backups (SQLCipher-consistent Online Backup API snapshots with manifest + rotation), **Transport & Pairing Hub** with real-time fingerprint display, live cert regeneration, scannable Reef Handshake QR pairing, and **Decoupled Share Signups** with atomic single-use invite tokens (`inv_<base62>`). Restores stay offline by design. See [ADMIN.md](./ADMIN.md).
 
 ### 🛠️ Ops & Design
 

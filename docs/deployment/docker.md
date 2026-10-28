@@ -80,13 +80,16 @@ ShellGuard is distributed as a single unified container image on GitHub Containe
 
 | Environment Variable | Required | Default | Description |
 | :--- | :--- | :--- | :--- |
-| **`PORT`** | No | `6464` | The HTTP/HTTPS port the Express server listens on inside the container. |
-| **`DATA_DIR`** | Yes | `/app/data` | Path to persistent storage containing `db.sqlite`, `audit.sqlite`, and snapshot backups. |
+| **`PORT`** | No | `6565` | The HTTP/HTTPS port the Express server listens on inside the container. |
+| **`DATA_DIR`** | Yes | `/app/data` | Path to persistent storage containing `db.sqlite`, `audit.sqlite`, `certs/`, and `instance.key`. |
 | **`DB_ENCRYPTION_KEY`** | **Yes** | *(Empty)* | 256-bit Base64 key for per-row metadata encryption (Layer 2) and SQLCipher whole-DB encryption (Layer 3). |
 | **`ADMIN_TOKEN`** | **Yes** | *(Empty)* | Authentication token for the SuperLobster control plane at `/superlobster`. |
 | **`PUID` / `PGID`** | No | `1000:1000` | Host user/group IDs for permissions remapping. Set to `99:100` on Unraid. |
 | **`TRUST_PROXY`** | No | `false` | Enable (`true`) if running behind a reverse proxy terminating TLS (Nginx, Caddy, Traefik). |
-| **`TLS_ENABLED`** | No | `false` | When `true`, enables Native LAN TLS with automatic 10-year EC P-256 self-signed certificate generation. |
+| **`TLS_ENABLED`** | No | `false` | When `true`, enables Native LAN TLS with automatic 10-year EC P-256 self-signed cert generation. See [First-Class HTTPS & TLS](/deployment/https-tls). |
+| **`DISABLE_SIGNUPS`** | No | `false` | When `true`, closes public registration. Identity creation requires a single-use SuperLobster invite token (`?invite=inv_...`). Genesis User #1 is immune. |
+| **`TLS_CERT_PATH`** | No | *(Empty)* | Absolute path to external public certificate for Bring-Your-Own (BYO) TLS mode. |
+| **`TLS_KEY_PATH`** | No | *(Empty)* | Absolute path to external private key for Bring-Your-Own (BYO) TLS mode. |
 | **`CORS_ORIGIN`** | No | *(Empty)* | Restricts cross-origin resource sharing to designated domain origins. |
 | **`TOKEN_TTL_DEFAULT`**| No | `24h` | Default expiration lifetime for user session tokens (`1h`, `24h`, `7d`). |
 | **`ATTACHMENT_MAX_MB`** | No | `500` | Per-file attachment upload ceiling in MB (breaches abort with `413`). |

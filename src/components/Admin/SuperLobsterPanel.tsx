@@ -16,16 +16,18 @@ import { SuperLobsterStatus } from './SuperLobsterStatus.tsx';
 import { SuperLobsterUsers } from './SuperLobsterUsers.tsx';
 import { SuperLobsterSettings } from './SuperLobsterSettings.tsx';
 import { SuperLobsterBackups } from './SuperLobsterBackups.tsx';
+import { TlsManagementTab } from './TlsManagementTab.tsx';
 import { SuperLobsterAudit } from './SuperLobsterAudit.tsx';
 import { BouncyBrand } from '../ui/BouncyBrand.tsx';
 
-type Section = 'status' | 'users' | 'settings' | 'backups' | 'audit';
+type Section = 'status' | 'users' | 'settings' | 'backups' | 'audit' | 'transport';
 
 const SECTIONS: Array<{ id: Section; label: string; icon: React.ReactNode; count?: string }> = [
   { id: 'status', label: 'Reef Status', icon: <Activity size={16} /> },
   { id: 'users', label: 'Lobsters', icon: <Users size={16} /> },
   { id: 'settings', label: 'Settings', icon: <Settings2 size={16} /> },
   { id: 'backups', label: 'Backups', icon: <DatabaseBackup size={16} /> },
+  { id: 'transport', label: 'Transport', icon: <Shield size={16} /> },
   { id: 'audit', label: 'Audit Reef', icon: <ScrollText size={16} /> },
 ];
 
@@ -113,6 +115,7 @@ export function SuperLobsterPanel() {
             {section === 'users' && <SuperLobsterUsers />}
             {section === 'settings' && <SuperLobsterSettings />}
             {section === 'backups' && <SuperLobsterBackups />}
+            {section === 'transport' && <TlsManagementTab />}
             {section === 'audit' && <SuperLobsterAudit />}
           </motion.div>
         </AnimatePresence>

@@ -4,7 +4,7 @@
 [![Pattern](https://img.shields.io/badge/Security-Zero_Knowledge-red?style=for-the-badge)](#)
 [![Twin](https://img.shields.io/badge/Twin_Codebase-ClawChives%20v3.4.0-purple?style=for-the-badge)](#-appendix-shellguard-deltas-vs-clawchives)
 
-> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.8. This document covers architecture, patterns, constraints, and implementation details.
+> ASCII Construction Blueprint — the authoritative structural reference for ShellGuard v0.0.2.9. This document covers architecture, patterns, constraints, and implementation details.
 
 ---
 
@@ -34,7 +34,7 @@
 ShellGuard/
 │
 ├── 📄 server.ts                       # Express 5 entrypoint — exports `app` for the test seam
-├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.8)
+├── 📄 package.json                    # NPM dependencies & scripts (name "shellguard", v0.0.2.9)
 ├── 📄 vite.config.ts                  # Vite :6464 strictPort, /api proxy → :6565, "@" alias
 ├── 📄 tsconfig.json / tsconfig.node.json  # Strict TypeScript rules
 ├── 📄 .env.example                    # Environment variable reference (openssl hint included)
@@ -97,7 +97,7 @@ ShellGuard/
 │   ├── encrypt-existing-metadata.ts   # Batch encrypt plaintext metadata (migration helper)
 │   └── decrypt-existing-metadata.ts   # Batch decrypt metadata for downgrade
 ├── 🤖 skills/shellguard/SKILL.md      # Agent API reference — served at GET /skill.md
-├── 🧪 tests/                          # 32 Vitest + supertest suites (360+ tests), per-suite DATA_DIR isolation
+├── 🧪 tests/                          # 33 Vitest + supertest suites (370+ tests), per-suite DATA_DIR isolation
 │   ├── helpers/                       # testDb, testFactories, testAuth
 │   ├── auth-flow.test.ts
 │   ├── security.test.ts               # Cross-owner isolation + permission bypass attempts
@@ -112,6 +112,7 @@ ShellGuard/
 │   ├── metadata-encryption.test.ts    # Per-row AES-256-GCM unit crypto & API round-trip
 │   ├── admin.test.ts                  # SuperLobster Panel auth, session & backup gates
 │   ├── tls.test.ts                    # Native LAN TLS generation & redirect checks
+│   ├── tls-admin.test.ts              # Phase 27 TLS control plane, cert hot-reload & share signups
 │   ├── build-gates.test.ts            # Asserts Dockerfile/config shape before CI does
 │   └── unit/                          # Isolated unit test suites
 │       ├── bitwarden-import.test.ts   # Phase 21 Bitwarden JSON/CSV parser & folder-to-pod sniffer
@@ -632,7 +633,9 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
 | `GET` | `/api/health` | ✗ Public | Health check + record counts |
-| `POST` | `/api/auth/register` | ✗ Public | Register identity (username, SHA-256 keyHash, uuid) — 409 on duplicate |
+| `GET` | `/api/public/signup-status` | ✗ Public | Public signup availability check and optional invite token validation (`?invite=...`) |
+| `GET` | `/api/public/tls-manifest` | ✗ Public | Public TLS rotation proof signed by persistent root host key (`instance.key`) |
+| `POST` | `/api/auth/register` | ✗ Public | Register identity (username, SHA-256 keyHash, uuid) — 409 on duplicate, supports single-use invite tokens |
 | `POST` | `/api/auth/token` | ✗ Public | Issue `api-` token from `hu-`/`lb-` keyHash (constant-time compare) |
 | `GET` | `/api/auth/validate` | ✓ Bearer | Validate current bearer token |
 | `GET` | `/api/auth/me` | ✓ Bearer | Current profile *(ShellGuard-only)* |
@@ -712,6 +715,11 @@ Token-gated instance admin plane. **Disabled entirely when `ADMIN_TOKEN` is unse
 | `GET` | `/api/admin/audit` | Recent ADMIN*/AUTH*/BACKUP* events |
 | `POST` | `/api/admin/backup` | One-shot Online Backup API snapshot of db.sqlite + audit.sqlite → `DATA_DIR/backups/` (server-side write; **no download**) |
 | `GET` | `/api/admin/backups` | List backup sets (names/sizes/timestamps only) |
+| `GET` | `/api/admin/invites` | List active single-use share signup invites with expiration countdowns |
+| `POST` | `/api/admin/invites` | Mint a single-use invite token (`inv_<base62>`) with configurable TTL (`ttlHours`: 1, 6, 24, 168) |
+| `DELETE` | `/api/admin/invites/:keyHash` | Revoke an unredeemed single-use invite immediately |
+| `GET` | `/api/admin/tls/status` | Read TLS engine status, active cert validity, SANs, and SHA-256 fingerprint |
+| `POST` | `/api/admin/tls/generate` | Hot-regenerate self-signed TLS cert and update in-memory secure context without restarting Node |
 
 **No HTTP restore endpoint exists** — restores are offline file swaps at shell trust tier (ADMIN.md §5). `audit.sqlite` is never swapped by a restore (append-only reef survives).
 
@@ -780,8 +788,9 @@ Vitest + supertest. Isolation follows the twin pattern exactly: each suite sets 
 | `unit/habitat-export.test.ts` | Phase 25 Habitat streaming ZIP export, Web Streams client-zip packing, attachment manifest embedding, and path traversal sanitization |
 | `unit/habitat-import.test.ts` | Phase 25 Two-Stage Habitat ZIP & directory sniffer, central directory extraction via `fflate`, and reactive Abyssal Ingestion Dock queue orchestration |
 | `vault-imported-tracking.test.ts` | Phase 26 Import Lifecycle Tracking: batch stamping, auto-graduation on edit, mass graduation, transactional batch revert with attachment cascade, and permission gates |
+| `tls-admin.test.ts` | Phase 27 SuperLobster TLS Control Plane: 10-year EC P-256 self-signed certs, dynamic SANs, immutable root host key (`instance.key` `0o600`), ECDSA rotation proofs, Genesis User #1 immunity, gateway lockdown, atomic single-use invite burn transaction, and edge proxy parity |
 
-Run them: `npm test` (all 32 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
+Run them: `npm test` (all 33 suites sequential via `fileParallelism: false`), `npm run test:integration`, `npm run test:security`, `npm run test:build-gates`, `npm run test:full`.
 
 ---
 
@@ -822,6 +831,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 | 29 | Cryptographic Audit Hardening & Auditor's Battery (Pure-TS WebCrypto fallback parity proven against official NIST SP 800-38D, FIPS 180-4, RFC 2104, and RFC 5869 standards vectors with unskipped `webCryptoFallback.test.ts`; mechanized constant-time comparison sweep using `constantTimeCompare()` across `auth.ts`, `admin.ts`, and `auth.ts` middleware with automated AST/regex CI gate in `build-gates.test.ts`; standing Docs-as-Code claim battery verifying L1-L5 classes; and formalized threat model addendum for in-process rate limiting, LRU eviction, and redaction coverage) | Elevates cryptographic security from declarative assertions to executable mathematical proof, eliminates timing side-channel leaks, and binds documentation truth directly to code reality (Phase 24, v0.0.2.6, Tasks 47 & 48) |
 | 30 | Habitat Full-Archive Mobility & Reactive Ingestion Dock (streaming zero-knowledge ZIP generator with client-zip bounded to memory ceiling, deterministic collision-proof path sanitization, Two-Stage Ingestion Pipeline with Abyssal Dropzone, and background Abyssal Ingestion Dock in VaultShell with reactive chips) | Eliminates memory crashes on large vault exports and prevents UI freezing during massive attachment restores (Phase 25, v0.0.2.7, Tasks 49 & 50) |
 | 31 | Import Lifecycle Tracking & Ephemeral Quarantine (Migration 0010 adding indexed `import_batch_id` and `imported_at` across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys`; atomic batch stamping on `POST /api/vault/bulk-import`; auto-graduation on edit clearing import metadata on `PUT /:id`; Batch Operations API with `POST .../:id/graduate` and `DELETE .../:id` cascading linked attachments and logging `IMPORT_BATCH_REVERTED`; progressive disclosure quarantine filter tab in `ItemListPane.tsx`, centered floating batch action bar in `VaultShell.tsx`, and inline quarantine banner with revert dialog in `ItemDetailPane.tsx`) | Prevents silent clutter from bulk credential imports, enforces transparent batch traceability, and provides instant, atomic rollback with attachment cascade (Phase 26, v0.0.2.8, Tasks 51 & 52) |
+| 32 | SuperLobster TLS Control Plane & Decoupled Share Signups (Zero-command built-in TLS engine in `tlsManager.ts` forging 10-year EC P-256 self-signed leaf certificates with dynamic LAN interface SAN reflection; persistent immutable root host key `DATA_DIR/instance.key` with `0o600` permissions signing rotation manifest `manifest.json` via ECDSA-SHA256; zero-downtime socket context hot-reloading in `server.ts` via `registerTlsReloadListener`, `httpsServer.setSecureContext({ key, cert })`, `closeIdleConnections()`, and `Connection: close`; edge proxy parity mode when `TLS_ENABLED=false`; SuperLobster Transport & Pairing Hub tab with live SHA-256 fingerprint, `.pem` download, and interactive Reef Handshake QR pairing card; Decoupled Share Signups architecture in `admin.ts` and `auth.ts` reusing `api_tokens` table with `owner_type = 'invite'`, configurable TTLs, and atomic single-use burn inside `db.transaction()`; Genesis User #1 immunity rule guaranteeing registration when lobsters count is 0; client shell address bar scrubber in `App.tsx` via `window.history.replaceState`; and unconditional form lockout in `SetupView.tsx` on invalid or burned tokens; verified by 9 integration tests in `tests/tls-admin.test.ts`) | Provides native zero-command transport encryption without external proxies, establishes mobile pairing with auto-healing trust rotation, and enables private, invite-only onboarding with atomic replay prevention (Phase 27, v0.0.2.9, Tasks 53 & 54) |
 
 ---
 

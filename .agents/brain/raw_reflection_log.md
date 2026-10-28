@@ -1,4 +1,50 @@
 ---
+Date: 2026-10-28
+TaskRef: "Phase 27 Gate 5 Physical Ratification & /walk-the-docs Master Execution (v0.0.2.9 / Build 31)"
+
+Learnings:
+- Production Vite Build Stale Bundle Trap: When debugging full-stack behavior in production mode (`server.ts` serving from `dist/`), frontend edits to TypeScript/React components (`SetupView.tsx`, `App.tsx`) will NOT take effect in the browser until `npm run build` is explicitly executed to generate a new bundle (`dist/assets/index-*.js`). A seemingly broken fix is often an un-recompiled bundle.
+- Hydration Gating Invariant: Any client view relying on an asynchronous backend status query (such as `GET /api/public/signup-status`) must retain a loading state (`isMolting=true`) until the promise settles. Releasing the view early causes momentary visual flashes of unlocked forms before the lock banner mounts.
+- Decoupled Share Signups Architecture: Reusing `api_tokens` with `owner_type = 'invite'` allows zero-migration invite tokens. Atomic burn is achieved by bundling `DELETE FROM api_tokens WHERE key = ? AND expires_at > datetime('now')` and `INSERT INTO lobsters` inside `db.transaction()`. If `changes === 0`, rollback guarantees zero token reuse.
+- Top-Down Documentation Architecture: Walking the docs across 4 zones (`docs/deployment/`, `docs/superlobster/`, `docs/companion/`, `docs/getting-started/`) ensures operator clarity, protocol transparency, and 100% manifest alignment with `ARCHITECTURE.md` (Delta #32), `ADMIN.md`, `SECURITY.md`, and `CHANGELOG.md`.
+
+Difficulties:
+- Diagnosing why burned invite tokens appeared reusable in the browser: Traced to two root causes—`SetupView.tsx` had an old `&& !inviteToken` guard bypassing disabled checks, and `dist/` was serving an un-rebuilt stale Vite bundle. Fixed by stripping the bypass, gating `isMolting`, purging token on auth state transitions, and recompiling `dist/`.
+
+Successes:
+- Gate 5 (Share Signups & Atomic Burn) physically tested and ratified live with Lucas on `https://localhost:6565`.
+- Full `/walk-the-docs` executed across 7 VitePress guides and root manifests.
+- All 12 unit/doc tests (`docsLinks.test.ts`, `mermaidDiagrams.test.ts`, `version.test.ts`) passed 100% green.
+- VitePress build (`npm run docs:build`) compiled 100% green with zero dead links in 105.74s.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Vite Production Serving Stale Asset Trap & `dist/` Recompile Invariant.
+- General pattern: Asynchronous Gateway Hydration Gating.
+---
+
+---
+Date: 2026-10-27
+TaskRef: "Phase 27 Physical Verification Gates 1-4: TLS Hot-Reload, Admin Route Conventions & Interactive Invite UI"
+
+Learnings:
+- Zero-Downtime TLS Hot-Reload in Node.js: Generating new certificates on disk does not change the in-memory TLS context of an active `https.Server`. Calling `httpsServer.setSecureContext({ key, cert })` replaces the secure context immediately for new connections. Calling `httpsServer.closeIdleConnections()` and responding with `Connection: close` forces client browsers to close keep-alive sockets and perform a fresh TLS handshake, immediately presenting the new certificate and prompting security re-acceptance.
+- Admin Routing Dialect Distinction: SuperLobster admin endpoints are mounted under `/api/admin` and authenticate via `sg_admin_session` cookies using `adminApi` from `SuperLobsterContext`. Calling `/admin/...` without `/api` routes to the SPA catch-all (404/index.html), and calling `restAdapter` fails to attach cookie credentials.
+- Zero-Knowledge Single-Reveal Invite Ergonomics: Because hashes are stored in `api_tokens` (`owner_type = 'invite'`), the plaintext invite token is only available at creation time. Providing an interactive card with a scannable QR Code (`QRCode.toDataURL`), a 1-click "Copy URL" button, and maintaining in-session access via `sessionInvites` creates an exceptional UX for self-hosted homelab sharing without compromising the zero-knowledge security boundary.
+
+Difficulties:
+- Identifying why cert regeneration wasn't triggering browser untrusted cert prompts: Lucas perceptively observed that hard-refreshing never prompted for cert re-acceptance. Traced to missing `setSecureContext` wiring despite being documented in `.jules/knowledge/KNOWLEDGE.md`.
+
+Successes:
+- Gates 1 through 4 physically ratified live with Lucas on `https://localhost:6565`.
+- Live TLS certificate hot-reload empirically proven with `openssl s_client` without restarting Node.
+- Interactive QR code sharing and invite creation completely operational.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Node.js Zero-Downtime TLS Hot-Reload (`setSecureContext` + `closeIdleConnections` + `Connection: close`).
+- General pattern: Admin Panel Cookie Session vs User Bearer Token API Separation.
+---
+
+---
 Date: 2026-10-24
 TaskRef: "Execute /draft-release & /walk-the-docs for Phase 26 v0.0.2.8 (Build 30): Import Lifecycle Tracking, Ephemeral Quarantine & Documentation Truth Parity"
 
@@ -1049,6 +1095,29 @@ Successes:
 - Cloud CI Run #39203270400 passed 100% green on GitHub Actions across all 30 test suites (350+ assertions).
 - Expanded canonical RELEASE-v0.0.2.7.md, rolled ROADMAP.md sliding window (Phases 23, 24, 25 active; Phase 22 retired), and synchronized version anchors across README.md, CHANGELOG.md, and ARCHITECTURE.md.
 ---
+Date: 2026-10-28
+TaskRef: "Phase 27 Draft Release (v0.0.2.9 / Build 31), Single Active Release Draft Invariant & 3-Version Roadmap Slide"
+
+Learnings:
+- Execution of the `/draft-release` protocol requires coordinating multiple invariants: single active release draft, 3-version sliding window in `ROADMAP.md`, historical archive sharding (`ROADMAP-HISTORY.md`), and doc-oracle verification.
+- Enforcing the Single Active Release Draft invariant (`git rm RELEASE-v0.0.2.8.md` upon authoring `RELEASE-v0.0.2.9.md`) ensures `.github/workflows/release.yml` unambiguously parses root release notes for GitHub Releases publication.
+- The 3-version sliding-window protocol in `ROADMAP.md` keeps root milestones legible (Phases 25, 26, 27 active) while historical Phase 24 is cleanly preserved in `.agents/brain/ROADMAP-HISTORY.md` shard 1 (Phases 1-24).
+- Advancing the active forward queue to Phase 28 (`v0.0.3.0 / Build 32`: Mobile Offline Biometric Vault, P2P Sync & Reactive Rivers) sets the architectural spine for the next development leap.
+- Running unit tests for docs and versions (`tests/unit/docsLinks.test.ts`, `tests/unit/mermaidDiagrams.test.ts`, `tests/unit/version.test.ts`) verifies 12/12 passing assertions prior to release staging.
+
+Difficulties:
+- None; the protocol and invariables provided clear rails. Git staging boundaries strictly excluded `.agents/` internal brain files to preserve sovereign isolation.
+
+Successes:
+- Canonical `RELEASE-v0.0.2.9.md` authored with ASCII art, themes, topology diagrams, and physical test oracle receipts.
+- `ROADMAP.md` rolled cleanly and verified with doc-oracle unit tests.
+- Release chore committed (`1c275c5`) and pushed to origin stage branch.
+- Comprehensive release report artifact `phase-27-draft-release-report.md` authored.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Single Active Release Draft & 3-Version Sliding Window Roll Protocol.
+---
+
 
 
 

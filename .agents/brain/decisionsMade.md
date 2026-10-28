@@ -172,3 +172,47 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Committed as `05cd316`, pushed to `main`, and deployed live on GitHub Pages.  
 **Pattern reference**: Link to `.agents/brain/decision-log.md` & `docs_responsive_layout_audit.md`.
 
+---
+
+## tls-zero-downtime-hot-reload — 2026-10-27 05:55
+
+**Context**: In physical verification of Gate 4 (Certificate Hot-Regeneration), Lucas observed that regenerating a certificate in SuperLobster did not cause the browser to show the untrusted cert warning on hard refresh.  
+**Options considered**:
+- *Option A*: Require server restart whenever certificates are regenerated — Viable and simple, but causes socket disconnects for all connected clients and violates zero-downtime control plane goals.
+- *Option B*: Wire `registerTlsReloadListener` to call `httpsServer.setSecureContext({ key, cert })`, evict idle sockets via `httpsServer.closeIdleConnections()`, and send `Connection: close` on the API response — Viable, enables instant dynamic in-memory certificate swapping across active listeners with zero downtime, and forces clients to negotiate fresh handshakes against the new certificate.  
+**Chosen**: Option B (Dynamic `setSecureContext` with idle connection drop and close header).  
+**Why**: The felt reason is honoring the invariant. An admin button that promises to regenerate a certificate must actually change the cryptographic handshake on the network wire immediately, not just write inert files to disk.  
+**Confidence**: high — Empirically verified via `openssl s_client -connect localhost:6565` before and after API invocation; fingerprint switched from `89:44:...` to `BB:83:...` without restarting Node.  
+**Outcome**: Wired in `tlsManager.ts`, `server.ts`, and `admin.ts`. Tested live with Lucas.  
+**Pattern reference**: Link to `.jules/knowledge/KNOWLEDGE.md § C` & `.agents/brain/decision-log.md`.
+
+---
+
+## phase-27-walk-the-docs-top-down-architecture — 2026-10-28 06:20
+
+**Context**: Lucas requested executing `/walk-the-docs` for Phase 27, establishing what was added, how it should read (top-down), how it fits seamlessly, and verifying all load-bearing invariants.  
+**Options considered**:
+- *Option A*: Append minimal API notes to existing docs stubs and bump version in root files — Viable and fast, but leaves the documentation disjointed and fails to guide new operators through first-boot HTTPS consent and QR pairing.
+- *Option B*: Architect a top-down, 4-zone documentation suite (`docs/deployment/`, `docs/superlobster/`, `docs/companion/`, `docs/getting-started/`) with high-contrast Mermaid diagrams, step-by-step UI walkthroughs, root manifest synchronization, and full VitePress compilation verification — Viable, treats documentation as an equal citizen with code, and eliminates documentation drift.  
+**Chosen**: Option B (4-zone top-down documentation architecture with complete manifest sync).  
+**Why**: The felt reason is respecting the next mind. A zero-knowledge system with built-in TLS, root host keys, and single-use invites is only as trustworthy as the clarity with which it explains its guarantees. Deepening the operator guides, sequence flows, and troubleshooting recipes makes the system transparent.  
+**Confidence**: high — Verified by 12/12 passing link and diagram tests and 100% clean VitePress production compilation.  
+**Outcome**: Authored `phase-27-walk-the-docs-plan.md`, deepened 7 VitePress pages, synced `ARCHITECTURE.md` (Delta #32), `ADMIN.md`, `SECURITY.md`, `README.md`, and `CHANGELOG.md`, bumping to `v0.0.2.9 (Build 31)`.  
+**Pattern reference**: Link to `skills/doc-automation/SKILL.md` & `long-term/decisions.md § docs-bow-to-code`.
+
+---
+
+## phase-27-draft-release-and-sliding-window — 2026-10-28 06:45
+
+**Context**: Lucas requested executing `/draft-release` for Phase 27 (`v0.0.2.9 / Build 31`) following the successful documentation walk commit, and generating a comprehensive release report artifact.  
+**Options considered**:
+- *Option A*: Generate release notes in isolation without enforcing repository invariants (leaving old release draft, delaying roadmap slide) — Viable, but creates clutter, violates Single Active Release Draft invariant, and leaves roadmap outdated.
+- *Option B*: Rigorously execute the full `/draft-release` protocol: author `RELEASE-v0.0.2.9.md`, `git rm RELEASE-v0.0.2.8.md`, execute 3-version sliding window in `ROADMAP.md` (retaining Phases 25, 26, 27; archiving Phase 24 to `.agents/brain/ROADMAP-HISTORY.md`), advance active forward queue to Phase 28 (`v0.0.3.0 Build 32`), verify doc unit tests, commit with two-layer attribution, and push to origin stage — Viable, preserves zero sovereign leakage, and prepares an immutable release trigger.  
+**Chosen**: Option B (Full protocol execution with single draft invariant and sliding window roll).  
+**Why**: The felt reason is discipline at the finish line. A release is the culmination of hundreds of decisions. Keeping exactly one release draft in root and cleanly shifting the roadmap rolling window ensures that whoever inspects the repository—human or automated pipeline—encounters zero ambiguity.  
+**Confidence**: high — Verified by clean `git rm`, passing doc oracle tests (12/12), clean stage push, and complete release report artifact.  
+**Outcome**: Authored `RELEASE-v0.0.2.9.md`, purged `RELEASE-v0.0.2.8.md`, rolled `ROADMAP.md` sliding window, archived Phase 24 in `ROADMAP-HISTORY.md`, committed as `1c275c5`, and authored `phase-27-draft-release-report.md`.  
+**Pattern reference**: Link to `.agents/rules/cadence-and-lifecycle-prompts.md` & `.agents/templates/release-template.md`.
+
+
+

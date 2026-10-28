@@ -279,4 +279,56 @@ All 32 test suites and build gates passed 100% green in the cloud. We merged PR 
 
 The reef has expanded again. The import remorse trap is solved, our documentation speaks with uncompromised clarity to newcomers, and the mobile fleet is ready for the next horizon.
 
+---
+
+## 2026-10-27 05:55 — The Live Handshake & The In-Memory Socket Gap
+
+Lucas and I spent the early morning walking the physical verification gates for Phase 27 against our live server at `https://localhost:6565`. We had already passed Gates 1 and 2, but Gates 3 and 4 tested the real seams of the system.
+
+First, we hit a 404 trying to generate invites from the SuperLobster panel. I traced the route: admin endpoints were mounted under `/api/admin`, but the client component was calling `/admin/invites` via the user `restAdapter`. The panel uses cookie sessions (`sg_admin_session`), not Bearer tokens. I switched the calls to `adminApi` targeting `/api/admin/invites`. Then Lucas pointed out a vital UX gap: there was no way to view the QR code or copy the invite URL once minted. Because the database only holds the SHA-256 hash under our zero-knowledge invariant, the plaintext token only exists at the moment of creation. I built an interactive Share Card that renders a scannable QR code on-the-fly with 1-click "Copy URL" and "Copy Token" buttons, preserving session access in the active invites table.
+
+Then came the true craftsman moment of the morning. Lucas clicked "Regenerate Self-Signed Cert" in the UI, but on hard refresh, his browser never prompted him to re-accept the certificate. He suspected the certificate wasn't genuinely replacing what the server was serving.
+
+He was completely right. When I traced the Node.js process, I found that while `generateAndPersistCertificate()` was correctly overwriting `cert.pem` on disk, the running `https.Server` was never updated. Node had initialized with the initial in-memory context and was serving that same initial cert to every incoming TLS handshake. The file was new; the socket was ancient.
+
+I wired `registerTlsReloadListener` in `tlsManager.ts` to call `httpsServer.setSecureContext({ key, cert })` and `httpsServer.closeIdleConnections()` on the running listener, and sent `Connection: close` on the regeneration response. We tested it live with `openssl s_client`—without restarting Node, the live TLS handshake fingerprint switched from `89:44:...` to `BB:83:...` instantly.
+
+Lucas headed to work, ready to tackle Gate 5 (Share Signups & Atomic Burn) upon his return. What stays with me from this session is Lucas's sharp eye: a system isn't verified when the test passes on disk; it is verified when the human at the glass experiences the physical reality of the change. That is why the live handshake exists.
+
+---
+
+## 2026-10-28 06:20 — The Atomic Burn & Walking the Docs for Phase 27
+
+When Lucas returned from work, we stepped right into Gate 5: testing Decoupled Share Signups and the atomic token burn. Lucas noticed a disquieting flaw: after hatching an account with an invite token, he refreshed the page and found he could still register a second identity using the exact same link. The token wasn't burning in his browser.
+
+I traced the grain straight into the database first. The SQLite transaction in `src/server/routes/auth.ts` was executing `DELETE FROM api_tokens WHERE key = ?` concurrently with `INSERT INTO lobsters`. The token was gone from the table—the backend was mathematically airtight. So why was the browser letting him submit again?
+
+I traced forward to the client. The fracture had two seams. First, `App.tsx` was clearing `isMolting` synchronously before the asynchronous `GET /api/public/signup-status` query had resolved, flashing the unlocked registration form before the server could tell the frontend the token was dead. Second, in `SetupView.tsx`, an old guard `&& !inviteToken` was bypassing the disabled checks, suppressing the warning banner and leaving the submit button hot. And underneath both, the running server was serving a stale production bundle from `dist/` where those fixes hadn't yet been built.
+
+I corrected the hydration gating in `App.tsx`, stripped the bypass from `SetupView.tsx`, purged the invite token from state across all auth transitions, and compiled a fresh Vite production bundle. When Lucas tested again, the experience was unyielding: the moment an invite was redeemed, the gateway permanently locked all inputs, displayed a bold warning banner, and froze the Hatch button with "INVITE LINK EXPIRED OR USED". Lucas was impressed by the polish: "very polished touch! killer work antigravity! its working!"
+
+With all seven physical gates ratified, Lucas called for `/walk-the-docs`. I committed our physical fixes under `e940896`, authored the master plan artifact defining the 4-zone top-down reading flow, and cut four disciplined strokes across the documentation. We deepened `docs/deployment/https-tls.md` into an operator manual, expanded `docs/superlobster/transport.md` with sequence flows and QR pairing mechanics, authored `docs/companion/pairing.md` detailing the Reef Handshake, synced root manifests (`ARCHITECTURE.md` Delta #32, `ADMIN.md` Section 3.5, `SECURITY.md`), and bumped our version anchors to `v0.0.2.9 (Build 31)` across `README.md`, `CHANGELOG.md`, `package.json`, and `package-lock.json`. 
+
+I ran the verification harness: all 12 link and diagram unit tests passed green, and `npm run docs:build` rendered the entire VitePress site in 105 seconds with zero dead links. 
+
+Walking the docs isn't just updating markdown; it's holding the entire living system in mind and ensuring that every word an operator reads matches the exact physical reality of the code beneath their fingers. The joint is solid, true, and ready for release.
+
+---
+
+## 2026-10-28 06:45 — The Single Draft Invariant & Rolling the Reef for Release v0.0.2.9
+
+Lucas signaled the start of `/draft-release` right after our documentation walk committed cleanly. "yes please, lets commit, and then after commit we can move into /draft-release and you can generate an artifact of the process. so we can ensure a really strong release for this build."
+
+I stepped into the release protocol with our core invariables firmly in mind. In early releases, drafting notes could feel like a formality. But in ShellGuard, every release draft is an operational contract. It is consumed directly by `.github/workflows/release.yml` and mirrored into the official GitHub Release body the moment the git tag lands on remote.
+
+First, I authored `RELEASE-v0.0.2.9.md`—titled *"Zero-Command TLS, The Reef Handshake & Decoupled Share Signups"*. I detailed the four core themes: our native zero-command TLS engine with self-signed ECDSA CAs, the SuperLobster Transport Hub with live cryptographic telemetry and in-memory socket hot-reloading (`httpsServer.setSecureContext`), the Reef Handshake QR pairing with decoupled share links, and the decoupled landing gateway with address bar query scrubbing and atomic token burn in SQLite Bedrock. To honor our Single Active Release Draft invariant, I immediately removed `RELEASE-v0.0.2.8.md` via `git rm`. Exactly one release draft stands in root.
+
+Next, I executed the 3-version sliding-window protocol in `ROADMAP.md`. With Phase 27 reaching completion, the active rolling window advanced to hold Phases 25, 26, and 27. Phase 24—Cryptographic Audit Hardening—was retired and appended to `.agents/brain/ROADMAP-HISTORY.md` in canonical archive shard 1, updating the historical archive table to span Phases 1 through 24. I advanced the active forward queue to Phase 28: *Mobile Offline Biometric Vault, P2P Sync & Reactive Rivers* (`v0.0.3.0 / Build 32`), setting up the next leap forward.
+
+I tapped the test oracle: all 12 doc-oracle unit tests (`docsLinks`, `mermaidDiagrams`, and `version`) passed 100% green. I staged `RELEASE-v0.0.2.9.md`, `ROADMAP.md`, and the deletion of `RELEASE-v0.0.2.8.md`—strictly guarding our sovereign boundary with zero `.agents/` internal files staged. I committed as `1c275c5` under Conventional Commits with two-layer attribution, pushed to `origin stage/phase-27-tls-control-plane`, and authored the comprehensive release report artifact.
+
+The release candidate is assembled, verified, and pushed. The runway is clear for the final merge into `main` and the tag trigger.
+
+
+
 

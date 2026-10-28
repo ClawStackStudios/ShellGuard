@@ -1,6 +1,6 @@
 # 🏛️ ShellGuard Roadmap History — Archive Shard 1
 
-> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 23 (`v0.0.0.0` → `v0.0.2.5`)**
+> **CANONICAL HISTORICAL ARCHIVE — PHASES 1 THROUGH 24 (`v0.0.0.0` → `v0.0.2.6`)**
 > *This document archives completed historical roadmap phases retired from the active [`ROADMAP.md`](../../ROADMAP.md) under the 3-version sliding-window protocol.*
 > *Max shard limit: 3,000 lines.*
 
@@ -10,7 +10,7 @@
 
 This archive preserves the deterministic reverse-built roadmap reconstructed post hoc from the repository's git history. Every phase contains strictly paired 2-task deliveries: **Task A [Functionality/Security Engine]** paired with **Task B [UI Component/Interactive State]**, backed by cited commit receipts and verifiable test criteria.
 
-For active in-flight molts and the 3 most recent completed phases (Phases 24, 25, and 26), consult the active [`ROADMAP.md`](../../ROADMAP.md).
+For active in-flight molts and the 3 most recent completed phases (Phases 25, 26, and 27), consult the active [`ROADMAP.md`](../../ROADMAP.md).
 
 ---
 
@@ -1295,4 +1295,68 @@ ordering Passwords → Cards → Identities → Secure Notes → SSH Keys.
   - On-demand runtime quarantine sweeper `POST /api/attachments/quarantine/sweep`.
   - Pre-flight quota capacity endpoint `GET /api/attachments/quota`.
   - Expanded test coverage in `tests/attachment-integrity.test.ts` (341 tests passing).
+
+---
+
+## Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [v0.0.2.6 (Build 28)] ✅
+
+> Phase Feature Set Overview:
+> Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code
+> audit (which proved the corpus's only liars were docs — the code was sound) into
+> standing verification. Task A hardens the last open soft spot in the crypto
+> claims: the pure-TS WebCrypto fallback's native parity has never been proven
+> against real standards vectors (its test has been skipped since v0.0.1.2) — Task A
+> runs the fallback against NIST/RFC/SP vectors and mechanizes the constant-time
+> guarantee across every key-material comparison site. Task B turns the claim
+> battery (grep enforcing code first, assert doc second) into an executable gate
+> and writes the auditor's addendum into the threat model: in-process rate limiting
+> (restart resets; multi-instance shares nothing), per-key LRU eviction behavior,
+> redaction-regex coverage, and the PBKDF2 narration. No runtime behavior changes;
+> no migrations; the corpus becomes third-party auditable by construction.
+> *(Receipts: Phase 24 Tasks 47 & 48, PR #6, 2026-10-18. Released & live.)*
+
+> 📚 **Documentation Impact**: SECURITY.md + docs/architecture/threat-model.md (auditor's addendum) - project/verification-gates.md (the battery becomes an oracle) - encryption-layers-spec.md section 5 (side-channel boundary) — ✅ synced.
+
+- [x] **Task 47: [Security Engine] WebCrypto Fallback Vector Parity & Constant-Time Guarantee**
+
+Description: Close the last open soft spot in the crypto claims. (1) Fix the
+skipped `tests/unit/webCryptoFallback.test.ts` (skipped since v0.0.1.2 — a known
+issue guarding our own parity claim): run the pure-TS engine against REAL
+standards vectors — SHA-256 (FIPS 180-4 vectors), HMAC-SHA256 (RFC 2104),
+HKDF-SHA256 (RFC 5869 test vectors), AES-256-GCM (SP 800-38D) — asserting
+byte-identity with Node native output on every vector; unskip. (2) Mechanize the
+constant-time sweep: enumerate every comparison site over key material across
+`src/` (auth, admin, revoke, sentinel) and prove zero `===` on secrets — as an
+executable assertion, not an eyeball pass. (3) Narrate the honest boundary in
+`project/encryption-layers-spec.md` section 5: pure-TS AES-GCM is FUNCTIONAL
+parity (LAN-HTTP availability), not side-channel parity — stated verbatim so no
+future doc inflates it.
+
+> Success Criteria: The skipped test is unskipped and green against real
+> standards vectors; fallback output byte-identical to native on every vector;
+> the constant-time sweep script runs in CI and finds zero `===` comparisons on
+> secret material; the side-channel boundary is documented in the spec; the full
+> test oracle + `tsc` + build stay clean.
+
+- [x] **Task 48: [Verification/Documentation Component] The Auditor's Battery & Threat-Model Addendum**
+
+Description: Make the corpus self-auditing. (1) Consolidate the claim battery —
+grep enforcing code first, assert doc second (the L1-L8 classes: limiter numbers
+vs rateLimiter.ts, schema claims vs migrations, identity shape vs crypto.ts,
+permission masks vs zod, AAD namespaces vs test fixtures, PRAGMA rekey, file
+names) — into an executable gate (`scripts/audit-docs.ts` or a vitest suite,
+reviewable in the PR) wired into the build-gates suite so docs drift fails CI.
+(2) Write the auditor's addendum across `SECURITY.md` and
+`docs/architecture/threat-model.md`: in-process rate limiting (restart resets
+counters; multi-instance deployments share nothing — say it), per-key LRU
+eviction behavior (evicted keys fall back to DB lookups — safe, but documented),
+redaction-regex coverage enumerated, and PBKDF2 narration where the test tree
+mentions it.
+
+> Success Criteria: The battery fails loudly on any planted docs-lie (mutation
+> test: re-introduce one L-class lie, watch CI catch it); the threat-model
+> addendum names in-process limiter semantics, LRU eviction, and redaction
+> coverage explicitly; SECURITY.md and the portal threat-model agree; the full
+> test oracle + `tsc` + build stay clean.
+
 

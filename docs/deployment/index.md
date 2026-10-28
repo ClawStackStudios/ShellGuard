@@ -57,7 +57,7 @@ All production settings are configured via standard environment variables:
 ShellGuard exposes an unauthenticated health check endpoint at `GET /api/health`:
 
 ```bash
-curl http://localhost:6464/api/health
+curl -k https://localhost:6565/api/health
 ```
 
 ### Response Payload:
@@ -65,7 +65,7 @@ curl http://localhost:6464/api/health
 {
   "success": true,
   "service": "ShellGuard API",
-  "version": "0.0.2.8",
+  "version": "0.0.2.9",
   "mode": "sqlite",
   "uptime": 3612.45,
   "counts": {

@@ -393,10 +393,12 @@ If you make a good faith effort to comply with this policy when discovering and 
 Before exposing ShellGuard to anything beyond localhost:
 
 - [ ] Set **`DB_ENCRYPTION_KEY`** (`openssl rand -base64 32`) — activates both SQLCipher and per-row metadata encryption
-- [ ] Place the app behind **Nginx/Caddy with TLS**, set `TLS_ENABLED=true` for native self-signed LAN HTTPS, or set `ENFORCE_HTTPS=true` if terminating in-process
+- [ ] Set **`TLS_ENABLED=true`** for built-in 10-year EC P-256 self-signed LAN HTTPS (or place behind Nginx/Caddy/Cloudflare Tunnel)
+- [ ] Set **`DISABLE_SIGNUPS=true`** after creating Genesis User #1 to restrict identity hatching to single-use SuperLobster invites
+- [ ] Verify **`DATA_DIR/instance.key`** and **`DATA_DIR/certs/key.pem`** have strict `0o600` permissions (owner read/write only)
 - [ ] Set **`TRUST_PROXY=true`** only behind your reverse proxy (correct IPs for rate limiting)
 - [ ] Set **`CORS_ORIGIN`** to your specific origin — not wildcard
-- [ ] Restrict port `6464` to localhost/LAN and proxy publicly via TLS
+- [ ] Restrict port `6565` to localhost/LAN or proxy publicly via TLS
 - [ ] Keep **`VITE_SHELLCRYPTION_ENABLED=true`** — never ship a plaintext-at-column vault
 - [ ] Set a sane **`TOKEN_TTL_DEFAULT`** for your threat model (shorter than 24h on shared networks)
 - [ ] Back up **both** `data/db.sqlite` and `data/audit.sqlite` regularly — and keep the encryption key elsewhere

@@ -69,8 +69,9 @@ Vaultwarden gave its admin panel full config-editing power because container ope
 |---|---|
 | **Login** | `ADMIN_TOKEN` input → session cookie. If `ADMIN_TOKEN` unset → 503 |
 | **Reef Status** | Version, mode, encryption flags, DB type, port, retention (read-only), uptime history, recent security events |
+| **Transport & Pairing** | Real-time TLS status, SHA-256 fingerprint, zero-downtime cert regeneration (`setSecureContext`), Reef Handshake QR pairing card, and Decoupled Share Signups engine |
 | **Lobsters Overview** | Strict-metadata user table + cascade delete with type-to-confirm |
-| **System Settings** | Editable whitelist: retention days, backup toggle/interval/retention. Everything else read-only |
+| **System Settings** | Editable whitelist: retention days, backup toggle/interval/retention, `allow_signups` toggle. Everything else read-only |
 | **Backups** | Toggle On/Off, schedule + retention config, "Back up now" one-shot (returns path). **No download** |
 | **Audit Reef Viewer** | Filtered recent admin/security events |
 
@@ -89,6 +90,16 @@ Vaultwarden gave its admin panel full config-editing power because container ope
 ### 3.4 User Export/Import (Tier 1 — Recovery & Sync)
 
 `ImportExportView.tsx`: CSV metadata export + hu-key-gated decrypted/encrypted JSON export/import, plus native `sgtotp.bak` backup container import from the [ShellGuard-TOTP](https://github.com/ClawStackStudios/ShellGuard-TOTP) Android companion. Primary user-level recovery and offline sync path.
+
+### 3.5 Transport Control Plane & Share Signups (Tier 3 — Transport Armor & Onboarding)
+
+`TlsManagementTab.tsx`:
+- **Native TLS 1.3 Engine**: Built-in 10-year EC P-256 self-signed leaf certificate with local IP SAN reflection and zero-downtime socket hot-reloading (`server.setSecureContext`).
+- **Immutable Instance Root Key**: `DATA_DIR/instance.key` with `0o600` permissions. Permanently anchors host identity and signs rotation manifests (`manifest.json`) via ECDSA-SHA256.
+- **The Reef Handshake**: Dynamic vector QR pairing card embedding `shellguard://pair` URI for zero-touch mobile client onboarding.
+- **Decoupled Share Signups**: Admin mints single-use invite tokens (`inv_<32 chars>`) with configurable TTLs (1h, 6h, 24h, 7d). Reuses `api_tokens` table (`owner_type = 'invite'`). Atomic single-use burn inside registration transaction (`DELETE` + `INSERT`).
+- **Genesis User #1 Immunity**: When `SELECT COUNT(*) FROM lobsters === 0`, registration is unconditionally open, preventing instance lockout on initial setup.
+- **Address Bar Scrubber**: Client shell purges `?invite=...` via `window.history.replaceState` immediately upon mounting.
 
 ---
 

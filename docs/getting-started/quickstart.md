@@ -60,19 +60,22 @@ ShellGuard compiles into a single multi-stage container (`node:20-alpine`) runni
 
 2. Verify that the server is healthy and the database is initialized:
    ```bash
-   curl http://localhost:6464/api/health
-   # {"success":true,"service":"ShellGuard API","version":"0.0.2.8","mode":"sqlite","uptime":14.2,"counts":{"vaultPearls":0,"secureNotes":0,"sshKeys":0,"attachments":0,"agentKeys":0}}
+   curl -k https://localhost:6565/api/health
+   # {"success":true,"service":"ShellGuard API","version":"0.0.2.9","mode":"sqlite","uptime":14.2,"counts":{"vaultPearls":0,"secureNotes":0,"sshKeys":0,"attachments":0,"agentKeys":0}}
    ```
 
-### Step 3: Launch Vault & First-Time Molting
+### Step 3: Launch Vault & Genesis User #1 Hatching
 
-1. Open **[http://localhost:6464](http://localhost:6464)** in your web browser.
-2. Click **Molt New Identity** to generate your sovereign 67-character `hu-` master key.
-3. Download and securely store your identity recovery JSON kit. **There are no central passwords, reset emails, or account recovery links.**
-4. Enter your vault dashboard (**The Grotto**) to begin storing secrets and issuing agent delegation keys.
+1. Open **[https://localhost:6565](https://localhost:6565)** (or your LAN IP `https://192.168.1.x:6565`) in your web browser.
+2. **Accept Self-Signed Certificate**: On your first visit, your browser will present a security notice. Click **Advanced ➔ Proceed to localhost (unsafe)**. ShellGuard's persistent self-signed certificate pins trust (TOFU) across restarts without recurring warnings.
+3. **Hatch Genesis Identity**: Click **Hatch Vault** to generate your sovereign 67-character `hu-` master ClawKey.
+   > [!NOTE]
+   > **Genesis User #1 Immunity**: Even if your server is configured with `DISABLE_SIGNUPS=true`, the first user to hatch on a fresh database is unconditionally permitted to register. Once User #1 exists, the gateway automatically locks down to invite-only mode.
+4. Download and securely store your identity recovery JSON kit. **There are no central passwords, reset emails, or account recovery links.**
+5. Enter your vault dashboard (**The Grotto**) to begin storing secrets and issuing agent delegation keys.
 
 > [!TIP]
-> **Connecting from ShellGuard Mobile**: If you plan to pair [ShellGuard Mobile](/mobile/) from your Android phone on the same local network, connect using your server's host LAN IP (e.g. `http://192.168.1.100:6464`). Ensure your host firewall allows inbound TCP traffic on port `6464`.
+> **Connecting from ShellGuard Mobile**: Open SuperLobster at **[https://localhost:6565/superlobster](https://localhost:6565/superlobster)**, navigate to **Transport & Mobile Pairing**, and scan the on-screen QR code with [ShellGuard Mobile](/mobile/) or [ShellGuard-TOTP](/companion/) to establish instant, auto-healing trust. Ensure your host firewall allows inbound TCP traffic on port `6565`.
 
 
 ---

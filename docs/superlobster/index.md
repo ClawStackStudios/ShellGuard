@@ -29,7 +29,10 @@ The SuperLobster design is derived from a clean-room synthesis of the **Vaultwar
 
 ## SuperLobster Sub-Sections
 
-<CardGrid cols="3">
+<CardGrid cols="2">
+  <Card title="Transport & Pairing Hub" href="/superlobster/transport" icon="🌐">
+    TLS status, zero-downtime certificate regeneration, mobile QR pairing, and single-use share signups.
+  </Card>
   <Card title="Lobster Management" href="/superlobster/management" icon="👥">
     User table, storage counts, and atomic cascade deletions.
   </Card>

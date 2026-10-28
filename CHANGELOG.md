@@ -1,5 +1,26 @@
 # Changelog — ShellGuard
 
+## [0.0.2.9] - 2026-10-28 (Build 31)
+
+### Added
+- **Built-in Zero-Command TLS Engine (Phase 27 / Task 53):**
+  - **Automated Certificate Generation (`src/server/utils/tlsManager.ts`):** Generates and persists a 10-year EC P-256 self-signed leaf certificate in `DATA_DIR/certs/cert.pem` and `key.pem` with `0o600` permissions when `TLS_ENABLED=true`. Computes Subject Alternative Names (SANs) dynamically for `localhost`, `127.0.0.1`, and all host LAN interface IPs.
+  - **Immutable Root Host Key (`src/server/utils/instanceKey.ts`):** Generates a persistent EC P-256 keypair in `DATA_DIR/instance.key` with strict `0o600` permissions on first boot. Anchors instance identity across leaf renewals and signs rotation manifests (`manifest.json`) via ECDSA-SHA256.
+  - **Zero-Downtime Socket Context Hot-Reloading (`src/server.ts`):** Dynamic in-memory certificate replacement via `registerTlsReloadListener` and `httpsServer.setSecureContext({ key, cert })`, evicting idle connections via `closeIdleConnections()` and issuing `Connection: close` on regeneration responses without restarting the Node server.
+  - **Edge Proxy Parity Mode:** When `TLS_ENABLED=false`, boots cleanly into plain HTTP on port 6565, omitting HSTS headers and stripping the `Secure` cookie flag for homelab reverse proxies (Cloudflare Tunnel, Caddy, Nginx).
+  - **BYO Certificate Support:** Supports custom certificates via `TLS_CERT_PATH` and `TLS_KEY_PATH` environment variables.
+- **Decoupled Share Signups & SuperLobster Transport Hub (Phase 27 / Task 54):**
+  - **Zero-Migration Invite Engine (`src/server/routes/admin.ts`, `auth.ts`, `public.ts`):** Reuses existing `api_tokens` table (`owner_type = 'invite'`) to mint cryptographically secure single-use invite tokens (`inv_<32 base62 chars>`) with configurable TTLs (1h, 6h, 24h, 7d). Tokens are hashed via SHA-256 at rest.
+  - **Atomic Single-Use Burn:** Enforces single-use token consumption inside a transactional boundary (`DELETE FROM api_tokens` concurrently with `INSERT INTO lobsters`), completely eliminating race conditions and replay attacks.
+  - **Genesis User #1 Immunity Rule:** Unconditionally permits registration when `SELECT COUNT(*) FROM lobsters === 0`, ensuring server operators can never be locked out of a fresh installation even if `DISABLE_SIGNUPS=true`.
+  - **SuperLobster Transport & Pairing Hub (`src/components/Admin/TlsManagementTab.tsx`):** Real-time TLS status indicator, SHA-256 certificate fingerprint with 1-click copy, live certificate regeneration, leaf cert PEM download, and interactive Share Card with instant vector QR Code generation and 1-click Copy URL and Copy Token buttons.
+  - **Client Gateway Hygiene & Address Bar Scrubber (`src/App.tsx`, `SetupView.tsx`, `LandingView.tsx`):** Scrubs `?invite=...` parameter from the address bar via `window.history.replaceState` immediately on mount. Gates client rendering with `isMolting` until signup status resolves, and unconditionally locks the registration form with an error banner when an invite is burned or invalid.
+- **Integration Test Battery (`tests/tls-admin.test.ts`):** 9 comprehensive integration tests covering self-signed TLS generation, dynamic SANs, immutable root key permissions, rotation manifest ECDSA signatures, Genesis User #1 hatching, gateway lockdown, invite creation/burn transactions, and edge proxy parity.
+
+### Changed
+- **Default Port Alignment:** Aligned default standalone execution and container exposure port to `6565`.
+- **Admin API Client Routing:** Updated SuperLobster invite endpoints to use `adminApi` targeting `/api/admin/invites` with cookie session credentials.
+
 ## [0.0.2.8] - 2026-10-24 (Build 30)
 
 ### Added

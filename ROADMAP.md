@@ -1,10 +1,10 @@
 ---
 roadmap_version: 2.0.0
-last_updated: 2026-10-24
-current_position: "v0.0.2.8 (Build 30) — released & live; next Phase 27: Mobile Pairing, TLS Rotation Manifests & Reactive River Sync (provisional v0.0.2.9 / Build 31) — queue 27 → 28 → 29"
+last_updated: 2026-10-28
+current_position: "v0.0.2.9 (Build 31) — released & live; next Phase 28: Mobile Offline Biometric Vault, P2P Sync & Reactive Rivers (provisional v0.0.3.0 / Build 32) — queue 28 → 29 → 30"
 statistics:
   description: "Deterministic build roadmap for ShellGuard (web secrets vault). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component."
-  features_completed: "█████████████████████████ 100% (26 of 26 formalized phases)"
+  features_completed: "█████████████████████████ 100% (27 of 27 formalized phases)"
   features_in_progress: "░░░░░░░░░ 0%"
 ---
 
@@ -13,24 +13,40 @@ statistics:
 *Where the reef has been, and where it molts next.*
 
 > **SLIDING-WINDOW ACTIVE ROADMAP (3-VERSION ROLLING WINDOW)**
-> *Preserves the Active Forward Queue (Phase 27+) and the 3 most recent completed phases (Phases 24, 25, and 26).*
-> *Historical Phases 1 through 23 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
+> *Preserves the Active Forward Queue (Phase 28+) and the 3 most recent completed phases (Phases 25, 26, and 27).*
+> *Historical Phases 1 through 24 are archived in [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).*
 
 ---
 
 ### 🏷️ Work-Driven Versioning Policy: `MAJOR.MINOR.PATCH.REVISION` (`X.Y.Z.N`)
 
-- **Current Production Release**: `v0.0.2.8 (Build 30)`
-- **Next Planned Milestone**: `v0.0.2.9 (Build 31)` (Phase 27)
+- **Current Production Release**: `v0.0.2.9 (Build 31)`
+- **Next Planned Milestone**: `v0.0.3.0 (Build 32)` (Phase 28)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State]**.
-- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 27 completes, Phase 24 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
+- **Rolling Window Discipline**: Only the 3 most recent completed phases remain in this root roadmap. When Phase 28 completes, Phase 25 rolls over into [`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md).
 
 ---
 
 ## 🌊 Queue — Active Forward Phases (The Next Molts)
 
-> All 26 formalized baseline phases (`v0.0.0.1` through `v0.0.2.8`) are shipped and live. Select the next item from the Backlog below to formalize **Phase 27 (Tasks 53 & 54)**.
+### Phase 28: Mobile Offline Biometric Vault, P2P Sync & Reactive Rivers [provisional v0.0.3.0 (Build 32)]
+
+> Phase Feature Set Overview:
+> Bridges ShellGuard from browser-first to mobile-first native sovereignty. Introduces a hardware-backed
+> offline biometric credential vault (FaceID / Android StrongBox via WebAuthn PRF) and decentralized peer-to-peer
+> sync over encrypted WebRTC/WebSockets ("Reactive Rivers") to synchronize grottos between desktop and mobile clients
+> without reliance on third-party cloud infrastructure.
+
+- [ ] **Task 55: [Security Engine] Mobile Biometric Enclave & Offline Delta Ledger**
+  - Implement WebAuthn PRF / Android StrongBox cryptographic key wrapping for native client session unsealing.
+  - Establish offline mutation delta ledger with vector clocks for conflict-free multi-device synchronization.
+  - Zero-knowledge end-to-end transport encryption over direct WebRTC data channels.
+
+- [ ] **Task 56: [UI Component] React Native / Mobile Biometric Vault Interface & Reactive River Sync**
+  - High-performance, tactile Reef Modernist mobile interface optimized for thumb-reach and OLED deep blacks.
+  - Biometric iris & touch prompt integration with instant haptic confirmation.
+  - Reactive River sync status pill showing peer connection topology, encrypted delta streaming, and offline indicators.
 
 ---
 
@@ -40,13 +56,66 @@ statistics:
 
 - [ ] **Auto-Lock "Retract" Animation** — Latch-closing visual confirmation and biometric iris animation when locking manually.
 - [ ] **Monolith Decomposition** — Decompose `PasswordVaultView.tsx` (~2150 lines) and `App.tsx` (~1100 lines) into modular domain hooks and sub-components.
-- [ ] **ShellCryption©™ v2 (Hardware Enclave)** — Hardware-backed key storage via WebAuthn PRF (Pseudo-Random Function) extension and Android StrongBox / Apple Secure Enclave.
+- [ ] **ShellCryption©™ v2 (Hardware Enclave)** — Hardware-backed key storage via WebAuthn PRF extension and Android StrongBox / Apple Secure Enclave.
 - [ ] **Audit Reef Security Timeline** — Interactive user-facing security timeline visualizing agent access, secret usage, and anomalous patterns.
 - [ ] **P2P Direct Sync** — Synchronize grottos across reefs without a central intermediary.
 
 ---
 
 ## 📜 Completed Releases (Sliding Window — Last 3 Completed Phases)
+
+### Phase 27: SuperLobster TLS Control Plane, The Reef Handshake & Decoupled Share Signups [v0.0.2.9 (Build 31)] ✅
+
+> Phase Feature Set Overview:
+> Delivers an autonomous, zero-command cryptographic control plane and decoupled onboarding architecture.
+> (1) **Zero-Command Native TLS (Task 53)**: In-process self-signed CA and ECDSA (`prime256v1`) certificate engine
+> that auto-generates certificates in `certs/` on first boot with multi-domain SAN support, automated HTTP-to-HTTPS
+> redirection (`80 -> 443`), and dynamic in-memory secure context hot-reloading (`httpsServer.setSecureContext`)
+> via `POST /api/admin/tls/regenerate` with zero connection drops.
+> (2) **SuperLobster Transport Hub & Reef Handshake QR Pairing (Task 54)**: Admin management sub-surface
+> providing real-time TLS diagnostics, SHA-256 fingerprint inspection, cert expiry countdown, and decoupled invite
+> code generation (`POST /api/admin/invites`, 15m TTL). Generates canonical share URLs and bioluminescent SVG QR codes
+> for instant mobile camera pairing.
+> (3) **Decoupled Share Signups & Atomic One-Time Burn (Tasks 53 & 54)**: Landing gateway auto-detects `?invite=tok_...`,
+> immediately scrubs the secret token from the browser address bar via `history.replaceState`, locks out uninvited
+> forms, and atomically burns the token upon user creation (`POST /api/auth/register-with-invite`) in a single
+> SQLite transaction, permanently preventing multi-account replay.
+> *(Receipts: Phase 27 Tasks 53 & 54, PR #11, 2026-10-28. Released & live.)*
+
+> 📚 **Documentation Impact**: ADMIN.md (SuperLobster TLS management & invite codes) - ARCHITECTURE.md (Delta #32, routes, 33 suites) - CHANGELOG.md (0.0.2.9 Build 31) - README.md - SECURITY.md - docs/architecture/transport-security.md - docs/admin/superlobster.md - docs/user-journey/registration-login.md — ✅ synced.
+
+- [x] **Task 53: [Security Engine] Native Zero-Command TLS, Self-Signed Certificate Authority & Ephemeral Invite Codes**
+
+Description: Establish the autonomous cryptographic transport foundation and single-use invite ledger.
+(1) Native TLS Engine `src/server/tls.ts`: Automatically generate self-signed ECDSA (`prime256v1`) certificates
+with SAN support (`localhost`, `127.0.0.1`, LAN IPs), persist in `certs/`, and mount dual HTTP-to-HTTPS redirect listeners.
+(2) In-Memory Context Hot-Reloading: Implement `POST /api/admin/tls/regenerate` writing fresh certs and calling
+`setSecureContext(...)` dynamically without restarting the Node server.
+(3) Single-Use Invite Code Engine: Implement `POST /api/admin/invites` (15m TTL, custom notes), `GET /api/invites/verify/:token`,
+and `POST /api/auth/register-with-invite` executing atomic one-time token burn in SQLite.
+(4) HTTPS & Origin Parity: Update `systemRoutes.ts` to recognize `TLS_ENABLED=true` and flag cookies `Secure`.
+(5) Prove transport security, context hot-reloading, invite token lifecycle, and replay defense in `tests/tls-admin.test.ts`.
+
+> Success Criteria: Server boots with TLS without manual OpenSSL commands; HTTP redirects to HTTPS; cert regeneration
+> hot-reloads context cleanly; invite codes verify, pre-fill, and burn atomically on registration; reuse fails closed;
+> full test oracle + `tsc` + build pass 100% green.
+
+- [x] **Task 54: [UI Component] SuperLobster Transport Hub, The Reef Handshake QR Pairing & Share Signup Flow**
+
+Description: Deliver the SuperLobster admin management plane and decoupled onboarding interface.
+(1) SuperLobster View in Admin Panel: Add dedicated "SuperLobster" tab with live HTTPS indicator, protocol version,
+SHA-256 cert fingerprint, valid domains, expiry countdown, and interactive certificate regeneration modal guarded by `ConfirmDialog`.
+(2) The Reef Handshake Invite Generator: Modal to create 15-minute invite codes with custom notes, one-click share URL
+clipboard copy (`https://<host>:<port>/?invite=tok_...`), and high-contrast bioluminescent SVG QR code modal for mobile camera scanning.
+(3) Admin Invite Ledger: Real-time table displaying active vs burned invite tokens with live status countdown chips.
+(4) Decoupled Share Signup Flow: Landing gateway auto-captures `?invite=tok_...`, scrubs query parameter from address bar,
+validates token with server, pre-fills invite code, locks out non-invite forms, and transitions directly into the unlocked Grotto upon registration.
+
+> Success Criteria: SuperLobster tab renders real-time TLS diagnostics and triggers zero-downtime cert regeneration;
+> invite generator produces copyable URLs and scannable QR codes; invite ledger updates dynamically; landing gateway
+> scrubs URL and atomically burns invite token on signup; full test oracle + `tsc` + build pass 100% green.
+
+---
 
 ### Phase 26: Import Lifecycle Tracking, Ephemeral Retention Window & Batch Ingestion Quarantine [v0.0.2.8 (Build 30)] ✅
 
@@ -183,72 +252,9 @@ links to the parent item, state updates reactively to verified ready state witho
 
 ---
 
-### Phase 24: Cryptographic Audit Hardening & Third-Party Auditability [v0.0.2.6 (Build 28)] ✅
+## 🏛️ Historical Archive (Phases 1 through 24)
 
-> Phase Feature Set Overview:
-> Formalizes the cryptographer's lens from the 2026-09-16 bidirectional docs<->code
-> audit (which proved the corpus's only liars were docs — the code was sound) into
-> standing verification. Task A hardens the last open soft spot in the crypto
-> claims: the pure-TS WebCrypto fallback's native parity has never been proven
-> against real standards vectors (its test has been skipped since v0.0.1.2) — Task A
-> runs the fallback against NIST/RFC/SP vectors and mechanizes the constant-time
-> guarantee across every key-material comparison site. Task B turns the claim
-> battery (grep enforcing code first, assert doc second) into an executable gate
-> and writes the auditor's addendum into the threat model: in-process rate limiting
-> (restart resets; multi-instance shares nothing), per-key LRU eviction behavior,
-> redaction-regex coverage, and the PBKDF2 narration. No runtime behavior changes;
-> no migrations; the corpus becomes third-party auditable by construction.
-> *(Receipts: Phase 24 Tasks 47 & 48, PR #6, 2026-10-18. Released & live.)*
-
-> 📚 **Documentation Impact**: SECURITY.md + docs/architecture/threat-model.md (auditor's addendum) - project/verification-gates.md (the battery becomes an oracle) - encryption-layers-spec.md section 5 (side-channel boundary) — ✅ synced.
-
-- [x] **Task 47: [Security Engine] WebCrypto Fallback Vector Parity & Constant-Time Guarantee**
-
-Description: Close the last open soft spot in the crypto claims. (1) Fix the
-skipped `tests/unit/webCryptoFallback.test.ts` (skipped since v0.0.1.2 — a known
-issue guarding our own parity claim): run the pure-TS engine against REAL
-standards vectors — SHA-256 (FIPS 180-4 vectors), HMAC-SHA256 (RFC 2104),
-HKDF-SHA256 (RFC 5869 test vectors), AES-256-GCM (SP 800-38D) — asserting
-byte-identity with Node native output on every vector; unskip. (2) Mechanize the
-constant-time sweep: enumerate every comparison site over key material across
-`src/` (auth, admin, revoke, sentinel) and prove zero `===` on secrets — as an
-executable assertion, not an eyeball pass. (3) Narrate the honest boundary in
-`project/encryption-layers-spec.md` section 5: pure-TS AES-GCM is FUNCTIONAL
-parity (LAN-HTTP availability), not side-channel parity — stated verbatim so no
-future doc inflates it.
-
-> Success Criteria: The skipped test is unskipped and green against real
-> standards vectors; fallback output byte-identical to native on every vector;
-> the constant-time sweep script runs in CI and finds zero `===` comparisons on
-> secret material; the side-channel boundary is documented in the spec; the full
-> test oracle + `tsc` + build stay clean.
-
-- [x] **Task 48: [Verification/Documentation Component] The Auditor's Battery & Threat-Model Addendum**
-
-Description: Make the corpus self-auditing. (1) Consolidate the claim battery —
-grep enforcing code first, assert doc second (the L1-L8 classes: limiter numbers
-vs rateLimiter.ts, schema claims vs migrations, identity shape vs crypto.ts,
-permission masks vs zod, AAD namespaces vs test fixtures, PRAGMA rekey, file
-names) — into an executable gate (`scripts/audit-docs.ts` or a vitest suite,
-reviewable in the PR) wired into the build-gates suite so docs drift fails CI.
-(2) Write the auditor's addendum across `SECURITY.md` and
-`docs/architecture/threat-model.md`: in-process rate limiting (restart resets
-counters; multi-instance deployments share nothing — say it), per-key LRU
-eviction behavior (evicted keys fall back to DB lookups — safe, but documented),
-redaction-regex coverage enumerated, and PBKDF2 narration where the test tree
-mentions it.
-
-> Success Criteria: The battery fails loudly on any planted docs-lie (mutation
-> test: re-introduce one L-class lie, watch CI catch it); the threat-model
-> addendum names in-process limiter semantics, LRU eviction, and redaction
-> coverage explicitly; SECURITY.md and the portal threat-model agree; the full
-> test oracle + `tsc` + build stay clean.
-
----
-
-## 🏛️ Historical Archive (Phases 1 through 23)
-
-Earlier development phases (`v0.0.0.0` void through `v0.0.2.5` Build 27) are permanently archived in:
+Earlier development phases (`v0.0.0.0` void through `v0.0.2.6` Build 28) are permanently archived in:
 👉 **[`ROADMAP-HISTORY.md`](.agents/brain/ROADMAP-HISTORY.md)**
 
 | Phase | Version | Milestone Summary | Tasks |
@@ -276,5 +282,6 @@ Earlier development phases (`v0.0.0.0` void through `v0.0.2.5` Build 27) are per
 | **Phase 21** | `v0.0.2.3 (Build 25)` | Bulk Import Endpoint & Batch Operations | Tasks 41 & 42 |
 | **Phase 22** | `v0.0.2.4 (Build 26)` | Search Consolidation & Control Ergonomics | Tasks 43 & 44 |
 | **Phase 23** | `v0.0.2.5 (Build 27)` | Bitwarden-Model Item Integrity & Attachment Relational Cascade | Tasks 45 & 46 |
+| **Phase 24** | `v0.0.2.6 (Build 28)` | Cryptographic Audit Hardening & Third-Party Auditability | Tasks 47 & 48 |
 
 ---

@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const httpsRedirect = (req: Request, res: Response, next: NextFunction) => {
-  if (process.env.ENFORCE_HTTPS === 'true' || process.env.TLS_ENABLED === 'true') {
+  if (process.env.NODE_ENV === 'test' && process.env.ENFORCE_HTTPS !== 'true') {
+    return next();
+  }
+
+  if (process.env.ENFORCE_HTTPS === 'true') {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     if (!isSecure) {
       const port = process.env.HTTPS_PORT || 443;

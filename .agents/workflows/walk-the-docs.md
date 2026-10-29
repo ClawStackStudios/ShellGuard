@@ -42,13 +42,13 @@ Walk each anchor document sequentially and enforce bidirectional consistency wit
 - [ ] Confirm monotonic `versionCode` (+1 for release builds).
 - [ ] Confirm semantic `versionName` matches the target milestone.
 
-### 2. Strategic Roadmap (`ROADMAP.md`)
+### 2. Strategic Roadmap (`project/ROADMAP-ERA2.md`)
 - [ ] Mark completed tasks with `[x]`.
 - [ ] Update `current_position` to reflect the completed phase and name the next phase.
 - [ ] Recalculate `features_completed: XX%`.
 - [ ] **Monotonic Downstream Build Alignment**: Trace all future phases and verify that build projections (`Phase X ➔ Build Y`) account for any hotfixes or inserted phases, preserving monotonic build code ordering throughout the document.
 
-### 3. Stage & Prompt Alignment (`project/meta-prompt-ai-studio.md`)
+### 3. Stage & Prompt Alignment (`project/meta-prompt-ai-studio-era2.md`)
 - [ ] Re-index upcoming stage headers (e.g. `### Stage 14 (Phase 13): ... (Build 17)`).
 - [ ] Verify prompts, version tags, and task descriptions align with the updated roadmap.
 

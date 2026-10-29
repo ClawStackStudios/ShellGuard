@@ -530,7 +530,7 @@ ShellGuard/
 | [**CONTRIBUTING.md**](./CONTRIBUTING.md) | Development standards, twin-verbatim policy, PR checklist |
 | [**ADMIN.md**](./ADMIN.md) | SuperLobster Panel threat model, operational runbook & disaster recovery |
 | [**BLUEPRINT.md**](./BLUEPRINT.md) | Schema v1 data reefs and topology map |
-| [**ROADMAP.md**](./ROADMAP.md) | Changelog and completed/future molts |
+| [**project/ROADMAP-ERA2.md**](./project/ROADMAP-ERA2.md) | Era 2 roadmap, completed releases, and future molts |
 | [**DESIGN.md**](./DESIGN.md) | Reef Modernist design tokens and component language |
 | [**compatibility_layer.md**](./compatibility_layer.md) | ShellGuard-TOTP Android `sgtotp.bak` backup format & 1-way sync bridge specification |
 | [**docs/**](./docs/) | Full interactive documentation site (VitePress portal) |

@@ -46,7 +46,7 @@ The agent acts as an active cartographer of the project's development lifecycle.
   - **MINOR**: Backward-compatible new features or major capabilities (`feat`).
   - **PATCH / BUILD**: Backward-compatible fixes, ergonomic polish, or refactors (`fix`, `perf`, `refactor`).
 - **Agent Action**: Ask the user:
-  > *"Commit is recorded cleanly under Conventional Commits with two-layer attribution. Does this change warrant bumping our release version tag (`version` in `package.json` / `ROADMAP.md` / `CHANGELOG.md`), or are we keeping the current version to bundle additional tasks into `[Unreleased]` first?"*
+  > *"Commit is recorded cleanly under Conventional Commits with two-layer attribution. Does this change warrant bumping our release version tag (`version` in `package.json` / `project/ROADMAP-ERA2.md` / `CHANGELOG.md`), or are we keeping the current version to bundle additional tasks into `[Unreleased]` first?"*
 
 ### 3. Version Bump Gate (Versioned → Release Movement Check)
 - **When to Trigger**: Immediately after `versionCode` / `versionName` or package version are updated.

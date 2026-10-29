@@ -1,5 +1,30 @@
 ---
 Date: 2026-10-28
+TaskRef: "24-Envar Multi-Angle Stress Test, Phase 28 Dual-Testing Sub-Phases (28.1-28.4) & Era 2 Cutover"
+
+Learnings:
+- Environment Variable Boundary Simulation: Simulating hostile/unexpected operator inputs across all 24 envars exposed cross-variable failure modes that single-variable code reads miss:
+  1. `ADMIN_TOKEN="   "` or `"true"` (Docker Compose YAML boolean stringification) satisfies `.length > 0` without `.trim()` or entropy checks.
+  2. `DISABLE_SIGNUPS=true` with `ADMIN_TOKEN` unset creates a permanent onboarding Catch-22 after Genesis User #1 registers because invite tokens can only be minted inside `/superlobster`.
+  3. `TLS_ENABLED=true` falling back to HTTP on certificate generation failure leaves `process.env.TLS_ENABLED === 'true'`, causing `httpsRedirectMiddleware` to 301-redirect all HTTP requests to dead `https://` and setting `Secure` cookies over plain HTTP.
+  4. `AUTH_RATE_WINDOW="1h"` parses as `1ms` in `parseWindow()` because `parseInt('1h', 10)` returns `1` without a `'h'` branch; `API_RATE_LIMIT="0"` passes `max: 0` to `express-rate-limit`, blocking 100% of API requests with HTTP 429.
+- Era 1 -> Era 2 Archive Cutover: Retiring `project/meta-prompt-ai-studio.md` and root `ROADMAP.md` into `.agents/internal/` (which is `.gitignore`d) preserves full local historical context while leaving `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md` as the sole tracked sources of truth.
+
+Difficulties:
+- Sandbox `language_server` `fork/exec` restriction blocked sandboxed `run_command`; used direct `view_file` / `replace_file_content` for all file inspections and edits, reserving unsandboxed execution strictly for git operations.
+
+Successes:
+- Authored complete 24-variable multi-angle simulation artifact (`envar-edge-case-stress-test.md`).
+- Structured Phase 28 (`v0.0.3.0 / Build 32`) into 4 sequential Sub-Phases (`28.1`–`28.4`, Tasks 55–62, strictly 2 tasks per sub-phase) with mandatory Dual-Testing Teamwork gates.
+- Cleaned all legacy references across `AGENTS.md`, `.agents/`, `README.md`, `ARCHITECTURE.md`, and `CONTRIBUTING.md` to point to Era 2.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Runtime vs Env State Decoupling (middleware must inspect live server state like `isTlsServerActive`, not raw `process.env`, when startup has fallback paths).
+- General pattern: Cross-Envar Lockout Matrix Auditing (`DISABLE_SIGNUPS` x `ADMIN_TOKEN`, `ENFORCE_HTTPS` x `PORT` healthcheck).
+---
+
+---
+Date: 2026-10-28
 TaskRef: "Phase 27 Gate 5 Physical Ratification & /walk-the-docs Master Execution (v0.0.2.9 / Build 31)"
 
 Learnings:

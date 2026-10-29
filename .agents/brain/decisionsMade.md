@@ -214,5 +214,17 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Authored `RELEASE-v0.0.2.9.md`, purged `RELEASE-v0.0.2.8.md`, rolled `ROADMAP.md` sliding window, archived Phase 24 in `ROADMAP-HISTORY.md`, committed as `1c275c5`, and authored `phase-27-draft-release-report.md`.  
 **Pattern reference**: Link to `.agents/rules/cadence-and-lifecycle-prompts.md` & `.agents/templates/release-template.md`.
 
+---
 
+## phase-28-envar-hardening-subphases-and-dual-testing — 2026-10-28 22:28
+
+**Context**: Following the 24-Envar Multi-Angle Edge-Case Audit (`envar-edge-case-stress-test.md`), Lucas directed wrapping all findings into Stage 2 (Phase 28) in `project/meta-prompt-ai-studio-era2.md` as sequential sub-phases of 2 tasks each, verified after each sub-phase via Dual-Testing Teamwork (Agent handles terminal commands and code; User performs physical testing and sign-off before moving to the next sub-phase).  
+**Options considered**:
+- *Option A*: Create a separate standalone hotfix phase for environment variables outside Era 2's roadmap — Viable, but fragments version numbering and splits operational diagnostics from Era 2's server control plane.
+- *Option B*: Structure Stage 2 (Phase 28, `v0.0.3.0 Build 32`) into 4 sequential Sub-Phases (`28.1` Core Crypto/Admin/Identity, `28.2` Network/TLS/Rate-Limiters, `28.3` Storage/Container/Build-Flags/Docs, and `28.4` Sync-Native Reactive River SSE), strictly 2 tasks per sub-phase (`Tasks 55–62`), with a mandatory Dual-Testing Teamwork Verification Gate after every sub-phase — Viable, preserves the Strict 2-Task Pairing Law at the sub-phase level, and ensures zero edge cases slip past physical verification.  
+**Chosen**: Option B (4 Sequential 2-Task Sub-Phases in Phase 28 with Dual-Testing Teamwork Gates).  
+**Why**: The felt reason is rhythm and control. Hardening 24 environment variables across crypto, TLS, rate limiters, and Docker entrypoints touches every load-bearing seam of the server. Cutting it into 2-task sub-phases with a human-in-the-loop physical handshake after each pair guarantees that every stroke is felt and ratified before the next layer is placed on top.  
+**Confidence**: high — Synchronized across `project/meta-prompt-ai-studio-era2.md`, `project/ROADMAP-ERA2.md`, and root `ROADMAP.md`.  
+**Outcome**: Updated `project/meta-prompt-ai-studio-era2.md`, `project/ROADMAP-ERA2.md`, and `ROADMAP.md` with Sub-Phases `28.1`–`28.4` (`Tasks 55–62`) and Dual-Testing Teamwork gates.  
+**Pattern reference**: Link to `long-term/patterns.md § dual-verification-and-the-live-handshake` & `envar-edge-case-stress-test.md`.
 

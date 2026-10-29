@@ -26,7 +26,7 @@ Run a full verification loop:
    - Create `RELEASE-vX.Y.Z.N.md` in the root directory following `[release-template.md](file:///config/Documents/workspace-lucas/projects/Agents/ShellGuard/.agents/templates/release-template.md)`.
    - Purge previous release draft files (e.g. `RELEASE-vX.Y.Z.N-1.md`) ensuring strictly ONE active release draft exists in root.
 2. **Execute Roadmap 3-Version Sliding-Window Protocol:**
-   - Advance `current_position` in `ROADMAP.md` to `vX.Y.Z.N (Build B) — released & live`.
+   - Advance `current_position` in `project/ROADMAP-ERA2.md` to `vX.Y.Z.N (Build B) — released & live`.
    - Move the newly completed phase into "Completed Releases".
    - If "Completed Releases" exceeds 3 milestones, retire the oldest completed phase into `.agents/brain/ROADMAP-HISTORY.md`.
    - Advance the active forward queue to start at the next pending phase.

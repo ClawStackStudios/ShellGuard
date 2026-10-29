@@ -42,14 +42,14 @@ Walk each anchor document sequentially and enforce bidirectional consistency wit
 - [ ] Confirm monotonic `versionCode` (+1 for release builds).
 - [ ] Confirm semantic `versionName` matches the target milestone.
 
-### 2. Strategic Roadmap (`project/ROADMAP-ERA2.md`)
+### 2. Strategic Roadmap (`.agents/skills/project/ROADMAP-ERA2.md`)
 - [ ] Mark completed tasks with `[x]`.
 - [ ] Update `current_position` to reflect the completed phase and name the next phase.
 - [ ] Recalculate `features_completed: XX%`.
 - [ ] **Monotonic Downstream Build Alignment**: Trace all future phases and verify that build projections (`Phase X ➔ Build Y`) account for any hotfixes or inserted phases, preserving monotonic build code ordering throughout the document.
 
-### 3. Stage & Prompt Alignment (`project/meta-prompt-ai-studio-era2.md`)
-- [ ] Re-index upcoming stage headers (e.g. `### Stage 14 (Phase 13): ... (Build 17)`).
+### 3. Stage & Prompt Alignment (`.agents/skills/project/meta-prompt-antigravity.md` & `.agents/skills/project/stages/`)
+- [ ] Re-index upcoming stage headers and prune completed stage directories from `.agents/skills/project/stages/`.
 - [ ] Verify prompts, version tags, and task descriptions align with the updated roadmap.
 
 ### 4. Public Changelog (`CHANGELOG.md` at Repository Root)
@@ -70,11 +70,11 @@ Walk each anchor document sequentially and enforce bidirectional consistency wit
 - [ ] Update passing test suite count badge/prose to match current test oracle total.
 - [ ] Highlight new user-facing features or security suites in the feature list.
 
-### 8. Architectural & Storage Specs (`project/*.md`, `ARCHITECTURE.md`)
-- [ ] **Room DB Schema** (`project/room-storage-schema.md`): If database entities changed, update schema version, entity listings, and DAO signatures.
-- [ ] **Cryptography & Keystore** (`project/crypto-and-keystore.md`): If key management, broadcast receivers, or security controls changed, document methods and security guarantees.
-- [ ] **Architecture Blueprint** (`ARCHITECTURE.md`): Update component interaction diagrams, threat models, and operational modes.
-- [ ] **UI/UX Design System** (`project/ui-ux-design-system.md`): If theme tokens, typography, or component patterns changed, update design specs.
+### 8. Architectural & Storage Specs (`.agents/skills/project/specs/**`, `.agents/skills/project/modules/**`, `ARCHITECTURE.md`)
+- [ ] **Storage & Schema** (`.agents/skills/project/specs/storage/database-schema.md`): If database tables or migrations changed, update schema listings.
+- [ ] **Cryptography & Key Hierarchy** (`.agents/skills/project/specs/crypto/`): If key management, AAD namespaces, or security controls changed, document methods and security guarantees.
+- [ ] **Architecture Blueprint** (`ARCHITECTURE.md` & `.agents/skills/project/specs/architecture/architecture.md`): Update component interaction diagrams, threat models, and operational modes.
+- [ ] **UI/UX Design System** (`.agents/skills/project/specs/ui/ui-ux-design-system.md`): If theme tokens, typography, or component patterns changed, update design specs.
 
 ### 9. Cross-Repository Compatibility (`compatibility_layer.md`)
 - [ ] If network sync payloads, item formats, or REST endpoints were updated, open and synchronize `compatibility_layer.md` in the partner repository (e.g. ShellGuard Web Server) before closing the task.

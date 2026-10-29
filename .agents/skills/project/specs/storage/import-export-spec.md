@@ -16,7 +16,7 @@
 
 ## §2. The `sgtotp.bak` Compatibility Layer (Phase 15)
 
-**Contract source of truth**: [`/compatibility_layer.md`](../compatibility_layer.md)
+**Contract source of truth**: [`/compatibility_layer.md`](../../../../../compatibility_layer.md)
 (the cross-project format spec) and the Android twins — ShellGuard-TOTP
 `BackupManager.kt` + `ShellCryptionEngine.kt`.
 

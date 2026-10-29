@@ -15,14 +15,14 @@ only opaque envelopes it cannot open.
 | Layer | Engine | File | Sees plaintext? |
 |:---|:---|:---|:---|
 | 1. ShellCryption (this spec) | HKDF-SHA256 + AES-GCM-256 | `src/lib/shellCryption.ts` | Only the client |
-| 2. Per-row metadata | SG-META (see `encryption-layers-spec.md` §2) | `src/server/utils/fieldEncryption.ts` | Server, transiently |
+| 2. Per-row metadata | SG-META (see [`encryption-layers-spec.md`](./encryption-layers-spec.md) §2) | `src/server/utils/fieldEncryption.ts` | Server, transiently |
 | 3. SQLCipher at rest | Whole-DB | better-sqlite3-multiple-ciphers | Nobody |
 
 **The firewall (inviolable):** ShellCryption payload columns — `secret`,
 `content`, `key_value`, `file_data`, `totp_secret`, `custom_fields` — are
 **NEVER registered in `metadataGuard.ts`**. They are already zero-knowledge
 ciphertext; server-side re-encryption would double-encrypt and break the
-model. See `encryption-layers-spec.md` §3.
+model. See [`encryption-layers-spec.md`](./encryption-layers-spec.md) §3.
 
 ---
 
@@ -44,7 +44,7 @@ HKDF-SHA-256(
   **zeroized on lock/logout** — purged from memory together with all decrypted
   plaintext (see §6).
 - Salt is the **user UUID**, so two identities in the multi-account session
-  manager (see `ui-ux-design-system.md` §3) never derive the same key.
+  manager (see [`../ui/ui-ux-design-system.md`](../ui/ui-ux-design-system.md) §3) never derive the same key.
 
 ---
 
@@ -83,7 +83,7 @@ TEXT column as plaintext would occupy — no schema changes:
 | `vault_ssh_keys:{id}` | SSH key `key_value` | |
 | `vault_ssh_keys_custom:{id}` | SSH key `custom_fields` blob | |
 | `vault_secure_attachments:{id}` | Attachment `file_data` | |
-| `totp_backup:{ownerUuid}` | `sgtotp.bak` import bridge | Distinct derivation — salt = envelope `ownerUuid` (see `import-export-spec.md` §2) |
+| `totp_backup:{ownerUuid}` | `sgtotp.bak` import bridge | Distinct derivation — salt = envelope `ownerUuid` (see [`../storage/import-export-spec.md`](../storage/import-export-spec.md) §2) |
 
 Namespace uniqueness per table per field prevents **envelope shuffling**
 between item types.
@@ -112,7 +112,7 @@ the passthrough ladder, in order:
    `⚠️ [Decryption Failed]` (wrong key/identity, corrupted blob).
 
 > Invariant: steps 1–2 are what make the legacy-plaintext backward
-> compatibility of `encryption-layers-spec.md` §3 possible — both engines
+> compatibility of [`encryption-layers-spec.md`](./encryption-layers-spec.md) §3 possible — both engines
 > coexist in one column, discriminated by envelope shape alone.
 
 ---
@@ -125,7 +125,7 @@ check — the caller never branches:
 - **Native path**: `crypto.subtle.importKey(HKDF)` → `deriveKey` →
   `crypto.subtle.encrypt/decrypt` (secure origins).
 - **Fallback path**: `webCryptoFallback.ts` (see
-  `encryption-layers-spec.md` §5) — `hkdfSha256` returns raw bytes wrapped in
+  [`encryption-layers-spec.md`](./encryption-layers-spec.md) §5) — `hkdfSha256` returns raw bytes wrapped in
   a `ShellKeyFallback` object (`_rawKey`, algorithm-tagged, non-extractable
   semantics), then `aesGcmEncrypt`/`aesGcmDecrypt`. This is the plain-HTTP
   LAN topology (Unraid at `192.168.x.x`).
@@ -140,9 +140,9 @@ check — the caller never branches:
 
 1. **Plaintext never crosses the wire** — the server stores §3 envelopes
    byte-for-byte and treats them as opaque (opacity invariant,
-   `routes-and-contracts.md` §3).
+   [`../network/routes-and-contracts.md`](../network/routes-and-contracts.md) §3).
 2. **The `hu-` key is never transmitted** — only its SHA-256 hash authenticates
-   (see `key-hierarchy-spec.md` §2); the derived key exists in client memory
+   (see [`key-hierarchy-spec.md`](./key-hierarchy-spec.md) §2); the derived key exists in client memory
    only and is purged on lock, logout, and session expiry.
 3. **AAD is binding, not advisory** — envelope relocation fails closed (§4.3).
 4. **One engine, one envelope** — native and fallback output are

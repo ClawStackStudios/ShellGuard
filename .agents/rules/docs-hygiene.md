@@ -26,7 +26,7 @@ Documentation updates should not be isolated to a separate "chore: update docs" 
 - When a document contradicts shipped, verified behavior, **the document is the defect**. Never change working or security-relevant code to match stale prose; correct the corpus. (Governance ruling, 2026-09-16.)
 - **Claim battery method**: for every documented invariant, grep the ENFORCING CODE first, then assert the doc matches. When a behavioral claim has no literal code hit, the TEST FIXTURES are the oracle (e.g. custom-field AAD namespaces live in `tests/unit/customFields.test.ts`, not application literals).
 - **Enumerate, never recall**: permission models come from the zod schema; limiter numbers from `rateLimiter.ts` cited with their env vars; schema truth from the migrations. Neighbor configs (auth vs admin limiters) drift independently — never document one from the other's numbers.
-- A phase's **📚 Documentation Impact** line in `project/ROADMAP-ERA2.md` is part of that phase's definition of done.
+- A phase's **📚 Documentation Impact** line in `.agents/skills/project/ROADMAP-ERA2.md` is part of that phase's definition of done.
 
 ## 6. Wire-Exact Contract Alignment
 - Document API endpoint request and response payloads with exact TypeScript types matching the runtime controller (e.g. distinguishing an array of IDs `inserted: string[]` from a count `inserted: number`, and exact HTTP status codes `201 Created` vs `207 Multi-Status`).

@@ -69,7 +69,7 @@ describe('Build gates — Auditor\'s Claim Battery (Docs bow to Code)', () => {
   });
 
   it('guarantees AAD namespaces match test fixtures', () => {
-    const encLayersDocs = readIfExists('project/encryption-layers-spec.md') ?? '';
+    const encLayersDocs = readIfExists('.agents/skills/project/specs/crypto/encryption-layers-spec.md') ?? '';
     const shellCryptionCode = readIfExists('src/lib/shellCryption.ts') ?? '';
     expect(shellCryptionCode).toContain('${table}:${recordId}');
     expect(encLayersDocs).toContain('vault_pearls_custom:{id}');

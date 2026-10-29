@@ -60,9 +60,9 @@ TTLs parse through the hardened parser (`src/server/utils/parsers.ts`):
 ### C. Client Contract
 - `restAdapter.ts` unwraps `{success, data}` centrally and throws typed errors otherwise.
 - The `api-` token lives in `sessionStorage` only (per-identity, multi-account
-  aware — see `ui-ux-design-system.md` §3); **never** `localStorage` and never a
+  aware — see [`../ui/ui-ux-design-system.md`](../ui/ui-ux-design-system.md) §3); **never** `localStorage` and never a
   cookie. The `hu-` key never persists beyond the client-side ShellCryption
-  key derivation and is zeroized on lock/logout (see `shellcryption-spec.md` §6).
+  key derivation and is zeroized on lock/logout (see [`../crypto/shellcryption-spec.md`](../crypto/shellcryption-spec.md) §6).
 
 ---
 
@@ -161,5 +161,3 @@ Unauthenticated public endpoint returning the active certificate fingerprint, in
   ```
 
 ---
-
-

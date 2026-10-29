@@ -138,4 +138,3 @@ the native API:
 > **Side-Channel Boundary Notice**: The pure-TS AES-GCM engine provides functional parity (for plain HTTP LAN availability on devices like Unraid) and produces byte-for-byte identical ciphertext to native WebCrypto. However, it does *not* provide hardware-level side-channel parity (e.g., constant-time execution for AES S-box lookups). On a trusted LAN, this is an acceptable tradeoff for availability; on an untrusted or hostile host, WebCrypto via TLS is strictly required to defend against timing attacks.
 
 ---
-

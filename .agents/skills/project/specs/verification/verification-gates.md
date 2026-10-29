@@ -62,4 +62,3 @@ Established at genesis, formalized across release phases:
    workflows — the agent contract that keeps docs and app welded together.
 
 ---
-

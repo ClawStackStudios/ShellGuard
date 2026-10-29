@@ -114,5 +114,3 @@ Client connections race LAN probes (`192.168.x.x`, 1200ms timeout) against Tails
 Live Server-Sent Events stream (`GET /api/sync/events`) broadcasts real-time mutation markers (`{ domain, id, rev, action, timestamp }`), enabling sub-50ms reactive cross-device reconciliation without polling.
 
 ---
-
-

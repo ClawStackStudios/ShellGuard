@@ -853,7 +853,7 @@ ShellGuard ports the ClawChives v3.4.0 server **file-for-file** (the twin-verbat
 → See [BLUEPRINT.md](./BLUEPRINT.md)
 
 **For project roadmap and future development:**
-→ See [project/ROADMAP-ERA2.md](./project/ROADMAP-ERA2.md)
+→ See [.agents/skills/project/ROADMAP-ERA2.md](./.agents/skills/project/ROADMAP-ERA2.md)
 
 **For administrator panel threat model and operational guide:**
 → See [ADMIN.md](./ADMIN.md)

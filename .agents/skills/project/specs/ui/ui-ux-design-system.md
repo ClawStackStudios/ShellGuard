@@ -136,7 +136,3 @@ The pairing card in `TlsManagementTab.tsx` provides zero-touch onboarding for Sh
   - `Copy Pairing URI`: Copies raw URI string for headless or remote client setups.
   - `Download Certificate (.pem)`: Public-only certificate export for manual trust-store injection.
   - `Regenerate Cert`: Modal-guarded action to regenerate leaf certificate with instant rotation proof signing.
-
-
-
-

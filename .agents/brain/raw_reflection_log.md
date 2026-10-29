@@ -1,5 +1,24 @@
 ---
 Date: 2026-10-28
+TaskRef: "Convert /project Directory into Modular Custom Skill (.agents/skills/project/) & Clean Up Corpus Links"
+
+Learnings:
+- Three-Pillar Skill Architecture (`.agents/skills/project/`): Separating the specification genome into (1) `modules/` (feature-activity UI/ergonomic specs capped at <= 2 paragraphs of high-density probability-collapse prose), (2) `specs/` (domain-segregated deep cryptographic/storage/network/admin/ui/verification invariants), and (3) `stages/` (individual stage `prompt.md` slices routed by `meta-prompt-antigravity.md` with pruning of completed stages) eliminates 30KB+ monolithic prompt bloat while keeping all 10 original spec assets 100% intact.
+- Load-Bearing Test Seam Awareness: `tests/build-gates.test.ts` reads `.agents/skills/project/specs/crypto/encryption-layers-spec.md` directly to assert `vault_pearls_custom:{id}` AAD namespace documentation parity. Moving spec files without grepping `tests/` would break the build gate.
+
+Difficulties:
+- None; inspecting `ShellGuard-Extension/.agents/skills/project/` first provided a clear target invariant before reorganizing any files.
+
+Successes:
+- Created all 34 modular files in `.agents/skills/project/` (`SKILL.md`, `meta-prompt-antigravity.md`, `ROADMAP-ERA2.md`, 10 `specs/` files, 13 `modules/` specs, 8 `stages/` prompts).
+- Removed legacy `/project/` and updated all references across `tests/build-gates.test.ts`, `AGENTS.md`, `README.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`, `.agents/rules/`, `.agents/skills/`, and `.agents/workflows/`.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: 3-Pillar Modular Project Skill (`modules/` + `specs/` + `stages/` with sliding `meta-prompt-antigravity.md` router).
+---
+
+---
+Date: 2026-10-28
 TaskRef: "24-Envar Multi-Angle Stress Test, Phase 28 Dual-Testing Sub-Phases (28.1-28.4) & Era 2 Cutover"
 
 Learnings:

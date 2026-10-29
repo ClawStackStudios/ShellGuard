@@ -98,7 +98,7 @@ AI: <files updated, tests verified, and documentation synchronized>
 2. **Never Duplicate `versionCode`**: Google Play Console will immediately reject any upload with an existing or decremented `versionCode`. It must strictly increment (`N + 1`).
 3. **Never Desynchronize Version Anchors**: Updating `app/build.gradle.kts` without updating `CHANGELOG.md`, `README.md`, and drafting `RELEASE-vX.Y.Z.N.md` creates documentation drift. All anchors evolve in the same release commit.
 4. **Never Guess Ambiguous Increments**: If changes in `[Unreleased]` do not cleanly map to a single SemVer increment tier, always ask the user with structured choices rather than guessing.
-5. **Never Ignore the Downstream Blast Radius**: If you bump a version incorrectly in `project/ROADMAP-ERA2.md` or `changelog.md`, every future phase and milestone mapped in those documents becomes mathematically corrupted. You must strictly adhere to the tier definitions (e.g., a phase deliverable is a PATCH, not a MINOR) to protect the integrity of the entire roadmap.
+5. **Never Ignore the Downstream Blast Radius**: If you bump a version incorrectly in `.agents/skills/project/ROADMAP-ERA2.md` or `changelog.md`, every future phase and milestone mapped in those documents becomes mathematically corrupted. You must strictly adhere to the tier definitions (e.g., a phase deliverable is a PATCH, not a MINOR) to protect the integrity of the entire roadmap.
 
 ---
 

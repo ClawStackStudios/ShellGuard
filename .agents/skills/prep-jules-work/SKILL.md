@@ -55,7 +55,7 @@ flowchart TD
 
 Before drafting prompts or touching code, the orchestrator must map both sides of the bridge:
 
-1. **Inspect Ground Truth**: Read the active phase prompt in `project/meta-prompt-ai-studio-era2.md` and `project/ROADMAP-ERA2.md`.
+1. **Inspect Ground Truth**: Read the active stage router in `.agents/skills/project/meta-prompt-antigravity.md`, the stage slice in `.agents/skills/project/stages/`, and `.agents/skills/project/ROADMAP-ERA2.md`.
 2. **Trace the Code Grain**: Inspect target files, existing tests, schemas, and routes to determine exact line ranges and boundary conditions.
 3. **Author Master Domain Map Artifact**:
    - Location: `<appDataDir>/brain/<conversation-id>/phase-<N>-domain-map.md`.

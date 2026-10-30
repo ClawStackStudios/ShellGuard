@@ -26,6 +26,8 @@ jobs:
           path: main-repo
 
       - name: Checkout GitHub Wiki Repository 📚
+        id: checkout_wiki
+        continue-on-error: true
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository }}.wiki
@@ -34,6 +36,12 @@ jobs:
 
       - name: Synchronize Markdown Files 🔄
         run: |
+          if [ ! -d "wiki-repo/.git" ]; then
+            echo "⚠️ GitHub Wiki repository is not yet initialized on GitHub."
+            echo "To initialize, visit https://github.com/${{ github.repository }}/wiki and click 'Create the first page'."
+            echo "Skipping automated push until wiki is enabled."
+            exit 0
+          fi
           echo "Copying documentation from .github/wiki/ to wiki repository..."
           rm -rf wiki-repo/*
           cp -R main-repo/.github/wiki/* wiki-repo/

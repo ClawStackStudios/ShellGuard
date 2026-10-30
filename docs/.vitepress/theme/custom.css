@@ -83,6 +83,14 @@
   z-index: 9999;
 }
 
+.dark::view-transition-old(root) {
+  z-index: 9999;
+}
+
+.dark::view-transition-new(root) {
+  z-index: 1;
+}
+
 /* Background gradient ambient glow */
 body {
   background-image: 
@@ -97,15 +105,37 @@ h1, h2, h3, .VPHero .name, .VPNavBarTitle .title {
   letter-spacing: -0.02em;
 }
 
-/* Signature Horizon Seam across Desktop and Mobile */
+/* Signature Unbroken 2px Horizon Seam across Desktop and Mobile */
 .VPNavBar {
-  border-bottom: 2px solid var(--sg-header-seam) !important;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  border-bottom: none !important;
+  transition: background-color 0.3s ease;
+}
+
+.VPNavBar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--sg-header-seam);
+  box-shadow: 0 4px 20px -2px var(--sg-header-seam-glow);
+  z-index: 50;
+  pointer-events: none;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .dark .VPNavBar {
   background-color: rgba(15, 20, 25, 0.88) !important;
-  box-shadow: 0 4px 20px -2px var(--sg-header-seam-glow);
+}
+
+/* Suppress VitePress default fragmented dividers so the 2px horizon seam is clean & unbroken */
+.VPNavBar .divider {
+  display: none !important;
+}
+
+.VPNavBarTitle.has-sidebar .title {
+  border-bottom: none !important;
 }
 
 .VPLocalNav {

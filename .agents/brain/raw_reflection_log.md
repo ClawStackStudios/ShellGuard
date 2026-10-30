@@ -1,4 +1,27 @@
 ---
+Date: 2026-10-30
+TaskRef: "Align VitePress Documentation Portal UI & Theming to Reef Modernist App Design"
+
+Learnings:
+- Customizing VitePress Layout Slots: Wrapping `DefaultTheme.Layout` and injecting components into slots (`nav-bar-title-after: () => h(BouncyBrand)`) combined with `siteTitle: false` in `config.ts` allows building completely custom, reactive brand identities without fork-maintaining VitePress defaults.
+- View Transitions Radial Wipe Architecture: Injecting `provide('toggle-appearance', async ({ clientX, clientY }) => ...)` in VitePress theme setup enables custom circular clip-path reveals (`circle(${maxRadius}px at ${clientX}px ${clientY}px)`) animating `::view-transition-new(root)` or `::view-transition-old(root)`. Always guard with `window.matchMedia('(prefers-reduced-motion: no-preference)').matches` for accessibility.
+- Mermaid 11.x Cylinder Syntax Pitfall: In Mermaid v11, cylinder nodes `[("...")]` must NOT contain nested parentheses inside the label (e.g. `[("db.sqlite (SQLCipher Layer)")]`), as the parser prematurely terminates on the inner `)` and throws `Syntax error in text mermaid version 11.17.2`. Hyphenation `[("db.sqlite - SQLCipher Layer")]` resolves it cleanly.
+- Brand Continuity vs Prototyping Tools: Direct testing with Google Stitch MCP demonstrated that automated text-to-design models often default to generic, harsh industrial brutalism with random clashing colors and deformed iconography. Hand-crafting design tokens in CSS and Vue components preserves organic squircle geometry (`22px–24px`), tactile spring physics (`cubic-bezier(0.34, 1.56, 0.64, 1)`), and consistent brand memory.
+
+Difficulties:
+- Mermaid client-side cylinder parse error collided with strict string assertions in `tests/unit/mermaidDiagrams.test.ts`. Solved by keeping the cylinder syntax hyphenated while strictly preserving the test-required quoted edge label `-->|"{v, alg, iv, ct, aad}"|`.
+
+Successes:
+- Designed and delivered `BouncyBrand.vue`, 950ms View Transitions circular reveal, 2px purple/pink horizon seam, and soft pill buttons.
+- Created living brand memory in `.agents/brain/project/brandIdentity.md`.
+- All 12 doc unit tests green, `tsc --noEmit` clean, and all 3 remote GitHub Actions cloud workflows (CI, Docker, Docs) passed 100% green.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: VitePress View Transitions circular theme toggle with accessibility fallback.
+- General pattern: Mermaid 11.x cylinder node label delimiter hygiene (avoid nested parens in cylindrical nodes).
+---
+
+---
 Date: 2026-10-28
 TaskRef: "Convert /project Directory into Modular Custom Skill (.agents/skills/project/) & Clean Up Corpus Links"
 

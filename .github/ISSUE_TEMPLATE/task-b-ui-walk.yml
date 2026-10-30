@@ -1,0 +1,34 @@
+name: 🎨 Task B — UI Component & Documentation Walk
+description: Frontend interface component and 4-zone documentation sweep
+title: "[Task B]: "
+labels: ["pillar:stage", "task:ui-docs", "dual-gate:staged"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🎨 Task B: UI Presentation & Documentation Parity
+        Pairs with Task A to deliver the user interface and guarantees documentation 100% reflects runtime code.
+  - type: input
+    id: paired_task
+    attributes:
+      label: Paired Task A Issue Number
+      placeholder: "#55"
+    validations:
+      required: true
+  - type: textarea
+    id: ui_components
+    attributes:
+      label: Component & Visual Invariants
+      description: Specific components modified, design tokens applied, and interactive states handled.
+      placeholder: "SuperLobsterPanel.tsx: Add Enforced by Environment badge, disable DB toggle..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: walk_the_docs
+    attributes:
+      label: 4-Zone Documentation Verification
+      options:
+        - label: "Zone 1: Operator Documentation (docs/deployment/*.md)"
+        - label: "Zone 2: Surface & Admin Docs (docs/superlobster/*.md or docs/companion/*.md)"
+        - label: "Zone 3: Root Manifests (ARCHITECTURE.md, ADMIN.md, SECURITY.md, README.md)"
+        - label: "Zone 4: Navigation & Unit Tests (docs/.vitepress/config.ts & docsLinks.test.ts)"

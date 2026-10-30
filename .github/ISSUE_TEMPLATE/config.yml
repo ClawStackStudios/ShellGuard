@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions (Architecture & RFCs)
+    url: https://github.com/ClawStackStudios/ShellGuard/discussions
+    about: Ask questions, propose features, or discuss cryptographic design.
+  - name: 📖 ShellGuard Documentation
+    url: https://clawstackstudios.github.io/ShellGuard/
+    about: User manuals, Docker setup, and deployment guides.

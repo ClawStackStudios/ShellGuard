@@ -1,0 +1,48 @@
+name: 🤝 Dual-Testing Teamwork Sign-Off Gate
+description: Human-agent physical verification and merge approval gate
+title: "[Gate Sign-Off]: "
+labels: ["dual-gate:testing-handshake"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🤝 Dual-Testing Teamwork Protocol
+        Ensures both automated cloud validation and physical human inspection pass before advancing.
+  - type: input
+    id: stage_subphase
+    attributes:
+      label: Stage / Sub-Phase Identifier
+      placeholder: "Gate 28.1"
+    validations:
+      required: true
+  - type: input
+    id: ci_run_url
+    attributes:
+      label: GitHub Actions CI Run URL
+      placeholder: "https://github.com/ClawStackStudios/ShellGuard/actions/runs/..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: agent_verification
+    attributes:
+      label: Agent Automated Gate (Cloud Runner)
+      options:
+        - label: Static typecheck and linting passed 100% clean (`npm run lint`)
+        - label: All Vitest unit and integration suites passed green (`npm test`)
+        - label: Production bundle compiled cleanly (`npm run build`)
+        - label: Documentation portal compiled with zero broken links (`npm run docs:build`)
+  - type: textarea
+    id: live_checklist
+    attributes:
+      label: Live Physical Verification Checklist (Lucas)
+      description: Numbered steps performed in the physical running container/app.
+      placeholder: "1. Boot container with weak ADMIN_TOKEN -> verify warning in docker logs\n2. Open https://localhost:6565/superlobster -> verify override badge..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: lucas_signoff
+    attributes:
+      label: Lucas Human Gate Sign-Off
+      options:
+        - label: Physical verification successful in running application
+        - label: Ready to merge stage branch and advance to next phase

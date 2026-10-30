@@ -1,0 +1,50 @@
+name: Sync Technical Wiki 📖
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/wiki/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-sync
+  cancel-in-progress: false
+
+jobs:
+  sync_wiki:
+    name: Sync .github/wiki to GitHub Wiki Repository 🚀
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Main Repository 🛡️
+        uses: actions/checkout@v4
+        with:
+          path: main-repo
+
+      - name: Checkout GitHub Wiki Repository 📚
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: wiki-repo
+
+      - name: Synchronize Markdown Files 🔄
+        run: |
+          echo "Copying documentation from .github/wiki/ to wiki repository..."
+          rm -rf wiki-repo/*
+          cp -R main-repo/.github/wiki/* wiki-repo/
+          cd wiki-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "docs(wiki): synchronize technical compendium from main [skip ci]"
+            git push origin master || git push origin main
+            echo "Wiki updated successfully."
+          else
+            echo "No wiki changes detected. Skipping commit."
+          fi

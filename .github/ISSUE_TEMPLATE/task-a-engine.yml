@@ -1,0 +1,62 @@
+name: 🛡️ Task A — Functionality / Security Engine
+description: Core cryptographic, schema, relational, or backend engine task
+title: "[Task A]: "
+labels: ["pillar:stage", "task:engine", "dual-gate:staged"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🛡️ Task A: Generative & Falsifiable Core Engine Specification
+        Every clause must unfold across schema, Express routes, and cryptographic layers, and be backed by automated Vitest assertions.
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Target Stage & Milestone
+      options:
+        - "Stage 28.1: Envar Core Crypto (v0.0.3.0)"
+        - "Stage 28.2: Envar Network TLS (v0.0.3.0)"
+        - "Stage 28.3: Envar Storage & Containers (v0.0.3.0)"
+        - "Stage 28.4: Reactive Events SSE (v0.0.3.0)"
+        - "Stage 29: Dual-Homed MagicDNS (v0.0.3.1)"
+        - "Stage 30: Offline Delta Journal (v0.0.3.2)"
+        - "Stage 31: Peer-to-Peer Sync (v0.0.3.3)"
+        - "Stage 32: Hardware Enclave (v0.0.3.4)"
+    validations:
+      required: true
+  - type: dropdown
+    id: security_layer
+    attributes:
+      label: Security Layer Touched
+      options:
+        - "Layer 1: Resting ShellCryption (hu- / AES-256-GCM / AAD)"
+        - "Layer 2: MetadataGuard (sqlcipher / per-row disk)"
+        - "Layer 3: Transport & Instance Identity (TLS / instance.key)"
+        - "Relational & Schema (SQLite Engine)"
+        - "Network / Route Envelopes"
+        - "Non-Cryptographic Engine"
+    validations:
+      required: true
+  - type: textarea
+    id: specification
+    attributes:
+      label: Generative Specification Clauses
+      description: Numbered architectural clauses detailing exact behavior, entropy bounds, and error handling.
+      placeholder: "1. Trim and validate DB_ENCRYPTION_KEY...\n2. Verify 16-byte SQLite header magic bytes..."
+    validations:
+      required: true
+  - type: textarea
+    id: test_oracle
+    attributes:
+      label: Falsifiable Test Oracle
+      description: Exact Vitest test file and assertions that prove this engine holds.
+      placeholder: "tests/unit/env-validator.test.ts: proves invalid Base64 throws, proves short key rejected..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Core Architectural Invariants
+      options:
+        - label: Zero plaintext secrets stored on disk or emitted in logs
+        - label: Backward-compatible with existing database migrations
+        - label: Cloud CI verification targeted (stage/* branch, never direct main)

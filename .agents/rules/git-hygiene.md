@@ -7,6 +7,8 @@ trigger: always_on
 ## Isolation
 - Never work directly on the default branch (main/master). Start every task on a fresh branch or worktree: `git checkout -b <type>/<short-desc>`.
 - One task = one branch. Don't mix unrelated changes into the same branch or working tree.
+- **Stage Branch Naming Contract**: Active roadmap stages and sub-phases MUST follow the convention `stage/stage-XX.Y-<short-desc>` (e.g. `stage/stage-28.1-envar-core-crypto`). Bugfixes during live testing follow `fix/gh-<issue-number>-<short-desc>`.
+- **Target Base Alignment**: Pull requests originating from stage tasks must target `stage/*` branches first, never raw `main`, until Dual-Testing verification passes.
 - When handling urgent hotfixes or multi-agent parallel branches without disturbing in-flight state, utilize Git Worktrees (`git worktree add ../<path> -b <branch>`). Always clean up worktrees when finished (`git worktree remove`, `git worktree prune`).
 - Before starting, snapshot state: `git status` and `git diff --stat`. If the tree is dirty with work you didn't author, stop and ask.
 - When committing work you did not author (in-flight user edits), commit, push to the remote branch, and tail the GitHub Actions CI run. Their edits ride your commit message; they ride cloud verification too.
@@ -58,6 +60,9 @@ trigger: always_on
 
 ## Attribution & Commit Body Format
 - Commit under the human's configured identity (`git config user.name` / `user.email`). No separate agent identity, no AI co-author line.
+- **Neutral Language Invariant in Git History**: Commit subjects, bodies, and attribution notes MUST strictly adhere to the Neutral Language Policy (see `docs-hygiene.md` §13). Never include nautical metaphors or brand fiction in commit history (use *cluster* instead of *reef*, *workspace* or *data directory* instead of *grotto*, *lifecycle stage pruning* instead of *molting*). Permitted terms (`ClawKeys`, `LobsterKeys`, `HumanKeys`, `Resting ShellCryption`) are used strictly in their logical capacity.
+- **Mandatory Issue & Project Linking**: Whenever committing work tied to a tracked GitHub Issue, always cite the issue reference in the commit footer (`Closes #123`, `Fixes #456`, or `Ref: #789`). On merge to `main`, this automatically advances GitHub Milestone progress counters and transitions Project v2 board cards to Done.
+- **Technical Wiki Commit Scoping**: Commit changes affecting `.github/wiki/` under the explicit scope `docs(wiki): <summary>`. Do not mix application code refactors into `.github/wiki/` commits, allowing the wiki sync workflow (`sync-wiki.yml`) to operate cleanly.
 - Every commit message uses the standard **Two-Layer Attribution Format** layered beneath the Conventional Commit header:
 
   ```
@@ -67,7 +72,7 @@ trigger: always_on
   AI: <the concrete implementation, functions, refactors, or tests that were generated>
 
   [optional BREAKING CHANGE: <description and migration instructions>]
-  [optional Issue References, e.g. Closes #123, Fixes #456]
+  [Closes #123 / Ref: #456]
   ```
 
 - The `User:` line is always the *why/what* — the intent, spec, or structural decision.

@@ -47,6 +47,15 @@ Furthermore, user onboarding has been reimagined with **The Reef Handshake**: ad
 - **Gateway Lockout Invariant (`src/components/Auth/SetupView.tsx`, `QuickLoginModal.tsx`)**: When an invite token is present, the gateway validates it via `GET /api/invites/verify/:token`. The UI locks out alternate login, quick-login, and standard registration tabs, dedicating the surface exclusively to the invited user with a pre-filled token chip. If an invalid or already-burned token is supplied, all forms firmly lock with a clear rejection message.
 - **Atomic One-Time Burn Semantics (`POST /api/auth/register-with-invite`)**: User registration and token consumption are bound inside an atomic SQLite transaction. The engine checks `used_at IS NULL` and `expires_at > CURRENT_TIMESTAMP`, creates the user account and master key credentials, and atomically sets `used_at = CURRENT_TIMESTAMP`. Reusing a burned token fails closed immediately with `410 Gone / 400 Bad Request`.
 
+### 🌊 5. Reef Modernist Documentation Portal & Interactive Docker Envars Reference
+- **Interactive Docker Envars Reference (`docs/deployment/envars.md` & `EnvarList.vue`)**: Comprehensive, reactive reference covering all 24 ShellGuard environment variables with real-time keyword search, category filter chips (Security, Network, TLS, Storage, Admin, Rate Limits, Frontend), copy buttons for both clean variable names and syntax-valid configuration assignments, and a master `.env` template export.
+- **Reef Modernist Documentation UI & Theme Alignment**:
+  - **Interactive Bouncy Brand (`BouncyBrand.vue`)**: Dual-tone **Shell** (`#e4048a`) and **Guard** (`#06b6d4`) logotype with per-letter spring hover physics (`cubic-bezier(0.34, 1.56, 0.64, 1)`), superscript `©™`, and version badge.
+  - **View Transitions 950ms Circular Theme Reveal**: Smooth radial clip-path transition originating from cursor click coordinates upon toggling appearance, with `prefers-reduced-motion` safety checks.
+  - **Signature 2px Horizon Seam**: Anchors the top navbar with ShellGuard Purple (`#7e22ce`) in Light Mode and glowing Bioluminescent Pink (`#e4048a`) in Dark Mode.
+  - **Three-Font Typography Matrix & Soft CaraBase Geometry**: Bound `Outfit` (display headlines), `Inter` (body reading), and `JetBrains Mono` (cryptography & telemetry), paired with 24px squircle CaraBase cards (`VPFeature` / `Card.vue`) and soft pill action buttons (`rounded-full`).
+  - **Living Brand Identity Memory (`.agents/brain/project/brandIdentity.md`)**: Formalized design memory capturing tokens, typography, component DNA, voice, and motion rules.
+
 ---
 
 ## 🏗️ Architectural Topology Map
@@ -196,6 +205,8 @@ This release is **100% non-breaking** and backwards-compatible with existing She
 ## 📜 Ledger of Commits (Phase 27)
 
 ```text
+5761b22 docs(theme): align VitePress docs UI to Reef Modernist app design
+1541a28 feat(docs): add interactive docker envars list component and reference page
 df2e5b4 docs(release): walk the docs for Phase 27 - SuperLobster TLS control plane and share signups (v0.0.2.9 Build 31)
 e940896 fix(tls-admin): hot-reload TLS secure context, polish invite share card, and lock gateway on used invites
 39c40c0 docs(agents): author root AGENTS.md skill-seed with diagnostic invariants

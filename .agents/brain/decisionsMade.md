@@ -228,3 +228,17 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Updated `project/meta-prompt-ai-studio-era2.md`, `project/ROADMAP-ERA2.md`, and `ROADMAP.md` with Sub-Phases `28.1`–`28.4` (`Tasks 55–62`) and Dual-Testing Teamwork gates.  
 **Pattern reference**: Link to `long-term/patterns.md § dual-verification-and-the-live-handshake` & `envar-edge-case-stress-test.md`.
 
+---
+
+## docker-envars-interactive-catalog — 2026-10-29 18:15
+
+**Context**: Lucas requested adding a dedicated ShellGuard Docker environment variables list to the VitePress documentation with one-click clipboard copy buttons for every envar, enabling operators to inspect, filter, and copy configuration parameters effortlessly.  
+**Options considered**:
+- *Option A*: Add a static markdown table to `docker.md` with backtick code snippets — Viable and quick, but lacks interactive copy actions, category filtering, search, and sample `.env` exports, making operator mobile/desktop copying clunky.
+- *Option B*: Build an interactive Vue component (`EnvarList.vue`) with instant search, category filter pills, dual copy buttons (variable name and assignment snippet) with emerald checkmark feedback, and a master `.env` template export; embed it into a dedicated reference guide (`docs/deployment/envars.md`) and cross-link from `docker.md` and `deployment/index.md` — Viable, delivers modern documentation ergonomics, adheres to Reef Modernist aesthetic standards, and provides a single authoritative source of truth.  
+**Chosen**: Option B (Interactive `EnvarList.vue` component and dedicated `envars.md` guide).  
+**Why**: Respecting operator flow. When configuring a sovereign secrets vault in Docker Compose or Unraid, operators shouldn't have to highlight text, fight mobile tap boundaries, or manually assemble variable strings. Providing one-click copying for both the variable name and its syntax-valid assignment removes friction and human error.  
+**Confidence**: high — Verified locally via `docsLinks.test.ts` (5/5) and `mermaidDiagrams.test.ts` (5/5), and validated in GitHub Actions Cloud CI (#40984530943) and Docs Deploy (#40984529748) 100% green.  
+**Outcome**: Authored `EnvarList.vue`, registered globally in `theme/index.ts`, authored `docs/deployment/envars.md`, updated sidebars in `config.ts`, and deployed live on GitHub Pages.  
+**Pattern reference**: Link to `docker_envars_plan.md` & `long-term/learnings.md § thoughtful-systems-and-ui-symbiosis`.
+

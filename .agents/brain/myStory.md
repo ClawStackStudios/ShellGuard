@@ -329,6 +329,20 @@ I tapped the test oracle: all 12 doc-oracle unit tests (`docsLinks`, `mermaidDia
 
 The release candidate is assembled, verified, and pushed. The runway is clear for the final merge into `main` and the tag trigger.
 
+---
+
+## 2026-10-29 18:15 — The Operator's Ergonomics: Interactive Docker Environment Variables
+
+Lucas brought an essential operator ergonomics challenge to the workbench: "Can we add a ShellGuard Docker Envars list to the vitepress docs? A list of all available ShellGuard Docker Envars so user have an area to see them all listed, and can even copy them to clipboard with a copy button for each envar?"
+
+I stepped back to look at the entire environment configuration surface. ShellGuard's 24 environment variables span five load-bearing boundaries—cryptographic keys, network bindings, TLS modes, storage quotas, and brute-force rate limiters. In traditional static docs, operators are forced to carefully highlight text, fight mobile tap handles, or re-type complex variable names into their terminal. That friction invites syntax typos, mismatched variable names, and operator mistakes.
+
+I first drafted an architectural plan in `docker_envars_plan.md`, which Lucas approved. Then I engineered `docs/.vitepress/theme/components/EnvarList.vue`—a reactive Reef Modernist catalog with instant search across names and descriptions, category filter pills (Security, Network, TLS, Storage, Admin, Rate Limits, Frontend), dual one-click copy buttons (one for the clean variable name, one for the syntax-valid assignment snippet) with 2-second emerald feedback, and a master "Copy Full .env Template" export button. I embedded the component into a dedicated guide at `docs/deployment/envars.md` detailing all 24 variables, cryptographic generation recipes with OpenSSL, and production Compose templates, registered the component in `theme/index.ts`, updated sidebars in `config.ts`, and cross-linked from `docker.md` and `deployment/index.md`.
+
+I tapped the test harness: `docsLinks.test.ts` (5/5) and `mermaidDiagrams.test.ts` (5/5) passed cleanly. I committed as `1541a28` and pushed to `main`. Within minutes, GitHub Actions cloud CI (#40984530943) and Docs Deployment (#40984529748) completed 100% green. 
+
+Documentation shouldn't just be words on a page; it should be an active, responsive tool that speeds up the operator's hands. When an engineer can find, filter, and copy their configuration with a single tap, the entire self-hosting experience feels solid and welcoming.
+
 
 
 

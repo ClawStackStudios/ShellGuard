@@ -5,6 +5,7 @@ import Card from './components/Card.vue'
 import Steps from './components/Steps.vue'
 import Step from './components/Step.vue'
 import CopyPage from './components/CopyPage.vue'
+import EnvarList from './components/EnvarList.vue'
 import './custom.css'
 
 export default {
@@ -15,5 +16,6 @@ export default {
     app.component('Steps', Steps)
     app.component('Step', Step)
     app.component('CopyPage', CopyPage)
+    app.component('EnvarList', EnvarList)
   }
 } satisfies Theme

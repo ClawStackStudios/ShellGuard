@@ -193,6 +193,7 @@ export default withMermaid(
           items: [
             { text: 'Deployment Overview', link: '/deployment/' },
             { text: 'Docker & Compose Stacks', link: '/deployment/docker' },
+            { text: 'Environment Variables Reference', link: '/deployment/envars' },
             { text: 'First-Class HTTPS & TLS', link: '/deployment/https-tls' },
             { text: 'Unraid Community Apps', link: '/deployment/unraid' },
             { text: 'Reverse Proxy & TLS', link: '/deployment/reverse-proxy' },
@@ -207,6 +208,7 @@ export default withMermaid(
           items: [
             { text: 'Reference Overview', link: '/reference/' },
             { text: 'Database Schema Ground Truth', link: '/reference/blueprint-schema' },
+            { text: 'Docker Environment Variables', link: '/deployment/envars' },
             { text: 'Reef Modernist Design System', link: '/reference/design-system' },
             { text: 'ClawStack Lexicon (Glossary)', link: '/reference/glossary' },
             { text: 'ShellGuard-TOTP Companion', link: '/companion/' },

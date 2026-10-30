@@ -78,6 +78,8 @@ ShellGuard is distributed as a single unified container image on GitHub Containe
 
 ## ⚙️ Environment Configuration Reference
 
+> 💡 **Need the full catalog with one-click copy buttons?** Explore the [**Interactive Docker Environment Variables Reference**](/deployment/envars) for the complete 24-variable matrix, instant search, and sample `.env` exports.
+
 | Environment Variable | Required | Default | Description |
 | :--- | :--- | :--- | :--- |
 | **`PORT`** | No | `6565` | The HTTP/HTTPS port the Express server listens on inside the container. |

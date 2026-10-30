@@ -23,6 +23,9 @@ ShellGuard is designed for absolute self-hosting sovereignty. It compiles into a
   <Card title="Reverse Proxy & TLS" href="/deployment/reverse-proxy" icon="🔒" tag="Networking">
     Set up Caddy or Nginx for SSL termination, or enable Native LAN TLS (<code>TLS_ENABLED=true</code>) for self-signed certificates.
   </Card>
+  <Card title="Environment Variables" href="/deployment/envars" icon="⚙️" tag="Config">
+    Interactive matrix of all 24 Docker environment variables with one-click clipboard copy buttons and sample templates.
+  </Card>
   <Card title="Forensic Auditing (audit.sqlite)" href="/deployment/forensic-auditing" icon="🩺" tag="Auditing">
     Inspect the append-only, tamper-resistant security log stored in <code>DATA_DIR/audit.sqlite</code>.
   </Card>

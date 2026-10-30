@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Shield, KeyRound, Loader2, ArrowLeft } from 'lucide-react';
+import { Shield, KeyRound, Loader2, ArrowLeft, Copy, Check } from 'lucide-react';
 import { useSuperLobster } from './SuperLobsterContext.tsx';
 import { BouncyBrand } from '../ui/BouncyBrand.tsx';
 
@@ -18,6 +18,13 @@ export function SuperLobsterLogin() {
   const [token, setToken] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyCommand = () => {
+    navigator.clipboard.writeText('openssl rand -hex 24');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,10 +84,26 @@ export function SuperLobsterLogin() {
           </div>
 
           {panelDisabled ? (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-sm text-amber-500">
-              The SuperLobster Panel is not enabled on this instance. Set the
-              <code className="mx-1 px-1.5 py-0.5 bg-theme-base rounded font-mono text-xs">ADMIN_TOKEN</code>
-              environment variable to enable it.
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 text-xs text-amber-300 space-y-3">
+              <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                <Shield size={16} />
+                <span>SuperLobster Control Plane Sealed</span>
+              </div>
+              <p className="leading-relaxed text-theme-muted">
+                The SuperLobster Panel is not enabled on this instance. To activate sovereign administrative controls, configure the <code className="font-mono text-amber-400 font-bold bg-theme-base/60 px-1 py-0.5 rounded">ADMIN_TOKEN</code> environment variable (minimum 16 characters).
+              </p>
+              <div className="bg-theme-base/80 border border-theme-subtle rounded-xl p-3 flex items-center justify-between gap-2 font-mono text-[11px] text-theme-main">
+                <span className="truncate select-all">openssl rand -hex 24</span>
+                <button
+                  type="button"
+                  onClick={copyCommand}
+                  className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 rounded-lg text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+                  title="Copy generation command to clipboard"
+                >
+                  {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                  <span>{copied ? 'Copied' : 'Copy Command'}</span>
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

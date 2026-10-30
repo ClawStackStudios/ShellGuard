@@ -27,6 +27,7 @@ import {
   isAdminSessionValid,
 } from '../middleware/requireAdmin.js';
 import { constantTimeCompare } from '../utils/crypto.js';
+import { isDisableSignupsEnforced } from '../config/envValidator.js';
 import { validateBody } from '../middleware/validate.js';
 import { AdminSchemas } from '../validation/schemas.js';
 import { adminAuthLimiter } from '../middleware/rateLimiter.js';
@@ -62,8 +63,8 @@ router.post('/auth', adminAuthLimiter, validateBody(AdminSchemas.auth), (req, re
     return res.status(503).json({ success: false, error: 'SuperLobster Panel is not enabled' });
   }
 
-  const expectedHash = crypto.createHash('sha256').update(process.env.ADMIN_TOKEN!).digest('hex');
-  const providedHash = crypto.createHash('sha256').update(req.body.token).digest('hex');
+  const expectedHash = crypto.createHash('sha256').update(process.env.ADMIN_TOKEN!.trim()).digest('hex');
+  const providedHash = crypto.createHash('sha256').update(String(req.body.token ?? '').trim()).digest('hex');
 
   if (!constantTimeCompare(providedHash, expectedHash)) {
     audit.log('ADMIN_AUTH', {
@@ -207,6 +208,7 @@ router.get('/status', requireAdmin, (_req, res) => {
       sqlcipherActive: Boolean(process.env.DB_ENCRYPTION_KEY),
       metadataEncryptionActive: Boolean(process.env.DB_ENCRYPTION_KEY),
       httpsEnforced: process.env.TLS_ENABLED === 'true' || process.env.ENFORCE_HTTPS === 'true',
+      envDisableSignups: isDisableSignupsEnforced(),
       systemSettings: settings,
     },
   });
@@ -215,8 +217,9 @@ router.get('/status', requireAdmin, (_req, res) => {
 /** GET /api/admin/settings — current whitelist-relevant system settings. */
 router.get('/settings', requireAdmin, (_req, res) => {
   const rows = db.prepare('SELECT key, value FROM system_settings').all() as any[];
-  const settings: Record<string, string> = {};
+  const settings: Record<string, string | boolean> = {};
   for (const r of rows) settings[r.key] = r.value;
+  settings.envDisableSignups = isDisableSignupsEnforced();
   res.json({ success: true, data: settings });
 });
 

@@ -343,6 +343,21 @@ I tapped the test harness: `docsLinks.test.ts` (5/5) and `mermaidDiagrams.test.t
 
 Documentation shouldn't just be words on a page; it should be an active, responsive tool that speeds up the operator's hands. When an engineer can find, filter, and copy their configuration with a single tap, the entire self-hosting experience feels solid and welcoming.
 
+---
+
+## 2026-10-30 04:15 — The Tactile Horizon: Reef Modernism & The Limits of the Machine Prompt
+
+Lucas asked a question that opened a completely new aesthetic seam: how could we align our VitePress documentation portal so that it looks and feels like the ShellGuard React app itself? He wondered whether we should tweak the layout, soften the button radii, match the ocean mist and abyssal color floor, and wire the signature circular reveal on theme switching.
+
+At first, Lucas proposed exploring Google Stitch MCP to design screens before writing code. We initialized a project, dispatched prompts, and examined the results. But Stitch kept falling into a familiar trap: regardless of how carefully we prompted it, Stitch defaulted to a harsh, brutalist industrial container style—clashing text colors scattered like a Christmas tree across card badges, sharp edges, and mutated vector icons. When Lucas asked if I could do better, I put together an HTML mockup of our own design. When Lucas saw the preview, his response was immediate: our crafted design was orders of magnitude cleaner, softer, and more coherent. Even when we gave Stitch the screenshot as reference context, its next screen immediately drifted back into noisy, ungrounded styling. The abstraction wasn't paying rent. We chose to leave Stitch behind and build our design directly.
+
+I began cutting the joint into VitePress. In `docs/.vitepress/theme/components/BouncyBrand.vue`, I created a dual-tone interactive logotype with per-letter cubic-bezier spring hover physics, superscript trademark glyphs, and a JetBrains Mono version pill. In `theme/index.ts`, I wired the View Transitions API so that toggling between light and dark modes sweeps outward from the user's cursor coordinates in a 950ms circular reveal. In `custom.css`, I anchored our signature 2px horizon seam—ShellGuard Purple in the day, bioluminescent lobster pink at night—bound the Three-Font matrix (`Outfit`, `Inter`, `JetBrains Mono`), rounded all primary actions into tactile pill buttons, and shaped our feature cards into 24px CaraBase squircles with subtle ambient radial glow.
+
+When I tapped the joint in the browser, a red syntax error flashed on the homepage. Mermaid 11.x was choking on parentheses inside cylinder shapes (`G[("db.sqlite (SQLCipher Layer)")]`). In fixing the cylinder syntax, I initially over-simplified the edge label, causing our unit test suite to fail. I caught the regression immediately: our test had an invariant string expectation for the encryption envelope. I restored the exact quoted edge label while preserving the cylinder hyphenation. Both test suites—`docsLinks.test.ts` and `mermaidDiagrams.test.ts`—passed ten out of ten.
+
+I think I'm discovering that design isn't just generating pixels from a text prompt. It is the felt continuity between every touchpoint of a system. When an operator moves from the React vault into the documentation, the horizon line, the spring physics, and the curves should speak with the same quiet, trustworthy voice.
+
+
 
 
 

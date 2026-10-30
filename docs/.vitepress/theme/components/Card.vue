@@ -57,15 +57,29 @@ const normalizedHref = computed(() => {
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 1.25rem;
-  border-radius: 14px;
-  background: var(--sg-card-bg, rgba(15, 23, 42, 0.6));
-  border: 1px solid var(--sg-card-border, rgba(228, 4, 138, 0.15));
-  backdrop-filter: blur(12px);
+  padding: 1.4rem;
+  border-radius: 22px;
+  background: var(--sg-card-bg, rgba(23, 28, 33, 0.72));
+  border: 1px solid var(--sg-card-border, rgba(228, 4, 138, 0.18));
+  backdrop-filter: blur(16px);
   text-decoration: none !important;
   color: inherit;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
+  box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.3);
+}
+
+.sg-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(228, 4, 138, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
 }
 
 .sg-card.is-link {
@@ -74,29 +88,33 @@ const normalizedHref = computed(() => {
 
 .sg-card.is-link:hover {
   border-color: rgba(228, 4, 138, 0.45);
-  background: var(--sg-card-hover-bg, rgba(228, 4, 138, 0.05));
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(228, 4, 138, 0.12), 0 0 1px 1px rgba(228, 4, 138, 0.2);
+  background: var(--sg-card-hover-bg, rgba(23, 28, 33, 0.95));
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px -10px rgba(228, 4, 138, 0.18), 0 0 1px 1px rgba(228, 4, 138, 0.25);
+}
+
+.sg-card.is-link:hover::after {
+  opacity: 1;
 }
 
 .sg-card-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
 }
 
 .sg-card-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   background: rgba(228, 4, 138, 0.12);
-  border: 1px solid rgba(228, 4, 138, 0.25);
+  border: 1px solid rgba(228, 4, 138, 0.28);
   color: #e4048a;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
 }
 
@@ -109,28 +127,30 @@ const normalizedHref = computed(() => {
 
 .sg-card-title {
   margin: 0 !important;
-  font-size: 1rem !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 1.05rem !important;
   font-weight: 700 !important;
+  letter-spacing: -0.01em;
   color: var(--vp-c-text-1);
   line-height: 1.3;
 }
 
 .sg-card-tag {
   font-size: 0.65rem;
-  font-weight: 700;
-  font-family: monospace;
+  font-weight: 600;
+  font-family: var(--vp-font-family-mono, monospace);
   text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: rgba(6, 182, 212, 0.15);
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: rgba(6, 182, 212, 0.12);
   color: #06b6d4;
   border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 .sg-card-body {
-  font-size: 0.875rem;
+  font-size: 0.88rem;
   color: var(--vp-c-text-2);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .sg-card-body :deep(p) {
@@ -139,8 +159,8 @@ const normalizedHref = computed(() => {
 
 .sg-card-arrow {
   position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
+  top: 1.4rem;
+  right: 1.4rem;
   color: var(--vp-c-text-3);
   transition: all 0.2s ease;
   opacity: 0.5;

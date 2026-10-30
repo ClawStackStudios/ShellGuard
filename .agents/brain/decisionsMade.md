@@ -242,3 +242,18 @@ The story says how it felt. This says what was actually chosen and why.
 **Outcome**: Authored `EnvarList.vue`, registered globally in `theme/index.ts`, authored `docs/deployment/envars.md`, updated sidebars in `config.ts`, and deployed live on GitHub Pages.  
 **Pattern reference**: Link to `docker_envars_plan.md` & `long-term/learnings.md § thoughtful-systems-and-ui-symbiosis`.
 
+---
+
+## docs-reef-modernist-ui-alignment — 2026-10-30 04:10
+
+**Context**: Lucas asked how to align the VitePress documentation UI so it looks and feels like the ShellGuard React app (theme transitions, horizon seam, soft card squircle geometry, pill buttons, bouncy branding), and explored whether Google Stitch MCP could prototype the design.  
+**Options considered**:
+- *Option A*: Rely on Google Stitch MCP to design and generate screens for the VitePress portal — Viable conceptually, but direct experiments demonstrated Stitch repeatedly defaulted to harsh, boxy industrial brutalism with mismatched fonts, random text coloring ("Christmas tree" artifacts), and warped icons.
+- *Option B*: Hand-craft the Reef Modernist design system directly into VitePress theme tokens, CSS, and custom Vue components (`BouncyBrand.vue`, `Card.vue`, `custom.css`, `index.ts`), using our pure-HTML mockups as the aesthetic standard — Viable, provides 100% pixel-perfect control, exact View Transitions API circular wipe physics, and flawless font and border radius harmony.  
+**Chosen**: Option B (Hand-craft Reef Modernist design system in VitePress theme components and CSS).  
+**Why**: The felt reason is taste and craftsmanship. Google Stitch was unable to hold a coherent soft modern aesthetic across continuing prompts, constantly regressing to industrial boxes. Hand-crafting the Vue components and CSS variables gave us full authority over the spring curves, the 2px purple/pink horizon seam, and the View Transitions coordinates.  
+**Confidence**: high — Validated visually via browser screenshots and verified 10/10 green by `docsLinks.test.ts` and `mermaidDiagrams.test.ts`.  
+**Outcome**: Authored `BouncyBrand.vue`, updated `docs/.vitepress/config.ts`, `custom.css`, `index.ts`, `Card.vue`, and `docs/index.md`; initialized `brandIdentity.md`; all doc unit tests 100% green.  
+**Pattern reference**: Link to `brandIdentity.md` & `long-term/learnings.md § thoughtful-systems-and-ui-symbiosis`.
+
+

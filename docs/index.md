@@ -16,6 +16,9 @@ hero:
       text: Architecture Blueprint
       link: /architecture/
     - theme: alt
+      text: Docker Envars
+      link: /deployment/envars
+    - theme: alt
       text: AI Agent API
       link: /agent-integration/
 
@@ -80,20 +83,20 @@ features:
 
 ```mermaid
 flowchart LR
-  subgraph Client ["Client Browser (Zero-Knowledge)"]
-    A["User Input (hu- key)"] --> B["HKDF-SHA-256 Key Derivation"]
+  subgraph Client ["Client Browser - Zero-Knowledge"]
+    A["User Input - hu key"] --> B["HKDF-SHA-256 Key Derivation"]
     B --> C["AES-GCM-256 Seal"]
     C -->|"{v, alg, iv, ct, aad}"| D["Opaque JSON Blob"]
   end
 
-  subgraph Server ["Express 5 Backend (:6565 / :6464)"]
-    D --> E["Metadata Encryption (AES-256-GCM)"]
-    E --> F["SQLite Bedrock (WAL Mode)"]
+  subgraph Server ["Express 5 Backend - Port 6565"]
+    D --> E["Metadata Encryption - AES-256-GCM"]
+    E --> F["SQLite Bedrock - WAL Mode"]
   end
 
   subgraph Storage ["Persistent Host Storage"]
-    F --> G[("db.sqlite (SQLCipher Layer)")]
-    F --> H[("audit.sqlite (Append-Only Reef)")]
+    F --> G[("db.sqlite - SQLCipher Layer")]
+    F --> H[("audit.sqlite - Append-Only Reef")]
   end
 ```
 

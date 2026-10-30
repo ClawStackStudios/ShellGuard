@@ -18,6 +18,9 @@ export default withMermaid(
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/assets/shellguard-icon.svg' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'ShellGuard Docs — Sovereign Secrets Vault' }],
     ['meta', { property: 'og:description', content: 'Zero-knowledge password & secrets vault with autonomous AI agent key management and triple-layer defense.' }],
@@ -28,7 +31,7 @@ export default withMermaid(
 
   themeConfig: {
     logo: '/assets/shellguard-icon.svg',
-    siteTitle: 'ShellGuard',
+    siteTitle: false,
     sidebarMenuLabel: 'Chapters',
     returnToTopLabel: 'Return to top',
 

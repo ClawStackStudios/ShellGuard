@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import db from '../database/index.js';
 import { getRotationManifest } from '../utils/tlsManager.js';
 import { getInstancePublicKeyHex } from '../utils/instanceKey.js';
+import { isDisableSignupsEnforced } from '../config/envValidator.js';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get('/tls-manifest', (_req, res) => {
 });
 
 function areSignupsDisabled(): boolean {
-  if (process.env.DISABLE_SIGNUPS === 'true') return true;
+  if (isDisableSignupsEnforced()) return true;
   try {
     const row = db.prepare("SELECT value FROM system_settings WHERE key = 'allow_signups'").get() as { value: string } | undefined;
     if (row && row.value === 'false') return true;

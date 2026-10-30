@@ -16,6 +16,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { isValidAdminToken } from '../config/envValidator.js';
 
 // In-memory admin session store (intentionally volatile — a restart
 // invalidates every admin session, which is exactly what we want).
@@ -86,7 +87,7 @@ export function destroyAdminSession(token: string | undefined) {
   if (token) adminSessions.delete(token);
 }
 
-/** True when the SuperLobster panel is enabled (ADMIN_TOKEN env is set). */
+/** True when the SuperLobster panel is enabled (valid ADMIN_TOKEN env is set). */
 export function isAdminPanelEnabled(): boolean {
-  return Boolean(process.env.ADMIN_TOKEN && process.env.ADMIN_TOKEN.length > 0);
+  return isValidAdminToken(process.env.ADMIN_TOKEN);
 }

@@ -32,6 +32,7 @@ import publicRoutes      from './src/server/routes/public.js';
 import { performBackup } from './src/server/utils/backupManager.js';
 import { ensureTlsMaterials, registerTlsReloadListener } from './src/server/utils/tlsManager.js';
 import { getAppVersion } from './src/server/utils/version.js';
+import { validateEnvironment, printStartupBanner } from './src/server/config/envValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -46,6 +47,13 @@ export const app = express();
 const SESSION_ID = crypto.randomUUID();
 
 // ─── Startup tasks ───────────────────────────────────────────────────────────
+const envSummary = validateEnvironment();
+printStartupBanner(envSummary);
+if (!envSummary.isValid && process.env.NODE_ENV === 'production') {
+  console.error('[Startup] Fatal environment configuration errors detected. Refusing startup in production.');
+  process.exit(1);
+}
+
 purgeExpiredTokens();
 scheduleTokenCleanup(db);
 

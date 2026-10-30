@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import db, { audit } from '../database/index.js';
-import { calculateExpiry } from '../utils/tokenExpiry.js';
+import { calculateExpiry, getSafeTokenTtlDefault } from '../utils/tokenExpiry.js';
+import { isDisableSignupsEnforced } from '../config/envValidator.js';
 import { generateString, constantTimeCompare } from '../utils/crypto.js';
 import { requireAuth, requireHuman, AuthRequest } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
@@ -18,7 +19,7 @@ function detectKeyType(key: string) {
 }
 
 function areSignupsDisabled(): boolean {
-  if (process.env.DISABLE_SIGNUPS === 'true') return true;
+  if (isDisableSignupsEnforced()) return true;
   try {
     const row = db.prepare("SELECT value FROM system_settings WHERE key = 'allow_signups'").get() as { value: string } | undefined;
     if (row && row.value === 'false') return true;
@@ -59,8 +60,8 @@ router.post('/register', authLimiter, validateBody(AuthSchemas.register), (req, 
 /** POST /api/auth/token */
 router.post('/token', authLimiter, validateBody(AuthSchemas.token), (req, res) => {
   const { type, uuid, keyHash, ownerKey } = req.body;
-  // Delta #1: bare values ('1440') are MINUTES; also accepts '30m'/'12h'/'24h'/'7d'/ISO
-  const ttl = process.env.TOKEN_TTL_DEFAULT || '1440';
+  // Delta #1: bare values ('1440') are MINUTES; also accepts '30m'/'12h'/'24h'/'7d'/'1w'/ISO
+  const ttl = getSafeTokenTtlDefault();
   const expiresAt = calculateExpiry(ttl);
 
   if (type === 'agent' || (ownerKey && detectKeyType(ownerKey) === 'agent')) {

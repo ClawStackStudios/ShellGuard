@@ -50,7 +50,11 @@ interface EncryptedEnvelope {
  * Deterministic — same input always produces the same key.
  */
 export function deriveMetadataKey(encryptionKeyB64: string): Buffer {
-  const rawKey = Buffer.from(encryptionKeyB64, 'base64');
+  const normalized = encryptionKeyB64.trim().replace(/-/g, '+').replace(/_/g, '/');
+  const rawKey = Buffer.from(normalized, 'base64');
+  if (rawKey.length < 32) {
+    throw new Error(`[FieldEncryption] DB_ENCRYPTION_KEY entropy too low (${rawKey.length} bytes, minimum 32 bytes required).`);
+  }
   return Buffer.from(crypto.hkdfSync('sha256', rawKey, HKDF_SALT, HKDF_INFO, KEY_LENGTH));
 }
 

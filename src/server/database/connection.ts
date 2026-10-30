@@ -15,14 +15,20 @@ if (!fs.existsSync(DATA_DIR) && process.env.NODE_ENV !== 'test') {
 }
 
 // ─── Database Encryption (SQLCipher / ShellCryption™) ──────────────────────────
-const encryptionKey = process.env.DB_ENCRYPTION_KEY;
+const rawEncryptionKey = process.env.DB_ENCRYPTION_KEY?.trim();
 
 // Validate encryption key at startup
-if (encryptionKey) {
-  if (!/^[a-zA-Z0-9+/=]+$/.test(encryptionKey)) {
-    throw new Error('[DB] DB_ENCRYPTION_KEY must be base64-encoded (alphanumeric, +, /, = only).');
+if (rawEncryptionKey) {
+  const normalized = rawEncryptionKey.replace(/-/g, '+').replace(/_/g, '/');
+  if (!/^[a-zA-Z0-9+/=]+$/.test(normalized)) {
+    throw new Error('[DB] DB_ENCRYPTION_KEY must be base64 or base64url encoded (alphanumeric, +, /, =, -, _ only).');
+  }
+  const decoded = Buffer.from(normalized, 'base64');
+  if (decoded.length < 32) {
+    throw new Error(`[DB] DB_ENCRYPTION_KEY decoded entropy insufficient (${decoded.length} bytes; must be >= 32 bytes / 256 bits).`);
   }
 }
+const encryptionKey = rawEncryptionKey;
 
 function encryptExistingDatabase(dbPath: string, key: string) {
   // better-sqlite3-multiple-ciphers exposes PRAGMA rekey (not SQLCipher's
@@ -70,6 +76,18 @@ export function createConnection(filename: string, key?: string): Database.Datab
         // either message depending on version — catch both spellings.
         const msg = String(e?.message ?? '');
         if (msg.includes('not a database') || msg.includes('unsupported file format') || e.code === 'SQLITE_NOTADB') {
+          // Verify that this is truly a plaintext database by checking the first 16 bytes on disk.
+          // Plaintext SQLite files start with the magic string "SQLite format 3\0".
+          if (fs.existsSync(dbPath)) {
+            const fd = fs.openSync(dbPath, 'r');
+            const header = Buffer.alloc(16);
+            fs.readSync(fd, header, 0, 16, 0);
+            fs.closeSync(fd);
+            const SQLITE_MAGIC = 'SQLite format 3\0';
+            if (header.toString('utf8', 0, 16) !== SQLITE_MAGIC) {
+              throw new Error(`[DB] WRONG_DB_ENCRYPTION_KEY: Database file ${filename} does not start with plaintext SQLite header. It is likely already encrypted with a different key or is corrupt.`);
+            }
+          }
           console.log(`[DB] Detected unencrypted database ${filename} — migrating to encrypted...`);
           db.close();
           encryptExistingDatabase(dbPath, key);

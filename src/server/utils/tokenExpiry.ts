@@ -14,7 +14,7 @@ export function calculateExpiry(ttl: string | null | undefined): string | null {
   const now = Date.now();
   const normalized = String(ttl).trim();
 
-  const relative = /^(\d+)\s*(m|h|d|days?)?$/i.exec(normalized);
+  const relative = /^(\d+)\s*(m|h|d|days?|w|weeks?)?$/i.exec(normalized);
   if (relative) {
     const amount = parseInt(relative[1], 10);
     if (isNaN(amount) || amount <= 0) throw new Error(`Invalid TTL format: ${ttl}`);
@@ -27,9 +27,16 @@ export function calculateExpiry(ttl: string | null | undefined): string | null {
       case 'd':
       case 'day':
       case 'days': ms = amount * 24 * 60 * 60 * 1000; break; // days
+      case 'w':
+      case 'week':
+      case 'weeks': ms = amount * 7 * 24 * 60 * 60 * 1000; break; // weeks
       default:   ms = amount * 60 * 1000; break;             // bare number = minutes
     }
-    return new Date(now + ms).toISOString();
+    const targetMs = now + ms;
+    if (!Number.isFinite(targetMs) || targetMs > 8640000000000000) {
+      throw new Error(`TTL value causes date overflow: ${ttl}`);
+    }
+    return new Date(targetMs).toISOString();
   }
 
   if (normalized === '1year') {
@@ -112,3 +119,18 @@ export function extendTokenExpiry(db: Database, token: string, ttl = '90d'): str
   db.prepare(`UPDATE api_tokens SET expires_at = ? WHERE key = ?`).run(newExpiry, token);
   return newExpiry;
 }
+
+/**
+ * Returns process.env.TOKEN_TTL_DEFAULT if valid, or safely falls back to '1440' (24h).
+ */
+export function getSafeTokenTtlDefault(): string {
+  const envVal = process.env.TOKEN_TTL_DEFAULT?.trim();
+  if (!envVal) return '1440';
+  try {
+    calculateExpiry(envVal);
+    return envVal;
+  } catch {
+    return '1440';
+  }
+}
+

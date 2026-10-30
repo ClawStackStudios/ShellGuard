@@ -9,12 +9,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Settings2, Save, Loader2, Lock, CheckCircle2, AlertTriangle, Clock, Database } from 'lucide-react';
+import { Settings2, Save, Loader2, Lock, CheckCircle2, AlertTriangle, Clock, Database, UserPlus } from 'lucide-react';
 import { useSuperLobster } from './SuperLobsterContext.tsx';
 
 export function SuperLobsterSettings() {
   const { adminApi } = useSuperLobster();
-  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [settings, setSettings] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +38,7 @@ export function SuperLobsterSettings() {
       await adminApi('/api/admin/settings', {
         method: 'PATCH',
         body: JSON.stringify({
+          allow_signups: settings['allow_signups'] ?? 'true',
           audit_retention_days: num('audit_retention_days', 90),
           uptime_retention_days: num('uptime_retention_days', 30),
           backup_interval_minutes: num('backup_interval_minutes', 1440),
@@ -149,6 +150,56 @@ export function SuperLobsterSettings() {
 
       {/* Settings Grid */}
       <div className="bg-theme-surface border border-theme-subtle rounded-2xl p-6 space-y-6 shadow-sm">
+        {/* Section: Registration & Access Gate */}
+        <div className="pb-6 border-b border-theme-subtle/70">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-theme-muted flex items-center gap-2">
+              <UserPlus size={14} className="text-[#06b6d4]" /> User Registration & Access Gate
+            </h3>
+            {settings.envDisableSignups && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <Lock size={12} /> 🔒 Enforced by DISABLE_SIGNUPS Environment Variable
+              </span>
+            )}
+          </div>
+
+          <div className="bg-theme-base/60 border border-theme-subtle/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1 max-w-xl">
+              <p className="text-xs font-bold uppercase tracking-wider text-theme-main">
+                Allow Public Signups
+              </p>
+              <p className="text-[11px] text-theme-muted leading-relaxed">
+                {settings.envDisableSignups
+                  ? 'Registration is globally locked by container environment configuration (DISABLE_SIGNUPS=true). Web visitors cannot create new accounts without single-use invites minted from the Lobsters tab.'
+                  : 'When enabled, new users can hatch sovereign identities directly from the landing page. When disabled, only single-use invite tokens are accepted.'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={Boolean(settings.envDisableSignups)}
+              onClick={() => {
+                if (settings.envDisableSignups) return;
+                const current = settings['allow_signups'] !== 'false';
+                setSettings(prev => ({ ...prev, allow_signups: current ? 'false' : 'true' }));
+              }}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                (settings.envDisableSignups ? false : settings['allow_signups'] !== 'false')
+                  ? 'bg-[#06b6d4]'
+                  : 'bg-theme-subtle'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                  (settings.envDisableSignups ? false : settings['allow_signups'] !== 'false')
+                    ? 'translate-x-5'
+                    : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
         {/* Section: Retention */}
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-theme-muted flex items-center gap-2 mb-4">

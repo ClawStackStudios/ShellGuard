@@ -2,6 +2,9 @@
 
 *Episodic memory: how I moved through the codebase. Semantic truth lives in the Brain; walls, detours, and instincts live here. Sliding window: 20 entries.*
 
+## 2026-10-30 — GitHub Native Offloading, Neutral Language Doctrine & Milestone Anchors
+Projected the 3 pillars of `.agents/skills/project/` into GitHub native primitives (GitHub Projects v2, Milestones, and Issue Forms). Authored YAML issue forms (`task-a-engine.yml`, `task-b-ui-walk.yml`, `dual-testing-gate.yml`) enforcing 2-task pairing and human-agent Dual-Testing sign-off. Established version-controlled technical wiki compendium (`.github/wiki/`) and automated push workflow (`sync-wiki.yml`). Ratified the Neutral Language Policy with Lucas: removed all ecosystem lore and nautical metaphors from user/wiki documentation, restricting permitted terms to strictly logical definitions (`ClawKeys`, `LobsterKeys`, `HumanKeys`, `Resting ShellCryption`). Created initial SemVer release milestones on GitHub (`v0.0.2.9` closed, `v0.0.3.0` active, `v0.0.3.1` queued) and synced repository labels.
+
 ## 2026-10-30 — VitePress Docs UI & Theme Alignment to Reef Modernist Invariants
 Lucas requested aligning the VitePress documentation portal UI and theming with the physical feel of the ShellGuard React app. Authored `BouncyBrand.vue` with per-letter cubic-bezier spring hover physics and superscript `©™`. Fixed the theme transition and navbar horizon line: authored `Layout.vue` providing `toggle-appearance` directly to `DefaultTheme.Layout`, added `.dark::view-transition-old(root) { z-index: 9999 }` and `.dark::view-transition-new(root) { z-index: 1 }` to properly elevate the light-to-dark circular wipe, and rendered an unbroken 2px horizon seam via `.VPNavBar::after` (z-index 50) to prevent `.content-body`'s background from covering the seam in the center on doc pages. Verified all 12 doc unit tests passing green.
 

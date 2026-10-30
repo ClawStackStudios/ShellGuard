@@ -90,3 +90,19 @@ Documentation updates should not be isolated to a separate "chore: update docs" 
   - **Endpoint Matrix (`api-reference.md`)**: Add the route with exact HTTP verb, path, description, payload/response types, and explicit **Session Token / Auth Requirement** (e.g. `None`, `Bearer Token (canRead)`, `Bearer Token (canWrite)`).
   - **Feature Guides (`vault-features/*.md`)**: Document user-facing implications, reverse cascade rules, and edge-case behaviors (e.g. pre-flight quota queries, runtime sweeper triggers).
 - **Zero Orphaned Features**: An endpoint or capability that exists in code but is unslotted in docs is a definition-of-done defect.
+
+## 13. Neutral Language & Permitted Terms Policy
+- **Objective**: Ensure all public-facing documentation, operator guides, commit summaries, and Technical Wiki articles are immediately understandable to external engineers, auditors, and contributors without requiring knowledge of internal brand lore or ecosystem fiction.
+- **Lore-Free Prohibited Terminology**: Prohibit nautical metaphors and brand lore across all documentation surfaces (e.g. do NOT use *Reef*, *Grotto*, *Hatching*, *Molting*, *Carapace*, or *CaraBase* in user-facing or technical texts). Use standard software engineering vocabulary (e.g. *sync cluster*, *fleet*, *workspace*, *data directory*, *registration*, *lifecycle stage pruning*, *security perimeter*).
+- **Permitted Terms (Strictly Logical Definitions Only)**:
+  - **ClawKeys**: User cryptographic identity credentials (`hu-` prefix) used to derive client encryption keys and unlock the vault (*"ClawKeys are used to unlock the vault and must not be lost"*).
+  - **LobsterKeys**: Scoped, hash-only agent API keys (`lb-` prefix) issued for automated integration with restricted permissions.
+  - **HumanKeys**: Master user account credentials and recovery passphrases representing physical operator sovereignty.
+  - **Resting ShellCryption**: The field-level authenticated encryption protocol (AES-256-GCM with HKDF-SHA256 key derivation) protecting data fields prior to database persistence.
+
+## 14. Three-Tier Documentation Doctrine & Technical Wiki Invariant
+- **Tier 1: VitePress Portal (`docs/`)**: Focused exclusively on operators, end users, and fleet administrators (deployment, setup, REST API reference, envar catalog, mobile companion guide). Approachable, clean, and frictionless.
+- **Tier 2: In-Repo Sovereign Core (`.agents/skills/project/`)**: Focused exclusively on AI agents and active construction (sliding 2-task execution prompts, component oracles, test redlines).
+- **Tier 3: GitHub Technical Wiki (`.github/wiki/` synced to `repo.wiki.git`)**: Focused on security researchers and core engineers (cryptographic proofs, HKDF bitwise derivations, AAD serialization taxonomy, T1/T2 threat matrices, offline conflict vector-clock math, and immutable ADRs).
+- **Living Wiki Sync Invariant**: Wiki articles are authored and version-controlled inside the repository under `.github/wiki/` and automatically pushed to the GitHub Wiki via `.github/workflows/sync-wiki.yml` upon merge to `main`. Never edit the wiki directly in the web browser without repository versioning.
+

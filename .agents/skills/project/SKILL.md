@@ -68,3 +68,22 @@ When building or modifying any stage or feature activity in ShellGuard, execute 
     ├── stage-31-p2p-direct-reef-sync/prompt.md        # Queued (Tasks 67 & 68)
     └── stage-32-hardware-enclave/prompt.md            # Queued (Tasks 69 & 70)
 ```
+
+## 3. GitHub Native Integration & Dual-Testing Synchronization
+
+Every phase and stage defined in `ROADMAP-ERA2.md` and `stages/` maps directly into GitHub's native project primitives:
+
+1. **GitHub Milestones**: Track SemVer release targets (`v0.0.3.0`, `v0.0.3.1`). Closing all stage tasks in a milestone enables the release roll.
+2. **GitHub Projects v2 ("ShellGuard Core & Distributed Roadmap")**: Tracks work across 5 custom dimensions:
+   - `Stage`: Current execution slice (`Stage 28.1`, `Stage 28.2`, etc.).
+   - `Task Type`: `Task A [Engine]`, `Task B [UI/Docs]`, `Lifecycle Prune`, `Spike / RFC`.
+   - `Security Layer`: `Layer 1: Resting ShellCryption (hu-)`, `Layer 2: MetadataGuard`, `Layer 3: Host/Transport`, `Non-Cryptographic`.
+   - `Dual-Testing Gate`: `1. Staged / In Flight` ➔ `2. Automated Cloud CI Passed` ➔ `3. Physical Verification Pending` ➔ `4. Ratified & Merged`.
+   - `Module Area`: Maps directly to the 13 feature activities in `modules/`.
+3. **GitHub Issue Forms (`.github/ISSUE_TEMPLATE/`)**:
+   - `task-a-engine.yml`: Generative clauses + falsifiable test oracle.
+   - `task-b-ui-walk.yml`: Component visual state + 4-zone docs walk.
+   - `dual-testing-gate.yml`: Automated CI pass + Lucas live verification checklist.
+   - `bug-report.yml`: Live testing defects with Expected vs Actual and reproduction steps.
+4. **Issue-Task Equivalence**: In GitHub Projects v2, Issues *are* Tasks. Bugs or tasks filed directly on GitHub drop onto the board via the right-hand sidebar Project selector without requiring manual conversion.
+

@@ -1,0 +1,54 @@
+name: 🐛 Bug Report
+description: Report a reproducible defect, unexpected behavior, or regression
+title: "[Bug]: "
+labels: ["bug", "dual-gate:staged"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🐛 ShellGuard Bug Report
+        Use this form to record defects caught during live testing, local runs, or regression audits.
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Affected Stage or Release
+      options:
+        - "Stage 28.1 (v0.0.3.0)"
+        - "Stage 28.2 (v0.0.3.0)"
+        - "Stage 28.3 (v0.0.3.0)"
+        - "Stage 28.4 (v0.0.3.0)"
+        - "Phase 27 (v0.0.2.9)"
+        - "Other / Regression"
+    validations:
+      required: true
+  - type: dropdown
+    id: module_area
+    attributes:
+      label: Module Area
+      options:
+        - "01-auth-gateway"
+        - "02-vault-workspace"
+        - "03-generator"
+        - "04-lobster-keys"
+        - "05-import-export"
+        - "06-settings"
+        - "07-admin-panel"
+        - "Companion Android"
+    validations:
+      required: true
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What was the invariant expected, and what was the actual result observed?
+      placeholder: "Expected: Unmask toggle reveals password without horizontal overflow.\nActual: Last 4 characters clip behind container border."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce & Environment
+      description: Exact steps, environment (Docker, local node, browser, OS), or error logs.
+      placeholder: "1. Log into vault with test account\n2. Open item with 24-character password\n3. Click eye icon"
+    validations:
+      required: true

@@ -5,16 +5,77 @@ import db from '../database/index.js';
 import { AuthRequest } from './auth.js';
 
 
-function parseWindow(windowStr: string | undefined): number | null {
+/**
+ * Parse human rate limit window strings into milliseconds.
+ * Supports: 'ms', 's', 'm', 'h', 'd' (e.g. '1h' -> 3600000, '30m' -> 1800000, '15s' -> 15000, '500ms' -> 500).
+ * Plain numbers are treated as milliseconds.
+ */
+export function parseWindow(windowStr: string | undefined): number | null {
   if (!windowStr) return null;
-  if (windowStr.endsWith('m')) return parseInt(windowStr) * 60 * 1000;
-  if (windowStr.endsWith('s')) return parseInt(windowStr) * 1000;
-  return parseInt(windowStr);
+  const str = windowStr.trim().toLowerCase();
+  if (!str) return null;
+
+  // Days: '1d', '2days', 'day'
+  const dayMatch = str.match(/^(\d+(?:\.\d+)?)\s*(?:d|day|days)$/);
+  if (dayMatch) {
+    const val = parseFloat(dayMatch[1]);
+    return val > 0 ? Math.round(val * 24 * 60 * 60 * 1000) : null;
+  }
+
+  // Hours: '1h', '2hours', 'hour'
+  const hourMatch = str.match(/^(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)$/);
+  if (hourMatch) {
+    const val = parseFloat(hourMatch[1]);
+    return val > 0 ? Math.round(val * 60 * 60 * 1000) : null;
+  }
+
+  // Minutes: '15m', '15min', 'minutes'
+  const minMatch = str.match(/^(\d+(?:\.\d+)?)\s*(?:m|min|mins|minute|minutes)$/);
+  if (minMatch) {
+    const val = parseFloat(minMatch[1]);
+    return val > 0 ? Math.round(val * 60 * 1000) : null;
+  }
+
+  // Milliseconds: '500ms'
+  const msMatch = str.match(/^(\d+(?:\.\d+)?)\s*(?:ms|msec|millisec|milliseconds)$/);
+  if (msMatch) {
+    const val = parseFloat(msMatch[1]);
+    return val > 0 ? Math.round(val) : null;
+  }
+
+  // Seconds: '30s', '30sec', 'seconds'
+  const secMatch = str.match(/^(\d+(?:\.\d+)?)\s*(?:s|sec|secs|second|seconds)$/);
+  if (secMatch) {
+    const val = parseFloat(secMatch[1]);
+    return val > 0 ? Math.round(val * 1000) : null;
+  }
+
+  // Plain numeric string (milliseconds)
+  const numeric = parseFloat(str);
+  if (!Number.isNaN(numeric) && numeric > 0) {
+    return Math.round(numeric);
+  }
+
+  return null;
+}
+
+/**
+ * Clamp rate limit max value so 0, negative, or NaN values safely fall back
+ * to defaults rather than locking out 100% of requests with HTTP 429.
+ */
+export function getSafeRateLimit(limitStr: string | undefined, defaultLimit: number, varName?: string): number {
+  if (!limitStr) return defaultLimit;
+  const parsed = parseInt(limitStr, 10);
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    console.warn(`[RateLimiter] ⚠️ Invalid or non-positive ${varName || 'rate limit'} value ("${limitStr}"). Falling back to safe default ${defaultLimit}.`);
+    return defaultLimit;
+  }
+  return parsed;
 }
 
 export const authLimiter = rateLimit({
   windowMs: parseWindow(process.env.AUTH_RATE_WINDOW) || 15 * 60 * 1000,
-  max: parseInt(process.env.AUTH_RATE_LIMIT || '10', 10),
+  max: getSafeRateLimit(process.env.AUTH_RATE_LIMIT, 10, 'AUTH_RATE_LIMIT'),
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -26,7 +87,7 @@ export const authLimiter = rateLimit({
 
 export const apiLimiter = rateLimit({
   windowMs: parseWindow(process.env.API_RATE_WINDOW) || 1 * 60 * 1000,
-  max: parseInt(process.env.API_RATE_LIMIT || '100', 10),
+  max: getSafeRateLimit(process.env.API_RATE_LIMIT, 100, 'API_RATE_LIMIT'),
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -34,6 +95,7 @@ export const apiLimiter = rateLimit({
     error: "The reef is crowded! You've exceeded your rate limit. Please slow down your requests.",
   },
 });
+
 
 /**
  * Stricter limiter for the SuperLobster panel's token auth endpoint (T1).

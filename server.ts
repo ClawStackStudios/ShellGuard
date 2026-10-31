@@ -30,18 +30,34 @@ import settingsRoutes    from './src/server/routes/settings.js';
 import adminRoutes       from './src/server/routes/admin.js';
 import publicRoutes      from './src/server/routes/public.js';
 import { performBackup } from './src/server/utils/backupManager.js';
-import { ensureTlsMaterials, registerTlsReloadListener } from './src/server/utils/tlsManager.js';
+import { ensureTlsMaterials, registerTlsReloadListener, setTlsServerActive, isTlsServerActive } from './src/server/utils/tlsManager.js';
 import { getAppVersion } from './src/server/utils/version.js';
 import { validateEnvironment, printStartupBanner } from './src/server/config/envValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-const PORT = parseInt(process.env.PORT ?? '6565', 10);
-const isProduction = process.env.NODE_ENV === 'production';
+const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+const isProduction = !isDevelopment;
+
+function resolvePort(): number {
+  const raw = process.env.PORT;
+  if (!raw) return 6565;
+  const parsed = parseInt(raw, 10);
+  if (Number.isNaN(parsed) || parsed < 1 || parsed > 65535) {
+    console.warn(`[Server] ⚠️ Invalid PORT ("${raw}"). Falling back to safe default 6565.`);
+    return 6565;
+  }
+  if (parsed < 1024 && typeof process.getuid === 'function' && process.getuid() !== 0) {
+    console.warn(`[Server] ⚠️ Binding to privileged port ${parsed} as non-root user (UID ${process.getuid()}) may fail with EACCES.`);
+  }
+  return parsed;
+}
+
+const PORT = resolvePort();
 
 // ─── Export for tests ────────────────────────────────────────────────────────
-export { db, audit, auditDb, generateId, generateString };
+export { db, audit, auditDb, generateId, generateString, isDevelopment, isProduction, resolvePort };
 export const app = express();
 
 const SESSION_ID = crypto.randomUUID();
@@ -125,18 +141,37 @@ const backupTicker = setInterval(runScheduledBackup, BACKUP_TICK_MS);
 backupTicker.unref();
 
 // ─── Trust proxy ─────────────────────────────────────────────────────────────
-if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
+if (process.env.TRUST_PROXY) {
+  const rawTrust = process.env.TRUST_PROXY.trim();
+  if (rawTrust === 'true' || rawTrust === '1') {
+    app.set('trust proxy', 1);
+  } else if (rawTrust === 'false' || rawTrust === '0') {
+    app.set('trust proxy', false);
+  } else {
+    const hops = parseInt(rawTrust, 10);
+    if (!Number.isNaN(hops) && hops > 0) {
+      app.set('trust proxy', hops);
+    } else {
+      app.set('trust proxy', rawTrust);
+    }
+  }
+}
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(httpsRedirect);
 
+// Dynamic HSTS: sends header only when TLS server is actively listening OR ENFORCE_HTTPS=true
+app.use((_req, res, next) => {
+  if (process.env.ENFORCE_HTTPS === 'true' || isTlsServerActive()) {
+    res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+  }
+  next();
+});
+
 // Delta #3: ShellGuard has no reader-mode feature — no jina/microlink connect-src
-// HSTS activates when TLS termination happens here (native TLS or ENFORCE_HTTPS
-// behind a proxy). Browsers ignore the header over plain HTTP, so it is inert
-// in LAN-HTTP mode.
-const hstsEnabled = process.env.ENFORCE_HTTPS === 'true' || process.env.TLS_ENABLED === 'true';
+// Inverted dev check: Only explicit development and test modes permit embedding
 app.use(helmet({
-  strictTransportSecurity: hstsEnabled ? undefined : false,
+  strictTransportSecurity: false, // Handled dynamically above based on live TLS active state
   contentSecurityPolicy: {
     directives: {
       defaultSrc:    ["'self'"],
@@ -145,7 +180,7 @@ app.use(helmet({
       fontSrc:       ["'self'", 'https://fonts.gstatic.com'],
       imgSrc:        ["'self'", 'data:', 'https:'],
       connectSrc:    ["'self'", 'wss:', 'ws:'],
-      frameAncestors: isProduction ? ["'self'"] : ["'self'", "*"],
+      frameAncestors: isDevelopment ? ["'self'", "*"] : ["'self'"],
       upgradeInsecureRequests: process.env.ENFORCE_HTTPS === 'true' ? [] : null,
     },
   },
@@ -153,7 +188,7 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
   crossOriginOpenerPolicy:   false,
   originAgentCluster:        false,
-  frameguard: isProduction ? { action: 'sameorigin' } : false,
+  frameguard: isDevelopment ? false : { action: 'sameorigin' },
 }));
 
 app.use(cors(getCorsConfig()));
@@ -250,7 +285,20 @@ app.use('/api', (_req, res) => res.status(404).json({ success: false, error: 'Ro
 app.use(errorHandler);
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-const HOST = process.env.HOST ?? (isProduction ? '0.0.0.0' : '127.0.0.1');
+function resolveHost(): string {
+  let raw = (process.env.HOST ?? '').trim();
+  if (!raw) {
+    return isDevelopment ? '127.0.0.1' : '0.0.0.0';
+  }
+  if (/^https?:\/\//i.test(raw)) {
+    const stripped = raw.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim();
+    console.warn(`[Server] ⚠️ HOST envar contained URL scheme ("${process.env.HOST}"). Stripping to host string "${stripped}".`);
+    return stripped || (isDevelopment ? '127.0.0.1' : '0.0.0.0');
+  }
+  return raw;
+}
+
+const HOST = resolveHost();
 const tlsEnabled = process.env.TLS_ENABLED === 'true';
 
 function onListening(protocol: 'http' | 'https', tls?: { generated: boolean; fingerprint: string; certPath: string }) {
@@ -270,6 +318,7 @@ if (tlsEnabled) {
   try {
     const tls = await ensureTlsMaterials();
     const httpsServer = https.createServer({ key: tls.key, cert: tls.cert }, app);
+    setTlsServerActive(true);
     registerTlsReloadListener(({ key, cert, fingerprint }) => {
       httpsServer.setSecureContext({ key, cert });
       httpsServer.closeIdleConnections?.();
@@ -279,11 +328,13 @@ if (tlsEnabled) {
       onListening('https', { generated: tls.generated, fingerprint: tls.fingerprint, certPath: tls.certPath }),
     );
   } catch (err: any) {
+    setTlsServerActive(false);
     console.error(`[TLS] ⚠️ Failed to start with TLS: ${err.message}`);
     console.error('[TLS]    Falling back to plain HTTP. Fix TLS_CERT_PATH/TLS_KEY_PATH or unset TLS_ENABLED.');
     server = app.listen(PORT, HOST, () => onListening('http'));
   }
 } else {
+  setTlsServerActive(false);
   server = app.listen(PORT, HOST, () => onListening('http'));
 }
 

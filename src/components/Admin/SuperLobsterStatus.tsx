@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Activity, CheckCircle2, AlertTriangle, Clock, ShieldCheck, Database, Server, Lock, Cpu } from 'lucide-react';
+import { Activity, CheckCircle2, AlertTriangle, Clock, ShieldCheck, Database, Server, Lock, Cpu, Globe, Gauge, HardDrive, Sliders, Shield } from 'lucide-react';
 import { useSuperLobster } from './SuperLobsterContext.tsx';
 
 interface UptimeSession {
@@ -186,6 +186,141 @@ export function SuperLobsterStatus() {
           </div>
         </div>
       </div>
+
+      {/* Card 4: Environment & Guardrails Diagnostic (Stage 28.2) */}
+      {status.runtimeConfig && (
+        <div className="bg-theme-surface border border-theme-subtle rounded-2xl p-6 shadow-sm relative overflow-hidden group hover:border-[#e4048a]/30 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#e4048a]/5 rounded-bl-full pointer-events-none" />
+
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#e4048a]/10 border border-[#e4048a]/30 flex items-center justify-center text-[#e4048a] shadow-sm">
+                <Sliders size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold font-[Sora] text-theme-main tracking-tight flex items-center gap-2">
+                  Environment & Guardrails Diagnostics
+                </h3>
+                <p className="text-xs text-theme-muted mt-0.5">
+                  Sanitized envar bindings, network proxies, rate limits, and storage ceilings
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {status.runtimeConfig.isByoCert ? (
+                <span className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[11px] font-bold flex items-center gap-1.5">
+                  <Shield size={12} /> BYO CERT
+                </span>
+              ) : status.runtimeConfig.tlsMode === 'SELF_SIGNED' ? (
+                <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[11px] font-bold flex items-center gap-1.5">
+                  <ShieldCheck size={12} /> NATIVE TLS
+                </span>
+              ) : (
+                <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[11px] font-bold flex items-center gap-1.5">
+                  <AlertTriangle size={12} /> CLEARTEXT HTTP
+                </span>
+              )}
+              <span className={`px-2.5 py-1 rounded-full font-mono text-[10px] font-bold border ${
+                status.runtimeConfig.isTlsServerActive
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-theme-base text-theme-muted border-theme-subtle'
+              }`}>
+                {status.runtimeConfig.isTlsServerActive ? 'ACTIVE LISTENER' : 'HTTP FALLBACK'}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Block 1: Transport & Network */}
+            <div className="bg-theme-base border border-theme-subtle rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-theme-muted font-bold mb-2">
+                  <Server size={12} className="text-[#06b6d4]" /> Network & Proxy
+                </div>
+                <div className="space-y-1.5 text-xs font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-theme-muted">Bind:</span>
+                    <span className="text-theme-main font-semibold">{status.runtimeConfig.host || '0.0.0.0'}:{status.port || '6565'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-theme-muted">Trust Proxy:</span>
+                    <span className="text-[#06b6d4] font-semibold">{status.runtimeConfig.trustProxy}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-theme-subtle/50 text-[10px] text-theme-muted truncate">
+                Mode: {status.runtimeConfig.tlsMode}
+              </div>
+            </div>
+
+            {/* Block 2: CORS */}
+            <div className="bg-theme-base border border-theme-subtle rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-theme-muted font-bold mb-2">
+                  <Globe size={12} className="text-purple-400" /> Origin Policy (CORS)
+                </div>
+                <div className="space-y-1.5 text-xs font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-theme-muted">Policy:</span>
+                    <span className="text-purple-400 font-semibold">{status.runtimeConfig.corsMode}</span>
+                  </div>
+                  <div className="text-[11px] text-theme-muted truncate" title={status.runtimeConfig.corsOrigin || 'LAN IPs & Localhost'}>
+                    {status.runtimeConfig.corsOrigin || 'LAN & CGNAT Ranges'}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-theme-subtle/50 text-[10px] text-theme-muted">
+                Trailing slash stripped
+              </div>
+            </div>
+
+            {/* Block 3: Rate Limiting */}
+            <div className="bg-theme-base border border-theme-subtle rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-theme-muted font-bold mb-2">
+                  <Gauge size={12} className="text-emerald-400" /> Rate Limiters
+                </div>
+                <div className="space-y-1.5 text-xs font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-theme-muted">Auth:</span>
+                    <span className="text-emerald-400 font-semibold">{status.runtimeConfig.authRateLimit} / {status.runtimeConfig.authRateWindow}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-theme-muted">API:</span>
+                    <span className="text-emerald-400 font-semibold">{status.runtimeConfig.apiRateLimit} / {status.runtimeConfig.apiRateWindow}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-theme-subtle/50 text-[10px] text-theme-muted">
+                Zero-clamp protected
+              </div>
+            </div>
+
+            {/* Block 4: Storage Quotas */}
+            <div className="bg-theme-base border border-theme-subtle rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-theme-muted font-bold mb-2">
+                  <HardDrive size={12} className="text-[#e4048a]" /> Storage Quotas
+                </div>
+                <div className="space-y-1.5 text-xs font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-theme-muted">Per File:</span>
+                    <span className="text-[#e4048a] font-semibold">{status.runtimeConfig.attachmentMaxMb} MB</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-theme-muted">Per Grotto:</span>
+                    <span className="text-[#e4048a] font-semibold">{status.runtimeConfig.grottoQuotaMb} MB</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-theme-subtle/50 text-[10px] text-theme-muted">
+                Fail-closed at quota
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Caution Callout */}
       {!status.sqlcipherActive && (

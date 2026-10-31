@@ -161,3 +161,29 @@ export function getRotationManifest(): { certFingerprint: string; timestamp: num
     return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
   } catch { return null; }
 }
+
+let activeTlsServer = false;
+
+/** Set the active running state of the TLS server. */
+export function setTlsServerActive(active: boolean): void {
+  activeTlsServer = active;
+}
+
+/** Check if the TLS HTTPS server is actively bound and listening. */
+export function isTlsServerActive(): boolean {
+  return activeTlsServer;
+}
+
+/** Check if custom BYO certificates are configured via environment variables. */
+export function isByoCertConfigured(): boolean {
+  return Boolean(process.env.TLS_CERT_PATH && process.env.TLS_KEY_PATH);
+}
+
+/** Return the active certificate path (either BYO or internal default cert.pem). */
+export function getActiveCertPath(): string {
+  if (process.env.TLS_CERT_PATH) {
+    return process.env.TLS_CERT_PATH;
+  }
+  return DEFAULT_CERT_PATH;
+}
+

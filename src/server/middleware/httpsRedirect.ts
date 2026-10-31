@@ -17,11 +17,12 @@ export const httpsRedirect = (req: Request, res: Response, next: NextFunction) =
     return next();
   }
 
-  const shouldEnforce = process.env.ENFORCE_HTTPS === 'true' || isTlsServerActive();
-
-  if (process.env.NODE_ENV === 'test' && !shouldEnforce) {
+  // In test suites using Supertest (plain in-memory HTTP), do not redirect unless ENFORCE_HTTPS is explicitly 'true'
+  if (process.env.NODE_ENV === 'test' && process.env.ENFORCE_HTTPS !== 'true') {
     return next();
   }
+
+  const shouldEnforce = process.env.ENFORCE_HTTPS === 'true' || isTlsServerActive();
 
   if (shouldEnforce) {
     // Parse comma-separated X-Forwarded-Proto for multi-proxy chains (e.g. Cloudflare -> Nginx -> ShellGuard)

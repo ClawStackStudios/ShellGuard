@@ -75,7 +75,7 @@ export function getSafeRateLimit(limitStr: string | undefined, defaultLimit: num
 
 export const authLimiter = rateLimit({
   windowMs: parseWindow(process.env.AUTH_RATE_WINDOW) || 15 * 60 * 1000,
-  max: getSafeRateLimit(process.env.AUTH_RATE_LIMIT, 10, 'AUTH_RATE_LIMIT'),
+  max: getSafeRateLimit(process.env.AUTH_RATE_LIMIT || '10', 10, 'AUTH_RATE_LIMIT'),
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -87,7 +87,7 @@ export const authLimiter = rateLimit({
 
 export const apiLimiter = rateLimit({
   windowMs: parseWindow(process.env.API_RATE_WINDOW) || 1 * 60 * 1000,
-  max: getSafeRateLimit(process.env.API_RATE_LIMIT, 100, 'API_RATE_LIMIT'),
+  max: getSafeRateLimit(process.env.API_RATE_LIMIT || '100', 100, 'API_RATE_LIMIT'),
   standardHeaders: true,
   legacyHeaders: false,
   message: {

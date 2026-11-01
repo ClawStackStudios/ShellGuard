@@ -40,7 +40,9 @@ export function getApiBaseUrl(): string {
 
   // Priority 3: Local development default (separate ports)
   // Dev server (port 6464) connects to API server (port 6565)
-  // Use window.location.hostname to support LAN testing (mobile devices)
+  // Use window.location.hostname and protocol to support HTTPS and LAN testing (mobile devices)
+  const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const protocol = isHttps ? 'https:' : 'http:';
   const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  return `http://${hostname}:6565`;
+  return `${protocol}//${hostname}:6565`;
 }

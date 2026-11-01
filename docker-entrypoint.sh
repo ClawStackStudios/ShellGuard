@@ -7,8 +7,16 @@ echo "🛡️ [ShellGuard] Initializing Container..."
 TARGET_UID=${PUID:-1000}
 TARGET_GID=${PGID:-1000}
 
-# Modify 'node' user if running as root and IDs differ
-if [ "$(id -u)" = "0" ] && [ "$TARGET_UID" != "1000" ]; then
+# Validate that PUID and PGID are positive integers, falling back safely to 1000
+case "$TARGET_UID" in
+    ''|*[!0-9]*) TARGET_UID=1000 ;;
+esac
+case "$TARGET_GID" in
+    ''|*[!0-9]*) TARGET_GID=1000 ;;
+esac
+
+# Modify 'node' user if running as root and either UID or GID differs from default (1000)
+if [ "$(id -u)" = "0" ] && { [ "$TARGET_UID" != "1000" ] || [ "$TARGET_GID" != "1000" ]; }; then
     echo "🔧 [ShellGuard] Updating 'node' user to UID: $TARGET_UID / GID: $TARGET_GID"
 
     # Check if group exists
@@ -22,13 +30,14 @@ if [ "$(id -u)" = "0" ] && [ "$TARGET_UID" != "1000" ]; then
 fi
 
 # Ensure storage directory exists and is writable by the target user
-if [ -d "$DATA_DIR" ]; then
-    echo "📦 [ShellGuard] Fixing permissions for $DATA_DIR..."
-    chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
-elif [ -n "$DATA_DIR" ]; then
-    echo "📦 [ShellGuard] Creating directory $DATA_DIR..."
-    mkdir -p "$DATA_DIR"
-    chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
+TARGET_DATA_DIR="${DATA_DIR:-/app/data}"
+if [ -d "$TARGET_DATA_DIR" ]; then
+    echo "📦 [ShellGuard] Fixing permissions for $TARGET_DATA_DIR..."
+    chown -R "$TARGET_UID:$TARGET_GID" "$TARGET_DATA_DIR"
+else
+    echo "📦 [ShellGuard] Creating directory $TARGET_DATA_DIR..."
+    mkdir -p "$TARGET_DATA_DIR"
+    chown -R "$TARGET_UID:$TARGET_GID" "$TARGET_DATA_DIR"
 fi
 
 # Switch to 'node' user if running as root

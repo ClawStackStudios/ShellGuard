@@ -23,18 +23,27 @@ const router = Router();
 //     replacement re-uploads. The router sits behind the global 1mb JSON
 //     body parser — metadata-only bodies fit trivially.
 
-/** Hard per-file ceiling: 500MB of ciphertext (env: ATTACHMENT_MAX_MB). */
-export const MAX_ATTACHMENT_BYTES =
-  (parseInt(process.env.ATTACHMENT_MAX_MB ?? '500', 10) || 500) * 1024 * 1024;
+import { getSafeAttachmentMaxMb, getSafeGrottoQuotaMb } from '../config/storageConfig.js';
+export { getSafeAttachmentMaxMb, getSafeGrottoQuotaMb };
 
-/** Per-owner grotto quota: 1000MB total stored ciphertext (env: GROTTO_QUOTA_MB). */
+/** Hard per-file ceiling: clamped between 1MB and 2000MB (env: ATTACHMENT_MAX_MB ?? '500'). */
+export const MAX_ATTACHMENT_BYTES =
+  getSafeAttachmentMaxMb(process.env.ATTACHMENT_MAX_MB ?? '500') * 1024 * 1024;
+
+/** Per-owner grotto quota: clamped between 1MB and 100000MB (env: GROTTO_QUOTA_MB ?? '1000'). */
 export const GROTTO_QUOTA_BYTES =
-  (parseInt(process.env.GROTTO_QUOTA_MB ?? '1000', 10) || 1000) * 1024 * 1024;
+  getSafeGrottoQuotaMb(process.env.GROTTO_QUOTA_MB ?? '1000') * 1024 * 1024;
+
+if (MAX_ATTACHMENT_BYTES > GROTTO_QUOTA_BYTES) {
+  console.warn(
+    `[STORAGE CONFIG] ATTACHMENT_MAX_MB (${Math.round(MAX_ATTACHMENT_BYTES / (1024 * 1024))}MB) exceeds GROTTO_QUOTA_MB (${Math.round(GROTTO_QUOTA_BYTES / (1024 * 1024))}MB). Single upload could exhaust grotto.`
+  );
+}
 
 /** Read/download chunk size for incremental BLOB streaming (1MB). */
 const BLOB_CHUNK_BYTES = 1024 * 1024;
 
-function grottoUsage(ownerUuid: string): number {
+export function grottoUsage(ownerUuid: string): number {
   const row = db
     .prepare('SELECT COALESCE(SUM(size_bytes), 0) AS used FROM vault_secure_attachments WHERE owner_uuid = ?')
     .get(ownerUuid) as { used: number };
@@ -111,6 +120,26 @@ router.post('/', requireAuth, requirePermission('canWrite'), (req: AuthRequest, 
       success: false,
       error: 'Attachment uploads require multipart/form-data (streamed ciphertext).',
     });
+  }
+
+  // Pre-stream quota check: fast-reject oversized payloads via Content-Length header before piping
+  const rawContentLength = req.headers['content-length'];
+  if (rawContentLength) {
+    const contentLength = parseInt(rawContentLength, 10);
+    if (!isNaN(contentLength)) {
+      if (contentLength > MAX_ATTACHMENT_BYTES) {
+        return res.status(413).json({
+          success: false,
+          error: `Attachment exceeds the ${Math.round(MAX_ATTACHMENT_BYTES / (1024 * 1024))}MB per-file ceiling.`,
+        });
+      }
+      if (grottoUsage(req.userUuid) + contentLength > GROTTO_QUOTA_BYTES) {
+        return res.status(413).json({
+          success: false,
+          error: `Grotto storage quota exceeded (${Math.round(GROTTO_QUOTA_BYTES / (1024 * 1024))}MB per owner).`,
+        });
+      }
+    }
   }
 
   let busboy: Busboy.Busboy;

@@ -33,13 +33,13 @@ In the Unraid WebUI under **Docker &rarr; Add Container**, select the **ShellGua
 | **Network Type** | `Bridge` | Standard Docker bridge network. |
 | **Host Port 1** | `6464` | Host port mapped to container port `6464`. |
 | **Appdata Storage** | `/mnt/user/appdata/shellguard` | Persistent storage path mapped to `/app/data`. |
-| **PUID** | `99` | Unraid `nobody` user ID. |
-| **PGID** | `100` | Unraid `users` group ID. |
+| **PUID** | `99` | Unraid `nobody` user ID (validated as positive integer). |
+| **PGID** | `100` | Unraid `users` group ID (validated as positive integer). |
 | **DB_ENCRYPTION_KEY**| `openssl rand -base64 32` | 256-bit Base64 key for Layer 2 metadata and Layer 3 database encryption. |
 | **ADMIN_TOKEN** | Strong Secret Token | Master authentication key for the SuperLobster admin panel (`/superlobster`). |
 
 ### Step 3: Apply & Launch
-Click **Apply**. Unraid will pull the container image, remap volume permissions to `nobody:users` (`99:100`), run migrations, and launch the reef.
+Click **Apply**. Unraid will pull the container image, independently remap volume permissions to `nobody:users` (`99:100`), run migrations, and launch the reef.
 
 Open **`http://<unraid-ip>:6464`** in your browser.
 

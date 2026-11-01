@@ -17,6 +17,7 @@ import {
   Copy,
   Upload,
   AlertCircle,
+  AlertTriangle,
   ArrowRight,
   ArrowLeft,
   CheckCircle,
@@ -55,6 +56,7 @@ import { GeneratorToolView } from "./components/Generator/GeneratorToolView.tsx"
 import { ImportExportView } from "./components/Settings/ImportExportView.tsx";
 import { ConfigSettingsView } from "./components/Settings/ConfigSettingsView.tsx";
 import { LobsterKeysTab } from "./components/LobsterKeys/LobsterKeysTab.tsx";
+import { ZeroKnowledgeWarningBanner } from "./components/ZeroKnowledgeWarningBanner.tsx";
 import { 
   generateUUID, 
   generateHumanKey, 
@@ -990,78 +992,86 @@ export default function App() {
 
   if (view === "landing") {
     return (
-      <LandingView 
-        onClawIn={() => setView("login")} 
-        onHatch={() => {
-          if (signupStatus?.signupsAllowed === false) return;
-          setView("setup");
-        }} 
-        signupStatus={signupStatus}
-      />
+      <div className="min-h-screen flex flex-col">
+        <ZeroKnowledgeWarningBanner />
+        <div className="flex-1">
+          <LandingView 
+            onClawIn={() => setView("login")} 
+            onHatch={() => {
+              if (signupStatus?.signupsAllowed === false) return;
+              setView("setup");
+            }} 
+            signupStatus={signupStatus}
+          />
+        </div>
+      </div>
     );
   }
 
   if (view === "login" || view === "setup") {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-ocean text-slate-900 dark:text-slate-50 antialiased flex flex-col justify-center items-center p-4 sm:p-6 overflow-auto relative selection:bg-[#e4048a]/30">
-        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#e4048a]/10 dark:bg-[#e4048a]/5 blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-[#06b6d4]/10 dark:bg-[#06b6d4]/5 blur-[100px] pointer-events-none" />
+      <div className="min-h-screen bg-slate-50 dark:bg-ocean text-slate-900 dark:text-slate-50 antialiased flex flex-col selection:bg-[#e4048a]/30">
+        <ZeroKnowledgeWarningBanner />
+        <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-6 overflow-auto relative">
+          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#e4048a]/10 dark:bg-[#e4048a]/5 blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-[#06b6d4]/10 dark:bg-[#06b6d4]/5 blur-[100px] pointer-events-none" />
 
-        {activeModalConfig && (
-          <QuickLoginModal 
-            config={activeModalConfig} 
-            onSuccess={handleAuthModalSuccess} 
-            onClose={handleAuthModalClose} 
-          />
-        )}
+          {activeModalConfig && (
+            <QuickLoginModal 
+              config={activeModalConfig} 
+              onSuccess={handleAuthModalSuccess} 
+              onClose={handleAuthModalClose} 
+            />
+          )}
 
-        <div className="w-full max-w-md my-8 relative z-10">
-          <AnimatePresence mode="wait">
-            {error && (
-              <motion.div 
-                key="error"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="mb-6 p-4 bg-lobster-red/10 border border-lobster-red/30 rounded-xl flex items-center gap-3 text-lobster-red"
-              >
-                <AlertCircle size={20} />
-                <p className="text-sm font-medium">{error}</p>
-                <button onClick={() => setError(null)} className="ml-auto text-xs underline cursor-pointer">Dismiss</button>
-              </motion.div>
-            )}
+          <div className="w-full max-w-md my-8 relative z-10">
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div 
+                  key="error"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mb-6 p-4 bg-lobster-red/10 border border-lobster-red/30 rounded-xl flex items-center gap-3 text-lobster-red"
+                >
+                  <AlertCircle size={20} />
+                  <p className="text-sm font-medium">{error}</p>
+                  <button onClick={() => setError(null)} className="ml-auto text-xs underline cursor-pointer">Dismiss</button>
+                </motion.div>
+              )}
 
-            {view === "setup" && (
-              <SetupView 
-                onSuccess={handleLoginSuccess} 
-                onSwitch={() => {
-                  setInviteToken(null);
-                  setView("login");
-                }} 
-                onCancel={() => {
-                  setInviteToken(null);
-                  if (lobster && getNavIntent() === "dashboard") {
-                    setView("vault");
-                  } else {
+              {view === "setup" && (
+                <SetupView 
+                  onSuccess={handleLoginSuccess} 
+                  onSwitch={() => {
+                    setInviteToken(null);
+                    setView("login");
+                  }} 
+                  onCancel={() => {
+                    setInviteToken(null);
+                    if (lobster && getNavIntent() === "dashboard") {
+                      setView("vault");
+                    } else {
+                      setNavIntent("landing");
+                      setView("landing");
+                    }
+                  }} 
+                  inviteToken={inviteToken || undefined}
+                  signupStatus={signupStatus}
+                />
+              )}
+              {view === "login" && (
+                <LoginView 
+                  onSuccess={handleLoginSuccess} 
+                  onSwitch={() => setView("setup")} 
+                  onBack={() => {
                     setNavIntent("landing");
                     setView("landing");
-                  }
-                }}
-                inviteToken={inviteToken || undefined}
-                signupStatus={signupStatus}
-              />
-            )}
-            {view === "login" && (
-              <LoginView 
-                onSuccess={handleLoginSuccess} 
-                onSwitch={() => setView("setup")} 
-                onBack={() => {
-                  setNavIntent("landing");
-                  setView("landing");
-                }}
-              />
-            )}
-          </AnimatePresence>
+                  }} 
+                />
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     );
@@ -1071,29 +1081,31 @@ export default function App() {
   const isSettingsMode = view.startsWith('settings');
 
   return (
-    <div className="h-screen bg-theme-surface text-theme-main overflow-hidden font-sans selection:bg-claw-cyan/30 flex">
-      {activeModalConfig && (
-        <QuickLoginModal 
-          config={activeModalConfig} 
-          onSuccess={handleAuthModalSuccess} 
-          onClose={handleAuthModalClose} 
-        />
-      )}
-      {/* Mobile Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/40 z-40 transition-opacity"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+    <div className="h-screen bg-theme-surface text-theme-main overflow-hidden font-sans selection:bg-claw-cyan/30 flex flex-col">
+      <ZeroKnowledgeWarningBanner />
+      <div className="flex-1 flex min-h-0 relative overflow-hidden">
+        {activeModalConfig && (
+          <QuickLoginModal 
+            config={activeModalConfig} 
+            onSuccess={handleAuthModalSuccess} 
+            onClose={handleAuthModalClose} 
+          />
+        )}
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/40 z-40 transition-opacity"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
-      {/* Sidebar - FIXED to the left viewport wall */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 h-full flex flex-col overflow-hidden bg-theme-surface border-r border-theme-subtle transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? "w-16 translate-x-0" : 
-          isSidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:translate-x-0"
-        }`}
-      >
+        {/* Sidebar - FIXED to the left viewport wall */}
+        <aside
+          className={`absolute inset-y-0 left-0 z-50 h-full flex flex-col overflow-hidden bg-theme-surface border-r border-theme-subtle transition-all duration-300 ease-in-out ${
+            isSidebarCollapsed ? "w-16 translate-x-0" : 
+            isSidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:translate-x-0"
+          }`}
+        >
         <Sidebar
           view={view}
           setView={setView}
@@ -1488,6 +1500,7 @@ export default function App() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

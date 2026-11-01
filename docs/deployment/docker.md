@@ -94,8 +94,8 @@ ShellGuard is distributed as a single unified container image on GitHub Containe
 | **`TLS_KEY_PATH`** | No | *(Empty)* | Absolute path to external private key for Bring-Your-Own (BYO) TLS mode. |
 | **`CORS_ORIGIN`** | No | *(Empty)* | Restricts cross-origin resource sharing to designated domain origins. |
 | **`TOKEN_TTL_DEFAULT`**| No | `24h` | Default expiration lifetime for user session tokens (`1h`, `24h`, `7d`). |
-| **`ATTACHMENT_MAX_MB`** | No | `500` | Per-file attachment upload ceiling in MB (breaches abort with `413`). |
-| **`GROTTO_QUOTA_MB`** | No | `1000` | Total per-owner grotto storage quota in MB (breaches reject with `413`). |
+| **`ATTACHMENT_MAX_MB`** | No | `500` | Per-file attachment upload ceiling in MB (clamped 1–2000MB; pre-stream `Content-Length` 413 check). |
+| **`GROTTO_QUOTA_MB`** | No | `1000` | Total per-owner grotto storage quota in MB (clamped 1–100000MB; breaches reject with HTTP 413). |
 
 ---
 

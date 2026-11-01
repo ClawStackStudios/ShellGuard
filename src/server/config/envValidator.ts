@@ -14,6 +14,7 @@
  */
 
 import crypto from 'crypto';
+import { getSafeAttachmentMaxMb, getSafeGrottoQuotaMb } from './storageConfig.js';
 
 export interface EnvarDiagnostic {
   level: 'info' | 'warn' | 'error';
@@ -28,6 +29,10 @@ export interface ValidationSummary {
   adminPanelStatus: 'enabled' | 'sealed' | 'invalid';
   signupStatus: 'open' | 'invite_only' | 'genesis_only';
   ttlDefault: string;
+  storageQuotas: {
+    attachmentMaxMb: number;
+    grottoQuotaMb: number;
+  };
 }
 
 const WEAK_ADMIN_TOKENS = new Set([
@@ -255,6 +260,68 @@ export function validateEnvironment(): ValidationSummary {
     }
   }
 
+  // 5. Storage Quotas (ATTACHMENT_MAX_MB & GROTTO_QUOTA_MB)
+  const rawAttachmentMax = process.env.ATTACHMENT_MAX_MB;
+  const rawGrottoQuota = process.env.GROTTO_QUOTA_MB;
+  const safeAttachmentMb = getSafeAttachmentMaxMb(rawAttachmentMax);
+  const safeGrottoMb = getSafeGrottoQuotaMb(rawGrottoQuota);
+
+  if (rawAttachmentMax !== undefined && rawAttachmentMax !== '') {
+    const parsed = parseInt(rawAttachmentMax, 10);
+    if (isNaN(parsed) || parsed < 1 || parsed > 2000) {
+      diagnostics.push({
+        level: 'warn',
+        variable: 'ATTACHMENT_MAX_MB',
+        message: `Value "${rawAttachmentMax}" is invalid or out of bounds (1–2000 MB). Clamped to safe ceiling: ${safeAttachmentMb}MB.`,
+      });
+    } else {
+      diagnostics.push({
+        level: 'info',
+        variable: 'ATTACHMENT_MAX_MB',
+        message: `Configured per-file ceiling: ${safeAttachmentMb}MB.`,
+      });
+    }
+  }
+
+  if (rawGrottoQuota !== undefined && rawGrottoQuota !== '') {
+    const parsed = parseInt(rawGrottoQuota, 10);
+    if (isNaN(parsed) || parsed < 1 || parsed > 100000) {
+      diagnostics.push({
+        level: 'warn',
+        variable: 'GROTTO_QUOTA_MB',
+        message: `Value "${rawGrottoQuota}" is invalid or out of bounds (1–100000 MB). Clamped to safe quota: ${safeGrottoMb}MB.`,
+      });
+    } else {
+      diagnostics.push({
+        level: 'info',
+        variable: 'GROTTO_QUOTA_MB',
+        message: `Configured grotto quota: ${safeGrottoMb}MB.`,
+      });
+    }
+  }
+
+  if (safeAttachmentMb > safeGrottoMb) {
+    diagnostics.push({
+      level: 'warn',
+      variable: 'ATTACHMENT_MAX_MB',
+      message: `ATTACHMENT_MAX_MB (${safeAttachmentMb}MB) exceeds GROTTO_QUOTA_MB (${safeGrottoMb}MB). A single file upload could exhaust the user's entire grotto quota.`,
+    });
+  }
+
+  // 6. Runtime detection of build-time VITE_* envars in production
+  if (process.env.NODE_ENV === 'production') {
+    const viteVars = ['VITE_API_URL', 'VITE_SHELLCRYPTION_ENABLED'];
+    for (const v of viteVars) {
+      if (process.env[v] !== undefined) {
+        diagnostics.push({
+          level: 'warn',
+          variable: v,
+          message: `Variable "${v}" was provided to a production container at runtime. Note: VITE_* client variables are compiled into static assets at build time (npm run build). Passing this at container launch has no effect on client bundles unless rebuilt.`,
+        });
+      }
+    }
+  }
+
   return {
     isValid,
     diagnostics,
@@ -262,6 +329,10 @@ export function validateEnvironment(): ValidationSummary {
     adminPanelStatus: adminStatus,
     signupStatus,
     ttlDefault,
+    storageQuotas: {
+      attachmentMaxMb: safeAttachmentMb,
+      grottoQuotaMb: safeGrottoMb,
+    },
   };
 }
 
@@ -276,6 +347,7 @@ export function printStartupBanner(summary: ValidationSummary): void {
   console.log(`║ 🛡️  ShellGuard©™ Startup Security & Envar Diagnostic Banner        ║`);
   console.log(`╠${thin}╣`);
   console.log(`║  Storage Engine : ${summary.dbEncryptionStatus === 'active' ? '🔒 SQLCipher (256-bit AES) + Layer 2 FieldCipher' : summary.dbEncryptionStatus === 'invalid' ? '❌ INVALID KEY (Startup Blocked)' : '⚠️  Plaintext (Unencrypted at rest)'}`.padEnd(69) + '║');
+  console.log(`║  Storage Quotas : 📦 Per-File: ${summary.storageQuotas.attachmentMaxMb}MB · Grotto: ${summary.storageQuotas.grottoQuotaMb}MB`.padEnd(69) + '║');
   console.log(`║  Control Plane  : ${summary.adminPanelStatus === 'enabled' ? '✅ SuperLobster Active' : summary.adminPanelStatus === 'invalid' ? '⚠️  Sealed (Weak/Short ADMIN_TOKEN)' : '🔒 Sealed (ADMIN_TOKEN Unset)'}`.padEnd(69) + '║');
   console.log(`║  Signup Policy  : ${summary.signupStatus === 'invite_only' ? '✉️  Invite-Only (DISABLE_SIGNUPS=true)' : '🌐 Open Public Registration'}`.padEnd(69) + '║');
   console.log(`║  Session TTL    : ⏱️  ${summary.ttlDefault}`.padEnd(69) + '║');

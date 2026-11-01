@@ -26,13 +26,13 @@ const router = Router();
 import { getSafeAttachmentMaxMb, getSafeGrottoQuotaMb } from '../config/storageConfig.js';
 export { getSafeAttachmentMaxMb, getSafeGrottoQuotaMb };
 
-/** Hard per-file ceiling: clamped between 1MB and 2000MB (env: ATTACHMENT_MAX_MB). */
+/** Hard per-file ceiling: clamped between 1MB and 2000MB (env: ATTACHMENT_MAX_MB ?? '500'). */
 export const MAX_ATTACHMENT_BYTES =
-  getSafeAttachmentMaxMb(process.env.ATTACHMENT_MAX_MB) * 1024 * 1024;
+  getSafeAttachmentMaxMb(process.env.ATTACHMENT_MAX_MB ?? '500') * 1024 * 1024;
 
-/** Per-owner grotto quota: clamped between 1MB and 100000MB (env: GROTTO_QUOTA_MB). */
+/** Per-owner grotto quota: clamped between 1MB and 100000MB (env: GROTTO_QUOTA_MB ?? '1000'). */
 export const GROTTO_QUOTA_BYTES =
-  getSafeGrottoQuotaMb(process.env.GROTTO_QUOTA_MB) * 1024 * 1024;
+  getSafeGrottoQuotaMb(process.env.GROTTO_QUOTA_MB ?? '1000') * 1024 * 1024;
 
 if (MAX_ATTACHMENT_BYTES > GROTTO_QUOTA_BYTES) {
   console.warn(

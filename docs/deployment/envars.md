@@ -121,11 +121,15 @@ To prevent permission conflicts when mounting host directories into the containe
 - **Standard Linux / Docker**: `PUID=1000`, `PGID=1000`
 - **Unraid**: `PUID=99`, `PGID=100`
 
-### Attachment Storage Ceilings
+### Attachment Storage Ceilings & Pre-Stream Quota Protection
 
 ShellGuard stores encrypted file attachments directly as raw ciphertext BLOBs in SQLite:
-- **`ATTACHMENT_MAX_MB`** (Default: `500`): Protects against denial-of-service memory exhaustion during streaming uploads. Any single file exceeding this size terminates immediately with HTTP `413 Payload Too Large`.
-- **`GROTTO_QUOTA_MB`** (Default: `1000`): Allocates a cumulative storage quota per user (1 GB default).
+- **`ATTACHMENT_MAX_MB`** (Default: `500`): Hard per-file ceiling, validated and clamped between `1` and `2000` MB. Pre-stream `Content-Length` validation fast-rejects oversized uploads with HTTP `413 Payload Too Large` before streaming ciphertext into server memory.
+- **`GROTTO_QUOTA_MB`** (Default: `1000`): Cumulative storage quota per user, validated and clamped between `1` and `100,000` MB. Fast-rejects with HTTP `413` if `currentUsage + Content-Length` exceeds the grotto quota. Startup diagnostics emit a warning if `ATTACHMENT_MAX_MB > GROTTO_QUOTA_MB`.
+
+### Frontend Variables Notice (`VITE_*`)
+
+`VITE_API_URL` and `VITE_SHELLCRYPTION_ENABLED` are frontend parameters compiled into client static assets at build time (`npm run build`). Passing them as runtime environment variables to a production container has no effect on client bundles unless the frontend image is rebuilt. When `VITE_SHELLCRYPTION_ENABLED=false` is compiled into a build, the client renders a persistent high-visibility red warning banner across all views.
 
 ---
 

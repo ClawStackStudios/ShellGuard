@@ -82,8 +82,12 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
   return bytes.buffer;
 }
 
+export function isShellCryptionEnabled(): boolean {
+  return (import.meta as any).env?.VITE_SHELLCRYPTION_ENABLED !== 'false';
+}
+
 export async function encryptField(plaintext: string, shellKey: CryptoKey, table: string, recordId: string): Promise<string> {
-  if ((import.meta as any).env?.VITE_SHELLCRYPTION_ENABLED === 'false') {
+  if (!isShellCryptionEnabled()) {
     return plaintext;
   }
 

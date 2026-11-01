@@ -269,6 +269,8 @@ The instance admin plane at `/superlobster` (URL-only entry — no UI links anyw
 | **Authentication Bypass** | ✅ Mitigated | SHA-256 key hashes + constant-time compare | Timing-safe verification; raw keys never stored server-side |
 | **Authorization Bypass** | ✅ Mitigated | `requirePermission()` + `owner_uuid` scoping | Verb-mapped permissions per route; every query owner-filtered; cross-owner reads return 404 |
 | **Rate Limiting** | ✅ Mitigated | Three tiers | Global `apiLimiter` (100 req/min), `authLimiter` (10 attempts/15m default — `AUTH_RATE_LIMIT`-tunable, skips successful logins), per-agent LRU limiter honoring each key's configured rate limit (1–10000) |
+| **Denial of Service (Storage/Memory)** | ✅ Mitigated | Pre-stream `Content-Length` validation + bounded quota clamps | Rejects oversized uploads (`> MAX_ATTACHMENT_BYTES` or `> GROTTO_QUOTA_BYTES`) with HTTP 413 before multipart buffering into Node RSS; clamps `ATTACHMENT_MAX_MB` (1–2000MB) and `GROTTO_QUOTA_MB` (1–100000MB) |
+| **Container Privilege Escalation** | ✅ Mitigated | Non-root `node` user with independent `PUID`/`PGID` remapping | Validates positive integer IDs in `docker-entrypoint.sh` and maps host UID/GID preventing root execution and file ownership corruption |
 | **Audit Trail** | ✅ Mitigated | Segregated append-only `audit.sqlite` | Every mutation logged with extended redaction; daily retention prune; tamper-resistant isolation from live data |
 
 ### The Auditor's Addendum (Phase 24)

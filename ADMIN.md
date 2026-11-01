@@ -103,6 +103,20 @@ Vaultwarden gave its admin panel full config-editing power because container ope
 - **Address Bar Scrubber**: Client shell purges `?invite=...` via `window.history.replaceState` immediately upon mounting.
 - **Runtime Environment Inspector**: Live sanitized diagnostic card displaying active TLS mode, Proxy Trust configuration, CORS policy mode, rate limit windows and ceilings, and storage quotas.
 
+### 3.6 Storage Ceilings & Container User Isolation (Tier 4 — Host & Bedrock Defense)
+
+- **Sanitized `DATA_DIR`**: Automatically falls back to `./data` (standalone) or `/app/data` (container) if `DATA_DIR` is empty or whitespace (`path.resolve`).
+- **Clamped Storage Ceilings**:
+  - `ATTACHMENT_MAX_MB`: Validated and clamped between 1MB and 2000MB (default 500MB).
+  - `GROTTO_QUOTA_MB`: Validated and clamped between 1MB and 100,000MB (default 1000MB).
+  - Pre-stream `Content-Length` validation fast-rejects oversized uploads with HTTP 413 before multipart buffering into memory.
+  - Startup diagnostic warning emitted if per-file ceiling exceeds total grotto quota.
+- **Container `PUID` / `PGID` User Remapping**:
+  - `docker-entrypoint.sh` performs regex validation ensuring `PUID` and `PGID` are positive integers.
+  - Remaps `node` user and group independently to match host storage permissions on Unraid, TrueNAS, and NFS/ZFS mounts.
+- **Dynamic Container Healthcheck**:
+  - Docker probe dynamically queries `localhost:${PORT:-6464}/api/health` across plain HTTP and self-signed HTTPS.
+
 ---
 
 ## 4. Residual Risks (Accepted)

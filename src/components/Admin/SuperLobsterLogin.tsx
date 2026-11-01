@@ -50,23 +50,23 @@ export function SuperLobsterLogin() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative w-full max-w-md"
+        className="w-full max-w-md"
       >
-        <a
-          href="/"
-          onClick={(e) => {
-            if (window.location.pathname !== '/' || window.location.hash) {
-              e.preventDefault();
-              window.history.pushState({}, '', '/');
-              window.dispatchEvent(new PopStateEvent('popstate'));
-            }
-          }}
-          className="absolute -top-2 left-0 inline-flex items-center gap-1.5 text-sm text-theme-muted hover:text-theme-main transition-colors cursor-pointer"
-        >
-          <ArrowLeft size={14} /> Back to the reef
-        </a>
+        <div className="bg-theme-surface border-t-2 border-[#e4048a] border-x border-b border-theme-subtle rounded-2xl shadow-2xl p-8 relative">
+          <a
+            href="/"
+            onClick={(e) => {
+              if (window.location.pathname !== '/' || window.location.hash) {
+                e.preventDefault();
+                window.history.pushState({}, '', '/');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }
+            }}
+            className="absolute top-6 left-6 text-xs font-bold text-white flex items-center gap-1.5 bg-[#e4048a] hover:bg-[#c90077] py-1.5 px-3 rounded-full shadow-md shadow-[#e4048a]/25 hover:shadow-[#e4048a]/45 transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <ArrowLeft size={13} /> Back to the reef
+          </a>
 
-        <div className="bg-theme-surface border-t-2 border-[#e4048a] border-x border-b border-theme-subtle rounded-2xl shadow-2xl p-8">
           {/* Centered brand header — CaraBase-style polish */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 bg-[#e4048a]/10 rounded-2xl flex items-center justify-center shadow-lg shadow-[#e4048a]/20 border border-[#e4048a]/30">

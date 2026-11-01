@@ -34,6 +34,7 @@ interface HeaderProps {
   onOpenAdd?: (type: VaultItemType) => void;
   headerAddMenuRef?: React.RefObject<HTMLDivElement>;
   isLocked?: boolean;
+  riverStatus?: 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
 }
 
 export function Header({ 
@@ -53,6 +54,7 @@ export function Header({
   onOpenAdd,
   headerAddMenuRef,
   isLocked = false,
+  riverStatus,
 }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [removingTarget, setRemovingTarget] = useState<Lobster | null>(null);
@@ -134,6 +136,46 @@ export function Header({
 
         {/* Right Side: Add, Account Switcher & Actions */}
         <div className="flex items-center gap-2 md:gap-3">
+          {/* 🌊 Bioluminescent Reactive River Indicator */}
+          {user && !isLocked && riverStatus && (
+            <div
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold tracking-wide border transition-all ${
+                riverStatus === "connected"
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                  : riverStatus === "reconnecting" || riverStatus === "connecting"
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
+                  : "bg-slate-500/10 border-slate-500/20 text-slate-500 dark:text-slate-400"
+              }`}
+              title={
+                riverStatus === "connected"
+                  ? "Reactive River SSE Stream Active — live mutation sync"
+                  : riverStatus === "reconnecting"
+                  ? "Reconnecting to Reactive River SSE Stream…"
+                  : riverStatus === "connecting"
+                  ? "Connecting to Reactive River SSE Stream…"
+                  : "Reactive River SSE Stream Offline"
+              }
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  riverStatus === "connected"
+                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"
+                    : riverStatus === "reconnecting" || riverStatus === "connecting"
+                    ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-ping"
+                    : "bg-slate-400"
+                }`}
+              />
+              <span className="hidden md:inline">
+                {riverStatus === "connected"
+                  ? "River Live"
+                  : riverStatus === "reconnecting"
+                  ? "Reconnecting…"
+                  : riverStatus === "connecting"
+                  ? "Connecting…"
+                  : "Offline"}
+              </span>
+            </div>
+          )}
 
           {/* Add button */}
           {user && !isLocked && onOpenAdd && (

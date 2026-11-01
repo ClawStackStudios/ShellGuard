@@ -7,6 +7,7 @@ import { VaultSchemas } from '../validation/schemas.js';
 import { fieldCipher } from '../utils/fieldEncryption.js';
 import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
 import { normalizeTagsForDb, filterByTags } from '../utils/tagUtils.js';
+import { publishMutation } from '../utils/reactiveRiver.js';
 
 const router = Router();
 
@@ -77,6 +78,8 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       actor: req.userUuid,
       details: { itemType: type || 'password', itemId: id, category: category || '', tags: normalizedTags },
     });
+
+    publishMutation(req.userUuid, 'vault_pearls', id, 'upsert');
 
     res.status(201).json({
       success: true,
@@ -184,6 +187,7 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
           actor: req.userUuid,
           details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true, importBatchId },
         });
+        publishMutation(req.userUuid, 'vault_pearls', p.original.id, 'upsert');
       }
     }
 
@@ -270,6 +274,7 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
         actor: req.userUuid,
         details: { itemId: att.itemId, cascadeFrom: att.cascadeFrom, bulk: true },
       });
+      publishMutation(req.userUuid, 'vault_attachments', att.itemId, 'delete');
     }
 
     for (const id of deleted) {
@@ -279,6 +284,7 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
         actor: req.userUuid,
         details: { itemId: id, bulk: true },
       });
+      publishMutation(req.userUuid, 'vault_pearls', id, 'delete');
     }
 
     if (errors.length > 0) {
@@ -474,6 +480,8 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       details: { itemType: type || 'password', itemId: id, category: category || '', tags: normalizedTags },
     });
 
+    publishMutation(req.userUuid, 'vault_pearls', id, 'upsert');
+
     res.json({
       success: true,
       data: { id, title: title.trim(), username: username ? username.trim() : '', url: url ? url.trim() : '', type: type || 'password', category: category || '', tags: normalizedTags, notes: notes || '' },
@@ -516,6 +524,7 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: A
             actor: req.userUuid,
             details: { itemId: attId, cascadeFrom: id },
           });
+          publishMutation(req.userUuid, 'vault_attachments', attId, 'delete');
         }
       }
     }
@@ -528,6 +537,8 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: A
       actor: req.userUuid,
       details: { itemType: decryptedRow.type, itemId: id, category: decryptedRow.category },
     });
+
+    publishMutation(req.userUuid, 'vault_pearls', id, 'delete');
 
     res.json({ success: true, data: { message: 'Password removed from vault.' } });
   } catch (err: any) {

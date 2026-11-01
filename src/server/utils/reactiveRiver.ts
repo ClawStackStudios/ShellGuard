@@ -144,13 +144,14 @@ class ReactiveRiverManager {
    * Retrieve missed events for cursor replay after `lastEventId`.
    */
   public getEventsSince(ownerUuid: string, lastEventId?: string | null): RiverEvent[] {
+    const buffer = this.ringBuffers.get(ownerUuid) || [];
     if (!lastEventId) return [];
+    if (lastEventId === 'ev_0' || lastEventId === '0') return [...buffer];
     const match = String(lastEventId).match(/^ev_(\d+)$/);
     if (!match) return [];
     const lastSeq = parseInt(match[1], 10);
     if (Number.isNaN(lastSeq)) return [];
 
-    const buffer = this.ringBuffers.get(ownerUuid) || [];
     return buffer.filter(e => e.seq > lastSeq);
   }
 

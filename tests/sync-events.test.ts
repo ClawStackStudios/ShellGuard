@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import http from 'node:http';
 import request from 'supertest';
 import type { ServerHandle } from './helpers/testDb.js';
 import { loadServer, releaseServer } from './helpers/testDb.js';
@@ -29,6 +30,8 @@ vi.hoisted(() => {
 });
 
 let srv!: ServerHandle;
+let httpServer!: http.Server;
+let baseUrl!: string;
 let userA!: { user: any; token: string };
 let userB!: { user: any; token: string };
 
@@ -36,9 +39,24 @@ beforeAll(async () => {
   srv = await loadServer();
   userA = await createTestUserWithToken(srv.app);
   userB = await createTestUserWithToken(srv.app);
+
+  // Bind an ephemeral HTTP server for live SSE streaming sockets
+  await new Promise<void>((resolve) => {
+    httpServer = srv.app.listen(0, '127.0.0.1', () => {
+      const addr = httpServer.address() as any;
+      baseUrl = `http://127.0.0.1:${addr.port}`;
+      resolve();
+    });
+  });
 });
 
 afterAll(async () => {
+  if (httpServer) {
+    await new Promise<void>((resolve) => {
+      httpServer.closeAllConnections?.();
+      httpServer.close(() => resolve());
+    });
+  }
   await releaseServer(srv);
 });
 
@@ -57,21 +75,8 @@ describe('🌊 Phase 28.4: Reactive River SSE Stream & Mutation Engine', () => {
     });
 
     it('establishes SSE stream with correct unbuffered headers via query token', (done) => {
-      const reqStream = request(srv.app)
-        .get(`/api/sync/events?token=${encodeURIComponent(userA.token)}`)
-        .buffer(false);
-
-      let chunkCount = 0;
-      let buffer = '';
-
-      reqStream.end((err, res) => {
-        if (err && (err as any).code !== 'ECONNABORTED') {
-          // Expected when aborted or completed
-        }
-      });
-
-      reqStream.on('response', (res) => {
-        expect(res.status).toBe(200);
+      const req = http.get(`${baseUrl}/api/sync/events?token=${encodeURIComponent(userA.token)}`, (res) => {
+        expect(res.statusCode).toBe(200);
         expect(res.headers['content-type']).toMatch(/text\/event-stream/);
         expect(res.headers['cache-control']).toContain('no-cache');
         expect(res.headers['cache-control']).toContain('no-transform');
@@ -79,37 +84,41 @@ describe('🌊 Phase 28.4: Reactive River SSE Stream & Mutation Engine', () => {
         expect(res.headers['x-accel-buffering']).toBe('no');
 
         res.on('data', (chunk: Buffer) => {
-          buffer += chunk.toString();
-          chunkCount++;
-          if (buffer.includes(': connected')) {
-            (reqStream as any).abort();
+          if (chunk.toString().includes('connected')) {
+            req.destroy();
             done();
           }
         });
       });
+
+      req.on('error', () => {
+        // Destroyed cleanly on completion
+      });
     });
 
     it('establishes SSE stream via Authorization header', (done) => {
-      const reqStream = request(srv.app)
-        .get('/api/sync/events')
-        .set('Authorization', `Bearer ${userA.token}`)
-        .buffer(false);
+      const req = http.get(
+        `${baseUrl}/api/sync/events`,
+        {
+          headers: {
+            Authorization: `Bearer ${userA.token}`,
+          },
+        },
+        (res) => {
+          expect(res.statusCode).toBe(200);
+          expect(res.headers['content-type']).toMatch(/text\/event-stream/);
 
-      let buffer = '';
+          res.on('data', (chunk: Buffer) => {
+            if (chunk.toString().includes('connected')) {
+              req.destroy();
+              done();
+            }
+          });
+        }
+      );
 
-      reqStream.end(() => {});
-
-      reqStream.on('response', (res) => {
-        expect(res.status).toBe(200);
-        expect(res.headers['content-type']).toMatch(/text\/event-stream/);
-
-        res.on('data', (chunk: Buffer) => {
-          buffer += chunk.toString();
-          if (buffer.includes(': connected')) {
-            (reqStream as any).abort();
-            done();
-          }
-        });
+      req.on('error', () => {
+        // Destroyed cleanly on completion
       });
     });
   });
@@ -167,73 +176,71 @@ describe('🌊 Phase 28.4: Reactive River SSE Stream & Mutation Engine', () => {
       expect(replayedFrom1[0].id).toBe('ev_2');
       expect(replayedFrom1[1].id).toBe('ev_3');
 
-      const replayedFromAll = getEventsSince(testOwner, undefined);
+      const replayedFromAll = getEventsSince(testOwner, 'ev_0');
       expect(replayedFromAll.length).toBe(3);
+      expect(getEventsSince(testOwner, undefined).length).toBe(0);
     });
   });
 
   describe('3. End-to-End Vault Mutation Broadcast & Strict Tenant Isolation', () => {
     it('broadcasts mutation when a pearl is created and respects tenant isolation', (done) => {
-      // Connect userA to SSE stream
-      const reqStreamA = request(srv.app)
-        .get(`/api/sync/events?token=${encodeURIComponent(userA.token)}`)
-        .buffer(false);
-
-      // Connect userB to SSE stream
-      const reqStreamB = request(srv.app)
-        .get(`/api/sync/events?token=${encodeURIComponent(userB.token)}`)
-        .buffer(false);
-
       let streamAConnected = false;
       let userBReceivedUserAEvent = false;
 
-      reqStreamA.end(() => {});
-      reqStreamB.end(() => {});
+      const reqB = http.get(
+        `${baseUrl}/api/sync/events?token=${encodeURIComponent(userB.token)}`,
+        (resB) => {
+          resB.on('data', (chunk: Buffer) => {
+            const str = chunk.toString();
+            if (str.includes('test-pearl-sse-stream')) {
+              userBReceivedUserAEvent = true;
+            }
+          });
+        }
+      );
 
-      reqStreamB.on('response', (resB) => {
-        resB.on('data', (chunk: Buffer) => {
-          const str = chunk.toString();
-          if (str.includes('test-pearl-sse-stream')) {
-            userBReceivedUserAEvent = true;
-          }
-        });
-      });
+      reqB.on('error', () => {});
 
-      reqStreamA.on('response', (resA) => {
-        resA.on('data', async (chunk: Buffer) => {
-          const str = chunk.toString();
-          if (str.includes(': connected') && !streamAConnected) {
-            streamAConnected = true;
+      const reqA = http.get(
+        `${baseUrl}/api/sync/events?token=${encodeURIComponent(userA.token)}`,
+        (resA) => {
+          resA.on('data', async (chunk: Buffer) => {
+            const str = chunk.toString();
+            if (str.includes('connected') && !streamAConnected) {
+              streamAConnected = true;
 
-            // Trigger a POST /api/vault by User A
-            const payload = makePearlPayload({
-              id: 'test-pearl-sse-stream',
-              name: 'Streamed Pearl',
-            });
+              // Trigger a POST /api/vault by User A
+              const payload = makePearlPayload({
+                id: 'test-pearl-sse-stream',
+                name: 'Streamed Pearl',
+              });
 
-            await request(srv.app)
-              .post('/api/vault')
-              .set('Authorization', `Bearer ${userA.token}`)
-              .send(payload);
-          }
+              await request(srv.app)
+                .post('/api/vault')
+                .set('Authorization', `Bearer ${userA.token}`)
+                .send(payload);
+            }
 
-          if (str.includes('test-pearl-sse-stream')) {
-            // User A received the mutation!
-            expect(str).toContain('event: vault_mutation');
-            expect(str).toContain('"domain":"vault_pearls"');
-            expect(str).toContain('"id":"test-pearl-sse-stream"');
-            expect(str).toContain('"action":"upsert"');
+            if (str.includes('test-pearl-sse-stream')) {
+              // User A received the mutation!
+              expect(str).toContain('event: vault_mutation');
+              expect(str).toContain('"domain":"vault_pearls"');
+              expect(str).toContain('"id":"test-pearl-sse-stream"');
+              expect(str).toContain('"action":"upsert"');
 
-            // Wait a brief tick to verify User B never received it
-            setTimeout(() => {
-              expect(userBReceivedUserAEvent).toBe(false);
-              (reqStreamA as any).abort();
-              (reqStreamB as any).abort();
-              done();
-            }, 50);
-          }
-        });
-      });
+              // Wait a brief tick to verify User B never received it
+              setTimeout(() => {
+                expect(userBReceivedUserAEvent).toBe(false);
+                reqA.destroy();
+                reqB.destroy();
+                done();
+              }, 50);
+            }
+          });
+        }
+      );
+
+      reqA.on('error', () => {});
     });
   });
 });

@@ -120,12 +120,14 @@ PORT=6565
 ```
 - When both paths are defined, ShellGuard bypasses self-signed generation and loads your external certificates.
 - Files must be readable by the container's running user (`0o600` or `0o644`).
+- **BYO Protection**: The SuperLobster Transport Hub automatically detects BYO certificates (`🛡️ BYO Cert Active`) and disables the "Regenerate Self-Signed Cert" button (`400 Bad Request` guard) to prevent accidental overwriting of mounted external CA or Let's Encrypt keys.
+- **Active Cert Download**: Operators can download the active mounted public certificate (.pem) directly from the Transport Hub.
 
 ### Mode 3: Edge Proxy Parity Mode (Cloudflare Tunnels, Caddy, Nginx)
 If you terminate TLS upstream using a reverse proxy or tunnel:
 ```bash
 TLS_ENABLED=false
-TRUST_PROXY=true
+TRUST_PROXY=true # Or explicit hop count: TRUST_PROXY=2
 PORT=6565
 ```
 - ShellGuard operates cleanly in plain HTTP on port `6565`.
@@ -135,6 +137,14 @@ PORT=6565
 - Share Signups and Mobile Pairing remain **100% operational**.
 
 ---
+
+## 🛡️ Fail-Safe HTTP Fallback & Multi-Proxy Routing
+
+- **Fail-Safe HTTP Fallback**: If `TLS_ENABLED=true` fails to initialize (e.g. invalid or unreadable certificate paths), ShellGuard logs an alert and safely falls back to plain HTTP. The server tracks `isTlsServerActive`: HTTPS redirects and cookie `Secure` flags are dynamically suppressed on fallback unless `ENFORCE_HTTPS=true` is set, preventing 301 redirect loops to a dead socket and avoiding administrator cookie lockouts.
+- **Container Healthcheck Exemption**: `GET /api/health` is unconditionally exempted from HTTPS redirection, guaranteeing Docker and container orchestrator health probes always receive `200 OK`.
+- **Multi-Proxy Hop Resolution**: `X-Forwarded-Proto` parses comma-separated proxy chains (e.g. `client, proxy1, proxy2`) so upstream multi-hop reverse proxies (e.g. Cloudflare $\rightarrow$ Nginx $\rightarrow$ ShellGuard) correctly negotiate secure connections.
+- **`TRUST_PROXY` Hop Control**: Supports boolean (`true` / `1`) and explicit integer hop counts (`TRUST_PROXY=2`).
+
 
 ## 🛡️ Epistemic & Architectural Boundary
 

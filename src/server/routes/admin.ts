@@ -33,7 +33,14 @@ import { AdminSchemas } from '../validation/schemas.js';
 import { adminAuthLimiter } from '../middleware/rateLimiter.js';
 import { performBackup, listBackups } from '../utils/backupManager.js';
 import { getAppVersion } from '../utils/version.js';
-import { ensureTlsMaterials, collectSubjectAltNames, generateAndPersistCertificate } from '../utils/tlsManager.js';
+import {
+  ensureTlsMaterials,
+  collectSubjectAltNames,
+  generateAndPersistCertificate,
+  isTlsServerActive,
+  isByoCertConfigured,
+  getActiveCertPath,
+} from '../utils/tlsManager.js';
 import { getInstancePublicKeyHex } from '../utils/instanceKey.js';
 import os from 'os';
 import fs from 'fs';
@@ -78,7 +85,7 @@ router.post('/auth', adminAuthLimiter, validateBody(AdminSchemas.auth), (req, re
   const sessionToken = createAdminSession();
   res.cookie('sg_admin_session', sessionToken, {
     httpOnly: true,
-    secure: process.env.TLS_ENABLED === 'true' || process.env.ENFORCE_HTTPS === 'true',
+    secure: isTlsServerActive() || process.env.ENFORCE_HTTPS === 'true',
     sameSite: 'strict',
     maxAge: 20 * 60 * 1000,
   });
@@ -199,6 +206,7 @@ router.get('/status', requireAdmin, (_req, res) => {
   const settings = Object.fromEntries(
     (db.prepare('SELECT key, value FROM system_settings').all() as any[]).map(r => [r.key, r.value]),
   );
+  const isByo = isByoCertConfigured();
   res.json({
     success: true,
     data: {
@@ -207,9 +215,24 @@ router.get('/status', requireAdmin, (_req, res) => {
       dbType: 'sqlite (better-sqlite3-multiple-ciphers)',
       sqlcipherActive: Boolean(process.env.DB_ENCRYPTION_KEY),
       metadataEncryptionActive: Boolean(process.env.DB_ENCRYPTION_KEY),
-      httpsEnforced: process.env.TLS_ENABLED === 'true' || process.env.ENFORCE_HTTPS === 'true',
+      httpsEnforced: isTlsServerActive() || process.env.ENFORCE_HTTPS === 'true',
       envDisableSignups: isDisableSignupsEnforced(),
       systemSettings: settings,
+      runtimeConfig: {
+        tlsMode: process.env.TLS_ENABLED === 'true' ? (isByo ? 'BYO_CERT' : 'SELF_SIGNED') : 'DISABLED',
+        isTlsServerActive: isTlsServerActive(),
+        isByoCert: isByo,
+        activeCertPath: getActiveCertPath(),
+        trustProxy: process.env.TRUST_PROXY || 'disabled',
+        corsMode: process.env.CORS_ORIGIN ? (process.env.CORS_ORIGIN.trim() === '*' ? 'WILDCARD' : 'RESTRICTED') : 'LAN_PERMISSIVE',
+        corsOrigin: process.env.CORS_ORIGIN || null,
+        authRateWindow: process.env.AUTH_RATE_WINDOW || '15m (default)',
+        authRateLimit: process.env.AUTH_RATE_LIMIT || '10 (default)',
+        apiRateWindow: process.env.API_RATE_WINDOW || '1m (default)',
+        apiRateLimit: process.env.API_RATE_LIMIT || '100 (default)',
+        attachmentMaxMb: process.env.ATTACHMENT_MAX_MB || '500 (default)',
+        grottoQuotaMb: process.env.GROTTO_QUOTA_MB || '1000 (default)',
+      },
     },
   });
 });
@@ -329,13 +352,26 @@ router.get('/backups', requireAdmin, (_req, res) => {
   res.json({ success: true, data: listBackups() });
 });
 
-// ─── TLS Management (Phase 27) ────────────────────────────────────────────────
-
-// ─── TLS Management (Phase 27) ────────────────────────────────────────────────
+// ─── TLS Management (Phase 27 & Stage 28.2) ──────────────────────────────────
 router.get('/tls/status', requireAdmin, async (req, res) => {
   const tlsEnabled = process.env.TLS_ENABLED === 'true';
   const port = process.env.PORT || '6565';
-  if (!tlsEnabled) return res.json({ success: true, data: { enabled: false, protocol: 'HTTP', port } });
+  const isByo = isByoCertConfigured();
+  const certPath = getActiveCertPath();
+
+  if (!tlsEnabled) {
+    return res.json({
+      success: true,
+      data: {
+        enabled: false,
+        protocol: 'HTTP',
+        port,
+        isByoCert: isByo,
+        certPath,
+      },
+    });
+  }
+
   const materials = await ensureTlsMaterials();
   const sans = collectSubjectAltNames();
   const lan = `https://${sans.find(s => s.ip && s.ip.startsWith('192.168.'))?.ip || sans.find(s => s.ip && s.ip.startsWith('10.'))?.ip || '127.0.0.1'}:${port}`;
@@ -343,12 +379,32 @@ router.get('/tls/status', requireAdmin, async (req, res) => {
   const ik = getInstancePublicKeyHex();
   const alias = os.hostname();
   const pairingUri = `shellguard://pair?v=1&lan=${encodeURIComponent(lan)}&ts=${encodeURIComponent(ts)}&fp=${materials.fingerprint}&ik=${ik}&alias=${encodeURIComponent(alias)}`;
-  res.json({ success: true, data: { enabled: true, protocol: 'TLS 1.3', port, fingerprint: materials.fingerprint, instancePublicKey: ik, subjectAltNames: sans, certExpiresAt: new Date(Date.now() + 10 * 365.25 * 24 * 60 * 60 * 1000).toISOString(), pairingUri } });
+  res.json({
+    success: true,
+    data: {
+      enabled: true,
+      protocol: 'TLS 1.3',
+      port,
+      fingerprint: materials.fingerprint,
+      instancePublicKey: ik,
+      subjectAltNames: sans,
+      certExpiresAt: new Date(Date.now() + 10 * 365.25 * 24 * 60 * 60 * 1000).toISOString(),
+      pairingUri,
+      isByoCert: isByo,
+      certPath: materials.certPath,
+    },
+  });
 });
 
 router.post('/tls/generate', requireAdmin, async (req, res) => {
   const tlsEnabled = process.env.TLS_ENABLED === 'true';
   if (!tlsEnabled) return res.status(400).json({ success: false, error: 'TLS is not enabled.' });
+  if (isByoCertConfigured()) {
+    return res.status(400).json({
+      success: false,
+      error: 'Cannot regenerate certificate: Custom BYO certificate (TLS_CERT_PATH) is configured.',
+    });
+  }
   try {
     const materials = await generateAndPersistCertificate();
     adminAudit('TLS_CERT_GENERATED', req, { resource: 'tls', details: { fingerprint: materials.fingerprint } });
@@ -361,9 +417,10 @@ router.post('/tls/generate', requireAdmin, async (req, res) => {
 });
 
 router.get('/tls/cert', requireAdmin, (req, res) => {
-  const certPath = path.join(DATA_DIR, 'certs', 'cert.pem');
+  const certPath = getActiveCertPath();
   if (!fs.existsSync(certPath)) return res.status(404).json({ success: false, error: 'Certificate not found' });
-  res.download(certPath, 'cert.pem');
+  const filename = path.basename(certPath) || 'cert.pem';
+  res.download(certPath, filename);
 });
 
 // ─── Invites Management (Phase 27) ───────────────────────────────────────────

@@ -94,12 +94,14 @@ Vaultwarden gave its admin panel full config-editing power because container ope
 ### 3.5 Transport Control Plane & Share Signups (Tier 3 — Transport Armor & Onboarding)
 
 `TlsManagementTab.tsx`:
-- **Native TLS 1.3 Engine**: Built-in 10-year EC P-256 self-signed leaf certificate with local IP SAN reflection and zero-downtime socket hot-reloading (`server.setSecureContext`).
+- **Native TLS 1.3 Engine & BYO Parity**: Built-in 10-year EC P-256 self-signed leaf certificate with local IP SAN reflection and zero-downtime socket hot-reloading (`server.setSecureContext`). Supports BYO certificates (`TLS_CERT_PATH` / `TLS_KEY_PATH`) with automatic UI detection, download support, and overwrite protection (`400 Bad Request` guard on `/api/admin/tls/generate`).
+- **Fail-Safe HTTP Fallback**: Server tracks `isTlsServerActive`. In the event of TLS initialization failure, the server falls back to plain HTTP, exempts `/api/health` from redirection, suppresses forced HTTPS 301 loops to dead sockets, and keeps admin cookies accessible.
 - **Immutable Instance Root Key**: `DATA_DIR/instance.key` with `0o600` permissions. Permanently anchors host identity and signs rotation manifests (`manifest.json`) via ECDSA-SHA256.
 - **The Reef Handshake**: Dynamic vector QR pairing card embedding `shellguard://pair` URI for zero-touch mobile client onboarding.
 - **Decoupled Share Signups**: Admin mints single-use invite tokens (`inv_<32 chars>`) with configurable TTLs (1h, 6h, 24h, 7d). Reuses `api_tokens` table (`owner_type = 'invite'`). Atomic single-use burn inside registration transaction (`DELETE` + `INSERT`).
 - **Genesis User #1 Immunity**: When `SELECT COUNT(*) FROM lobsters === 0`, registration is unconditionally open, preventing instance lockout on initial setup.
 - **Address Bar Scrubber**: Client shell purges `?invite=...` via `window.history.replaceState` immediately upon mounting.
+- **Runtime Environment Inspector**: Live sanitized diagnostic card displaying active TLS mode, Proxy Trust configuration, CORS policy mode, rate limit windows and ceilings, and storage quotas.
 
 ---
 

@@ -61,6 +61,13 @@ function ensureDbPermissions(targetPath: string) {
 export function createConnection(filename: string, key?: string): Database.Database {
   const dbPath = filename === ':memory:' ? ':memory:' : path.join(DATA_DIR, filename);
 
+  if (dbPath !== ':memory:') {
+    const dir = path.dirname(dbPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    }
+  }
+
   // Set restrictive umask for DB file creation (0o077 = owner only)
   const originalUmask = process.umask(0o077);
 

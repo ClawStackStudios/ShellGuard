@@ -1,8 +1,9 @@
 import { CorsOptions } from 'cors';
 
 export function getCorsConfig(): CorsOptions {
-  const isProduction = process.env.NODE_ENV === "production";
-  const isDevelopment = !isProduction;
+  // Inverted check: ONLY development and test activate permissive mode.
+  // Any typos like NODE_ENV=prod or staging default strictly to production hardening.
+  const isDevelopment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
   const corsOrigin = process.env.CORS_ORIGIN;
 
   // Development mode: Allow all local origins (localhost + LAN IPs)
@@ -92,7 +93,13 @@ export function getCorsConfig(): CorsOptions {
   }
 
   // Strict mode: CORS_ORIGIN is set (for reverse proxy/CF tunnel)
-  const allowedOrigins = corsOrigin.split(",").map((origin) => origin.trim());
+  // Strip trailing slashes and support wildcard '*'
+  const allowedOrigins = corsOrigin
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
+  const allowsWildcard = allowedOrigins.includes("*");
 
   return {
     origin: (origin, callback) => {
@@ -101,7 +108,9 @@ export function getCorsConfig(): CorsOptions {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      const normalizedOrigin = origin.trim().replace(/\/+$/, '');
+
+      if (allowsWildcard || allowedOrigins.includes(normalizedOrigin)) {
         callback(null, true);
       } else {
         console.warn(`⚠️ CORS: Rejected origin: ${origin}`);

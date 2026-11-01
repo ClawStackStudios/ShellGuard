@@ -14,6 +14,8 @@ interface TlsStatus {
   subjectAltNames: Array<{ type: number; value?: string; ip?: string }>;
   certExpiresAt: string;
   pairingUri: string;
+  isByoCert?: boolean;
+  certPath?: string;
 }
 
 interface ShareableInvite {
@@ -116,10 +118,19 @@ export function TlsManagementTab() {
                 <Shield className="w-5 h-5 text-emerald-400" />
                 Active HTTPS ({status.protocol})
               </h2>
-              <p className="text-theme-muted text-sm">Port {status.port} • Self-Signed Leaf Certificate</p>
+              <p className="text-theme-muted text-sm">
+                Port {status.port} • {status.isByoCert ? 'Bring-Your-Own Certificate (TLS_CERT_PATH)' : 'Self-Signed Leaf Certificate'}
+              </p>
             </div>
-            <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-medium">
-              Protected
+            <div className="flex items-center gap-2">
+              {status.isByoCert && (
+                <div className="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-xs font-semibold flex items-center gap-1.5">
+                  <span>🛡️</span> BYO Cert Active
+                </div>
+              )}
+              <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-medium">
+                Protected
+              </div>
             </div>
           </div>
 
@@ -137,7 +148,7 @@ export function TlsManagementTab() {
                 {status.subjectAltNames.find(s => s.value && s.value.endsWith('.ts.net'))?.value && (
                   <div className="px-2 py-1 bg-theme-base border border-theme-border rounded text-xs text-theme-muted flex items-center gap-1">
                     <Server className="w-3 h-3" />
-                    Tailscale: {status.subjectAltNames.find(s => s.value && s.value.endsWith('.ts.net'))?.value}
+                    Tailscale: {status.subjectAltNames.find(s => s.value && s.value.endsWith('.ts.net')).value}
                   </div>
                 )}
               </div>
@@ -206,13 +217,25 @@ export function TlsManagementTab() {
                   <Download className="w-4 h-4" />
                   Download Certificate (.pem)
                 </a>
-                <button
-                  onClick={() => setShowConfirm(true)}
-                  className="px-4 py-2 bg-coral-500/10 hover:bg-coral-500/20 text-coral-500 border border-coral-500/20 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Regenerate Self-Signed Cert
-                </button>
+                {status.isByoCert ? (
+                  <div className="p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-lg text-xs text-cyan-300/90 flex items-start gap-2.5">
+                    <Shield className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-cyan-300">Self-Signed Regeneration Disabled</p>
+                      <p className="text-theme-muted mt-0.5">
+                        An external custom certificate is mounted (<code className="font-mono text-theme-main">{status.certPath || 'TLS_CERT_PATH'}</code>). Self-signed regeneration is blocked to protect your external CA or Let's Encrypt keys.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowConfirm(true)}
+                    className="px-4 py-2 bg-coral-500/10 hover:bg-coral-500/20 text-coral-500 border border-coral-500/20 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Regenerate Self-Signed Cert
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -118,7 +118,7 @@ Solutions to common configuration, network, and operational questions when setti
   {
     "success": true,
     "service": "ShellGuard API",
-    "version": "0.0.2.9",
+    "version": "0.0.3.0",
     "mode": "sqlite",
     "uptime": 45.2,
     "counts": {

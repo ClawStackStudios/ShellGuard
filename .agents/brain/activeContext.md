@@ -1,7 +1,7 @@
 # Active Context — ShellGuard
 ## Current Work Focus
 
-Milestone `v0.0.3.0` (Build 32) Documentation Walk and Modular `project` Skill Alignment (Issues #23 & #24) completed on branch `stage/docs-walk-milestone-v0.0.3.0`. Root release manifest `RELEASE-v0.0.3.0.md` authored (single release draft invariant enforced; `RELEASE-v0.0.2.9.md` removed). All version anchors bumped across `package.json`, `package-lock.json`, `README.md`, `SECURITY.md`, and `CHANGELOG.md`. Modular `project` skill genome updated (`ROADMAP-ERA2.md` Phase 28 marked complete `[x]`, `meta-prompt-antigravity.md` slid to Stage 29 active leading edge, `storage-quota-spec.md` and `network-topology-spec.md` authored, `encryption-layers-spec.md` §6 added, `stage-28.{1,2,3,4}.md` ratified execution records staged, and completed prompt directories pruned per molt protocol). Automated test batteries passing 100% green (12/12 doc oracle tests, 29 passing/1 skipped build gate tests, `tsc --noEmit` 0 errors). Awaiting user sign-off to commit and merge into `main`.
+Milestone `v0.0.3.0` (Build 32) is officially **released and shipped**! All 10 milestone issues closed, git tag `v0.0.3.0` minted and pushed to `origin`, GitHub Milestone 2 closed, and all remote GitHub Actions workflows (Release Pipeline, Publish Docker Images to GHCR, and Deploy Documentation to GitHub Pages) passed 100% green. Repository stands on `main` at commit `71d96de`. The codebase is primed for Stage 3 (Phase 29: Dual-Homed Network Resolution Engine & MagicDNS Mesh, Milestone `v0.0.3.1` / Build 33).
 
 ## Recent Changes (Sliding Window — Latest 10)
 

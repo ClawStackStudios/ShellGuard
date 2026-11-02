@@ -19,7 +19,7 @@
 <br/>
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/ClawStackStudios/ShellGuard/actions/workflows/docker-publish.yml)
-[![Version](https://img.shields.io/badge/Version-v0.0.2.9-blue?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.0.3.0-blue?style=for-the-badge)](CHANGELOG.md)
 [![Zero-Knowledge](https://img.shields.io/badge/Vault-Zero_Knowledge-red?style=for-the-badge)](./SECURITY.md)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -97,6 +97,7 @@
 - ⏳ **Ephemeral Import Quarantine & Auto-Graduation** — Bulk imports stamp every inserted record with an atomic batch identifier (`imp_<uuid>`) and UTC timestamp (`imported_at`). Quarantined records obey strict progressive disclosure (zero quarantine UI renders when no active quarantined items exist), auto-graduate to permanent status immediately upon user edit (`PUT`), and support 1-click atomic batch graduation or full rollback (`DELETE /api/vault/import-batches/:id`) with attachment cascade and forensic audit logging (`IMPORT_BATCH_REVERTED`).
 - 📤 **Sovereign Exports & Imports** — Atomic bulk import engine (up to 1,000 items with HTTP 207 Multi-Status partial failure reporting), universal Bitwarden ingestion parity (unencrypted JSON and CSV with automatic folder-to-pod conversion and custom field translation), zero-knowledge AES-256-GCM encrypted backup archives (sealed via ClawKey HKDF or custom passphrase PBKDF2-100k), RFC 4180 CSV spreadsheet export with password sanitization controls, and native `sgtotp.bak` backup import from the ShellGuard-TOTP Android companion.
 - 📱 **ShellGuard-TOTP Android Companion** — Dedicated native Android 2FA authenticator with biometrics, hardware-backed KeyStore isolation, camera & gallery QR scanning, and 1-way mirror sync with the ShellGuard web vault. Releases: [ShellGuard-TOTP Releases](https://github.com/ClawStackStudios/ShellGuard-TOTP/releases).
+- 🌊 **Reactive River SSE Engine** — Real-time mutation event stream (`/api/sync/events`) with <50ms broadcast, monotonic sequence cursors, 100-event ring buffer replay, and bioluminescent connection status pill in the header.
 - ⏱️ **Retract (Auto-Lock)** — Configurable inactivity timer locks the vault and clears session state automatically without flushing offline recovery buffers.
 
 ### 🤖 Agents & Administration

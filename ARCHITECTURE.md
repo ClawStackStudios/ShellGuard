@@ -170,8 +170,9 @@ ShellGuard/
     │   │   ├── attachments.ts         #   Attachment multipart streaming CRUD (BLOB, quota, 413)
     │   │   ├── agentKeys.ts           #   LobsterKeys©™ lifecycle (create/revoke/delete)
     │   │   ├── settings.ts            #   Per-user KV preferences
-    │   │   └── admin.ts               #   SuperLobster Panel API (ADMIN_TOKEN cookie-session; ADMIN.md)
-    │   └── utils/
+    │   │   ├── admin.ts               #   SuperLobster Panel API (ADMIN_TOKEN cookie-session; ADMIN.md)
+    │   │   └── sync.ts                #   Reactive River SSE stream (GET /api/sync/events)
+    │   ├── utils/
     │   │   ├── auditLogger.ts         #   audit.log() with extended redaction list (delta #2)
     │   │   ├── crypto.ts              #   generateString/generateId/constantTimeCompare
     │   │   ├── tokenExpiry.ts         #   TTL parser: 30m/12h/24h/7d/never/ISO/bare-minutes
@@ -183,7 +184,8 @@ ShellGuard/
     │   │   ├── tagUtils.ts            #   Tag parser, normalization, and deduplication utility
     │   │   ├── version.ts             #   Ground-truth application version resolver
     │   │   ├── backupManager.ts       #   SQLCipher Online Backup API atomic snapshots & manifest
-    │   │   └── tlsManager.ts          #   Native EC P-256 LAN TLS self-signed cert engine
+    │   │   ├── tlsManager.ts          #   Native EC P-256 LAN TLS self-signed cert engine
+    │   │   └── reactiveRiver.ts       #   In-process event bus, ring buffer replay & revision map
     │   └── validation/schemas.ts      #   AuthSchemas + entity schemas (title ≤255, url ≤2048…)
     │
     ├── lib/                           # ◀ Client crypto & utilities

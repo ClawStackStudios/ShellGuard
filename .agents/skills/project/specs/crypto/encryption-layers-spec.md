@@ -138,3 +138,17 @@ the native API:
 > **Side-Channel Boundary Notice**: The pure-TS AES-GCM engine provides functional parity (for plain HTTP LAN availability on devices like Unraid) and produces byte-for-byte identical ciphertext to native WebCrypto. However, it does *not* provide hardware-level side-channel parity (e.g., constant-time execution for AES S-box lookups). On a trusted LAN, this is an acceptable tradeoff for availability; on an untrusted or hostile host, WebCrypto via TLS is strictly required to defend against timing attacks.
 
 ---
+
+## §6. Database Key Entropy & Rekeying Invariants (Phase 28 / Sub-Phase 28.1)
+
+### A. Decoded 32-Byte Entropy Verification
+`DB_ENCRYPTION_KEY` governs both Layer 2 per-row metadata encryption and Layer 3 SQLCipher whole-database encryption:
+- **Encoding Formats**: Accepts standard Base64 (`+/=`) and Base64URL (`-_`).
+- **Entropy Requirement**: The string must decode to **at least 32 bytes (256 bits)** of cryptographic entropy (`Buffer.from(trimmed, 'base64').length >= 32`).
+- **Rejection**: Short keys, empty strings, and malformed base64 strings fail fast at boot during `envValidator.ts` execution, preventing weak key usage or silent downgrade.
+
+### B. SQLite Plaintext Magic Header Verification Before Rekey
+When encrypting an existing plaintext database via SQLCipher (`PRAGMA rekey`):
+- **Magic Header Check**: `connection.ts` reads the first 16 bytes of the file before running rekey commands.
+- **Verification**: The first 16 bytes must match the SQLite 3 magic string (`SQLite format 3\0`).
+- **Defense**: If the file is already encrypted or corrupted, executing `PRAGMA rekey` with an incorrect key would permanently scramble the database. Checking the magic header guarantees that rekeying is only attempted on genuine plaintext SQLite databases, throwing an explicit `WRONG_DB_ENCRYPTION_KEY` error if an encrypted database cannot be opened.

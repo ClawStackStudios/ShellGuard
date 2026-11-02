@@ -6,6 +6,48 @@ The story says how it felt. This says what was actually chosen and why.
 
 ---
 
+## milestone-v0.0.3.0-docs-walk-and-skill-alignment — 2026-11-01 19:45
+
+**Context**: Executing final two milestone issues (#23 Docs-as-Code walk and #24 project skill alignment) for Milestone `v0.0.3.0 (Build 32)` following live physical verification of Stage 28.4.  
+**Options considered**:
+- *Option A*: Bump version only in `package.json` and append a generic changelog bullet — Viable for quick velocity, but violates Docs-as-Code, leaves modular skill specifications disconnected from runtime code truth, and violates Single Active Release Draft invariant.
+- *Option B*: Rigorously walk all 4 documentation zones (`RELEASE-v0.0.3.0.md` authored, `RELEASE-v0.0.2.9.md` removed, manifests synced, `docs/deployment/docker.md` deepened) and align the `project` skill genome (ratify `stage-28.{1,2,3,4}.md` execution records, author `storage-quota-spec.md` and `network-topology-spec.md`, update `ROADMAP-ERA2.md`, slide `meta-prompt-antigravity.md` to Stage 29, and prune completed prompt directories) — Viable, eliminates documentation and architectural drift, and primes the workspace cleanly for Stage 3.  
+**Chosen**: Option B (Rigorous Docs-as-Code walk + Modular project skill genome alignment).  
+**Why**: Respecting the next mind. A zero-knowledge secrets vault must maintain strict bidirectional alignment between code, specifications, and user-facing documentation. Ratifying execution records while pruning prompt directories honors the living modular skill architecture.  
+**Confidence**: high — Verified across all 12 doc oracle tests and 29 passing build gates.  
+**Outcome**: Authored `RELEASE-v0.0.3.0.md`, purged legacy draft, authored specifications and stage execution records, updated version manifests to `0.0.3.0`, and verified clean lint and build gates.  
+**Pattern reference**: Link to `long-term/decisions.md § docs-bow-to-code` & `skills/project/SKILL.md`.
+
+---
+
+## stage-28-4-ponytail-cut-stale-dist-resolution — 2026-11-01 19:20
+
+**Context**: During physical verification of Stage 28.4 Reactive River SSE, the indicator and live cross-tab sync appeared non-functional on `https://localhost:6565`.  
+**Options considered**:
+- *Option A*: Implement complex diagnostic popovers, restructure CORS headers, and add interactive connection debugging tools — Viable if client runtime failed due to protocol or browser barriers.
+- *Option B*: Verify bundle timestamps, recognize that port 6565 was serving an October 27 stale production bundle, and run `npm run build` following YAGNI and re-use — Viable because the existing single-origin architecture requires zero extra code or refactors when the bundle is fresh.  
+**Chosen**: Option B (Rebuild stale bundle via `npm run build` with zero code bloat).  
+**Why**: Ponytail Principle & YAGNI. Question whether the complexity needs to exist at all. The underlying code was already correct and passing all test suites; the browser was simply loading stale assets.  
+**Confidence**: high — Verified live by Lucas across two browser tabs with immediate green indicator and instant cross-tab sync.  
+**Outcome**: Updated `dist/` with `index-BfDmvVmY.js`, eliminating the need for unnecessary issues or architectural workarounds.  
+**Pattern reference**: Link to `long-term/patterns.md § ponytail-simplest-path`.
+
+---
+
+## stage-28-3-storage-container-isolation — 2026-11-01 07:12
+
+**Context**: Implementing Sub-Phase 28.3 (Tasks 59 & 60) for storage quota ceilings, pre-stream 413 rejection, independent container user remapping, and zero-knowledge client warnings.  
+**Options considered**:
+- *Option A*: Enforce quota limits only inside Busboy stream processing after reading initial chunks — Viable for simplicity, but permits multi-gigabyte payload transfers into Node memory before aborting.
+- *Option B*: Fast-reject oversized requests pre-stream via `Content-Length` header check before piping to Busboy, paired with independent `PUID`/`PGID` remapping and a dedicated `storageConfig.ts` module — Viable because it halts memory exhaustion at the network socket edge and decouples storage bounds from database connections.  
+**Chosen**: Option B (Pre-stream fast rejection + independent storageConfig module).  
+**Why**: Defense-in-depth. Bounding storage quotas before allocating memory prevents DoS vectors, while isolating pure calculation logic in `storageConfig.ts` prevents circular dependencies and database locks during configuration validation.  
+**Confidence**: high — Verified across all 17 unit test assertions and clean TypeScript compilation.  
+**Outcome**: Implemented `storageConfig.ts`, updated `routes/attachments.ts`, `docker-entrypoint.sh`, `envValidator.ts`, `App.tsx`, and authored `tests/storage-container-isolation.test.ts`.  
+**Pattern reference**: Link to `long-term/patterns.md § the-seam-is-the-test-oracle`.
+
+---
+
 ## android-di-internal-boundary — 2026-09-25 21:26
 
 **Context**: Lucas asked whether the Application-Scoped Lazy DI pattern for ShellGuard-TOTP should be added to the `/docs` directory or if it was an internal concern.  
@@ -255,5 +297,36 @@ The story says how it felt. This says what was actually chosen and why.
 **Confidence**: high — Validated visually via browser screenshots and verified 10/10 green by `docsLinks.test.ts` and `mermaidDiagrams.test.ts`.  
 **Outcome**: Authored `BouncyBrand.vue`, updated `docs/.vitepress/config.ts`, `custom.css`, `index.ts`, `Card.vue`, and `docs/index.md`; initialized `brandIdentity.md`; all doc unit tests 100% green.  
 **Pattern reference**: Link to `brandIdentity.md` & `long-term/learnings.md § thoughtful-systems-and-ui-symbiosis`.
+
+---
+
+## stage-28.2-failsafe-tls-and-envar-hardening — 2026-10-31 09:15
+
+**Context**: When TLS initialization fails or container orchestrators route plain HTTP health checks, ShellGuard risked 301 redirection self-bricks, admin cookie lockouts, and rate limiter parsing errors.  
+**Options considered**:
+- *Option A*: Rely solely on static environment variables (`TLS_ENABLED`, `ENFORCE_HTTPS`) for middleware decisions — Fragile because runtime fallback to HTTP leaves the static variable true, triggering infinite 301 redirect loops.
+- *Option B*: Track live runtime socket state via `isTlsServerActive` and dynamically govern HSTS, HTTPS redirection, cookie `secure` flags, and rate limiter clamping — Viable, resilient, and guarantees that server reality dictates network boundaries.  
+**Chosen**: Option B (Dynamic socket state tracking and rate limiter clamping).  
+**Why**: The felt reason is fail-safe resilience. An application must never lock its operator out or brick its own health checks when a certificate fails to load; adapting dynamically to actual listener state preserves operator access and container liveness.  
+**Confidence**: high — Verified against 17 unit tests and direct Node TLS fallback branches.  
+**Outcome**: Implemented `isTlsServerActive`, `/api/health` 301 exemption, multi-proxy `X-Forwarded-Proto` chain parsing, `parseWindow` 'h'/'d' units, rate limit clamping, BYO cert protection, and SuperLobster diagnostics.  
+**Pattern reference**: Link to `long-term/patterns.md § cloud-offloaded-ci-verification` & `systemPatterns.md § Security Controls & Cryptographic Boundary`.
+
+---
+
+## superlobster-login-back-button-magenta-pill — 2026-10-31 23:30
+
+**Context**: On the SuperLobster login gateway, the 'Back to the reef' button was awkwardly floating `-top-2` above the modal container, colliding with the top border of the card.  
+**Options considered**:
+- *Option A*: Move button inside card at `top-6 left-6` styled in ShellGuard Magenta (`#e4048a`) pill geometry with micro-press physics — Viable, achieves 1:1 parity with `LoginView.tsx`, and reinforces the Reef Modernist visual identity.
+- *Option B*: Move to outer viewport top-left as a fixed escape latch — Viable, but detaches navigation from the modal context on wide desktop displays.
+- *Option C*: Stack above card in normal document flow — Viable, but creates uneven top margins above the centered card.  
+**Chosen**: Option A (Inside card at `top-6 left-6` in ShellGuard Magenta pill).  
+**Why**: Visual harmony and component DNA. Placing the button inside the card top-left mirrors `LoginView.tsx`, while ShellGuard Magenta (`#e4048a`) with full pill geometry anchors the action with unmistakable brand character.  
+**Confidence**: high — Visually verified and enthusiastically approved by Lucas.  
+**Outcome**: Updated `SuperLobsterLogin.tsx`, verified clean TypeScript compilation (`tsc --noEmit`), passed CI Run #41281116085, and merged into `main`.  
+**Pattern reference**: Link to `brandIdentity.md § Component DNA` & `long-term/learnings.md § thoughtful-systems-and-ui-symbiosis`.
+
+
 
 

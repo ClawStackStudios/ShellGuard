@@ -29,6 +29,7 @@ import agentKeyRoutes    from './src/server/routes/agentKeys.js';
 import settingsRoutes    from './src/server/routes/settings.js';
 import adminRoutes       from './src/server/routes/admin.js';
 import publicRoutes      from './src/server/routes/public.js';
+import syncRoutes        from './src/server/routes/sync.js';
 import { performBackup } from './src/server/utils/backupManager.js';
 import { ensureTlsMaterials, registerTlsReloadListener, setTlsServerActive, isTlsServerActive } from './src/server/utils/tlsManager.js';
 import { getAppVersion } from './src/server/utils/version.js';
@@ -239,6 +240,7 @@ app.use('/api/settings',     settingsRoutes);
 // The stricter token-auth rate limiter is applied inside routes/admin.ts (T1).
 app.use('/api/admin',        adminRoutes);
 app.use('/api/public',       publicRoutes);
+app.use('/api/sync',         syncRoutes);
 
 // Skill doc: public, no auth — registered before static files and SPA catch-all
 app.get(['/skill.md', '/SKILL.md'], (_req, res) => {

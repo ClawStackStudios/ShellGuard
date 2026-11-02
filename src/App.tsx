@@ -49,6 +49,7 @@ import { Header } from "./components/Layout/Header.tsx";
 import { QuickLoginModal, AuthModalConfig } from "./components/QuickLoginModal.tsx";
 import { VaultShell } from "./components/Vault/VaultShell.tsx";
 import { ItemFormModal } from "./components/Vault/ItemFormModal.tsx";
+import { useReactiveRiver, RiverMutationEvent } from "./hooks/useReactiveRiver.ts";
 import { SuperLobsterProvider, useSuperLobster } from "./components/Admin/SuperLobsterContext.tsx";
 import { SuperLobsterLogin } from "./components/Admin/SuperLobsterLogin.tsx";
 import { SuperLobsterPanel } from "./components/Admin/SuperLobsterPanel.tsx";
@@ -345,6 +346,24 @@ export default function App() {
       setAgents([]);
     }
   }, [shellKey, activeLobsterId, scuttleVault, scuttleAgents]);
+
+  // 🌊 Reactive River: real-time SSE stream & live state reconciliation
+  const handleRiverMutation = useCallback((event: RiverMutationEvent) => {
+    if (!shellKey || isLocked) return;
+
+    // Refresh items non-destructively; preserves active item selection
+    scuttleVault(shellKey);
+
+    // If an item was deleted and it is the currently selected item, unselect it
+    if (event.action === 'delete') {
+      setSelectedItemId((prev) => (prev === event.id ? null : prev));
+    }
+  }, [shellKey, isLocked, scuttleVault]);
+
+  const { status: riverStatus } = useReactiveRiver({
+    enabled: Boolean(shellKey && activeLobsterId && !isLocked),
+    onMutation: handleRiverMutation,
+  });
 
   const handleLogout = useCallback(() => {
     if (activeLobsterId) {
@@ -1155,6 +1174,7 @@ export default function App() {
           onHeaderAddMenuToggle={() => setIsHeaderAddMenuOpen(!isHeaderAddMenuOpen)}
           onOpenAdd={handleOpenAdd}
           headerAddMenuRef={headerAddMenuRef}
+          riverStatus={riverStatus}
         />
 
         {/* Scrollable Content Area */}

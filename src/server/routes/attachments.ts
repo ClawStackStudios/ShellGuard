@@ -7,6 +7,7 @@ import { AttachmentSchemas } from '../validation/schemas.js';
 import { fieldCipher } from '../utils/fieldEncryption.js';
 import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
 import { quarantineOrphanAttachments } from '../database/attachmentIntegrity.js';
+import { publishMutation, RiverDomain } from '../utils/reactiveRiver.js';
 
 const router = Router();
 
@@ -273,6 +274,12 @@ router.post('/', requireAuth, requirePermission('canWrite'), (req: AuthRequest, 
           details: { itemId: id, category, bytes: ciphertext.length, mimeType: mime_type },
         });
 
+        // 🌊 Reactive River: broadcast attachment creation and parent item update
+        publishMutation(req.userUuid, 'vault_attachments', id, 'upsert');
+        if (parentTable) {
+          publishMutation(req.userUuid, parentTable as RiverDomain, parent_id, 'upsert');
+        }
+
         finish(201, { success: true, data: { id, title, category, size_bytes: ciphertext.length } });
       } catch (err: any) {
         console.error('Attachments POST error:', err);
@@ -316,6 +323,9 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Attac
       details: { itemId: id, category: category || '', mimeType: mime_type || '' },
     });
 
+    // 🌊 Reactive River: broadcast attachment metadata update
+    publishMutation(req.userUuid, 'vault_attachments', id, 'upsert');
+
     res.json({ success: true, data: { id, title: title.trim(), category: category || '' } });
   } catch (err: any) {
     console.error('Attachments PUT error:', err);
@@ -333,21 +343,21 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: A
 
     const decryptedRow = await prepareRead('vault_secure_attachments', row, fieldCipher);
 
+    let parentTableName = '';
     const deleteTransaction = db.transaction(() => {
       db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?').run(id, req.userUuid);
 
       if (row.parent_id && row.parent_type) {
-        let tableName = '';
-        if (row.parent_type === 'note') tableName = 'vault_secure_notes';
-        else if (row.parent_type === 'key') tableName = 'vault_ssh_keys';
-        else tableName = 'vault_pearls'; // pearl, password, card, identity
+        if (row.parent_type === 'note') parentTableName = 'vault_secure_notes';
+        else if (row.parent_type === 'key') parentTableName = 'vault_ssh_keys';
+        else parentTableName = 'vault_pearls'; // pearl, password, card, identity
 
-        const parentRow = db.prepare(`SELECT attachments FROM ${tableName} WHERE id = ? AND owner_uuid = ?`).get(row.parent_id, req.userUuid) as any;
+        const parentRow = db.prepare(`SELECT attachments FROM ${parentTableName} WHERE id = ? AND owner_uuid = ?`).get(row.parent_id, req.userUuid) as any;
         if (parentRow && parentRow.attachments) {
           try {
             const currentAttachments: string[] = JSON.parse(parentRow.attachments);
             const updatedAttachments = currentAttachments.filter((attId: string) => attId !== id);
-            db.prepare(`UPDATE ${tableName} SET attachments = ? WHERE id = ? AND owner_uuid = ?`).run(JSON.stringify(updatedAttachments), row.parent_id, req.userUuid);
+            db.prepare(`UPDATE ${parentTableName} SET attachments = ? WHERE id = ? AND owner_uuid = ?`).run(JSON.stringify(updatedAttachments), row.parent_id, req.userUuid);
           } catch (e) {
             console.error(`Failed to parse attachments JSON for parent ${row.parent_id}`);
           }
@@ -363,6 +373,12 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: A
       actor: req.userUuid,
       details: { itemId: id, category: decryptedRow.category, bytes: row.size_bytes ?? 0 },
     });
+
+    // 🌊 Reactive River: broadcast attachment deletion and parent item update
+    publishMutation(req.userUuid, 'vault_attachments', id, 'delete');
+    if (parentTableName && row.parent_id) {
+      publishMutation(req.userUuid, parentTableName as RiverDomain, row.parent_id, 'upsert');
+    }
 
     res.json({ success: true, data: { message: 'Attachment removed.' } });
   } catch (err: any) {

@@ -211,6 +211,7 @@ export default withMermaid(
           items: [
             { text: 'Reference Overview', link: '/reference/' },
             { text: 'Database Schema Ground Truth', link: '/reference/blueprint-schema' },
+            { text: 'Reactive River SSE & Sync Events', link: '/reference/sync-events' },
             { text: 'Docker Environment Variables', link: '/deployment/envars' },
             { text: 'Reef Modernist Design System', link: '/reference/design-system' },
             { text: 'ClawStack Lexicon (Glossary)', link: '/reference/glossary' },

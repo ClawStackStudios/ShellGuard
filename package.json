@@ -27,7 +27,7 @@
     "lint": "tsc --noEmit",
     "start": "node server.ts",
     "test": "vitest run",
-    "test:integration": "vitest run tests/auth-flow.test.ts tests/vault-crud.test.ts tests/settings.test.ts",
+    "test:integration": "vitest run tests/auth-flow.test.ts tests/vault-crud.test.ts tests/settings.test.ts tests/sync-events.test.ts",
     "test:security": "vitest run tests/security.test.ts",
     "test:build-gates": "vitest run tests/build-gates.test.ts",
     "test:full": "vitest run"

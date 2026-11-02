@@ -6,6 +6,7 @@ import { SshKeySchemas } from '../validation/schemas.js';
 import { fieldCipher } from '../utils/fieldEncryption.js';
 import { prepareWrite, prepareRead, prepareReadAll } from '../utils/metadataGuard.js';
 import { normalizeTagsForDb, filterByTags } from '../utils/tagUtils.js';
+import { publishMutation } from '../utils/reactiveRiver.js';
 
 const router = Router();
 
@@ -48,6 +49,8 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(SshKey
       details: { itemId: id, category: category || '', tags: normalizedTags },
     });
 
+    publishMutation(req.userUuid, 'vault_ssh_keys', id, 'upsert');
+
     res.status(201).json({ success: true, data: { id, title: title.trim(), category: category || '', tags: normalizedTags } });
   } catch (err: any) {
     console.error('SSH keys POST error:', err);
@@ -87,6 +90,8 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(SshKe
       details: { itemId: id, category: category || '', tags: normalizedTags },
     });
 
+    publishMutation(req.userUuid, 'vault_ssh_keys', id, 'upsert');
+
     res.json({ success: true, data: { id, title: title.trim(), category: category || '', tags: normalizedTags } });
   } catch (err: any) {
     console.error('SSH keys PUT error:', err);
@@ -112,6 +117,7 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: A
         for (const attId of parsedAttachments) {
           if (typeof attId === 'string') {
             delAttachment.run(attId, req.userUuid);
+            publishMutation(req.userUuid, 'vault_attachments', attId, 'delete');
           }
         }
       }
@@ -125,6 +131,8 @@ router.delete('/:id', requireAuth, requirePermission('canDelete'), async (req: A
       actor: req.userUuid,
       details: { itemId: id, category: decryptedRow.category },
     });
+
+    publishMutation(req.userUuid, 'vault_ssh_keys', id, 'delete');
 
     res.json({ success: true, data: { message: 'Key removed.' } });
   } catch (err: any) {

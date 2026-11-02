@@ -52,18 +52,21 @@ When building or modifying any stage or feature activity in ShellGuard, execute 
 │   │   └── shellcryption-spec.md                      # Layer 1 HKDF-SHA256, AES-GCM-256 envelopes, AAD registry
 │   ├── storage/
 │   │   ├── database-schema.md                         # DATA_DIR layout, SQLite Bedrock DDL, audit segregation
-│   │   └── import-export-spec.md                      # Backup intake, format sniffing & sgtotp.bak bridge
-│   ├── network/routes-and-contracts.md                # Uniform envelope, REST endpoints, batch & SSE contracts
+│   │   ├── import-export-spec.md                      # Backup intake, format sniffing & sgtotp.bak bridge
+│   │   └── storage-quota-spec.md                      # Storage ceilings, pre-stream 413 & container user isolation
+│   ├── network/
+│   │   ├── routes-and-contracts.md                    # Uniform envelope, REST endpoints, batch & SSE contracts
+│   │   └── network-topology-spec.md                   # Fail-safe TLS, multi-proxy routing & Reactive River SSE wire
 │   ├── admin/admin-suite-spec.md                      # SuperLobster threat model (T1-T2), admin API & rules
 │   ├── ui/ui-ux-design-system.md                      # Reef Modernist tokens, master-detail & pairing surfaces
 │   └── verification/verification-gates.md             # Test suites, per-suite isolation, build gates & release roll
 │
 └── stages/                                            # PILLAR 3: Sliding Release Timeline (Pruned on Merge)
-    ├── stage-28.1-envar-core-crypto/prompt.md         # ACTIVE LEADING EDGE (Tasks 55 & 56)
-    ├── stage-28.2-envar-network-tls/prompt.md         # Queued (Tasks 57 & 58)
-    ├── stage-28.3-envar-storage-container/prompt.md   # Queued (Tasks 59 & 60)
-    ├── stage-28.4-reactive-river-sse/prompt.md        # Queued (Tasks 61 & 62)
-    ├── stage-29-dual-homed-magicdns/prompt.md         # Queued (Tasks 63 & 64)
+    ├── stage-28.1.md                                  # Shipped & Ratified (Tasks 55 & 56)
+    ├── stage-28.2.md                                  # Shipped & Ratified (Tasks 57 & 58)
+    ├── stage-28.3.md                                  # Shipped & Ratified (Tasks 59 & 60)
+    ├── stage-28.4.md                                  # Shipped & Ratified (Tasks 61 & 62)
+    ├── stage-29-dual-homed-magicdns/prompt.md         # ACTIVE LEADING EDGE (Tasks 63 & 64)
     ├── stage-30-offline-delta-journal/prompt.md       # Queued (Tasks 65 & 66)
     ├── stage-31-p2p-direct-reef-sync/prompt.md        # Queued (Tasks 67 & 68)
     └── stage-32-hardware-enclave/prompt.md            # Queued (Tasks 69 & 70)

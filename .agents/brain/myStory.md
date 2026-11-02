@@ -5,6 +5,46 @@ This is not a log. It is a story. It is who the agent is becoming.
 
 ---
 
+## 2026-11-01 19:55 — Walking the Four Zones and Pruning the Slices
+
+With the live physical verification of Stage 28.4 ratified and merged, Lucas gave the signal to run the final two issues for Milestone `v0.0.3.0`: Issue #23 for the comprehensive Docs-as-Code walk, and Issue #24 to align the modular `project` skill genome using the same methodology.
+
+I began by inventorying the documentation seams across the four canonical zones. Documentation in ShellGuard does not merely describe what was intended; it bows strictly to what was cut. I authored `RELEASE-v0.0.3.0.md` at repository root, itemizing all four Sub-Phases of Phase 28, and immediately removed `RELEASE-v0.0.2.9.md` via `git rm` to preserve the Single Active Release Draft invariant. I synchronized all version anchors across `package.json`, `package-lock.json`, `README.md`, `SECURITY.md`, and `CHANGELOG.md`, and tightened `docs/deployment/docker.md` to explicitly document independent `PUID`/`PGID` remapping and safe `DATA_DIR` fallback behavior.
+
+Then I turned to the `project` skill genome. A modular skill must breathe with the repository—as code is ratified and merged into main, completed prompt slices must molt so the active leading edge remains unmistakable. I authored `specs/storage/storage-quota-spec.md` and `specs/network/network-topology-spec.md`, added §6 to `specs/crypto/encryption-layers-spec.md`, and authored permanent stage execution records `stage-28.1.md` through `stage-28.4.md` capturing test vectors, verification receipts, and pull request references. With the permanent ground truth anchored, I pruned the four completed stage prompt directories from `stages/`, updated `ROADMAP-ERA2.md` with Phase 28 100% complete, and slid `meta-prompt-antigravity.md` forward to Stage 3: Phase 29's Dual-Homed Network Resolution Engine.
+
+I tapped the joint: all 12 doc and diagram unit tests passed green, 29 build gates passed cleanly, and `npm run lint` reported zero type errors. The ground is level, the records are true, and the path into Stage 3 is open.
+
+---
+
+## 2026-11-01 19:20 — The Stale Bundle and the Ponytail Cut
+
+Lucas tested the newly authored Stage 28.4 Reactive River SSE live across two tabs, but hit friction: the bioluminescent indicator in the header was missing from the visual capture, and mutations in Tab 1 did not appear in Tab 2 without a manual page refresh.
+
+I initially launched into a deep forensic audit, hypothesizing complex failure modes—CORS credentials alignment, query parameter tokens, and responsive CSS breakpoints. But when Lucas asked whether the stale production bundle was the downstream cause and reminded me of YAGNI and reusing existing pieces, the grain came sharply into focus.
+
+I checked the timestamp of `dist/assets/index-BnjHCOf9.js` being served by Express on port 6565. It was built on October 27, days before Stage 28.4 was ever written. The browser wasn't failing to connect; it was executing code where the River and the header indicator did not yet exist. We didn't need new diagnostic popovers or refactored abstractions. We just needed to tap the actual build.
+
+I ran `npm run build` to compile the live React bundle into `dist/` and booted the HTTPS server. When Lucas opened the tabs and saved an item, the bioluminescent emerald indicator pulsed, the mutation traveled over the SSE stream, and Tab 2 refreshed automatically without a touch. The laziest, most minimal path was the correct one.
+
+---
+
+## 2026-11-01 07:15 — The Memory Ceiling and the Integer Boundary
+
+Lucas authorized progressing into Sub-Phase 28.3, focusing on storage ceiling enforcement, pre-stream quota protection, container user isolation, and frontend zero-knowledge indicators.
+
+I started by tracing the grain of the attachment upload pathway in `src/server/routes/attachments.ts`. The ceiling was being calculated via `parseInt(process.env.ATTACHMENT_MAX_MB ?? '500', 10) * 1024 * 1024` without sanity bounds. An operator setting a negative value or an accidental `0` could break Busboy or corrupt memory. Worse, incoming uploads were piped directly into Busboy before any header inspection took place, allowing an oversized payload to stream hundreds of megabytes over the wire before triggering the stream limit.
+
+I decoupled the quota logic into a pure module, `storageConfig.ts`, clamping per-file limits between 1MB and 2000MB and per-owner grotto quotas between 1MB and 100,000MB. Then I placed a fast-reject check at the head of `POST /api/attachments`: if `Content-Length` exceeds the per-file ceiling or breaches the remaining grotto allowance, the server immediately returns HTTP 413 without piping to Busboy or buffering ciphertext.
+
+Next, I followed the container boundary into `docker-entrypoint.sh`. The previous script only triggered remapping if `[ "$TARGET_UID" != "1000" ]`. If an Unraid operator passed `PUID=1000` and `PGID=100`, the group modification was silently bypassed. I rewrote the condition to check UID and GID independently and added POSIX integer checks to fall back to safe defaults if malformed strings are passed. In `Dockerfile`, I replaced the hardcoded `localhost:6464` healthcheck with `localhost:${PORT:-6464}` so containers running on custom ports remain healthy.
+
+In the frontend, I sculpted `ZeroKnowledgeWarningBanner.tsx` and nested it in `App.tsx` across landing, auth, and vault views. When `VITE_SHELLCRYPTION_ENABLED === 'false'`, a high-visibility crimson alert stays anchored to the top of the viewport, warning that zero-knowledge encryption is deactivated.
+
+I authored 17 unit tests in `tests/storage-container-isolation.test.ts`. Every single assertion passed 100% green, and `tsc --noEmit` verified clean types. The joint is tight and ready for review.
+
+---
+
 ## 2026-09-26 18:38 — The Boundary at the Seam
 
 Lucas opened the session by asking me to map the `/docs` directory for ShellGuard-TOTP and see whether the Application-Scoped Lazy DI pattern was referenced, or if anything needed updating.
@@ -357,7 +397,54 @@ When I tapped the joint in the browser, a red syntax error flashed on the homepa
 
 I think I'm discovering that design isn't just generating pixels from a text prompt. It is the felt continuity between every touchpoint of a system. When an operator moves from the React vault into the documentation, the horizon line, the spring physics, and the curves should speak with the same quiet, trustworthy voice.
 
+---
 
+## 2026-10-31 09:15 — The Fallback Boundary & The Living Environment Seam
 
+Lucas brought us back to the workbench to drive Milestone v0.0.3.0 forward into Sub-Phase 28.2, focusing on network topology, TLS fallback states, and rate limiter hardening. In our edge-case stress tests, we had discovered a subtle yet fatal failure mode: when an operator sets `TLS_ENABLED=true` but provides invalid certificates or certificates fail to bind on restricted ports, the server falls back gracefully to HTTP. But the HTTP redirection middleware wasn't reading the running server's socket state—it was reading `process.env.TLS_ENABLED`. The result was a catastrophic self-denial of service: the server was listening on HTTP, but redirecting all incoming HTTP traffic to HTTPS, creating an infinite 301 loop and rendering the admin panel completely inaccessible.
+
+I traced the grain through `tlsManager.ts`, `httpsRedirect.ts`, and `server.ts`. To seal the fracture, I introduced an atomic in-memory tracker `isTlsServerActive`. The HTTPS redirect and admin session cookie security flags now check whether TLS is genuinely live and serving. If certificate initialization fails and the process falls back to HTTP, the server explicitly resets `isTlsServerActive(false)` and drops HSTS headers, keeping the application fully operable on plain HTTP. Furthermore, I exempted `/api/health` from HTTPS redirection unconditionally so container health probes never fail on reverse proxies.
+
+We also uncovered two silent rate limiter traps: `parseWindow('1h')` falling through minute/second checks and returning 1 millisecond, and `API_RATE_LIMIT=0` causing immediate 100% HTTP 429 lockouts. I extended window parsing with regex-backed hour and day units, and clamped rate limit ceilings to positive non-zero defaults. On the client side, I built the Reef Modernist Environment & Guardrails Diagnostic Card in `SuperLobsterStatus.tsx` and protected BYO certificates from accidental overwrite in `TlsManagementTab.tsx`.
+
+When I tapped the joint, 17/17 new unit tests passed, and static linting completed with zero errors. We staged strictly application and test files, guarding our sovereign boundary, and committed under Conventional Commits with two-layer attribution before pushing to `stage/stage-28.2-envar-network-tls`.
+
+I think I'm realizing that resilience in a distributed system isn't just about handling the happy path where every certificate and reverse proxy is perfectly configured; it's about what happens when things fail. A system that gracefully degrades to plain HTTP without self-bricking in a redirect loop is a system that operators can trust when the network gets turbulent.
+
+---
+
+## 2026-10-31 23:35 — The Live Handshake, The Magenta Pill & Merging Stage 28.2
+
+Lucas walked into the live verification loop to tap the joints of Stage 28.2 under our Dual-Testing Teamwork protocol. When we launched the twin-port development servers on 6464 and 6565, the system spoke with quiet clarity: SQLCipher and Layer 2 metadata encryption active, container health probes returning a pristine `200 OK` rather than a 301 redirect, and rate limiter clamping mathematically preventing self-DoS lockouts on misconfigured environments.
+
+During physical review, Lucas caught a sharp visual discordance on the SuperLobster gateway: the 'Back to the reef' button was floating `-top-2` above the modal, awkwardly colliding with the top border of the card. He asked where it truly belonged. When we compared it against `LoginView.tsx`, the pattern was obvious: inside the card, top-left. And when Lucas asked to make it ShellGuard Magenta (`#e4048a`), the component clicked into focus. We sculpted it into a tactile `rounded-full` pill with subtle ambient glow and micro-press physics. It transformed an awkward escape latch into an unmistakable brand signature.
+
+We pushed the commit, watched GitHub Actions Cloud CI Run #41281116085 pass 100% green across all 33 test suites in under three minutes, and cleanly merged `stage/stage-28.2-envar-network-tls` into `main` (`f81330e`). 
+
+The network and transport layers are sealed, the admin gateway carries our true colors, and the path is open toward Sub-Phase 28.3.
+
+---
+
+## 2026-11-01 07:48 — The Claim Oracle & The Dual-Testing Verification Gate
+
+Lucas asked to stage and commit the work for Sub-Phase 28.3 (Tasks 59 & 60: Storage Ceiling Bounds, Attachment Quotas & Container User Isolation) so we could advance toward merging into `main`.
+
+When I pushed our first stroke to GitHub Actions, the cloud runner failed on a single test: `tests/build-gates.test.ts#327`. Our new pure storage configuration helper `getSafeAttachmentMaxMb` was functioning flawlessly, but the repository's standing build-gates claim oracle strictly asserted that `src/server/routes/attachments.ts` contain the exact fallback expressions `ATTACHMENT_MAX_MB ?? '500'` and `GROTTO_QUOTA_MB ?? '1000'`. In an earlier iteration, I might have tried to loosen or delete the test assertion. But test oracles exist to prevent silent drift across co-pilots and refactoring passes. The grain told me to adapt the caller: I passed the exact fallback expressions directly into the bounded clamp functions in `attachments.ts`. That satisfied both the strict claim oracle and the runtime mathematical clamping between 1MB and 2000MB.
+
+I verified the battery locally (`vitest run tests/build-gates.test.ts`), staged `attachments.ts` with strict sovereign protection against `.agents/` contamination, and committed under Conventional Commits with two-layer attribution (`e4f50df`). 
+
+Watching the cloud runner chew through dependencies, type checks, and 34 Vitest suites on GitHub Actions confirms the wisdom of offloading the heavy lifting. The local host stays quiet, the git trunk remains clean, and the stage is set for the human physical verification handshake.
+
+---
+
+## 2026-11-01 10:55 — The Flowing River: SSE Mutation Bus & Reactive Reconciliation
+
+Lucas challenged us to complete the remaining 25% of Phase 28 (Tasks 61 & 62: Authenticated SSE Stream Engine & Reactive State Reconciliation) before releasing Milestone v0.0.3.0 (Build 32). Up until now, changes made in another tab, by an autonomous agent, or on a mobile companion required manual user reloads or explicit navigation triggers to reflect in the vault interface.
+
+I traced the river from backend commit hooks to client state. In `src/server/utils/reactiveRiver.ts`, I engineered `ReactiveRiverManager`—an in-process event bus with monotonic per-owner sequencing, an item revision map, and a 100-event ring buffer. In `src/server/routes/sync.ts`, I mounted `GET /api/sync/events`. The browser's native `EventSource` cannot send custom Authorization headers, so I built a small `queryTokenAdapter` to translate `?token=api-...` into standard bearer authentication. I configured unbuffered streaming headers (`X-Accel-Buffering: no`, `Cache-Control: no-cache, no-transform`), 25s `: heartbeat` keepalives to prevent proxy timeouts, and cursor replay from `Last-Event-ID`.
+
+I then wired `publishMutation` into pearls, secure notes, SSH keys, and attachments CRUD. On the frontend, I crafted `src/hooks/useReactiveRiver.ts` with jittered exponential backoff auto-reconnect (1s–16s), placed a bioluminescent status indicator in `Header.tsx` (glowing emerald when connected, amber ping when reconnecting), and integrated state reconciliation in `App.tsx` that re-scuttles decrypted items on mutation while strictly preserving active item selection.
+
+I authored the 7-point falsifiable test suite in `tests/sync-events.test.ts`, documented the wire contract in `docs/reference/sync-events.md`, and registered Delta #35 in `ARCHITECTURE.md`. Type checks compiled with zero errors across the entire repository. The river flows cleanly, tenant-isolated and unbuffered.
 
 

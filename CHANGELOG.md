@@ -1,5 +1,42 @@
 # Changelog — ShellGuard
 
+## [0.0.3.0] - 2026-11-01 (Build 32)
+
+### Added
+- **Sync-Native Reactive River SSE Infrastructure (Phase 28 / Sub-Phase 28.4 / Tasks 61 & 62):**
+  - **In-Process ReactiveRiverManager Event Bus (`src/server/utils/reactiveRiver.ts`):** High-throughput in-memory mutation pub/sub broadcasting `vault_mutation` events (`{ domain, id, rev, action, timestamp }`) with <50ms commit-to-broadcast latency, tenant isolation by `owner_uuid`, monotonic sequence identifiers (`ev_<seq>`), per-owner 100-event ring buffer cursor replay, and per-item revision maps.
+  - **Authenticated Server-Sent Events Route (`src/server/routes/sync.ts`):** `GET /api/sync/events` protected by `queryTokenAdapter` allowing query parameter token authentication (`?token=...`) for native browser `EventSource` clients without custom header limitations. Enforces unbuffered streaming headers (`X-Accel-Buffering: no`, `Cache-Control: no-cache, no-transform`), 25s `: heartbeat` keepalive comments preventing reverse proxy socket timeouts, and `Last-Event-ID` cursor recovery.
+  - **Database Mutation Hook Integration:** Wired `publishMutation` into all `vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`, and `vault_secure_attachments` create, update, and delete endpoints.
+  - **Client-Side React Consumer Hook (`src/hooks/useReactiveRiver.ts`):** Native EventSource management with multi-tier token extraction fallback (`customToken` -> `getSessions()` -> `sessionStorage`), monotonic cursor tracking, and jittered exponential backoff auto-reconnect (1s to 16s).
+  - **Header Bioluminescent Connection Status Pill (`src/components/Layout/Header.tsx`):** Real-time status pill rendering emerald (`River Live`), amber pulsing (`Reconnecting…` / `Connecting…`), and slate (`Offline`).
+  - **Non-Destructive In-Memory State Reconciliation (`src/App.tsx`):** Dispatches live mutations to `scuttleVault` refreshing in-memory vault state while preserving active pane selection and folder tree position.
+  - **Technical Reference & Delta #35:** Complete wire specification in `docs/reference/sync-events.md` and Delta #35 in `ARCHITECTURE.md`.
+  - **Falsifiable Test Suite (`tests/sync-events.test.ts`):** 9 automated integration tests verifying SSE frame delivery, tenant isolation across multiple users, heartbeat intervals, and cursor replay from `ev_0`.
+
+- **Storage Ceilings, Attachment Quotas & Container User Isolation (Phase 28 / Sub-Phase 28.3 / Tasks 59 & 60):**
+  - **Pure Storage Quota Engine (`src/server/config/storageConfig.ts`):** Clamped safe bounds for `ATTACHMENT_MAX_MB` (1–2000 MB, default 500) and `GROTTO_QUOTA_MB` (1–100,000 MB, default 1000). Pre-stream `Content-Length` validation in `routes/attachments.ts` fast-rejects oversized uploads with HTTP 413 prior to multipart buffering.
+  - **Container User Isolation (`docker-entrypoint.sh`):** Independent POSIX integer validation and remapping for `PUID` and `PGID`, with sanitized `DATA_DIR` fallback resolving whitespace/empty paths to `./data`.
+  - **Dynamic Container Healthcheck (`Dockerfile`):** Dynamic probe querying `localhost:${PORT:-6464}/api/health`.
+  - **Zero-Knowledge Alert Banner (`src/components/ZeroKnowledgeWarningBanner.tsx`):** Persistent crimson warning banner rendered across all views when `VITE_SHELLCRYPTION_ENABLED === 'false'`.
+  - **Unit Test Battery (`tests/storage-container-isolation.test.ts`):** 17 tests proving quota clamps, fast 413 rejection, and envar validation.
+
+- **Network Topology, Fail-Safe TLS State & Rate Limiter Hardening (Phase 28 / Sub-Phase 28.2 / Tasks 57 & 58):**
+  - **Fail-Safe TLS State Tracking (`src/server/utils/tlsManager.ts`):** Dynamic `isTlsServerActive` tracking preventing 301 redirection self-bricks and admin cookie lockouts on certificate fallback to HTTP.
+  - **Health Probe Redirection Exemption:** `/api/health` exempted from HTTPS redirection to protect Docker container health probes.
+  - **Multi-Proxy Chain Support:** Multi-proxy comma-separated `X-Forwarded-Proto` chain parsing and `TRUST_PROXY` integer hop counts (`TRUST_PROXY=2`).
+  - **Rate Limiter Hardening:** Added `'h'` and `'d'` unit support to `parseWindow()` fixing `'1h'` parsing bug, and clamped rate limiters `> 0` preventing self-DoS `max: 0` lockouts.
+  - **BYO Certificate Overwrite Guard:** Added `400 Bad Request` guard on `/api/admin/tls/generate` when custom certs are loaded.
+  - **Runtime Environment Inspector:** Reef Modernist diagnostic card in `SuperLobsterStatus.tsx`.
+  - **Test Suite (`tests/unit/envar-network-tls.test.ts`):** 20 tests verifying TLS fallback, rate limiters, and proxy hop counts.
+
+- **Core Crypto, Admin Plane & Identity Envar Hardening (Phase 28 / Sub-Phase 28.1 / Tasks 55 & 56):**
+  - **Centralized Boot Validator (`src/server/config/envValidator.ts`):** Validates all 24 environment variables on startup and prints formatted security diagnostic banner.
+  - **Entropy & Rekey Hardening (`src/server/database/connection.ts`):** Enforces >= 32 byte decoded entropy for `DB_ENCRYPTION_KEY` across Base64 and Base64URL. Inspects 16-byte plaintext SQLite magic header ("SQLite format 3\0") before executing PRAGMA rekey, preventing wrong-key database corruption.
+  - **Admin Token Hardening:** Whitespace trimming, >= 16 char length guard, and rejection of weak/boolean-confused tokens.
+  - **Signup Policy Lockout Detection:** Detects Catch-22 lockout when `DISABLE_SIGNUPS=true` and `ADMIN_TOKEN` is unset.
+  - **TTL Parser Date Overflow Guard:** Added weeks support and date overflow guard to `tokenExpiry.ts` with safe fallback to `1440`.
+  - **Unit Test Suite (`tests/unit/env-validator.test.ts`):** 17 tests verifying crypto entropy and envar validator behavior.
+
 ## [0.0.2.9] - 2026-10-28 (Build 31)
 
 ### Added

@@ -101,7 +101,8 @@ ShellGuard is distributed as a single unified container image on GitHub Containe
 
 ## 🔒 Security & Non-Root Execution
 
-The container includes a custom entrypoint script that executes prior to starting Node.js:
-1. **Dynamic ID Remapping**: Remaps the internal `node` user to match the host `PUID` and `PGID`.
-2. **Volume Ownership Verification**: Enforces `chown -R` on `/app/data` to ensure SQLite can write its WAL and lock files without host permissions friction.
-3. **Privilege Dropping**: Drops root privileges using `su-exec` to execute the Node.js process as a non-privileged user.
+The container includes a hardened entrypoint script (`docker-entrypoint.sh`) that executes prior to dropping privileges and launching Node.js:
+1. **Independent `PUID` & `PGID` Remapping**: Uses POSIX integer validation (`''|*[!0-9]*)`) to validate host user and group IDs. Remaps `node` user (`PUID`) and group (`PGID`) independently, ensuring environments like Unraid (`PUID=99`, `PGID=100`) or custom NAS storage groups apply group permissions even if UID is unchanged.
+2. **Safe `DATA_DIR` Fallback**: If `DATA_DIR` is unset or contains whitespace, the entrypoint and backend connection safely fall back to `/app/data` (in-container default) or `./data` (host default).
+3. **Volume Ownership Verification**: Enforces `chown -R` on the target data directory to ensure SQLite can write its WAL, SHM, and database lock files without host filesystem friction.
+4. **Privilege Dropping**: Drops root privileges using `su-exec` to execute the Node.js process as the non-privileged `node` user.

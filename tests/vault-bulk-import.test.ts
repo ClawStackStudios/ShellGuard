@@ -10,6 +10,7 @@ import {
   PERMISSION_PRESETS,
 } from './helpers/testFactories.js';
 import { createTestUserWithToken, createSecondUser, getAgentToken } from './helpers/testAuth.js';
+import { reactiveRiver } from '../src/server/utils/reactiveRiver.js';
 
 // ─── Isolation preamble ──────────────────────────────────────────────────────
 vi.hoisted(() => {
@@ -350,6 +351,34 @@ describe('Phase 21: Bulk Import Endpoint & Batch Operations', () => {
         .send({ ids: ['some-id'] });
 
       expect(res.status).toBe(403);
+    });
+  });
+
+  describe('Reactive River SSE Batch Coalescing (Issue #30)', () => {
+    it('emits exactly 1 coalesced SSE frame for a 25-item bulk import and 1 for bulk delete', async () => {
+      reactiveRiver.reset();
+      expect(reactiveRiver.getRingBufferSize(userA.uuid)).toBe(0);
+
+      const items = Array.from({ length: 25 }, (_, idx) => makePearlPayload({ title: `Coalesce-${idx}` }));
+      const importRes = await request(srv.app)
+        .post('/api/vault/bulk-import')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ items });
+
+      expect(importRes.status).toBe(201);
+      expect(importRes.body.data.inserted).toHaveLength(25);
+      // Must be exactly 1 coalesced event, NOT 25 events!
+      expect(reactiveRiver.getRingBufferSize(userA.uuid)).toBe(1);
+
+      const deleteRes = await request(srv.app)
+        .delete('/api/vault/bulk')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ ids: items.map((i) => i.id) });
+
+      expect(deleteRes.status).toBe(200);
+      expect(deleteRes.body.data.deleted).toHaveLength(25);
+      // Must be 2 total events (1 import + 1 delete), NOT 50!
+      expect(reactiveRiver.getRingBufferSize(userA.uuid)).toBe(2);
     });
   });
 });

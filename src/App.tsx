@@ -231,14 +231,24 @@ export default function App() {
     return stored ? parseInt(stored, 10) : 15;
   });
 
-  const scuttleVault = useCallback(async (key: CryptoKey) => {
-    try {
-      const [reefLogins, reefNotes, reefKeys, reefAttachments] = await Promise.all([
-        restAdapter.GET("/api/vault").catch(() => []),
-        restAdapter.GET("/api/notes").catch(() => []),
-        restAdapter.GET("/api/keys").catch(() => []),
-        restAdapter.GET("/api/attachments").catch(() => []),
-      ]);
+  const scuttleInFlightRef = useRef<Promise<void> | null>(null);
+  const scuttleQueuedKeyRef = useRef<CryptoKey | null>(null);
+  const riverDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scuttleVault = useCallback(async (key: CryptoKey): Promise<void> => {
+    if (scuttleInFlightRef.current) {
+      scuttleQueuedKeyRef.current = key;
+      return scuttleInFlightRef.current;
+    }
+
+    const run = (async () => {
+      try {
+        const [reefLogins, reefNotes, reefKeys, reefAttachments] = await Promise.all([
+          restAdapter.GET("/api/vault"),
+          restAdapter.GET("/api/notes"),
+          restAdapter.GET("/api/keys"),
+          restAdapter.GET("/api/attachments"),
+        ]);
       
       const decryptedLogins = await Promise.all(reefLogins.map(async (p: any) => {
         try {
@@ -318,10 +328,23 @@ export default function App() {
         return { ...p, secret: "", type: "attachment", category: cleanCat };
       }));
 
-      setVaultItems([...decryptedLoginsWithCustom, ...decryptedNotesWithCustom, ...decryptedKeysWithCustom, ...decryptedAttachments]);
-    } catch (err: any) {
-      setError(err.message);
-    }
+      const mergedItems = [...decryptedLoginsWithCustom, ...decryptedNotesWithCustom, ...decryptedKeysWithCustom, ...decryptedAttachments];
+      setVaultItems(mergedItems);
+      setSelectedItemId((prev) => (prev && mergedItems.some((i) => i.id === prev) ? prev : null));
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        scuttleInFlightRef.current = null;
+        const queuedKey = scuttleQueuedKeyRef.current;
+        scuttleQueuedKeyRef.current = null;
+        if (queuedKey) {
+          void scuttleVault(queuedKey);
+        }
+      }
+    })();
+
+    scuttleInFlightRef.current = run;
+    return run;
   }, []);
 
   const scuttleAgents = useCallback(async () => {
@@ -341,23 +364,33 @@ export default function App() {
       scuttleVault(shellKey);
       scuttleAgents();
     } else {
+      if (riverDebounceRef.current) {
+        clearTimeout(riverDebounceRef.current);
+        riverDebounceRef.current = null;
+      }
+      scuttleQueuedKeyRef.current = null;
       setVaultItems([]);
       setSelectedItemId(null);
       setAgents([]);
     }
   }, [shellKey, activeLobsterId, scuttleVault, scuttleAgents]);
 
-  // 🌊 Reactive River: real-time SSE stream & live state reconciliation
+  // 🌊 Reactive River: real-time SSE stream & live state reconciliation (200ms trailing debounce)
   const handleRiverMutation = useCallback((event: RiverMutationEvent) => {
     if (!shellKey || isLocked) return;
 
-    // Refresh items non-destructively; preserves active item selection
-    scuttleVault(shellKey);
-
-    // If an item was deleted and it is the currently selected item, unselect it
+    // Immediately unselect if the event explicitly targets the active item
     if (event.action === 'delete') {
       setSelectedItemId((prev) => (prev === event.id ? null : prev));
     }
+
+    if (riverDebounceRef.current) {
+      clearTimeout(riverDebounceRef.current);
+    }
+    riverDebounceRef.current = setTimeout(() => {
+      riverDebounceRef.current = null;
+      void scuttleVault(shellKey);
+    }, 200);
   }, [shellKey, isLocked, scuttleVault]);
 
   const { status: riverStatus } = useReactiveRiver({

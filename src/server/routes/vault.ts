@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { Router } from 'express';
-import db, { audit } from '../database/index.js';
+import db, { audit, auditDb } from '../database/index.js';
 import { AuthRequest, requireAuth, requirePermission } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { VaultSchemas } from '../validation/schemas.js';
@@ -179,16 +179,22 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
 
     runImport(preparedItems);
 
-    for (const p of preparedItems) {
-      if (inserted.includes(p.original.id)) {
-        audit.log('VAULT_ITEM_CREATED', {
-          action: 'vault_item_created',
-          outcome: 'success',
-          actor: req.userUuid,
-          details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true, importBatchId },
-        });
-        publishMutation(req.userUuid, 'vault_pearls', p.original.id, 'upsert');
-      }
+    const insertedSet = new Set(inserted);
+    if (inserted.length > 0) {
+      auditDb.transaction(() => {
+        for (const p of preparedItems) {
+          if (insertedSet.has(p.original.id)) {
+            audit.log('VAULT_ITEM_CREATED', {
+              action: 'vault_item_created',
+              outcome: 'success',
+              actor: req.userUuid,
+              details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true, importBatchId },
+            });
+          }
+        }
+      })();
+      // Emit 1 coalesced SSE frame for the entire batch instead of N per-item frames
+      publishMutation(req.userUuid, 'vault_pearls', importBatchId, 'upsert');
     }
 
     if (errors.length > 0) {
@@ -267,24 +273,29 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
 
     runBulkDelete(ids);
 
-    for (const att of cascadeAuditEvents) {
-      audit.log('ATTACHMENT_DELETED', {
-        action: 'attachment_deleted',
-        outcome: 'success',
-        actor: req.userUuid,
-        details: { itemId: att.itemId, cascadeFrom: att.cascadeFrom, bulk: true },
-      });
-      publishMutation(req.userUuid, 'vault_attachments', att.itemId, 'delete');
-    }
-
-    for (const id of deleted) {
-      audit.log('VAULT_ITEM_DELETED', {
-        action: 'vault_item_deleted',
-        outcome: 'success',
-        actor: req.userUuid,
-        details: { itemId: id, bulk: true },
-      });
-      publishMutation(req.userUuid, 'vault_pearls', id, 'delete');
+    if (cascadeAuditEvents.length > 0 || deleted.length > 0) {
+      auditDb.transaction(() => {
+        for (const att of cascadeAuditEvents) {
+          audit.log('ATTACHMENT_DELETED', {
+            action: 'attachment_deleted',
+            outcome: 'success',
+            actor: req.userUuid,
+            details: { itemId: att.itemId, cascadeFrom: att.cascadeFrom, bulk: true },
+          });
+        }
+        for (const id of deleted) {
+          audit.log('VAULT_ITEM_DELETED', {
+            action: 'vault_item_deleted',
+            outcome: 'success',
+            actor: req.userUuid,
+            details: { itemId: id, bulk: true },
+          });
+        }
+      })();
+      if (deleted.length > 0) {
+        // Emit 1 coalesced SSE frame for the entire bulk delete
+        publishMutation(req.userUuid, 'vault_pearls', 'bulk', 'delete');
+      }
     }
 
     if (errors.length > 0) {
@@ -332,6 +343,10 @@ router.post('/import-batches/:id/graduate', requireAuth, requirePermission('canE
       actor: req.userUuid,
       details: { batchId: id, graduatedCount },
     });
+
+    if (graduatedCount > 0) {
+      publishMutation(req.userUuid, 'vault_pearls', id, 'upsert');
+    }
 
     res.json({
       success: true,
@@ -412,6 +427,8 @@ router.delete('/import-batches/:id', requireAuth, requirePermission('canDelete')
       actor: req.userUuid,
       details: { batchId: id, deletedCount, deletedAttachments },
     });
+
+    publishMutation(req.userUuid, 'vault_pearls', id, 'delete');
 
     res.json({
       success: true,

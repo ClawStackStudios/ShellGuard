@@ -43,7 +43,9 @@ export const VaultSchemas = {
   bulkImportItem: z.object({
     id: itemId,
     title: itemTitle,
-    secret: z.string().min(1).max(20000),
+    secret: z.string().min(1).max(20000).optional(),
+    content: z.string().min(1).max(20000).optional(),
+    key_value: z.string().min(1).max(20000).optional(),
     username: z.string().max(255).optional(),
     url: z.string().max(2048).optional(),
     uris: z.string().max(100000).optional(),
@@ -55,12 +57,24 @@ export const VaultSchemas = {
     password_history: z.string().max(500000).optional(),
     attachments: z.string().max(2000000).optional(),
     custom_fields: z.string().max(500000).optional()
-  }),
+  }).refine(
+    (data) => Boolean(data.secret || data.content || data.key_value),
+    { message: 'Item payload (secret, content, or key_value) is required', path: ['secret'] }
+  ),
   bulkImport: z.object({
-    items: z.array(z.any()).min(1).max(1000) // limit bulk import to 1-1000 items at a time
+    items: z.array(z.any()).min(1).max(1000), // limit bulk import to 1-1000 items per batch
+    import_batch_id: z.string().regex(/^imp_[0-9a-fA-F-]{36}$/).optional(),
   }),
   bulkDelete: z.object({
     ids: z.array(itemId).min(1).max(1000)
+  }),
+  bulkMetadata: z.object({
+    updates: z.array(z.object({
+      id: itemId,
+      type: z.enum(['password', 'pearl', 'card', 'identity', 'note', 'key', 'attachment']).optional(),
+      category: itemCategory,
+      tags: itemTags,
+    })).min(1).max(1000),
   }),
   create: z.object({
     id: itemId,

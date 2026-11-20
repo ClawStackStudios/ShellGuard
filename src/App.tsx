@@ -868,6 +868,20 @@ export default function App() {
     }
   };
 
+  const chunkArray = <T,>(arr: T[], size = 500): T[][] => {
+    const chunks: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
+  };
+
+  const sendBulkMetadata = async (updates: Array<{ id: string; type?: VaultItemType; category?: string; tags?: string }>) => {
+    for (const chunk of chunkArray(updates, 500)) {
+      await restAdapter.PATCH('/api/vault/bulk-metadata', { updates: chunk });
+    }
+  };
+
   const handleRenamePod = async (oldPod: string, newPod: string) => {
     if (!shellKey || isLocked) return;
     const normOld = normalizePod(oldPod);
@@ -895,29 +909,16 @@ export default function App() {
       );
 
       if (itemsToUpdate.length > 0) {
-        for (const item of itemsToUpdate) {
+        const updates = itemsToUpdate.map((item) => {
           const currentCat = normalizePod(item.category);
           const updatedCat = currentCat === normOld ? normNew : currentCat.replace(new RegExp(`^${normOld}/`), `${normNew}/`);
-          await updateTheClaw(
-            item.id, 
-            {
-              title: item.title,
-              secret: item.secret,
-              username: item.username || "",
-              url: item.url || "",
-              uris: item.uris,
-              category: updatedCat,
-              type: item.type,
-              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
-              notes: item.notes,
-              totp_secret: item.totp_secret,
-              password_history: item.password_history,
-              attachments: item.attachments,
-              custom_fields: item.custom_fields
-            },
-            true
-          );
-        }
+          return {
+            id: item.id,
+            type: item.type as VaultItemType,
+            category: updatedCat,
+          };
+        });
+        await sendBulkMetadata(updates);
       }
 
       // Single server sync after all items are updated
@@ -950,27 +951,13 @@ export default function App() {
       );
 
       if (itemsToUpdate.length > 0) {
-        for (const item of itemsToUpdate) {
-          await updateTheClaw(
-            item.id, 
-            {
-              title: item.title,
-              secret: item.secret,
-              username: item.username || "",
-              url: item.url || "",
-              uris: item.uris,
-              category: "",
-              type: item.type,
-              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
-              notes: item.notes,
-              totp_secret: item.totp_secret,
-              password_history: item.password_history,
-              attachments: item.attachments,
-              custom_fields: item.custom_fields
-            },
-            true
-          );
-        }
+        await sendBulkMetadata(
+          itemsToUpdate.map((item) => ({
+            id: item.id,
+            type: item.type as VaultItemType,
+            category: "",
+          }))
+        );
       }
 
       // Single server sync after all items are updated
@@ -1298,23 +1285,8 @@ export default function App() {
                         if (selectedItemId && ids.includes(selectedItemId)) {
                           setSelectedItemId(null);
                         }
-                        const itemsToDelete = vaultItems.filter(i => ids.includes(i.id));
-                        const pearlIds = itemsToDelete.filter(i => i.type !== 'note' && i.type !== 'key' && i.type !== 'attachment').map(i => i.id);
-                        const noteIds = itemsToDelete.filter(i => i.type === 'note').map(i => i.id);
-                        const keyIds = itemsToDelete.filter(i => i.type === 'key').map(i => i.id);
-                        const attIds = itemsToDelete.filter(i => i.type === 'attachment').map(i => i.id);
-
-                        if (pearlIds.length > 0) {
-                          await restAdapter.DELETE('/api/vault/bulk', { ids: pearlIds });
-                        }
-                        for (const id of noteIds) {
-                          await restAdapter.DELETE(`/api/notes/${id}`).catch(() => {});
-                        }
-                        for (const id of keyIds) {
-                          await restAdapter.DELETE(`/api/keys/${id}`).catch(() => {});
-                        }
-                        for (const id of attIds) {
-                          await restAdapter.DELETE(`/api/attachments/${id}`).catch(() => {});
+                        for (const chunk of chunkArray(ids, 500)) {
+                          await restAdapter.DELETE('/api/vault/bulk', { ids: chunk });
                         }
                         if (shellKey) await scuttleVault(shellKey);
                       } catch (err: any) {
@@ -1325,25 +1297,13 @@ export default function App() {
                       if (!shellKey || isLocked) return;
                       try {
                         const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
-                        for (const item of itemsToUpdate) {
-                          await updateTheClaw(
-                            item.id,
-                            {
-                              title: item.title,
-                              secret: item.secret,
-                              username: item.username || "",
-                              url: item.url || "",
-                              uris: item.uris,
-                              category: category,
+                        if (itemsToUpdate.length > 0) {
+                          await sendBulkMetadata(
+                            itemsToUpdate.map((item) => ({
+                              id: item.id,
                               type: item.type as VaultItemType,
-                              tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
-                              notes: item.notes,
-                              totp_secret: item.totp_secret,
-                              password_history: item.password_history,
-                              attachments: item.attachments,
-                              custom_fields: item.custom_fields
-                            },
-                            true
+                              category,
+                            }))
                           );
                         }
                         if (shellKey) await scuttleVault(shellKey);
@@ -1355,28 +1315,17 @@ export default function App() {
                       if (!shellKey || isLocked) return;
                       try {
                         const itemsToUpdate = vaultItems.filter(i => ids.includes(i.id));
-                        for (const item of itemsToUpdate) {
-                          const currentTags = typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : (item.tags || []);
-                          const newTags = Array.from(new Set([...currentTags, ...tags]));
-
-                          await updateTheClaw(
-                            item.id,
-                            {
-                              title: item.title,
-                              secret: item.secret,
-                              username: item.username || "",
-                              url: item.url || "",
-                              uris: item.uris,
-                              category: item.category || "",
-                              type: item.type as VaultItemType,
-                              tags: JSON.stringify(newTags),
-                              notes: item.notes,
-                              totp_secret: item.totp_secret,
-                              password_history: item.password_history,
-                              attachments: item.attachments,
-                              custom_fields: item.custom_fields
-                            },
-                            true
+                        if (itemsToUpdate.length > 0) {
+                          await sendBulkMetadata(
+                            itemsToUpdate.map((item) => {
+                              const currentTags = typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : (item.tags || []);
+                              const newTags = Array.from(new Set([...currentTags, ...tags]));
+                              return {
+                                id: item.id,
+                                type: item.type as VaultItemType,
+                                tags: JSON.stringify(newTags),
+                              };
+                            })
                           );
                         }
                         if (shellKey) await scuttleVault(shellKey);
@@ -1500,42 +1449,34 @@ export default function App() {
                         });
                       }
 
-                      const pearlsToInsert = itemsToInsert.filter(i => i.type === 'password' || i.type === 'card' || i.type === 'identity' || !i.type);
-                      const others = itemsToInsert.filter(i => i.type === 'note' || i.type === 'key');
-
                       const result: { inserted: string[]; errors: { index: number; reason: string }[] } = {
                         inserted: [],
                         errors: [],
                       };
 
-                      if (pearlsToInsert.length > 0) {
+                      const sharedBatchId = `imp_${generateUUID()}`;
+                      const chunks = chunkArray(itemsToInsert, 500);
+                      let offset = 0;
+
+                      for (const chunk of chunks) {
                         try {
-                          const bulkRes = await restAdapter.POST<{ inserted: string[]; errors?: { index: number; reason: string }[] }>('/api/vault/bulk-import', { items: pearlsToInsert });
+                          const bulkRes = await restAdapter.POST<{ inserted: string[]; errors?: { index: number; reason: string }[] }>('/api/vault/bulk-import', {
+                            items: chunk,
+                            import_batch_id: sharedBatchId,
+                          });
                           if (bulkRes) {
                             result.inserted.push(...(bulkRes.inserted || []));
                             if (bulkRes.errors && bulkRes.errors.length > 0) {
-                              result.errors.push(...bulkRes.errors);
+                              result.errors.push(
+                                ...bulkRes.errors.map((err) => ({ ...err, index: err.index + offset }))
+                              );
                             }
                           }
                         } catch (e: any) {
                           console.error("Bulk import failed", e);
                           throw e;
                         }
-                      }
-
-                      for (let idx = 0; idx < others.length; idx++) {
-                        const item = others[idx];
-                        try {
-                          if (item.type === 'note') {
-                            await restAdapter.POST("/api/notes", { id: item.id, title: item.title, content: item.secret, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
-                            result.inserted.push(item.id);
-                          } else if (item.type === 'key') {
-                            await restAdapter.POST("/api/keys", { id: item.id, title: item.title, key_value: item.secret, username: item.username, category: item.category, tags: item.tags, custom_fields: item.custom_fields });
-                            result.inserted.push(item.id);
-                          }
-                        } catch (err: any) {
-                          result.errors.push({ index: pearlsToInsert.length + idx, reason: err.message || 'Insert failed' });
-                        }
+                        offset += chunk.length;
                       }
 
                       if (shellKey) await scuttleVault(shellKey);

@@ -381,4 +381,99 @@ describe('Phase 21: Bulk Import Endpoint & Batch Operations', () => {
       expect(reactiveRiver.getRingBufferSize(userA.uuid)).toBe(2);
     });
   });
+
+  describe('Unified Multi-Domain Bulk Operations (Issue #31)', () => {
+    it('bulk-imports pearls, notes, and SSH keys with a shared import_batch_id, updates metadata, and bulk-deletes all domains', async () => {
+      const cryptoLib = await import('node:crypto');
+      const sharedBatchId = `imp_${cryptoLib.randomUUID()}`;
+
+      const pearl = makePearlPayload({ title: 'Multi Pearl', category: 'Work' });
+      const note = {
+        id: cryptoLib.randomUUID(),
+        title: 'Multi Note',
+        secret: 'enc-note-content',
+        type: 'note',
+        category: 'Work',
+      };
+      const sshKey = {
+        id: cryptoLib.randomUUID(),
+        title: 'Multi SSH Key',
+        secret: 'enc-ssh-key',
+        username: 'root',
+        type: 'key',
+        category: 'Work',
+      };
+
+      // 1. Multi-domain bulk-import
+      const importRes = await request(srv.app)
+        .post('/api/vault/bulk-import')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ items: [pearl, note, sshKey], import_batch_id: sharedBatchId });
+
+      expect(importRes.status).toBe(201);
+      expect(importRes.body.data.inserted).toHaveLength(3);
+      expect(importRes.body.data.import_batch_id).toBe(sharedBatchId);
+
+      const db = srv.db!;
+      const pRow = db.prepare('SELECT import_batch_id, secret FROM vault_pearls WHERE id = ?').get(pearl.id) as any;
+      const nRow = db.prepare('SELECT import_batch_id, content FROM vault_secure_notes WHERE id = ?').get(note.id) as any;
+      const kRow = db.prepare('SELECT import_batch_id, key_value FROM vault_ssh_keys WHERE id = ?').get(sshKey.id) as any;
+      expect(pRow.import_batch_id).toBe(sharedBatchId);
+      expect(nRow.import_batch_id).toBe(sharedBatchId);
+      expect(kRow.import_batch_id).toBe(sharedBatchId);
+
+      // 2. Multi-domain PATCH /api/vault/bulk-metadata (moves Pod + tags without altering Layer 1 secrets)
+      const metaRes = await request(srv.app)
+        .patch('/api/vault/bulk-metadata')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({
+          updates: [
+            { id: pearl.id, type: 'password', category: 'Personal', tags: ['migrated'] },
+            { id: note.id, type: 'note', category: 'Personal', tags: ['migrated'] },
+            { id: sshKey.id, type: 'key', category: 'Personal', tags: ['migrated'] },
+          ],
+        });
+
+      expect(metaRes.status).toBe(200);
+      expect(metaRes.body.data.updated).toHaveLength(3);
+
+      // Verify Layer 1 secret columns were untouched
+      expect((db.prepare('SELECT secret FROM vault_pearls WHERE id = ?').get(pearl.id) as any).secret).toBe(pearl.secret);
+      expect((db.prepare('SELECT content FROM vault_secure_notes WHERE id = ?').get(note.id) as any).content).toBe('enc-note-content');
+      expect((db.prepare('SELECT key_value FROM vault_ssh_keys WHERE id = ?').get(sshKey.id) as any).key_value).toBe('enc-ssh-key');
+
+      // 3. Cross-tenant isolation on bulk-metadata
+      const crossMetaRes = await request(srv.app)
+        .patch('/api/vault/bulk-metadata')
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({ updates: [{ id: pearl.id, type: 'password', category: 'Stolen' }] });
+      expect(crossMetaRes.status).toBe(207);
+      expect(crossMetaRes.body.data.updated).toHaveLength(0);
+      expect(crossMetaRes.body.data.errors).toHaveLength(1);
+
+      // 4. Multi-domain DELETE /api/vault/bulk
+      const delRes = await request(srv.app)
+        .delete('/api/vault/bulk')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ ids: [pearl.id, note.id, sshKey.id] });
+
+      expect(delRes.status).toBe(200);
+      expect(delRes.body.data.deleted).toHaveLength(3);
+      expect(db.prepare('SELECT id FROM vault_pearls WHERE id = ?').get(pearl.id)).toBeUndefined();
+      expect(db.prepare('SELECT id FROM vault_secure_notes WHERE id = ?').get(note.id)).toBeUndefined();
+      expect(db.prepare('SELECT id FROM vault_ssh_keys WHERE id = ?').get(sshKey.id)).toBeUndefined();
+    });
+
+    it('enforces canEdit permission gate on PATCH /api/vault/bulk-metadata', async () => {
+      const readOnlyAgent = await createLobsterKey(srv.app, tokenA, PERMISSION_PRESETS.readOnly, 'Read-Only Meta Agent');
+      const agentToken = await getAgentToken(srv.app, readOnlyAgent.apiKey);
+
+      const res = await request(srv.app)
+        .patch('/api/vault/bulk-metadata')
+        .set('Authorization', `Bearer ${agentToken}`)
+        .send({ updates: [{ id: 'some-id', type: 'password', category: 'Nope' }] });
+
+      expect(res.status).toBe(403);
+    });
+  });
 });

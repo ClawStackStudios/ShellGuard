@@ -116,6 +116,29 @@ export function dataUrlToBlob(dataUrl: string): Blob | null {
   }
 }
 
+export class RateLimitError extends Error {
+  status: number = 429;
+  retryAfterSeconds: number;
+
+  constructor(message: string, retryAfterSeconds: number = 60) {
+    super(message);
+    this.name = 'RateLimitError';
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+export function parseRetryAfterSeconds(rawRetryAfter: string | null, rawRateLimitReset?: string | null): number {
+  const parsedRetry = rawRetryAfter ? parseInt(rawRetryAfter, 10) : NaN;
+  if (!Number.isNaN(parsedRetry) && parsedRetry > 0) {
+    return Math.min(120, Math.max(1, parsedRetry));
+  }
+  const parsedReset = rawRateLimitReset ? parseInt(rawRateLimitReset, 10) : NaN;
+  if (!Number.isNaN(parsedReset) && parsedReset > 0) {
+    return Math.min(120, Math.max(1, parsedReset));
+  }
+  return 60;
+}
+
 export interface MultipartUploadHandle {
   promise: Promise<void>;
   /** Aborts the in-flight upload (resolves the promise silently). */
@@ -171,6 +194,15 @@ export function uploadAttachmentMultipart(metadata: {
           const body = JSON.parse(xhr.responseText);
           if (body?.error) message = body.error;
         } catch { /* non-JSON error body */ }
+
+        if (xhr.status === 429) {
+          const retryAfter = parseRetryAfterSeconds(
+            xhr.getResponseHeader('Retry-After'),
+            xhr.getResponseHeader('RateLimit-Reset')
+          );
+          reject(new RateLimitError(message, retryAfter));
+          return;
+        }
         reject(new Error(message));
       }
     };
@@ -191,16 +223,27 @@ export function uploadAttachmentMultipart(metadata: {
 /**
  * Streams the attachment ciphertext BLOB from GET /api/attachments/:id/file
  * and returns the envelope string (the client decrypts it with the active
- * shellKey — the server cannot).
+ * shellKey — the server cannot). Automatically paces on HTTP 429.
  */
-export async function fetchAttachmentEnvelope(attId: string): Promise<string> {
+export async function fetchAttachmentEnvelope(attId: string, maxRetries = 3): Promise<string> {
   const token = sessionStorage.getItem(SESSION_KEYS.TOKEN);
-  const response = await fetch(`${getApiBaseUrl()}/api/attachments/${attId}/file`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!response.ok) {
-    throw new Error(`Attachment fetch failed (${response.status}).`);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(`${getApiBaseUrl()}/api/attachments/${attId}/file`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (response.status === 429 && attempt < maxRetries) {
+      const waitSec = parseRetryAfterSeconds(
+        response.headers.get('Retry-After'),
+        response.headers.get('RateLimit-Reset')
+      );
+      await new Promise((r) => setTimeout(r, waitSec * 1000));
+      continue;
+    }
+    if (!response.ok) {
+      throw new Error(`Attachment fetch failed (${response.status}).`);
+    }
+    const buffer = await response.arrayBuffer();
+    return new TextDecoder('utf8', { fatal: false }).decode(buffer);
   }
-  const buffer = await response.arrayBuffer();
-  return new TextDecoder('utf8', { fatal: false }).decode(buffer);
+  throw new Error('Attachment fetch failed (429).');
 }

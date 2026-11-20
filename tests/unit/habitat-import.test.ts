@@ -277,5 +277,47 @@ describe('Habitat Ingestion Pipeline & Queue (Task 50)', () => {
       expect(status.progressPercent).toBe(45);
       expect(status.fileName).toBe('contract.pdf');
     });
+
+    it('paces and retries automatically on HTTP 429 RateLimitError without failing the attachment', async () => {
+      const { RateLimitError } = await import('../../src/lib/attachmentUtils.js');
+      let attempts = 0;
+      const mockUploader = vi.fn(() => {
+        attempts++;
+        if (attempts === 1) {
+          return {
+            promise: Promise.reject(new RateLimitError('Too many requests', 1)),
+            abort: () => {},
+          };
+        }
+        return {
+          promise: Promise.resolve(),
+          abort: () => {},
+        };
+      });
+
+      const queue = new AttachmentIngestionQueue(mockUploader);
+      const item: AttachmentQueueItem = {
+        id: 'rate-limit-att',
+        fileName: 'large.bin',
+        relativePath: 'attachments/large.bin',
+        sizeBytes: 2048,
+        parentItemId: 'parent-rl',
+        parentType: 'password',
+        status: 'queued',
+        progressPercent: 0,
+        bytesUploaded: 0,
+        extractBytes: async () => new Uint8Array([1, 2, 3]),
+      };
+
+      queue.enqueue([item]);
+      queue.start(null);
+
+      // Wait just over the 1s Retry-After pacing delay
+      await new Promise((r) => setTimeout(r, 1200));
+
+      expect(attempts).toBe(2);
+      expect(item.status).toBe('verified');
+      expect(item.progressPercent).toBe(100);
+    });
   });
 });

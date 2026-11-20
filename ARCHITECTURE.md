@@ -649,9 +649,10 @@ All endpoints live in `src/server/routes/`. Responses use the `{success, data}` 
 |---|---|---|---|
 | `GET` | `/api/vault` | canRead | List pearl logins (newest first, owner-scoped; supports `?tags=a,b`) |
 | `POST` | `/api/vault` | canWrite | Create login — title ≤255, url ≤2048, notes ≤10000, optional TOTP seed |
-| `POST` | `/api/vault/bulk-import` | canWrite | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, returns HTTP 207 Multi-Status with `{ inserted, errors }`) |
+| `POST` | `/api/vault/bulk-import` | canWrite | Multi-domain batch insert (pearls, notes, SSH keys; up to 1000 items, atomic transaction with per-record validation, optional shared `import_batch_id`, returns HTTP 201 or 207 Multi-Status with `{ inserted, errors }`) |
+| `PATCH` | `/api/vault/bulk-metadata` | canEdit | Multi-domain batch Layer 2 metadata update (`category` / `tags`) across pearls, notes, and SSH keys in 1 transaction without touching Layer 1 secrets |
 | `PUT` | `/api/vault/:id` | canEdit | Update login |
-| `DELETE` | `/api/vault/bulk` | canDelete | Batch delete pearls by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
+| `DELETE` | `/api/vault/bulk` | canDelete | Multi-domain batch delete across pearls, notes, SSH keys, and attachments (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
 | `DELETE` | `/api/vault/:id` | canDelete | Delete login |
 
 ### Secure Notes (`routes/notes.ts`)

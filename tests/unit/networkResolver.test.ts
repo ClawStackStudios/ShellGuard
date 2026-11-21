@@ -45,15 +45,18 @@ describe('NetworkResolver Latency Prober & Vector Racing Engine (Issue #26)', ()
     });
 
     const racePromise = resolver.race();
-    await vi.advanceTimersByTimeAsync(50);
+    await vi.advanceTimersByTimeAsync(5);
     const state = await racePromise;
 
     expect(state.activeVector).toBe('lan');
     expect(state.activeUrl).toBe('https://192.168.1.50:6565');
     expect(state.lastRtts.lan?.status).toBe('online');
     expect(state.lastRtts.lan?.rttMs).toBeLessThan(5);
-    expect(state.lastRtts.tailscale?.status).toBe('online');
-    expect(state.lastRtts.tailscale?.rttMs).toBeGreaterThanOrEqual(30);
+
+    await vi.advanceTimersByTimeAsync(50);
+    const settled = resolver.getState();
+    expect(settled.lastRtts.tailscale?.status).toBe('online');
+    expect(settled.lastRtts.tailscale?.rttMs).toBeGreaterThanOrEqual(30);
   });
 
   it('fails over immediately to Tailscale when LAN probe times out at 1200ms', async () => {

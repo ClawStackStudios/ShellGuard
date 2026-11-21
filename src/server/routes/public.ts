@@ -1,11 +1,30 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import db from '../database/index.js';
-import { getRotationManifest } from '../utils/tlsManager.js';
+import { getRotationManifest, isTlsServerActive } from '../utils/tlsManager.js';
+import { buildReachabilityVectors, detectHostTopology } from '../utils/networkTopology.js';
 import { getInstancePublicKeyHex } from '../utils/instanceKey.js';
 import { isDisableSignupsEnforced } from '../config/envValidator.js';
 
 const router = Router();
+
+// Warm MagicDNS topology cache asynchronously at module load so /endpoints stays <2ms
+void detectHostTopology().catch(() => {});
+
+router.get('/endpoints', (req, res) => {
+  const protocol: 'http' | 'https' =
+    isTlsServerActive() || req.secure || process.env.TLS_ENABLED === 'true' ? 'https' : 'http';
+  const parsedPort = parseInt(process.env.PORT || '6565', 10);
+  const port = Number.isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535 ? 6565 : parsedPort;
+
+  const data = buildReachabilityVectors({
+    protocol,
+    port,
+    currentHost: req.hostname,
+  });
+
+  res.json({ success: true, data });
+});
 
 router.get('/tls-manifest', (_req, res) => {
   const manifest = getRotationManifest();

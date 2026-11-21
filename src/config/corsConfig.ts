@@ -1,5 +1,42 @@
 import { CorsOptions } from 'cors';
 
+const CORS_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
+const CORS_ALLOWED_HEADERS = ["Content-Type", "Authorization", "X-Requested-With"];
+const CORS_EXPOSED_HEADERS = [
+  "X-RateLimit-Limit",
+  "X-RateLimit-Remaining",
+  "X-RateLimit-Reset",
+  "RateLimit-Limit",
+  "RateLimit-Remaining",
+  "RateLimit-Reset",
+  "Retry-After",
+];
+
+/**
+ * True when hostname is loopback, RFC 1918 LAN IPv4, Tailscale CGNAT/ULA,
+ * or a Tailscale MagicDNS (*.ts.net) hostname.
+ */
+export function isPrivateNetworkHostname(rawHostname: string): boolean {
+  const hostname = rawHostname.replace(/^\[|\]$/g, '').trim().toLowerCase();
+  if (!hostname) return false;
+
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return true;
+  }
+
+  const isPrivateIP =
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    hostname.startsWith('fd7a:115c:a1e0:');
+
+  if (isPrivateIP) return true;
+
+  // Tailscale MagicDNS (*.ts.net) — require at least one subdomain label before .ts.net
+  return /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.ts\.net$/.test(hostname);
+}
+
 export function getCorsConfig(): CorsOptions {
   // Inverted check: ONLY development and test activate permissive mode.
   // Any typos like NODE_ENV=prod or staging default strictly to production hardening.
@@ -15,21 +52,7 @@ export function getCorsConfig(): CorsOptions {
 
         try {
           const url = new URL(origin);
-          const hostname = url.hostname;
-
-          // Always allow localhost
-          if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
-            return callback(null, true);
-          }
-
-          // Allow private IP ranges (LAN + Tailscale CGNAT)
-          const isPrivateIP =
-            /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-            /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-            /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-            /^100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(hostname);
-
-          if (isPrivateIP) return callback(null, true);
+          if (isPrivateNetworkHostname(url.hostname)) return callback(null, true);
 
           // In Dev: Allow all origins to prevent friction during LAN testing
           return callback(null, true);
@@ -38,14 +61,14 @@ export function getCorsConfig(): CorsOptions {
         }
       },
       credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-      exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "RateLimit-Limit", "RateLimit-Remaining", "RateLimit-Reset", "Retry-After"],
+      methods: CORS_METHODS,
+      allowedHeaders: CORS_ALLOWED_HEADERS,
+      exposedHeaders: CORS_EXPOSED_HEADERS,
       maxAge: 3600,
     };
   }
 
-  // LAN mode: If CORS_ORIGIN not set, allow local network access
+  // LAN mode: If CORS_ORIGIN not set, allow local network & Tailscale mesh access
   if (!corsOrigin) {
     return {
       origin: (origin, callback) => {
@@ -57,22 +80,7 @@ export function getCorsConfig(): CorsOptions {
         // Parse the origin URL
         try {
           const url = new URL(origin);
-          const hostname = url.hostname;
-
-          // Allow localhost/127.0.0.1
-          if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
-            return callback(null, true);
-          }
-
-          // Allow private IP ranges (LAN + Tailscale CGNAT)
-          // 192.168.x.x, 10.x.x.x, 172.16-31.x.x, 100.64-127.x.x
-          const isPrivateIP =
-            /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-            /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-            /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-            /^100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(hostname);
-
-          if (isPrivateIP) {
+          if (isPrivateNetworkHostname(url.hostname)) {
             return callback(null, true);
           }
 
@@ -85,9 +93,9 @@ export function getCorsConfig(): CorsOptions {
         }
       },
       credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-      exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "RateLimit-Limit", "RateLimit-Remaining", "RateLimit-Reset", "Retry-After"],
+      methods: CORS_METHODS,
+      allowedHeaders: CORS_ALLOWED_HEADERS,
+      exposedHeaders: CORS_EXPOSED_HEADERS,
       maxAge: 3600,
     };
   }

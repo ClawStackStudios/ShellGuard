@@ -41,6 +41,7 @@ import {
   isByoCertConfigured,
   getActiveCertPath,
 } from '../utils/tlsManager.js';
+import { detectHostTopology } from '../utils/networkTopology.js';
 import { getInstancePublicKeyHex } from '../utils/instanceKey.js';
 import os from 'os';
 import fs from 'fs';
@@ -373,9 +374,12 @@ router.get('/tls/status', requireAdmin, async (req, res) => {
   }
 
   const materials = await ensureTlsMaterials();
-  const sans = collectSubjectAltNames();
-  const lan = `https://${sans.find(s => s.ip && s.ip.startsWith('192.168.'))?.ip || sans.find(s => s.ip && s.ip.startsWith('10.'))?.ip || '127.0.0.1'}:${port}`;
-  const ts = sans.find(s => s.value && s.value.endsWith('.ts.net'))?.value ? `https://${sans.find(s => s.value && s.value.endsWith('.ts.net')).value}:${port}` : '';
+  const topology = await detectHostTopology();
+  const sans = collectSubjectAltNames({ magicDnsHost: topology.magicDnsName });
+  const primaryLanIp = topology.lanIps.find(ip => !ip.includes(':')) || '127.0.0.1';
+  const lan = `https://${primaryLanIp}:${port}`;
+  const tsHost = topology.magicDnsName || topology.tailscaleIps.find(ip => !ip.includes(':')) || '';
+  const ts = tsHost ? `https://${tsHost}:${port}` : '';
   const ik = getInstancePublicKeyHex();
   const alias = os.hostname();
   const pairingUri = `shellguard://pair?v=1&lan=${encodeURIComponent(lan)}&ts=${encodeURIComponent(ts)}&fp=${materials.fingerprint}&ik=${ik}&alias=${encodeURIComponent(alias)}`;

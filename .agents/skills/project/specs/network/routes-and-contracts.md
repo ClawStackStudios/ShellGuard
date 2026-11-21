@@ -93,14 +93,15 @@ Request bodies are validated by zod schemas in `src/server/validation/schemas.ts
 (`VaultSchemas.create`, `VaultSchemas.update`, …) — a route without a schema
 does not ship.
 
-**Batch Operations (Phases 21 & 26):**
+**Batch Operations (Phases 21, 26 & Stage 29A):**
 
 | HTTP Verb | Middleware chain | Permission | Purpose |
 |:---|:---|:---|:---|
-| `POST /bulk-import` | `requireAuth` → `requirePermission('canWrite')` → `validateBody(VaultSchemas.bulkImport)` | write | Atomic batch import (up to 1000 items, scoped 10MB parser, stamps `import_batch_id` & `imported_at`, HTTP 207 Multi-Status partial success envelope `{ inserted, errors, import_batch_id, imported_at }`) |
-| `DELETE /bulk` | `requireAuth` → `requirePermission('canDelete')` → `validateBody(VaultSchemas.bulkDelete)` | delete | Batch pearl deletion by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
-| `POST /import-batches/:id/graduate` | `requireAuth` → `requirePermission('canEdit')` | update | Promotes all quarantined records matching `import_batch_id = :id` across pearls, notes, and SSH keys by clearing `imported_at` and `import_batch_id` to `NULL` (`{ graduated_count }`) |
-| `DELETE /import-batches/:id` | `requireAuth` → `requirePermission('canDelete')` | delete | Atomic batch rollback purging all records matching `import_batch_id = :id` across pearls, notes, and SSH keys and cascading linked attachments (`{ deleted_count, deleted_attachments }`) |
+| `POST /bulk-import` | `requireAuth` → `requirePermission('canWrite')` → `validateBody(VaultSchemas.bulkImport)` | write | Multi-domain atomic batch import across pearls, notes, and SSH keys (up to 1000 items, scoped 10MB parser, optional shared `import_batch_id` & `imported_at`, 1 coalesced SSE event, HTTP 201 or 207 Multi-Status `{ inserted, errors, import_batch_id, imported_at }`) |
+| `PATCH /bulk-metadata` | `requireAuth` → `requirePermission('canEdit')` → `validateBody(VaultSchemas.bulkMetadata)` | edit | Multi-domain atomic Layer 2 metadata update (`category` and/or `tags`) across pearls, notes, and SSH keys without touching Layer 1 secrets (up to 1000 items, 1 coalesced SSE event) |
+| `DELETE /bulk` | `requireAuth` → `requirePermission('canDelete')` → `validateBody(VaultSchemas.bulkDelete)` | delete | Multi-domain atomic batch deletion across pearls, notes, SSH keys, and attachments (`{ ids: string[] }`, owner-scoped, cascades linked attachments, 1 coalesced SSE event) |
+| `POST /import-batches/:id/graduate` | `requireAuth` → `requirePermission('canEdit')` | update | Promotes all quarantined records matching `import_batch_id = :id` across pearls, notes, and SSH keys by clearing `imported_at` and `import_batch_id` to `NULL` (`{ graduated_count }`, 1 coalesced SSE event) |
+| `DELETE /import-batches/:id` | `requireAuth` → `requirePermission('canDelete')` | delete | Atomic batch rollback purging all records matching `import_batch_id = :id` across pearls, notes, and SSH keys and cascading linked attachments (`{ deleted_count, deleted_attachments }`, 1 coalesced SSE event) |
 
 ---
 

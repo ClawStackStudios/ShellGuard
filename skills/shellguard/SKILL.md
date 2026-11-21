@@ -278,9 +278,9 @@ Replace an existing pearl's mutable fields. Ownership-scoped: `404` if not yours
 
 **Error Responses:** `401 Unauthorized` · `403 Forbidden` (no `canDelete`) · `404 Not Found`
 
-### POST /api/vault/bulk-import — Batch Import Vault Items
+### POST /api/vault/bulk-import — Multi-Domain Batch Import
 
-Batch insert up to 1,000 vault pearls in an atomic transaction with per-record validation.
+Batch insert up to 1,000 vault records across **pearls** (`password`, `card`, `identity`), **secure notes** (`note`), and **SSH keys** (`key`) in a single atomic transaction with per-record validation. Accepts an optional `import_batch_id` (`imp_<uuid>`) so multi-chunk imports share one quarantine batch. Emits 1 coalesced Reactive River SSE event per batch.
 
 **Permissions Required:** `canWrite`  
 **Payload Limit:** 10MB scoped parser
@@ -288,6 +288,7 @@ Batch insert up to 1,000 vault pearls in an atomic transaction with per-record v
 **Request Body:**
 ```json
 {
+  "import_batch_id": "imp_00000000-0000-4000-8000-000000000000",
   "items": [
     {
       "id": "uuid-v4",
@@ -303,7 +304,7 @@ Batch insert up to 1,000 vault pearls in an atomic transaction with per-record v
 **Responses:**
 - `201 Created` — All items inserted successfully. `inserted` is an **array of the persisted IDs** (not a count):
   ```json
-  { "success": true, "data": { "inserted": ["uuid-v4", "uuid-v5"] } }
+  { "success": true, "data": { "inserted": ["uuid-v4", "uuid-v5"], "import_batch_id": "imp_...", "imported_at": "2026-11-20T00:00:00.000Z" } }
   ```
 - `207 Multi-Status` — Partial success (valid items persisted, invalid items reported). Each error carries the **zero-based source index** and a field-qualified reason:
   ```json
@@ -313,17 +314,40 @@ Batch insert up to 1,000 vault pearls in an atomic transaction with per-record v
       "inserted": ["uuid-v4"],
       "errors": [
         { "index": 4, "reason": "title: Required" },
-        { "index": 12, "reason": "secret: String must contain at least 1 character(s)" }
-      ]
+        { "index": 12, "reason": "secret: Item payload (secret, content, or key_value) is required" }
+      ],
+      "import_batch_id": "imp_...",
+      "imported_at": "2026-11-20T00:00:00.000Z"
     }
   }
   ```
 - `400 Bad Request` — Array missing, empty, or exceeds 1,000 items
 - `401 Unauthorized` · `403 Forbidden` (no `canWrite`)
 
-### DELETE /api/vault/bulk — Batch Delete Vault Items
+### PATCH /api/vault/bulk-metadata — Multi-Domain Batch Metadata Update
 
-Delete multiple vault pearls by their IDs in a single operation. Automatically cascades to linked file attachments and records audit events.
+Update Layer 2 metadata (`category` and/or `tags`) for up to 1,000 records across pearls, secure notes, and SSH keys in one atomic transaction **without touching or re-transmitting Layer 1 encrypted secrets**. Emits 1 coalesced Reactive River SSE event.
+
+**Permissions Required:** `canEdit`
+
+**Request Body:**
+```json
+{
+  "updates": [
+    { "id": "uuid-1", "type": "password", "category": "Work/Infra", "tags": ["prod"] },
+    { "id": "uuid-2", "type": "note", "category": "Work/Infra" }
+  ]
+}
+```
+
+**Responses:**
+- `200 OK` — All requested records updated (`{ "success": true, "data": { "updated": ["uuid-1", "uuid-2"] } }`)
+- `207 Multi-Status` — Partial success (`{ "success": true, "data": { "updated": [...], "errors": [{ "id": "...", "reason": "Not found" }] } }`)
+- `400 Bad Request` · `401 Unauthorized` · `403 Forbidden` (no `canEdit`)
+
+### DELETE /api/vault/bulk — Multi-Domain Batch Delete
+
+Delete up to 1,000 records across **pearls, secure notes, SSH keys, and attachments** by their IDs in a single atomic transaction. Automatically cascades to linked file attachments, wraps audit writes transactionally, and emits 1 coalesced Reactive River SSE event.
 
 **Permissions Required:** `canDelete`
 
@@ -557,7 +581,7 @@ All endpoints are rate-limited. Defaults (tunable via environment):
 | Global API (all `/api/*`) | 100 requests per minute per IP/token |
 | Per-agent-key | Governed by the key's `rateLimit` property (1–10000 req/min) |
 
-Exceeding a limit returns `429 Too Many Requests` with a `Retry-After` header indicating seconds until reset. Behind a reverse proxy, the deployment must set `TRUST_PROXY=true` for client IPs to be attributed correctly.
+Exceeding a limit returns `429 Too Many Requests` with IETF standard `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`, and `Retry-After` headers (all exposed via CORS) indicating remaining quota and seconds until reset. Behind a reverse proxy, the deployment must set `TRUST_PROXY=true` for client IPs to be attributed correctly.
 
 ---
 

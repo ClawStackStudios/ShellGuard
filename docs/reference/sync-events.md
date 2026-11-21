@@ -31,6 +31,7 @@ flowchart LR
 2. **Strict Tenant Isolation**: Event streams are scoped strictly by `owner_uuid`. User A's mutations are strictly inaudible to User B.
 3. **Cursor Replay via Ring Buffer**: Reconnecting clients supply the standard W3C `Last-Event-ID` header (or `?lastEventId=` query parameter). Missed events within the 100-event ring buffer are immediately replayed upon reconnection.
 4. **Proxy & Tunnel Unbuffering**: SSE headers include `X-Accel-Buffering: no` and `Cache-Control: no-cache, no-transform` with 25-second periodic `: heartbeat` comments to prevent reverse proxies (e.g. Nginx, Caddy, Cloudflare) from terminating or buffering the stream.
+5. **Bulk Event Coalescing & Client Debouncing**: Transactional bulk endpoints (`POST /api/vault/bulk-import`, `DELETE /api/vault/bulk`, `PATCH /api/vault/bulk-metadata`, `POST /api/vault/import-batches/:id/graduate`, and `DELETE /api/vault/import-batches/:id`) emit **1** coalesced `vault_mutation` frame per transaction rather than $N$ per-item frames, protecting the 100-event ring buffer from overflow. On the client, `App.tsx` applies a `200ms` trailing debounce to `handleRiverMutation` with single-flight `scuttleVault` deduplication, preserving prior state on transient network errors and automatically clearing `selectedItemId` if the viewed item was removed in a bulk delete.
 
 ---
 

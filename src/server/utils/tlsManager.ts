@@ -1,14 +1,21 @@
 import { signWithInstanceKey } from './instanceKey.js';
+import {
+  classifyHostInterfaces,
+  detectHostTopology,
+  getCachedMagicDnsName,
+  normalizeMagicDnsName,
+} from './networkTopology.js';
 /**
- * TLS certificate manager — self-signed cert generation for LAN HTTPS.
+ * TLS certificate manager — self-signed cert generation for LAN + Tailscale HTTPS.
  *
  * When TLS_ENABLED=true and no explicit cert paths are provided, a stable
  * self-signed certificate is generated on first boot and persisted under
  * DATA_DIR/certs/. The certificate is REUSED on every subsequent boot so the
  * browser exception the user grants once stays valid indefinitely (TOFU).
  *
- * Subject Alternative Names cover localhost + every detected LAN interface so
- * a single warning is shown regardless of how the user reaches the instance.
+ * Subject Alternative Names cover localhost + every detected LAN interface +
+ * active Tailscale IP/MagicDNS routes so a single warning is shown regardless
+ * of how the user reaches the instance.
  * BYO certs (TLS_CERT_PATH / TLS_KEY_PATH) take precedence when both are set.
  */
 
@@ -42,12 +49,21 @@ function certFingerprint(pem: string): string {
   return x509.fingerprint256;
 }
 
+export interface CollectSanOptions {
+  magicDnsHost?: string | null;
+  interfaces?: NodeJS.Dict<os.NetworkInterfaceInfo[]>;
+}
+
 /**
  * Collect SAN entries: localhost + loopback + every non-internal interface
- * address (LAN IPv4/IPv6). Deduplicated. This is what keeps the browser
- * warning to exactly one per origin.
+ * address (LAN + Tailscale IPv4/IPv6) + active MagicDNS *.ts.net FQDN.
+ * Synchronous for backwards-compatibility; pass `magicDnsHost` or call
+ * `detectHostTopology()` beforehand to populate the MagicDNS DNS entry.
  */
-export function collectSubjectAltNames(): Array<{ type: 2 | 7; value?: string; ip?: string }> {
+export function collectSubjectAltNames(
+  options?: CollectSanOptions | string,
+): Array<{ type: 2 | 7; value?: string; ip?: string }> {
+  const opts: CollectSanOptions = typeof options === 'string' ? { magicDnsHost: options } : (options ?? {});
   const altNames: Array<{ type: 2 | 7; value?: string; ip?: string }> = [
     { type: 2, value: 'localhost' },
     { type: 7, ip: '127.0.0.1' },
@@ -55,19 +71,29 @@ export function collectSubjectAltNames(): Array<{ type: 2 | 7; value?: string; i
   ];
   const seen = new Set(['localhost', '127.0.0.1', '::1']);
 
-  for (const iface of Object.values(os.networkInterfaces())) {
-    for (const addr of iface ?? []) {
-      if (!addr || addr.internal || seen.has(addr.address)) continue;
-      seen.add(addr.address);
-      // type 7 = IP address (v4 and v6), type 2 = DNS name
-      altNames.push({ type: 7, ip: addr.address });
-    }
+  const { allNonInternalIps, tailscaleIps } = classifyHostInterfaces(opts.interfaces);
+  for (const ip of allNonInternalIps) {
+    if (seen.has(ip)) continue;
+    seen.add(ip);
+    // type 7 = IP address (v4 and v6), type 2 = DNS name
+    altNames.push({ type: 7, ip });
   }
+
+  const candidateDns = opts.magicDnsHost !== undefined ? opts.magicDnsHost : getCachedMagicDnsName();
+  const magicDns = tailscaleIps.length > 0 ? normalizeMagicDnsName(candidateDns) : null;
+  if (magicDns && !seen.has(magicDns)) {
+    seen.add(magicDns);
+    altNames.push({ type: 2, value: magicDns });
+  }
+
   return altNames;
 }
 
 /** Generate a fresh 10-year EC P-256 self-signed certificate pair. */
 async function generateCertificate(): Promise<{ cert: string; key: string; fingerprint: string }> {
+  const topology = await detectHostTopology();
+  const altNames = collectSubjectAltNames({ magicDnsHost: topology.magicDnsName });
+
   const pems = await selfsigned.generate(
     [{ name: 'commonName', value: 'ShellGuard Self-Signed' }],
     {
@@ -79,7 +105,7 @@ async function generateCertificate(): Promise<{ cert: string; key: string; finge
         { name: 'basicConstraints', cA: false, critical: true },
         { name: 'keyUsage', digitalSignature: true, keyEncipherment: true, critical: true },
         { name: 'extKeyUsage', serverAuth: true },
-        { name: 'subjectAltName', altNames: collectSubjectAltNames(), critical: false },
+        { name: 'subjectAltName', altNames, critical: false },
       ],
     },
   );

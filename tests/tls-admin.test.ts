@@ -152,4 +152,53 @@ describe('TLS Control Plane & Share Signups', () => {
     expect(res.text).toContain('-----BEGIN CERTIFICATE-----');
     expect(res.text).not.toContain('PRIVATE KEY');
   });
+
+  it('exposes GET /api/public/endpoints without auth returning valid reachability vectors', async () => {
+    const res = await request(srv.app).get('/api/public/endpoints');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data.lan)).toBe(true);
+    expect(res.body.data.lan.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.lan[0]).toMatch(/^https?:\/\/.+:\d+$/);
+    expect(res.body.data.tailscale === null || typeof res.body.data.tailscale === 'string').toBe(true);
+    expect(typeof res.body.data.currentHost).toBe('string');
+    expect(typeof res.body.data.port).toBe('number');
+  });
+
+  it('builds reachability vectors accurately with Tailscale active and absent', async () => {
+    const { buildReachabilityVectors } = await import('../src/server/utils/networkTopology.js');
+
+    const dualHomed = buildReachabilityVectors({
+      protocol: 'https',
+      port: 6565,
+      currentHost: '192.168.1.50',
+      magicDnsName: 'my-vault.tailscale.ts.net',
+      interfaces: {
+        eth0: [{ address: '192.168.1.50', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:00', internal: false, cidr: '192.168.1.50/24' }],
+        tailscale0: [{ address: '100.89.12.34', netmask: '255.255.255.255', family: 'IPv4', mac: '00:00:00:00:00:00', internal: false, cidr: '100.89.12.34/32' }],
+      },
+    });
+    expect(dualHomed).toEqual({
+      lan: ['https://192.168.1.50:6565'],
+      tailscale: 'https://my-vault.tailscale.ts.net:6565',
+      currentHost: '192.168.1.50',
+      port: 6565,
+    });
+
+    const lanOnly = buildReachabilityVectors({
+      protocol: 'https',
+      port: 6565,
+      currentHost: '192.168.1.50',
+      magicDnsName: 'stale.ts.net',
+      interfaces: {
+        eth0: [{ address: '192.168.1.50', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:00', internal: false, cidr: '192.168.1.50/24' }],
+      },
+    });
+    expect(lanOnly).toEqual({
+      lan: ['https://192.168.1.50:6565'],
+      tailscale: null,
+      currentHost: '192.168.1.50',
+      port: 6565,
+    });
+  });
 });

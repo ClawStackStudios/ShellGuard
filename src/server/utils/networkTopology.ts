@@ -233,3 +233,50 @@ export function getCachedMagicDnsName(): string | null {
 export function resetTopologyCache(): void {
   cachedMagicDnsName = null;
 }
+
+export interface ReachabilityVectors {
+  lan: string[];
+  tailscale: string | null;
+  currentHost: string;
+  port: number;
+}
+
+export interface BuildReachabilityOptions {
+  protocol: 'http' | 'https';
+  port: number;
+  currentHost?: string;
+  interfaces?: NodeJS.Dict<os.NetworkInterfaceInfo[]>;
+  magicDnsName?: string | null;
+}
+
+/**
+ * Synchronously synthesize public reachability vectors from host interfaces
+ * and the cached MagicDNS name (<2ms, zero DB or network I/O).
+ */
+export function buildReachabilityVectors(opts: BuildReachabilityOptions): ReachabilityVectors {
+  const { lanIps, tailscaleIps } = classifyHostInterfaces(opts.interfaces);
+  const formatHost = (host: string) => (host.includes(':') && !host.startsWith('[') ? `[${host}]` : host);
+
+  const ipv4Lan = lanIps.filter(ip => !ip.includes(':'));
+  const selectedLan = ipv4Lan.length > 0 ? ipv4Lan : lanIps;
+  const lan = selectedLan.length > 0
+    ? selectedLan.map(ip => `${opts.protocol}://${formatHost(ip)}:${opts.port}`)
+    : [`${opts.protocol}://127.0.0.1:${opts.port}`];
+
+  let tailscale: string | null = null;
+  if (tailscaleIps.length > 0) {
+    const candidateDns = opts.magicDnsName !== undefined ? opts.magicDnsName : getCachedMagicDnsName();
+    const resolvedDns = normalizeMagicDnsName(candidateDns);
+    const tsHost = resolvedDns ?? tailscaleIps.find(ip => !ip.includes(':')) ?? tailscaleIps[0];
+    tailscale = `${opts.protocol}://${formatHost(tsHost)}:${opts.port}`;
+  }
+
+  const currentHost = (opts.currentHost || '').replace(/^\[|\]$/g, '').trim() || ipv4Lan[0] || '127.0.0.1';
+
+  return {
+    lan,
+    tailscale,
+    currentHost,
+    port: opts.port,
+  };
+}

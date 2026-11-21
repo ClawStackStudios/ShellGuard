@@ -24,11 +24,12 @@ All ShellGuard endpoints return standard `{ success: boolean, data?: any, error?
 |---|---|---|---|
 | `GET` | `/api/vault` | `canRead` | List all vault pearls for owner (supports `?tags=a,b` intersection filter; returns `imported_at` and `import_batch_id`) |
 | `POST` | `/api/vault` | `canWrite` | Create a new vault pearl (supports `tags`, `uris` Layer 2 metadata encryption, and `password_history` Layer 1 ShellCryption) |
-| `POST` | `/api/vault/bulk-import` | `canWrite` | Batch insert pearls (up to 1000 items, atomic transaction with per-record validation, stamps `import_batch_id` (`imp_<uuid>`) and `imported_at`; returns HTTP 201 `{ inserted, import_batch_id, imported_at }` or HTTP 207 Multi-Status with `errors`) |
+| `POST` | `/api/vault/bulk-import` | `canWrite` | Multi-domain batch insert across pearls, notes, and SSH keys (up to 1000 items, atomic transaction with per-record validation, stamps optional shared `import_batch_id` (`imp_<uuid>`) and `imported_at`; returns HTTP 201 `{ inserted, import_batch_id, imported_at }` or HTTP 207 Multi-Status with `errors`) |
+| `PATCH` | `/api/vault/bulk-metadata` | `canEdit` | Multi-domain batch Layer 2 metadata update (`category` and/or `tags`) across pearls, notes, and SSH keys in 1 atomic transaction without touching Layer 1 secrets (`{ updates: [{ id, type, category?, tags? }] }`) |
 | `POST` | `/api/vault/import-batches/:id/graduate` | `canEdit` | Atomically graduate an import batch across pearls, notes, and SSH keys by clearing `imported_at` and `import_batch_id` to `NULL` (`{ graduated_count }`) |
 | `DELETE` | `/api/vault/import-batches/:id` | `canDelete` | Atomically revert an import batch across pearls, notes, and SSH keys, cascading to linked `vault_secure_attachments` and logging `IMPORT_BATCH_REVERTED` (`{ deleted_count, deleted_attachments }`) |
 | `PUT` | `/api/vault/:id` | `canEdit` | Update an existing pearl (supports `tags`, `uris`, and `password_history`; auto-graduates item by clearing `imported_at` and `import_batch_id` to `NULL`) |
-| `DELETE` | `/api/vault/bulk` | `canDelete` | Batch delete pearls by IDs (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
+| `DELETE` | `/api/vault/bulk` | `canDelete` | Multi-domain batch delete across pearls, notes, SSH keys, and attachments (`{ ids: string[] }`, owner-scoped, cascades linked attachments) |
 | `DELETE` | `/api/vault/:id` | `canDelete` | Delete pearl (cascades linked attachments) |
 
 ---

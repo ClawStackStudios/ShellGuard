@@ -277,6 +277,7 @@ export class AttachmentIngestionQueue {
   private shellKey: CryptoKey | any = null;
   private subscribers = new Set<QueueSubscriber>();
   private uploadExecutor: UploadExecutor = uploadAttachmentMultipart;
+  private rateLimitRetries = new Map<string, number>();
 
   constructor(customUploader?: UploadExecutor) {
     if (customUploader) {
@@ -551,13 +552,26 @@ export class AttachmentIngestionQueue {
       await handle.promise;
 
       // 5. Success! Mark verified
+      this.rateLimitRetries.delete(nextItem.id);
       nextItem.status = 'verified';
       nextItem.progressPercent = 100;
       nextItem.bytesUploaded = nextItem.sizeBytes;
     } catch (err: any) {
-      console.error(`Attachment ingestion failed for ${nextItem.fileName}:`, err);
-      nextItem.status = 'error';
-      nextItem.errorMessage = err.message || 'Upload failed.';
+      const retries = this.rateLimitRetries.get(nextItem.id) || 0;
+      if (err?.status === 429 && retries < 5) {
+        this.rateLimitRetries.set(nextItem.id, retries + 1);
+        const waitMs = Math.max(1000, Math.min(120000, (err.retryAfterSeconds || 60) * 1000));
+        console.warn(`[AttachmentIngestionQueue] Rate limited (429) on ${nextItem.fileName}; pacing for ${Math.round(waitMs / 1000)}s before retry ${retries + 1}/5.`);
+        nextItem.status = 'queued';
+        nextItem.progressPercent = 0;
+        nextItem.bytesUploaded = 0;
+        this.notify();
+        await new Promise((r) => setTimeout(r, waitMs));
+      } else {
+        console.error(`Attachment ingestion failed for ${nextItem.fileName}:`, err);
+        nextItem.status = 'error';
+        nextItem.errorMessage = err.message || 'Upload failed.';
+      }
     } finally {
       this.activeHandle = null;
       this.activeItem = null;

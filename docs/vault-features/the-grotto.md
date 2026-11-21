@@ -163,10 +163,10 @@ ShellGuard provides rich batch management tools to organize, migrate, and prune 
 
 - **Tri-State Multi-Selection**: Select individual items via checkbox, or toggle select-all across filtered views using the header tri-state checkbox.
 - **Floating Action Bar**: Displays selected item counts with bulk actions (Move to Pod, Assign Tags, Delete Selected). Guarded automatically against display when the vault is locked (`!isLocked`).
-- **Bulk Move to Pod**: Move multiple logins, notes, or keys to a destination pod in one action, fully preserving tags and metadata.
-- **Bulk Tag Assignment**: Add tags across multiple selected items without wiping pre-existing tags.
-- **Bulk Delete with Safe Cascade**: Batch remove selected items with a Reef Modernist confirmation modal (`ConfirmDialog`); automatically cascades deletions to linked file attachments without orphan records.
-- **Bulk Import with 207 Multi-Status**: Import up to 1,000 items in a single atomic transaction. Any malformed records are reported with granular error resolution chips indicating item index, title, and validation reason while valid items persist cleanly.
+- **Bulk Move to Pod & Sidebar Pod Rename/Delete**: Moves or reorganizes logins, notes, and SSH keys via a single transactional `PATCH /api/vault/bulk-metadata` request (chunked at 500 items), updating only Layer 2 metadata without touching or re-encrypting Layer 1 secrets.
+- **Bulk Tag Assignment**: Adds tags across multiple selected items in a single `PATCH /api/vault/bulk-metadata` transaction without wiping pre-existing tags or touching encrypted secrets.
+- **Bulk Delete with Safe Cascade**: Batch removes selected pearls, secure notes, SSH keys, and attachments in a single atomic `DELETE /api/vault/bulk` transaction behind a Reef Modernist `ConfirmDialog`, cascading to linked file attachments and emitting 1 coalesced Reactive River sync event.
+- **Bulk Import with 207 Multi-Status**: Multi-domain batch import across pearls, notes, and SSH keys (chunked at 500 items with a shared `import_batch_id`). Any malformed records are reported with granular error resolution chips indicating item index, title, and validation reason while valid items persist cleanly.
 
 ---
 

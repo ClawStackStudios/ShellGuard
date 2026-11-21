@@ -1,5 +1,25 @@
 # Changelog — ShellGuard
 
+## [Unreleased] — Target: v0.0.3.1 (Build 33)
+
+### Added
+- **Unified Multi-Domain Bulk Metadata Endpoint (`PATCH /api/vault/bulk-metadata`, Issue #31):** Updates Layer 2 metadata (`category` / `tags`) across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys` in a single atomic SQLite transaction without touching or re-encrypting Layer 1 secrets.
+- **Standard Rate-Limit Header Exposure & Binary Stream Pacing (Issue #32):**
+  - Exposed IETF `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`, and `Retry-After` headers across all CORS modes in `src/config/corsConfig.ts`.
+  - Added `RateLimitError` and `parseRetryAfterSeconds()` in `src/lib/attachmentUtils.ts`, enabling `AttachmentIngestionQueue` (`habitatImport.ts`) and `fetchAttachmentEnvelope()` to automatically pause and resume on HTTP `429` without failing attachments on large Habitat archives.
+
+### Changed
+- **Unified Multi-Domain Bulk Import & Delete (Issue #31):**
+  - Extended `POST /api/vault/bulk-import` to transactionally insert `password`/`card`/`identity` (`vault_pearls`), `note` (`vault_secure_notes`), and `key` (`vault_ssh_keys`) with an optional client-supplied `import_batch_id` so multi-chunk imports (500 items/chunk) form a single Ephemeral Quarantine batch.
+  - Extended `DELETE /api/vault/bulk` to delete across `vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`, and `vault_secure_attachments` (including cascaded child attachments) in one atomic transaction.
+  - Refactored `src/App.tsx` bulk import, bulk delete, bulk move to pod, bulk tag assignment, pod rename, and pod delete handlers to use 500-item chunked batch requests instead of $O(N)$ per-item HTTP loops.
+
+### Fixed
+- **Reactive River SSE Batch Amplification & Client State Resilience (Issue #30):**
+  - Coalesced `publishMutation()` in `bulk-import`, `bulk-delete`, `bulk-metadata`, `import-batches/:id/graduate`, and `import-batches/:id` revert to emit **1** SSE frame per batch transaction instead of $N$ frames, preserving the 100-event ring buffer and keeping `apiLimiter` (`100 req/min`) strictly enforced.
+  - Wrapped bulk audit log inserts in `auditDb.transaction()` to eliminate $O(N)$ SQLite fsync stalls.
+  - Added single-flight deduplication to `scuttleVault()`, `200ms` trailing debounce to `handleRiverMutation()`, preserved prior `vaultItems` on transient fetch errors instead of wiping state to `[]`, and auto-cleared `selectedItemId` when a viewed item is deleted in a bulk batch.
+
 ## [0.0.3.0] - 2026-11-01 (Build 32)
 
 ### Added

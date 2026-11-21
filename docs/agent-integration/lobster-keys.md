@@ -86,5 +86,5 @@ Content-Type: application/json
 |---|---|---|
 | `canRead` | `GET /api/vault`, `GET /api/notes`, `GET /api/keys`, `GET /api/attachments` | Creating, editing, or deleting items |
 | `canWrite` | `POST /api/vault`, `POST /api/vault/bulk-import`, `POST /api/notes`, `POST /api/keys`, `POST /api/attachments` | Editing existing items or deleting items |
-| `canEdit` | `PUT /api/vault/:id`, `PUT /api/notes/:id`, `PUT /api/keys/:id`, `PUT /api/attachments/:id` | Deleting items |
-| `canDelete` | `DELETE /api/vault/:id`, `DELETE /api/vault/bulk`, `DELETE /api/notes/:id`, `DELETE /api/keys/:id`, `DELETE /api/attachments/:id` | Modifying settings or agent keys |
+| `canEdit` | `PUT /api/vault/:id`, `PATCH /api/vault/bulk-metadata`, `POST /api/vault/import-batches/:id/graduate`, `PUT /api/notes/:id`, `PUT /api/keys/:id`, `PUT /api/attachments/:id` | Deleting items |
+| `canDelete` | `DELETE /api/vault/:id`, `DELETE /api/vault/bulk`, `DELETE /api/vault/import-batches/:id`, `DELETE /api/notes/:id`, `DELETE /api/keys/:id`, `DELETE /api/attachments/:id` | Modifying settings or agent keys |

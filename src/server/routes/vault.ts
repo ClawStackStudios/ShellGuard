@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { Router } from 'express';
-import db, { audit } from '../database/index.js';
+import db, { audit, auditDb } from '../database/index.js';
 import { AuthRequest, requireAuth, requirePermission } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { VaultSchemas } from '../validation/schemas.js';
@@ -95,20 +95,28 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
 });
 
 /**
- * 🐚 POST /api/vault/bulk-import — Bulk import pearls.
- * Executes inside a database transaction with per-record validation.
+ * 🐚 POST /api/vault/bulk-import — Multi-domain bulk import (pearls, notes, SSH keys).
+ * Executes inside a single atomic database transaction with per-record validation.
  */
 router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validateBody(VaultSchemas.bulkImport), async (req: AuthRequest, res) => {
-  const { items } = req.body;
+  const { items, import_batch_id } = req.body;
   const errors: { index: number; reason: string }[] = [];
   const inserted: string[] = [];
 
-  const importBatchId = 'imp_' + crypto.randomUUID();
+  const importBatchId = import_batch_id || ('imp_' + crypto.randomUUID());
   const importedAt = new Date().toISOString();
 
-  const insertStmt = db.prepare(`
+  const insertPearlStmt = db.prepare(`
     INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at, imported_at, import_batch_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertNoteStmt = db.prepare(`
+    INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, tags, custom_fields, attachments, created_at, imported_at, import_batch_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertKeyStmt = db.prepare(`
+    INSERT INTO vault_ssh_keys (id, owner_uuid, title, key_value, username, category, tags, custom_fields, attachments, created_at, imported_at, import_batch_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Prepare all writes asynchronously before opening the transaction
@@ -124,23 +132,35 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
     }
 
     const item = validation.data;
+    const itemType = item.type || 'password';
     try {
       const normalizedTags = normalizeTagsForDb(item.tags);
-      const toStore = await prepareWrite('vault_pearls', {
-        title: item.title.trim(),
-        username: item.username ? item.username.trim() : '',
-        url: item.url ? item.url.trim() : '',
-        category: item.category || '',
-        tags: normalizedTags,
-        notes: item.notes || '',
-      }, fieldCipher);
-
-      preparedItems.push({
-        index: i,
-        original: item,
-        toStore,
-        normalizedTags,
-      });
+      if (itemType === 'note') {
+        const toStore = await prepareWrite('vault_secure_notes', {
+          title: item.title.trim(),
+          category: item.category || '',
+          tags: normalizedTags,
+        }, fieldCipher);
+        preparedItems.push({ index: i, domain: 'vault_secure_notes', original: item, toStore, normalizedTags });
+      } else if (itemType === 'key') {
+        const toStore = await prepareWrite('vault_ssh_keys', {
+          title: item.title.trim(),
+          username: item.username ? item.username.trim() : '',
+          category: item.category || '',
+          tags: normalizedTags,
+        }, fieldCipher);
+        preparedItems.push({ index: i, domain: 'vault_ssh_keys', original: item, toStore, normalizedTags });
+      } else {
+        const toStore = await prepareWrite('vault_pearls', {
+          title: item.title.trim(),
+          username: item.username ? item.username.trim() : '',
+          url: item.url ? item.url.trim() : '',
+          category: item.category || '',
+          tags: normalizedTags,
+          notes: item.notes || '',
+        }, fieldCipher);
+        preparedItems.push({ index: i, domain: 'vault_pearls', original: item, toStore, normalizedTags });
+      }
     } catch (err: any) {
       errors.push({ index: i, reason: err.message });
     }
@@ -148,28 +168,60 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
 
   try {
     const runImport = db.transaction((itemsToInsert: any[]) => {
+      const nowIso = new Date().toISOString();
       for (const p of itemsToInsert) {
         try {
-          insertStmt.run(
-            p.original.id,
-            req.userUuid,
-            p.toStore.title,
-            p.original.secret,
-            p.toStore.username,
-            p.toStore.url,
-            p.original.uris || '[]',
-            p.original.type || 'password',
-            p.toStore.category,
-            p.toStore.tags,
-            p.toStore.notes,
-            p.original.totp_secret || '',
-            p.original.password_history || '[]',
-            p.original.attachments || '[]',
-            p.original.custom_fields || '',
-            new Date().toISOString(),
-            importedAt,
-            importBatchId
-          );
+          if (p.domain === 'vault_secure_notes') {
+            insertNoteStmt.run(
+              p.original.id,
+              req.userUuid,
+              p.toStore.title,
+              p.original.content || p.original.secret,
+              p.toStore.category,
+              p.toStore.tags,
+              p.original.custom_fields || '',
+              p.original.attachments || '[]',
+              nowIso,
+              importedAt,
+              importBatchId
+            );
+          } else if (p.domain === 'vault_ssh_keys') {
+            insertKeyStmt.run(
+              p.original.id,
+              req.userUuid,
+              p.toStore.title,
+              p.original.key_value || p.original.secret,
+              p.toStore.username,
+              p.toStore.category,
+              p.toStore.tags,
+              p.original.custom_fields || '',
+              p.original.attachments || '[]',
+              nowIso,
+              importedAt,
+              importBatchId
+            );
+          } else {
+            insertPearlStmt.run(
+              p.original.id,
+              req.userUuid,
+              p.toStore.title,
+              p.original.secret,
+              p.toStore.username,
+              p.toStore.url,
+              p.original.uris || '[]',
+              p.original.type || 'password',
+              p.toStore.category,
+              p.toStore.tags,
+              p.toStore.notes,
+              p.original.totp_secret || '',
+              p.original.password_history || '[]',
+              p.original.attachments || '[]',
+              p.original.custom_fields || '',
+              nowIso,
+              importedAt,
+              importBatchId
+            );
+          }
           inserted.push(p.original.id);
         } catch (err: any) {
           errors.push({ index: p.index, reason: err.message });
@@ -179,16 +231,24 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
 
     runImport(preparedItems);
 
-    for (const p of preparedItems) {
-      if (inserted.includes(p.original.id)) {
-        audit.log('VAULT_ITEM_CREATED', {
-          action: 'vault_item_created',
-          outcome: 'success',
-          actor: req.userUuid,
-          details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true, importBatchId },
-        });
-        publishMutation(req.userUuid, 'vault_pearls', p.original.id, 'upsert');
-      }
+    const insertedSet = new Set(inserted);
+    if (inserted.length > 0) {
+      auditDb.transaction(() => {
+        for (const p of preparedItems) {
+          if (insertedSet.has(p.original.id)) {
+            const eventName = p.domain === 'vault_secure_notes' ? 'NOTE_CREATED' : p.domain === 'vault_ssh_keys' ? 'SSH_KEY_CREATED' : 'VAULT_ITEM_CREATED';
+            const actionName = p.domain === 'vault_secure_notes' ? 'note_created' : p.domain === 'vault_ssh_keys' ? 'ssh_key_created' : 'vault_item_created';
+            audit.log(eventName, {
+              action: actionName,
+              outcome: 'success',
+              actor: req.userUuid,
+              details: { itemType: p.original.type || 'password', itemId: p.original.id, category: p.toStore.category || '', tags: p.normalizedTags, bulk: true, importBatchId },
+            });
+          }
+        }
+      })();
+      // Emit 1 coalesced SSE frame for the entire batch instead of N per-item frames
+      publishMutation(req.userUuid, 'vault_pearls', importBatchId, 'upsert');
     }
 
     if (errors.length > 0) {
@@ -219,46 +279,97 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
 });
 
 /**
- * 🐚 DELETE /api/vault/bulk — Bulk delete items.
- * Executes inside a transaction, cascades to attachments.
+ * 🐚 DELETE /api/vault/bulk — Multi-domain bulk delete (pearls, notes, keys, attachments).
+ * Executes inside a single atomic transaction and cascades to attachments.
  */
 router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody(VaultSchemas.bulkDelete), async (req: AuthRequest, res) => {
   const { ids } = req.body;
   const deleted: string[] = [];
   const errors: { id: string; reason: string }[] = [];
   const cascadeAuditEvents: { itemId: string; cascadeFrom: string }[] = [];
+  const deletedRecords: { id: string; domain: string }[] = [];
 
-  const getStmt = db.prepare('SELECT type, category, attachments FROM vault_pearls WHERE id = ? AND owner_uuid = ?');
-  const delAttachmentStmt = db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?');
+  const getPearlStmt = db.prepare('SELECT attachments FROM vault_pearls WHERE id = ? AND owner_uuid = ?');
   const delPearlStmt = db.prepare('DELETE FROM vault_pearls WHERE id = ? AND owner_uuid = ?');
+
+  const getNoteStmt = db.prepare('SELECT attachments FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?');
+  const delNoteStmt = db.prepare('DELETE FROM vault_secure_notes WHERE id = ? AND owner_uuid = ?');
+
+  const getKeyStmt = db.prepare('SELECT attachments FROM vault_ssh_keys WHERE id = ? AND owner_uuid = ?');
+  const delKeyStmt = db.prepare('DELETE FROM vault_ssh_keys WHERE id = ? AND owner_uuid = ?');
+
+  const getAttStmt = db.prepare('SELECT parent_id, parent_type FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?');
+  const delAttStmt = db.prepare('DELETE FROM vault_secure_attachments WHERE id = ? AND owner_uuid = ?');
+
+  const cascadeDeleteAttachments = (rawAttachments: string | undefined, parentId: string) => {
+    let cascadeIds: string[] = [];
+    try {
+      const parsed = JSON.parse(rawAttachments || '[]');
+      if (Array.isArray(parsed)) cascadeIds = parsed.filter((v: unknown): v is string => typeof v === 'string');
+    } catch { }
+    for (const attId of cascadeIds) {
+      const result = delAttStmt.run(attId, req.userUuid);
+      if (result.changes > 0) {
+        cascadeAuditEvents.push({ itemId: attId, cascadeFrom: parentId });
+      }
+    }
+  };
 
   try {
     const runBulkDelete = db.transaction((itemsToDelete: string[]) => {
       for (const id of itemsToDelete) {
         try {
-          const row = getStmt.get(id, req.userUuid) as any;
-          if (!row) {
-            errors.push({ id, reason: 'Not found' });
+          const pearlRow = getPearlStmt.get(id, req.userUuid) as { attachments?: string } | undefined;
+          if (pearlRow) {
+            cascadeDeleteAttachments(pearlRow.attachments, id);
+            delPearlStmt.run(id, req.userUuid);
+            deleted.push(id);
+            deletedRecords.push({ id, domain: 'vault_pearls' });
             continue;
           }
 
-          let cascadeIds: string[] = [];
-          try {
-            const parsed = JSON.parse(row.attachments || '[]');
-            if (Array.isArray(parsed)) cascadeIds = parsed.filter((v: unknown): v is string => typeof v === 'string');
-          } catch { }
-
-          if (cascadeIds.length > 0) {
-            for (const attId of cascadeIds) {
-              const result = delAttachmentStmt.run(attId, req.userUuid);
-              if (result.changes > 0) {
-                cascadeAuditEvents.push({ itemId: attId, cascadeFrom: id });
-              }
-            }
+          const noteRow = getNoteStmt.get(id, req.userUuid) as { attachments?: string } | undefined;
+          if (noteRow) {
+            cascadeDeleteAttachments(noteRow.attachments, id);
+            delNoteStmt.run(id, req.userUuid);
+            deleted.push(id);
+            deletedRecords.push({ id, domain: 'vault_secure_notes' });
+            continue;
           }
 
-          delPearlStmt.run(id, req.userUuid);
-          deleted.push(id);
+          const keyRow = getKeyStmt.get(id, req.userUuid) as { attachments?: string } | undefined;
+          if (keyRow) {
+            cascadeDeleteAttachments(keyRow.attachments, id);
+            delKeyStmt.run(id, req.userUuid);
+            deleted.push(id);
+            deletedRecords.push({ id, domain: 'vault_ssh_keys' });
+            continue;
+          }
+
+          const attRow = getAttStmt.get(id, req.userUuid) as { parent_id?: string; parent_type?: string } | undefined;
+          if (attRow) {
+            delAttStmt.run(id, req.userUuid);
+            if (attRow.parent_id && attRow.parent_type) {
+              const parentTable = attRow.parent_type === 'note' ? 'vault_secure_notes'
+                : attRow.parent_type === 'key' ? 'vault_ssh_keys'
+                : 'vault_pearls';
+              const parentRow = db.prepare(`SELECT attachments FROM ${parentTable} WHERE id = ? AND owner_uuid = ?`).get(attRow.parent_id, req.userUuid) as { attachments?: string } | undefined;
+              if (parentRow?.attachments) {
+                try {
+                  const arr = JSON.parse(parentRow.attachments);
+                  if (Array.isArray(arr)) {
+                    db.prepare(`UPDATE ${parentTable} SET attachments = ? WHERE id = ? AND owner_uuid = ?`)
+                      .run(JSON.stringify(arr.filter((a: string) => a !== id)), attRow.parent_id, req.userUuid);
+                  }
+                } catch { }
+              }
+            }
+            deleted.push(id);
+            deletedRecords.push({ id, domain: 'vault_attachments' });
+            continue;
+          }
+
+          errors.push({ id, reason: 'Not found' });
         } catch (err: any) {
           errors.push({ id, reason: err.message });
         }
@@ -267,24 +378,37 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
 
     runBulkDelete(ids);
 
-    for (const att of cascadeAuditEvents) {
-      audit.log('ATTACHMENT_DELETED', {
-        action: 'attachment_deleted',
-        outcome: 'success',
-        actor: req.userUuid,
-        details: { itemId: att.itemId, cascadeFrom: att.cascadeFrom, bulk: true },
-      });
-      publishMutation(req.userUuid, 'vault_attachments', att.itemId, 'delete');
-    }
-
-    for (const id of deleted) {
-      audit.log('VAULT_ITEM_DELETED', {
-        action: 'vault_item_deleted',
-        outcome: 'success',
-        actor: req.userUuid,
-        details: { itemId: id, bulk: true },
-      });
-      publishMutation(req.userUuid, 'vault_pearls', id, 'delete');
+    if (cascadeAuditEvents.length > 0 || deletedRecords.length > 0) {
+      auditDb.transaction(() => {
+        for (const att of cascadeAuditEvents) {
+          audit.log('ATTACHMENT_DELETED', {
+            action: 'attachment_deleted',
+            outcome: 'success',
+            actor: req.userUuid,
+            details: { itemId: att.itemId, cascadeFrom: att.cascadeFrom, bulk: true },
+          });
+        }
+        for (const rec of deletedRecords) {
+          const eventName = rec.domain === 'vault_secure_notes' ? 'NOTE_DELETED'
+            : rec.domain === 'vault_ssh_keys' ? 'SSH_KEY_DELETED'
+            : rec.domain === 'vault_attachments' ? 'ATTACHMENT_DELETED'
+            : 'VAULT_ITEM_DELETED';
+          const actionName = rec.domain === 'vault_secure_notes' ? 'note_deleted'
+            : rec.domain === 'vault_ssh_keys' ? 'ssh_key_deleted'
+            : rec.domain === 'vault_attachments' ? 'attachment_deleted'
+            : 'vault_item_deleted';
+          audit.log(eventName, {
+            action: actionName,
+            outcome: 'success',
+            actor: req.userUuid,
+            details: { itemId: rec.id, bulk: true },
+          });
+        }
+      })();
+      if (deleted.length > 0) {
+        // Emit 1 coalesced SSE frame for the entire bulk delete
+        publishMutation(req.userUuid, 'vault_pearls', 'bulk', 'delete');
+      }
     }
 
     if (errors.length > 0) {
@@ -305,6 +429,112 @@ router.delete('/bulk', requireAuth, requirePermission('canDelete'), validateBody
   } catch (err: any) {
     console.error('Vault DELETE bulk error:', err);
     res.status(500).json({ success: false, error: 'Bedrock failure during bulk delete.' });
+  }
+});
+
+/**
+ * 🐚 PATCH /api/vault/bulk-metadata — Multi-domain bulk metadata update (category / tags).
+ * Updates Layer 2 metadata only without touching Layer 1 encrypted secrets.
+ */
+router.patch('/bulk-metadata', requireAuth, requirePermission('canEdit'), validateBody(VaultSchemas.bulkMetadata), async (req: AuthRequest, res) => {
+  const { updates } = req.body;
+  const updated: string[] = [];
+  const errors: { id: string; reason: string }[] = [];
+
+  // Prepare Layer 2 metadata writes asynchronously before opening the synchronous transaction
+  const preparedUpdates: Array<{
+    id: string;
+    domain: 'vault_pearls' | 'vault_secure_notes' | 'vault_ssh_keys';
+    hasCategory: boolean;
+    hasTags: boolean;
+    encryptedCategory?: string;
+    encryptedTags?: string;
+    rawCategory?: string;
+    rawTags?: string;
+  }> = [];
+
+  try {
+    for (const u of updates) {
+      const hasCategory = u.category !== undefined;
+      const hasTags = u.tags !== undefined;
+      if (!hasCategory && !hasTags) {
+        errors.push({ id: u.id, reason: 'No metadata fields provided' });
+        continue;
+      }
+
+      const domain: 'vault_pearls' | 'vault_secure_notes' | 'vault_ssh_keys' =
+        u.type === 'note' ? 'vault_secure_notes'
+        : u.type === 'key' ? 'vault_ssh_keys'
+        : 'vault_pearls';
+
+      const fieldsToEncrypt: Record<string, string> = {};
+      const rawTags = hasTags ? normalizeTagsForDb(u.tags) : undefined;
+      if (hasCategory) fieldsToEncrypt.category = u.category || '';
+      if (hasTags) fieldsToEncrypt.tags = rawTags!;
+
+      const encrypted = await prepareWrite(domain, fieldsToEncrypt, fieldCipher);
+      preparedUpdates.push({
+        id: u.id,
+        domain,
+        hasCategory,
+        hasTags,
+        encryptedCategory: hasCategory ? (encrypted.category as string) : undefined,
+        encryptedTags: hasTags ? (encrypted.tags as string) : undefined,
+        rawCategory: hasCategory ? (u.category || '') : undefined,
+        rawTags,
+      });
+    }
+
+    const runBulkMetadata = db.transaction(() => {
+      for (const p of preparedUpdates) {
+        const setClauses: string[] = [];
+        const params: any[] = [];
+        if (p.hasCategory) {
+          setClauses.push('category = ?');
+          params.push(p.encryptedCategory);
+        }
+        if (p.hasTags) {
+          setClauses.push('tags = ?');
+          params.push(p.encryptedTags);
+        }
+        params.push(p.id, req.userUuid);
+
+        const info = db.prepare(`UPDATE ${p.domain} SET ${setClauses.join(', ')} WHERE id = ? AND owner_uuid = ?`).run(...params);
+        if (info.changes === 0) {
+          errors.push({ id: p.id, reason: 'Not found' });
+        } else {
+          updated.push(p.id);
+        }
+      }
+    });
+
+    runBulkMetadata();
+
+    if (updated.length > 0) {
+      const updatedSet = new Set(updated);
+      auditDb.transaction(() => {
+        for (const p of preparedUpdates) {
+          if (updatedSet.has(p.id)) {
+            audit.log('VAULT_METADATA_UPDATED', {
+              action: 'vault_metadata_updated',
+              outcome: 'success',
+              actor: req.userUuid,
+              details: { itemId: p.id, domain: p.domain, bulk: true, ...(p.hasCategory ? { category: p.rawCategory } : {}), ...(p.hasTags ? { tags: p.rawTags } : {}) },
+            });
+          }
+        }
+      })();
+      publishMutation(req.userUuid, 'vault_pearls', 'bulk-metadata', 'upsert');
+    }
+
+    if (errors.length > 0) {
+      res.status(207).json({ success: true, data: { updated, errors } });
+    } else {
+      res.json({ success: true, data: { updated } });
+    }
+  } catch (err: any) {
+    console.error('Vault PATCH bulk-metadata error:', err);
+    res.status(500).json({ success: false, error: 'Bedrock failure during bulk metadata update.' });
   }
 });
 
@@ -332,6 +562,10 @@ router.post('/import-batches/:id/graduate', requireAuth, requirePermission('canE
       actor: req.userUuid,
       details: { batchId: id, graduatedCount },
     });
+
+    if (graduatedCount > 0) {
+      publishMutation(req.userUuid, 'vault_pearls', id, 'upsert');
+    }
 
     res.json({
       success: true,
@@ -412,6 +646,8 @@ router.delete('/import-batches/:id', requireAuth, requirePermission('canDelete')
       actor: req.userUuid,
       details: { batchId: id, deletedCount, deletedAttachments },
     });
+
+    publishMutation(req.userUuid, 'vault_pearls', id, 'delete');
 
     res.json({
       success: true,

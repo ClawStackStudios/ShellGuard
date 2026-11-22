@@ -35,6 +35,7 @@ interface HeaderProps {
   headerAddMenuRef?: React.RefObject<HTMLDivElement>;
   isLocked?: boolean;
   riverStatus?: 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+  onOpenTransportDrawer?: () => void;
 }
 
 export function Header({ 
@@ -55,6 +56,7 @@ export function Header({
   headerAddMenuRef,
   isLocked = false,
   riverStatus,
+  onOpenTransportDrawer,
 }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [removingTarget, setRemovingTarget] = useState<Lobster | null>(null);
@@ -136,10 +138,13 @@ export function Header({
 
         {/* Right Side: Add, Account Switcher & Actions */}
         <div className="flex items-center gap-2 md:gap-3">
-          {/* 🌊 Bioluminescent Reactive River Indicator */}
+          {/* 🌊 Bioluminescent Reactive River Indicator (opens Transport Diagnostics) */}
           {user && !isLocked && riverStatus && (
-            <div
-              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold tracking-wide border transition-all ${
+            <button
+              type="button"
+              onClick={onOpenTransportDrawer}
+              aria-label="Open Transport Health Diagnostics"
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold tracking-wide border transition-all cursor-pointer hover:brightness-110 ${
                 riverStatus === "connected"
                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                   : riverStatus === "reconnecting" || riverStatus === "connecting"
@@ -148,12 +153,12 @@ export function Header({
               }`}
               title={
                 riverStatus === "connected"
-                  ? "Reactive River SSE Stream Active — live mutation sync"
+                  ? "Reactive River SSE Stream Active — click for Transport Diagnostics"
                   : riverStatus === "reconnecting"
-                  ? "Reconnecting to Reactive River SSE Stream…"
+                  ? "Reconnecting to Reactive River SSE Stream… — click for Transport Diagnostics"
                   : riverStatus === "connecting"
-                  ? "Connecting to Reactive River SSE Stream…"
-                  : "Reactive River SSE Stream Offline"
+                  ? "Connecting to Reactive River SSE Stream… — click for Transport Diagnostics"
+                  : "Reactive River SSE Stream Offline — click for Transport Diagnostics"
               }
             >
               <span
@@ -174,7 +179,7 @@ export function Header({
                   ? "Connecting…"
                   : "Offline"}
               </span>
-            </div>
+            </button>
           )}
 
           {/* Add button */}

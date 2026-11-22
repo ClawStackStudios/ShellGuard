@@ -58,6 +58,7 @@ import { SuperLobsterPanel } from "./components/Admin/SuperLobsterPanel.tsx";
 import { GeneratorToolView } from "./components/Generator/GeneratorToolView.tsx";
 import { ImportExportView } from "./components/Settings/ImportExportView.tsx";
 import { ConfigSettingsView } from "./components/Settings/ConfigSettingsView.tsx";
+import { TransportDiagnosticsDrawer } from "./components/Network/TransportDiagnosticsDrawer.tsx";
 import { LobsterKeysTab } from "./components/LobsterKeys/LobsterKeysTab.tsx";
 import { ZeroKnowledgeWarningBanner } from "./components/ZeroKnowledgeWarningBanner.tsx";
 import { 
@@ -147,6 +148,7 @@ export default function App() {
   // Phase 19: streaming upload progress + cancel handle for in-flight attachments.
   const [uploadProgress, setUploadProgress] = useState<{ name: string; percent: number } | null>(null);
   const activeUploadRef = useRef<{ abort: () => void } | null>(null);
+  const [isTransportDrawerOpen, setIsTransportDrawerOpen] = useState(false);
 
   const handleOpenAdd = (type: VaultItemType) => {
     setActiveTypeFilter(type);
@@ -1202,6 +1204,7 @@ export default function App() {
           onOpenAdd={handleOpenAdd}
           headerAddMenuRef={headerAddMenuRef}
           riverStatus={riverStatus}
+          onOpenTransportDrawer={() => setIsTransportDrawerOpen(true)}
         />
 
         {/* Scrollable Content Area */}
@@ -1494,7 +1497,7 @@ export default function App() {
               )}
               {view === "settings_config" && (
                 <motion.div key="settings_config" className="w-full">
-                  <ConfigSettingsView />
+                  <ConfigSettingsView onOpenTransportDrawer={() => setIsTransportDrawerOpen(true)} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1502,6 +1505,11 @@ export default function App() {
         </div>
       </main>
       </div>
+      <TransportDiagnosticsDrawer
+        isOpen={isTransportDrawerOpen}
+        onClose={() => setIsTransportDrawerOpen(false)}
+        riverStatus={riverStatus}
+      />
     </div>
   );
 }

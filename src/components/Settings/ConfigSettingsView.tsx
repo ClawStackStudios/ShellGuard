@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, CheckCircle2, AlertCircle, Clock, ShieldCheck } from 'lucide-react';
+import { Settings, Save, CheckCircle2, AlertCircle, Clock, ShieldCheck, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { restAdapter } from '../../services/api/restAdapter.ts';
 
-export function ConfigSettingsView() {
+export interface ConfigSettingsViewProps {
+  onOpenTransportDrawer?: () => void;
+}
+
+export function ConfigSettingsView({ onOpenTransportDrawer }: ConfigSettingsViewProps = {}) {
   const [retentionWindow, setRetentionWindow] = useState<number>(30); // 30m, 60m, 90m, or 0 (Manual)
   const [autoGraduate, setAutoGraduate] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -159,6 +163,28 @@ export function ConfigSettingsView() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Network & Transport Diagnostics Deep-Link */}
+      <div className="bg-theme-surface/50 rounded-3xl border border-theme-subtle overflow-hidden shadow-sm">
+        <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-theme-main">
+              <Activity className="text-claw-cyan" size={20} />
+              <h3 className="text-lg font-bold">Network & Transport</h3>
+            </div>
+            <p className="text-sm text-theme-muted mt-1">
+              Inspect dual-homed LAN &amp; Tailscale MagicDNS latency, pin active transport vectors, and verify TLS fingerprints.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenTransportDrawer}
+            className="px-4 py-2.5 rounded-xl bg-theme-base hover:bg-theme-surface border border-theme-subtle text-sm font-bold text-theme-main transition-colors cursor-pointer shrink-0"
+          >
+            Open Transport Diagnostics
+          </button>
         </div>
       </div>
     </div>

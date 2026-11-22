@@ -92,7 +92,7 @@ describe('Bulk-Import Idempotent Upsert, Cross-Owner Isolation & MetadataGuard U
 
     expect(initialRes.status).toBe(201);
     expect(initialRes.body.data.inserted).toHaveLength(4);
-    expect(initialRes.body.data.errors).toEqual([]);
+    expect(initialRes.body.data.errors).toBeUndefined();
 
     // Re-import exact same UUIDs with updated metadata/secrets
     const reimportRes = await request(srv.app)
@@ -130,7 +130,7 @@ describe('Bulk-Import Idempotent Upsert, Cross-Owner Isolation & MetadataGuard U
 
     expect(reimportRes.status).toBe(201);
     expect(reimportRes.body.data.inserted).toEqual([pearlId, identityId, noteId, keyId]);
-    expect(reimportRes.body.data.errors).toEqual([]);
+    expect(reimportRes.body.data.errors).toBeUndefined();
 
     // Verify Layer-2 MetadataGuard encrypted uris on disk AND decrypted on GET /api/vault
     const rawRow = db.prepare('SELECT uris FROM vault_pearls WHERE id = ?').get(pearlId) as { uris: string };

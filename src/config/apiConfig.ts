@@ -17,6 +17,8 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
+import { networkResolver } from "../lib/networkResolver.ts";
+
 // @ts-ignore: Vite replaces these at build-time
 const BAKED_PROD = import.meta.env.PROD;
 // @ts-ignore: Vite replaces these at build-time
@@ -29,7 +31,13 @@ export function getApiBaseUrl(): string {
     return BAKED_API_URL.replace(/\/$/, "");
   }
 
-  // Priority 2: Production builds use relative paths (same-origin)
+  // Priority 2: Dynamic dual-homed active vector from NetworkResolver
+  const resolvedBase = networkResolver.getActiveBaseUrl();
+  if (resolvedBase) {
+    return resolvedBase.replace(/\/$/, "");
+  }
+
+  // Priority 3: Production builds use relative paths (same-origin)
   // This works for:
   // - Docker single-container deployments (UI + API on same port)
   // - Any LAN IP (192.168.x.x:6464) since relative paths work cross-IP
@@ -38,7 +46,7 @@ export function getApiBaseUrl(): string {
     return "";
   }
 
-  // Priority 3: Local development default (separate ports)
+  // Priority 4: Local development default (separate ports)
   // Dev server (port 6464) connects to API server (port 6565)
   // Use window.location.hostname and protocol to support HTTPS and LAN testing (mobile devices)
   const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';

@@ -24,8 +24,8 @@ ShellGuard Era 2 operates the web server and native Android companion (`ShellGua
 | **Stage 28.2** | `v0.0.3.0 (Build 32)` | `stages/stage-28.2.md` | `modules/07-superlobster-admin/{01,02}/`, `specs/architecture/architecture.md`, `specs/network/routes-and-contracts.md` | 🟢 **PRUNED (Shipped `f81330e`)** |
 | **Stage 28.3** | `v0.0.3.0 (Build 32)` | `stages/stage-28.3.md` | `modules/02-vault-workspace/01-shell-and-list/`, `specs/storage/storage-quota-spec.md`, `specs/crypto/shellcryption-spec.md` | 🟢 **PRUNED (Shipped `7770999`)** |
 | **Stage 28.4** | `v0.0.3.0 (Build 32)` | `stages/stage-28.4.md` | `modules/02-vault-workspace/01-shell-and-list/`, `specs/network/network-topology-spec.md`, `specs/architecture/architecture.md` | 🟢 **PRUNED (Shipped `7770999`)** |
-| **Stage 29** | `v0.0.3.1 (Build 33)` | [`stages/stage-29-dual-homed-magicdns/`](./stages/stage-29-dual-homed-magicdns/prompt.md) | `modules/06-settings/`, `modules/07-superlobster-admin/02-transport-and-mobile-pairing/`, `specs/architecture/architecture.md` | 🟢 **ACTIVE LEADING EDGE** |
-| **Stage 30** | `v0.0.3.2 (Build 34)` | [`stages/stage-30-offline-delta-journal/`](./stages/stage-30-offline-delta-journal/prompt.md) | `modules/02-vault-workspace/{01,02}/`, `specs/storage/database-schema.md`, `specs/network/routes-and-contracts.md` | ⚪ Queued |
+| **Stage 29** | `v0.0.3.1 (Build 33)` | [`stages/stage-29.md`](./stages/stage-29.md) | `modules/06-settings/`, `modules/07-superlobster-admin/02-transport-and-mobile-pairing/`, `specs/architecture/architecture.md` | 🟢 **PRUNED (Shipped `8b7338e`)** |
+| **Stage 30** | `v0.0.3.2 (Build 34)` | [`stages/stage-30-offline-delta-journal/`](./stages/stage-30-offline-delta-journal/prompt.md) | `modules/02-vault-workspace/{01,02}/`, `specs/storage/database-schema.md`, `specs/network/routes-and-contracts.md` | 🟢 **ACTIVE LEADING EDGE** |
 | **Stage 31** | `v0.0.3.3 (Build 35)` | [`stages/stage-31-p2p-direct-reef-sync/`](./stages/stage-31-p2p-direct-reef-sync/prompt.md) | `modules/05-import-export-habitat/`, `specs/network/routes-and-contracts.md`, `specs/crypto/key-hierarchy-spec.md` | ⚪ Queued |
 | **Stage 32** | `v0.0.3.4 (Build 36)` | [`stages/stage-32-hardware-enclave/`](./stages/stage-32-hardware-enclave/prompt.md) | `modules/01-auth-gateway/`, `modules/02-vault-workspace/04-lock-and-multi-account/`, `specs/crypto/key-hierarchy-spec.md` | ⚪ **ERA 2 CULMINATION** |
 
@@ -33,8 +33,8 @@ ShellGuard Era 2 operates the web server and native Android companion (`ShellGua
 
 ## 3. Active Stage Pointer
 
-- **Current Active Stage:** `Stage 3 (Phase 29): Dual-Homed Network Resolution Engine & MagicDNS Mesh (Tasks 63 & 64)`
-- **Location:** [`.agents/skills/project/stages/stage-29-dual-homed-magicdns/prompt.md`](./stages/stage-29-dual-homed-magicdns/prompt.md)
+- **Current Active Stage:** `Stage 4 (Phase 30): Offline Encrypted Delta Journal & Conflict Resolution (Tasks 65 & 66)`
+- **Location:** [`.agents/skills/project/stages/stage-30-offline-delta-journal/prompt.md`](./stages/stage-30-offline-delta-journal/prompt.md)
 - **Master Schedule:** [`.agents/skills/project/ROADMAP-ERA2.md`](./ROADMAP-ERA2.md)
 
 ---

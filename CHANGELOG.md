@@ -1,8 +1,17 @@
 # Changelog — ShellGuard
 
-## [Unreleased] — Target: v0.0.3.1 (Build 33)
+## [0.0.3.1] - 2026-11-22 (Build 33)
 
 ### Added
+- **Zero-Config Dual-Homed Network Topology & Tailscale MagicDNS Auto-Detection (Issues #21, #25):**
+  - Added `src/server/utils/networkTopology.ts` partitioning host interfaces into RFC 1918 LAN IPs (`10/8`, `172.16/12`, `192.168/16`) and Tailscale RFC 6598 CGNAT (`100.64.0.0/10`) / ULA (`fd7a:115c:a1e0::/48`) addresses. When Tailscale is active, both LAN and Tailscale interfaces are treated as concurrently active and MagicDNS `*.ts.net` FQDNs are auto-resolved (LocalAPI Unix socket ➔ `dns.reverse` ➔ optional `TS_CERT_DOMAIN`/`TAILSCALE_MAGIC_DNS` fallback) and injected as `type: 2` TLS SANs in `tlsManager.ts`. When absent, cleanly falls back to standard LAN interfaces with zero probes or warnings.
+  - Added unauthenticated `GET /api/public/endpoints` in `src/server/routes/public.ts` returning `{ lan, tailscale, currentHost, port }` in `<2ms` with zero DB overhead.
+- **CORS Mesh Authorization for `*.ts.net` (Issue #22):**
+  - Extracted `isPrivateNetworkHostname()` in `src/config/corsConfig.ts` authorizing `*.ts.net` MagicDNS subdomains (with or without port) and Tailscale IPv6 in LAN mode with `credentials: true` while strictly rejecting public origins unless explicitly listed in `CORS_ORIGIN`.
+- **Client `NetworkResolver`, Auto-Failover & Transport Diagnostics Drawer (Issues #26, #27, #28):**
+  - Added `src/lib/networkResolver.ts` racing LAN (`1200ms` timeout) vs Tailscale (`3000ms` timeout) `/api/health` probes in parallel with single-flight coalescing, `auto` / `force-lan` / `force-tailscale` pinning modes, `localStorage` (`sg_transport_config`) persistence, and `'online'` re-race listeners.
+  - Wired `networkResolver.getActiveBaseUrl()` into `src/config/apiConfig.ts`, added transparent network-error emergency race failover to `src/services/api/restAdapter.ts` (preserving bearer tokens without failing over on HTTP 4xx/5xx), and added immediate `EventSource` vector migration (retaining `Last-Event-ID`) to `src/hooks/useReactiveRiver.ts`.
+  - Built accessible slide-out `src/components/Network/TransportDiagnosticsDrawer.tsx` (Escape dismissal, Tab focus trap, live RTT telemetry cards, pinning mode selector, **Race Now**, and SHA-256 TLS fingerprint), wired to the interactive Header status pill and **Settings ➔ Configuration**.
 - **Unified Multi-Domain Bulk Metadata Endpoint (`PATCH /api/vault/bulk-metadata`, Issue #31):** Updates Layer 2 metadata (`category` / `tags`) across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys` in a single atomic SQLite transaction without touching or re-encrypting Layer 1 secrets.
 - **Standard Rate-Limit Header Exposure & Binary Stream Pacing (Issue #32):**
   - Exposed IETF `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`, and `Retry-After` headers across all CORS modes in `src/config/corsConfig.ts`.
@@ -10,15 +19,22 @@
 
 ### Changed
 - **Unified Multi-Domain Bulk Import & Delete (Issue #31):**
-  - Extended `POST /api/vault/bulk-import` to transactionally insert `password`/`card`/`identity` (`vault_pearls`), `note` (`vault_secure_notes`), and `key` (`vault_ssh_keys`) with an optional client-supplied `import_batch_id` so multi-chunk imports (500 items/chunk) form a single Ephemeral Quarantine batch.
+  - Extended `POST /api/vault/bulk-import` to transactionally upsert `password`/`card`/`identity` (`vault_pearls`), `note` (`vault_secure_notes`), and `key` (`vault_ssh_keys`) with an optional client-supplied `import_batch_id` so multi-chunk imports (500 items/chunk) form a single Ephemeral Quarantine batch.
   - Extended `DELETE /api/vault/bulk` to delete across `vault_pearls`, `vault_secure_notes`, `vault_ssh_keys`, and `vault_secure_attachments` (including cascaded child attachments) in one atomic transaction.
   - Refactored `src/App.tsx` bulk import, bulk delete, bulk move to pod, bulk tag assignment, pod rename, and pod delete handlers to use 500-item chunked batch requests instead of $O(N)$ per-item HTTP loops.
 
 ### Fixed
+- **Mobile Backup Interoperability, `CustomField` Normalization, Idempotent Upsert & Layer-2 `uris` Parity (Issue #34):**
+  - Added `src/lib/customFieldUtils.ts` (`normalizeCustomFields`, `extractShellGuardBackupItems`) resolving Mobile `{ label, type: "TEXT" | "HIDDEN" | "BOOLEAN" | "LINKED" }` and numeric Bitwarden field shapes across `ItemDetailPane.tsx`, `ItemFormModal.tsx`, `ImportExportView.tsx`, and `App.tsx`, plus camelCase (`customFields`, `totpSecret`) and legacy `{ pearls, notes, sshKeys }` backup envelopes.
+  - Updated `POST /api/vault/bulk-import` in `src/server/routes/vault.ts` to owner-scoped `ON CONFLICT(id) DO UPDATE ... WHERE owner_uuid = excluded.owner_uuid` (rejecting cross-owner UUID collisions fail-closed when `changes === 0`).
+  - Added Layer-2 `MetadataGuard` `uris` write encryption parity across `POST /api/vault`, `PUT /api/vault/:id`, and `POST /api/vault/bulk-import`.
 - **Reactive River SSE Batch Amplification & Client State Resilience (Issue #30):**
   - Coalesced `publishMutation()` in `bulk-import`, `bulk-delete`, `bulk-metadata`, `import-batches/:id/graduate`, and `import-batches/:id` revert to emit **1** SSE frame per batch transaction instead of $N$ frames, preserving the 100-event ring buffer and keeping `apiLimiter` (`100 req/min`) strictly enforced.
   - Wrapped bulk audit log inserts in `auditDb.transaction()` to eliminate $O(N)$ SQLite fsync stalls.
   - Added single-flight deduplication to `scuttleVault()`, `200ms` trailing debounce to `handleRiverMutation()`, preserved prior `vaultItems` on transient fetch errors instead of wiping state to `[]`, and auto-cleared `selectedItemId` when a viewed item is deleted in a bulk batch.
+
+### Verified
+- All **43 Vitest suites** (**480 passed**, 1 skipped), `tsc --noEmit`, `vite build`, and `vitepress docs:build` pass 100% green on GitHub Actions Cloud CI.
 
 ## [0.0.3.0] - 2026-11-01 (Build 32)
 

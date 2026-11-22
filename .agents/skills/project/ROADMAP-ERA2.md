@@ -1,7 +1,7 @@
 ---
 roadmap_version: 3.2.0-era2-modular
-last_updated: 2026-11-01
-current_position: "Phase 28 (v0.0.3.0 / Build 32) shipped; next up: Stage 3 (Phase 29: Dual-Homed Network Resolution Engine & MagicDNS Mesh, provisional v0.0.3.1 / Build 33, Tasks 63 & 64)"
+last_updated: 2026-11-22
+current_position: "Phase 29 (v0.0.3.1 / Build 33) shipped; next up: Stage 4 (Phase 30: Offline Encrypted Delta Journal & Conflict Resolution, provisional v0.0.3.2 / Build 34, Tasks 65 & 66)"
 statistics:
   description: "Deterministic build roadmap for ShellGuard Era 2 (The Distributed Reef & Mobile-First Fleet). Engineered strictly in synergistic 2-task phases where Task A delivers core functionality/security and Task B delivers the corresponding UI/interactive component and documentation walk."
   era: "Era 2 — Distributed Sync & Mobile-First Fleet (Phase 27+)"
@@ -23,7 +23,8 @@ statistics:
 
 - **Era 2 Launch Milestone**: `v0.0.2.9 (Build 31)` (Phase 27) ✅
 - **Milestone v0.0.3.0 (Build 32)**: (Phase 28) ✅
-- **Next Planned Milestone**: `v0.0.3.1 (Build 33)` (Phase 29)
+- **Milestone v0.0.3.1 (Build 33)**: (Phase 29) ✅
+- **Next Planned Milestone**: `v0.0.3.2 (Build 34)` (Phase 30)
 - **Version Grammar**: Every release increments REVISION or PATCH based on structural gravity.
 - **Strict 2-Task Pairing Law**: Every phase (and sub-phase) consists strictly of **Task A [Functionality / Security Engine]** followed immediately by **Task B [UI Component / Interactive State + Walk-the-Docs Verification]**.
 - **Rolling Window Discipline**: Preserves the Active Forward Queue and the 3 most recent completed phases (historical phases archived in [`.agents/brain/ROADMAP-HISTORY.md`](../../brain/ROADMAP-HISTORY.md)).
@@ -119,17 +120,16 @@ Include visual chips for reachability vectors (`LAN IP` and `Tailscale`), one-cl
 
 ---
 
-### Phase 29: Dual-Homed Network Resolution Engine & MagicDNS Mesh [provisional v0.0.3.1 (Build 33)] — [`stages/stage-29-dual-homed-magicdns/prompt.md`](./stages/stage-29-dual-homed-magicdns/prompt.md)
+### Phase 29: Dual-Homed Network Resolution Engine, MagicDNS Mesh, Bulk Coalescing & Mobile Backup Interop [v0.0.3.1 (Build 33)] ✅ — [`stages/stage-29.md`](./stages/stage-29.md)
 
 > Phase Feature Set Overview:
-> Bridges local LAN and Tailscale MagicDNS into a unified transport layer. Clients dynamically race LAN vs Tailscale
-> endpoints and seamlessly migrate between local WiFi and remote cellular connections without session loss.
+> Bridges local LAN and Tailscale MagicDNS into a unified zero-config transport layer while coalescing multi-domain bulk transactions and establishing lossless Mobile backup interoperability. Clients dynamically race LAN vs Tailscale endpoints, fail over REST/SSE transparently without session loss, and expose live telemetry inside the Transport Diagnostics Drawer.
 
-- [ ] **Task 63: [Functionality] Client-Side Latency Probing & Tailscale MagicDNS Resolver**
-  Description: Implement adaptive network prober testing LAN (`192.168.x.x`) against Tailscale (`*.ts.net`). Auto-route requests through the lowest latency vector, with automated failover and backoff.
+- [x] **Task 63: [Functionality] Client-Side Latency Probing, Tailscale MagicDNS Resolver, Bulk Coalescing & Idempotent Upsert**
+  Description: Implemented RFC 1918 vs RFC 6598/fd7a topology detection with 3-tier MagicDNS resolution (`networkTopology.ts`), `*.ts.net` TLS SAN reflection (`tlsManager.ts`), LAN-mode Tailscale CORS (`corsConfig.ts`), `GET /api/public/endpoints`, fast-first `NetworkResolver` (`1200ms` LAN / `3000ms` Tailscale races), transparent REST/SSE failover, multi-domain bulk SSE coalescing + 429 stream pacing, and owner-scoped idempotent bulk-import upsert with Layer-2 `uris` encryption.
 
-- [ ] **Task 64: [UI Component] Transport Health Diagnostics Drawer & Manual Network Overrides**
-  Description: Build Transport Diagnostics drawer in settings displaying active connection vector, latency graphs (ms), and manual transport pinning overrides.
+- [x] **Task 64: [UI Component & Walk-the-Docs] Transport Health Diagnostics Drawer, Mobile Interop & 4-Zone Docs Sync**
+  Description: Built accessible `TransportDiagnosticsDrawer.tsx` wired to the interactive Header River pill and Settings, added `customFieldUtils.ts` Mobile backup normalization, and completed the 4-Zone Docs Walk (`v0.0.3.1`, `RELEASE-v0.0.3.1.md`, VitePress `/reference/network-resolver`, `pairing.md`, `https-tls.md`, `import-export.md`, `ARCHITECTURE.md` Delta #37, and Project Skill Genome pruning).
 
 ---
 

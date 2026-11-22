@@ -38,6 +38,7 @@ import {
 import { ConfirmDialog } from "../ui/ConfirmDialog.tsx";
 import { VaultItem, Lobster, VaultItemType } from "../../types.ts";
 import { hashToken, generateUUID } from "../../lib/crypto.ts";
+import { extractShellGuardBackupItems } from "../../lib/customFieldUtils.ts";
 import { restAdapter } from "../../services/api/restAdapter.ts";
 import {
   sniffSgTotpBackup,
@@ -494,13 +495,9 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems, onBa
         // Not an sgtotp backup; fall through to standard JSON
       }
 
-      // 2e. Standard ShellGuard JSON export (array or { items: [...] })
-      let listToImport: any[] = [];
-      if (Array.isArray(parsed)) {
-        listToImport = parsed;
-      } else if (parsed && Array.isArray(parsed.items)) {
-        listToImport = parsed.items;
-      } else {
+      // 2e. Standard ShellGuard JSON export (array, { items: [...] }, or legacy { pearls, notes, sshKeys })
+      const listToImport = extractShellGuardBackupItems(parsed);
+      if (!listToImport) {
         throw new Error("Unrecognized structure. Expected an array of vault items, a ShellGuard backup, or a Bitwarden export.");
       }
 
@@ -531,12 +528,8 @@ export function ImportExportView({ items, lobster, shellKey, onImportItems, onBa
       const decrypted = await decryptBackupPayload(encryptedBackupPending, encryptedBackupPassword);
       if (decrypted.kind === "json") {
         const parsed = JSON.parse(decrypted.data);
-        let list: any[] = [];
-        if (Array.isArray(parsed)) {
-          list = parsed;
-        } else if (parsed && Array.isArray(parsed.items)) {
-          list = parsed.items;
-        } else {
+        const list = extractShellGuardBackupItems(parsed);
+        if (!list) {
           throw new Error("Decrypted payload does not contain an items array.");
         }
         setDetectedFormatName("ShellGuard Encrypted Archive (Decrypted)");

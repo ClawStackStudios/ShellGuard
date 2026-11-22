@@ -59,6 +59,7 @@ import { GeneratorToolView } from "./components/Generator/GeneratorToolView.tsx"
 import { ImportExportView } from "./components/Settings/ImportExportView.tsx";
 import { ConfigSettingsView } from "./components/Settings/ConfigSettingsView.tsx";
 import { TransportDiagnosticsDrawer } from "./components/Network/TransportDiagnosticsDrawer.tsx";
+import { normalizeCustomFields } from "./lib/customFieldUtils.ts";
 import { LobsterKeysTab } from "./components/LobsterKeys/LobsterKeysTab.tsx";
 import { ZeroKnowledgeWarningBanner } from "./components/ZeroKnowledgeWarningBanner.tsx";
 import { 
@@ -1421,24 +1422,34 @@ export default function App() {
                         let encryptedKey = "";
                         let encryptedCustomFields = "";
 
+                        const rawCustomFields = item.custom_fields ?? (item as any).customFields;
+                        const normalizedFields = normalizeCustomFields(rawCustomFields);
+                        const serializedCustomFields = normalizedFields.length > 0 ? JSON.stringify(normalizedFields) : "";
+                        const rawTotp = item.totp_secret || (item as any).totpSecret || "";
+
                         const itemType = (item.type as VaultItemType) || "password";
                         let encryptedHistory = "";
                         if (itemType === 'note') {
-                          const notePayload = item.secret || item.notes || "Note";
+                          const notePayload = item.secret || (item as any).content || item.notes || item.title || "Note";
                           encryptedContent = await encryptField(notePayload, shellKey, "vault_secure_notes", id);
-                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_secure_notes_custom", id) : "";
+                          encryptedCustomFields = serializedCustomFields ? await encryptField(serializedCustomFields, shellKey, "vault_secure_notes_custom", id) : "";
                         } else if (itemType === 'key') {
-                          encryptedKey = await encryptField(item.secret || "", shellKey, "vault_ssh_keys", id);
-                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_ssh_keys_custom", id) : "";
+                          const keyPayload = item.secret || (item as any).key_value || "";
+                          encryptedKey = await encryptField(keyPayload, shellKey, "vault_ssh_keys", id);
+                          encryptedCustomFields = serializedCustomFields ? await encryptField(serializedCustomFields, shellKey, "vault_ssh_keys_custom", id) : "";
                         } else {
-                          encryptedSecret = await encryptField(item.secret || "", shellKey, "vault_pearls", id);
-                          if (item.totp_secret) {
-                            encryptedTotp = await encryptField(item.totp_secret, shellKey, "vault_pearls_totp", id);
+                          const secretPayload = item.secret || item.notes || item.username || item.title || "Imported Record";
+                          encryptedSecret = await encryptField(secretPayload, shellKey, "vault_pearls", id);
+                          if (rawTotp) {
+                            encryptedTotp = await encryptField(rawTotp, shellKey, "vault_pearls_totp", id);
                           }
                           if (item.password_history) {
-                            encryptedHistory = await encryptField(item.password_history, shellKey, "vault_pearls_history", id);
+                            const historyStr = typeof item.password_history === 'string'
+                              ? item.password_history
+                              : JSON.stringify(item.password_history);
+                            encryptedHistory = await encryptField(historyStr, shellKey, "vault_pearls_history", id);
                           }
-                          encryptedCustomFields = item.custom_fields ? await encryptField(item.custom_fields, shellKey, "vault_pearls_custom", id) : "";
+                          encryptedCustomFields = serializedCustomFields ? await encryptField(serializedCustomFields, shellKey, "vault_pearls_custom", id) : "";
                         }
 
                         itemsToInsert.push({
@@ -1447,14 +1458,14 @@ export default function App() {
                           secret: itemType === 'note' ? encryptedContent : itemType === 'key' ? encryptedKey : encryptedSecret,
                           username: item.username || "",
                           url: item.url || "",
-                          uris: item.uris || "[]",
+                          uris: typeof item.uris === 'string' ? item.uris : JSON.stringify(item.uris || []),
                           category: item.category || "",
                           type: itemType,
                           tags: typeof item.tags === 'string' ? item.tags : JSON.stringify(item.tags || []),
                           notes: item.notes || "",
                           totp_secret: encryptedTotp,
                           password_history: encryptedHistory,
-                          attachments: item.attachments || "[]",
+                          attachments: typeof item.attachments === 'string' ? item.attachments : JSON.stringify(item.attachments || []),
                           custom_fields: encryptedCustomFields
                         });
                       }

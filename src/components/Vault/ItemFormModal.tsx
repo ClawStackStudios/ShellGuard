@@ -12,6 +12,7 @@ import { generatePassword, getGlobalGeneratorConfig, GeneratorConfig } from '../
 import { generateSshKeyPair, keypairGenerationSupported, GeneratedSshKeyPair, SshKeyAlgorithm, parseSshKeySecret, serializeSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 import { parseTotpSecret, formatTotpSecret, TotpAlgorithm } from '../../lib/totpUtils.ts';
 import { formatCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
+import { normalizeCustomFields } from '../../lib/customFieldUtils.ts';
 
 // We inline Favicon and PasswordStrengthIndicator here for simplicity if needed, 
 // or import them if they are exported.
@@ -233,11 +234,9 @@ export function ItemFormModal({
 
         // Parse custom fields from existing item
         if (initialItem.custom_fields) {
-          try {
-            const parsed = JSON.parse(initialItem.custom_fields);
-            if (Array.isArray(parsed)) {
-              setCustomFieldsState(parsed);
-              const getField = (name: string) => parsed.find(f => f.name.toLowerCase() === name.toLowerCase())?.value || "";
+          const parsed = normalizeCustomFields(initialItem.custom_fields);
+          setCustomFieldsState(parsed);
+          const getField = (name: string) => parsed.find(f => f.name.toLowerCase() === name.toLowerCase())?.value || "";
               if (initialItem.type === 'card') {
                 const detectedBrand = detectCardBrand(initialItem.secret || "");
                 setCardBrand(getField('Card Brand') || getField('Brand') || (detectedBrand !== 'Payment Card' ? detectedBrand : ""));
@@ -271,10 +270,6 @@ export function ItemFormModal({
                 setIdenPassport(getField('Passport Number') || getField('Passport'));
                 setIdenLicense(getField('License Number') || getField('License'));
               }
-            } else {
-              setCustomFieldsState([]);
-            }
-          } catch { setCustomFieldsState([]); }
         } else {
           setCustomFieldsState([]);
           setCardBrand("");

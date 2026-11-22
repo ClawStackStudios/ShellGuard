@@ -11,6 +11,7 @@ import { extractDomain } from '../../lib/urlUtils.ts';
 import { downloadAttachment, formatBytes } from '../../lib/attachmentUtils.ts';
 import { parseSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 import { formatCardNumber, maskCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
+import { normalizeCustomFields } from '../../lib/customFieldUtils.ts';
 import { globalIngestionQueue } from '../../lib/habitatImport.ts';
 import { restAdapter } from '../../services/api/restAdapter.ts';
 
@@ -123,13 +124,7 @@ export function ItemDetailPane({
 
   const cardDetails = useMemo(() => {
     if (!item || item.type !== 'card') return null;
-    let customFields: CustomField[] = [];
-    try {
-      if (item.custom_fields) {
-        const parsed = JSON.parse(item.custom_fields);
-        if (Array.isArray(parsed)) customFields = parsed;
-      }
-    } catch {}
+    const customFields: CustomField[] = normalizeCustomFields(item.custom_fields);
 
     const findField = (names: string[]) => {
       return customFields.find(f => names.includes(f.name.toLowerCase()))?.value || '';
@@ -163,13 +158,7 @@ export function ItemDetailPane({
 
   const identityDetails = useMemo(() => {
     if (!item || item.type !== 'identity') return null;
-    let customFields: CustomField[] = [];
-    try {
-      if (item.custom_fields) {
-        const parsed = JSON.parse(item.custom_fields);
-        if (Array.isArray(parsed)) customFields = parsed;
-      }
-    } catch {}
+    const customFields: CustomField[] = normalizeCustomFields(item.custom_fields);
 
     const getVal = (names: string[]) => {
       const match = customFields.find(f => names.includes(f.name.toLowerCase()));
@@ -1117,11 +1106,7 @@ export function ItemDetailPane({
 
             {/* Custom Fields */}
             {item.custom_fields && (() => {
-              let customFields: CustomField[] = [];
-              try {
-                const parsed = JSON.parse(item.custom_fields);
-                if (Array.isArray(parsed)) customFields = parsed;
-              } catch {}
+              let customFields: CustomField[] = normalizeCustomFields(item.custom_fields);
 
               // Filter out handled fields for card and identity to avoid duplication
               if (item.type === 'card') {

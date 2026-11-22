@@ -45,6 +45,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       title: title.trim(),
       username: username ? username.trim() : '',
       url: url ? url.trim() : '',
+      uris: uris || '[]',
       category: category || '',
       tags: normalizedTags,
       notes: notes || '',
@@ -60,7 +61,7 @@ router.post('/', requireAuth, requirePermission('canWrite'), validateBody(VaultS
       secret,
       toStore.username,
       toStore.url,
-      uris || '[]',
+      toStore.uris,
       type || 'password',
       toStore.category,
       toStore.tags,
@@ -109,14 +110,52 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
   const insertPearlStmt = db.prepare(`
     INSERT INTO vault_pearls (id, owner_uuid, title, secret, username, url, uris, type, category, tags, notes, totp_secret, password_history, attachments, custom_fields, created_at, imported_at, import_batch_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      title = excluded.title,
+      secret = excluded.secret,
+      username = excluded.username,
+      url = excluded.url,
+      uris = excluded.uris,
+      type = excluded.type,
+      category = excluded.category,
+      tags = excluded.tags,
+      notes = excluded.notes,
+      totp_secret = excluded.totp_secret,
+      password_history = excluded.password_history,
+      attachments = excluded.attachments,
+      custom_fields = excluded.custom_fields,
+      imported_at = excluded.imported_at,
+      import_batch_id = excluded.import_batch_id
+    WHERE vault_pearls.owner_uuid = excluded.owner_uuid
   `);
   const insertNoteStmt = db.prepare(`
     INSERT INTO vault_secure_notes (id, owner_uuid, title, content, category, tags, custom_fields, attachments, created_at, imported_at, import_batch_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      title = excluded.title,
+      content = excluded.content,
+      category = excluded.category,
+      tags = excluded.tags,
+      custom_fields = excluded.custom_fields,
+      attachments = excluded.attachments,
+      imported_at = excluded.imported_at,
+      import_batch_id = excluded.import_batch_id
+    WHERE vault_secure_notes.owner_uuid = excluded.owner_uuid
   `);
   const insertKeyStmt = db.prepare(`
     INSERT INTO vault_ssh_keys (id, owner_uuid, title, key_value, username, category, tags, custom_fields, attachments, created_at, imported_at, import_batch_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      title = excluded.title,
+      key_value = excluded.key_value,
+      username = excluded.username,
+      category = excluded.category,
+      tags = excluded.tags,
+      custom_fields = excluded.custom_fields,
+      attachments = excluded.attachments,
+      imported_at = excluded.imported_at,
+      import_batch_id = excluded.import_batch_id
+    WHERE vault_ssh_keys.owner_uuid = excluded.owner_uuid
   `);
 
   // Prepare all writes asynchronously before opening the transaction
@@ -155,6 +194,7 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
           title: item.title.trim(),
           username: item.username ? item.username.trim() : '',
           url: item.url ? item.url.trim() : '',
+          uris: item.uris || '[]',
           category: item.category || '',
           tags: normalizedTags,
           notes: item.notes || '',
@@ -171,8 +211,9 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
       const nowIso = new Date().toISOString();
       for (const p of itemsToInsert) {
         try {
+          let info: { changes: number };
           if (p.domain === 'vault_secure_notes') {
-            insertNoteStmt.run(
+            info = insertNoteStmt.run(
               p.original.id,
               req.userUuid,
               p.toStore.title,
@@ -186,7 +227,7 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
               importBatchId
             );
           } else if (p.domain === 'vault_ssh_keys') {
-            insertKeyStmt.run(
+            info = insertKeyStmt.run(
               p.original.id,
               req.userUuid,
               p.toStore.title,
@@ -201,14 +242,14 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
               importBatchId
             );
           } else {
-            insertPearlStmt.run(
+            info = insertPearlStmt.run(
               p.original.id,
               req.userUuid,
               p.toStore.title,
               p.original.secret,
               p.toStore.username,
               p.toStore.url,
-              p.original.uris || '[]',
+              p.toStore.uris,
               p.original.type || 'password',
               p.toStore.category,
               p.toStore.tags,
@@ -222,7 +263,11 @@ router.post('/bulk-import', requireAuth, requirePermission('canWrite'), validate
               importBatchId
             );
           }
-          inserted.push(p.original.id);
+          if (info.changes === 0) {
+            errors.push({ index: p.index, reason: 'A vault entry with this ID belongs to another owner.' });
+          } else {
+            inserted.push(p.original.id);
+          }
         } catch (err: any) {
           errors.push({ index: p.index, reason: err.message });
         }
@@ -682,6 +727,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       title: title.trim(),
       username: username ? username.trim() : '',
       url: url ? url.trim() : '',
+      ...(uris !== undefined ? { uris: uris || '[]' } : {}),
       category: category || '',
       tags: normalizedTags,
       notes: notes || '',
@@ -696,7 +742,7 @@ router.put('/:id', requireAuth, requirePermission('canEdit'), validateBody(Vault
       secret,
       toStore.username,
       toStore.url,
-      uris !== undefined ? uris : (existing.uris || '[]'),
+      uris !== undefined ? toStore.uris : (existing.uris || '[]'),
       type || 'password',
       toStore.category,
       toStore.tags,

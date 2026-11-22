@@ -74,6 +74,7 @@ export class NetworkResolver {
   private readonly windowTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | null;
   private readonly listeners = new Set<(state: TransportConfigState) => void>();
   private raceGeneration = 0;
+  private inFlightRace: Promise<TransportConfigState> | null = null;
 
   constructor(deps: NetworkResolverDeps = {}) {
     this.fetchFn = deps.fetchFn ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -86,6 +87,11 @@ export class NetworkResolver {
           ? window
           : null;
     this.state = this.loadState();
+  }
+
+  /** Returns the currently active resolved base URL, or null if not yet resolved. */
+  getActiveBaseUrl(): string | null {
+    return this.state.activeUrl;
   }
 
   private loadState(): TransportConfigState {
@@ -280,7 +286,17 @@ export class NetworkResolver {
     }
   }
 
-  async race(): Promise<TransportConfigState> {
+  race(): Promise<TransportConfigState> {
+    if (this.inFlightRace) {
+      return this.inFlightRace;
+    }
+    this.inFlightRace = this.executeRace().finally(() => {
+      this.inFlightRace = null;
+    });
+    return this.inFlightRace;
+  }
+
+  private async executeRace(): Promise<TransportConfigState> {
     const generation = ++this.raceGeneration;
     const candidates: Array<{ vector: TransportVector; url: string }> = [];
 

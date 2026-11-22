@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiBaseUrl } from '../config/apiConfig.ts';
+import { networkResolver } from '../lib/networkResolver.ts';
 import { SESSION_KEYS } from '../services/api/restAdapter.ts';
 
 export type RiverStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
@@ -27,6 +28,7 @@ export interface UseReactiveRiverOptions {
  * Provides:
  * - Native EventSource stream with token authentication via query parameter.
  * - Monotonic event cursor tracking via Last-Event-ID for zero-data-loss reconnects.
+ * - Automatic EventSource migration when NetworkResolver switches transport vectors.
  * - Jittered exponential backoff auto-reconnect (1s -> 16s).
  * - Real-time mutation notifications dispatched to the onMutation callback.
  * - Bioluminescent connection status: 'connecting' | 'connected' | 'reconnecting' | 'disconnected'.
@@ -42,6 +44,7 @@ export function useReactiveRiver({
   const lastEventIdRef = useRef<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const backoffRef = useRef<number>(1000);
+  const activeBaseUrlRef = useRef<string>(getApiBaseUrl());
   const onMutationRef = useRef(onMutation);
   onMutationRef.current = onMutation;
 
@@ -78,6 +81,11 @@ export function useReactiveRiver({
     function connect() {
       if (!isSubscribed) return;
 
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -86,6 +94,7 @@ export function useReactiveRiver({
       setStatus((prev) => (prev === 'connected' ? 'reconnecting' : 'connecting'));
 
       const baseUrl = getApiBaseUrl();
+      activeBaseUrlRef.current = baseUrl;
       let url = `${baseUrl}/api/sync/events?token=${encodeURIComponent(activeToken)}`;
       if (lastEventIdRef.current) {
         url += `&lastEventId=${encodeURIComponent(lastEventIdRef.current)}`;
@@ -121,6 +130,10 @@ export function useReactiveRiver({
           es.close();
           eventSourceRef.current = null;
 
+          if (networkResolver.getState().mode === 'auto') {
+            void networkResolver.race();
+          }
+
           const jitter = Math.floor(Math.random() * 500);
           const nextBackoff = Math.min(16000, backoffRef.current * 1.5) + jitter;
           backoffRef.current = nextBackoff;
@@ -142,8 +155,18 @@ export function useReactiveRiver({
 
     connect();
 
+    const unsubscribeResolver = networkResolver.subscribe(() => {
+      if (!isSubscribed) return;
+      const nextBase = getApiBaseUrl();
+      if (nextBase !== activeBaseUrlRef.current) {
+        backoffRef.current = 1000;
+        connect();
+      }
+    });
+
     return () => {
       isSubscribed = false;
+      unsubscribeResolver();
       disconnect();
     };
   }, [enabled, customToken, disconnect]);

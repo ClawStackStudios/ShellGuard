@@ -39,6 +39,8 @@ import {
   X
 } from "lucide-react";
 import { restAdapter, SESSION_KEYS } from "./services/api/restAdapter.ts";
+import { getApiBaseUrl } from "./config/apiConfig.ts";
+import { networkResolver } from "./lib/networkResolver.ts";
 import { InteractiveBrand } from "./components/Branding/InteractiveBrand.tsx";
 import { ThemeToggle } from "./components/Theme/ThemeToggle.tsx";
 import { LandingView } from "./components/LandingView.tsx";
@@ -562,9 +564,12 @@ export default function App() {
         setIsMolting(false);
       });
 
+    const cleanupNetwork = networkResolver.attachLifecycleListeners();
+    void networkResolver.discoverEndpoints(getApiBaseUrl()).then(() => networkResolver.race());
+
     if (detectedInvite) {
       setView("setup");
-      return;
+      return cleanupNetwork;
     }
 
     if (activeId) {
@@ -596,6 +601,8 @@ export default function App() {
     } else {
       setView("landing");
     }
+
+    return cleanupNetwork;
   }, []);
 
   /**

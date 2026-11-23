@@ -13,6 +13,14 @@ import { generateSshKeyPair, keypairGenerationSupported, GeneratedSshKeyPair, Ss
 import { parseTotpSecret, formatTotpSecret, TotpAlgorithm } from '../../lib/totpUtils.ts';
 import { formatCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
 import { normalizeCustomFields } from '../../lib/customFieldUtils.ts';
+import {
+  EMPTY_IDENTITY_FORM,
+  IdentityFormValues,
+  extractIdentityDetails,
+  buildIdentityCustomFields,
+  resolveIdentityUsernameAndSecret,
+} from '../../lib/identityFieldUtils.ts';
+import { IdentityFormSection } from './IdentityFormSection.tsx';
 
 // We inline Favicon and PasswordStrengthIndicator here for simplicity if needed, 
 // or import them if they are exported.
@@ -114,26 +122,7 @@ export function ItemFormModal({
   const [showCardCvv, setShowCardCvv] = useState(false);
 
   // Identity-specific state
-  const [idenTitle, setIdenTitle] = useState("");
-  const [idenFirstName, setIdenFirstName] = useState("");
-  const [idenMiddleName, setIdenMiddleName] = useState("");
-  const [idenLastName, setIdenLastName] = useState("");
-  const [idenCompany, setIdenCompany] = useState("");
-  const [idenEmail, setIdenEmail] = useState("");
-  const [idenPhone, setIdenPhone] = useState("");
-  const [idenAddress1, setIdenAddress1] = useState("");
-  const [idenAddress2, setIdenAddress2] = useState("");
-  const [idenAddress3, setIdenAddress3] = useState("");
-  const [idenCity, setIdenCity] = useState("");
-  const [idenState, setIdenState] = useState("");
-  const [idenPostalCode, setIdenPostalCode] = useState("");
-  const [idenCountry, setIdenCountry] = useState("");
-  const [idenSsn, setIdenSsn] = useState("");
-  const [idenPassport, setIdenPassport] = useState("");
-  const [idenLicense, setIdenLicense] = useState("");
-  const [showIdenSsn, setShowIdenSsn] = useState(false);
-  const [showIdenPassport, setShowIdenPassport] = useState(false);
-  const [showIdenLicense, setShowIdenLicense] = useState(false);
+  const [identityForm, setIdentityForm] = useState<IdentityFormValues>(EMPTY_IDENTITY_FORM);
 
   // UI State
   const [showPassword, setShowPassword] = useState(false);
@@ -251,24 +240,26 @@ export function ItemFormModal({
                 }
                 setCardCvv(getField('Security Code (CVV)') || getField('CVV') || getField('Code'));
               } else if (initialItem.type === 'identity') {
-                const getField = (name: string) => parsed.find(f => f.name.toLowerCase() === name.toLowerCase())?.value || "";
-                setIdenTitle(getField('Title'));
-                setIdenFirstName(getField('First Name'));
-                setIdenMiddleName(getField('Middle Name'));
-                setIdenLastName(getField('Last Name'));
-                setIdenCompany(getField('Company'));
-                setIdenEmail(getField('Email'));
-                setIdenPhone(getField('Phone'));
-                setIdenAddress1(getField('Address 1'));
-                setIdenAddress2(getField('Address 2'));
-                setIdenAddress3(getField('Address 3'));
-                setIdenCity(getField('City'));
-                setIdenState(getField('State / Province') || getField('State'));
-                setIdenPostalCode(getField('Postal Code'));
-                setIdenCountry(getField('Country'));
-                setIdenSsn(getField('SSN'));
-                setIdenPassport(getField('Passport Number') || getField('Passport'));
-                setIdenLicense(getField('License Number') || getField('License'));
+                const extracted = extractIdentityDetails(initialItem);
+                setIdentityForm(extracted ? {
+                  title: extracted.title,
+                  firstName: extracted.firstName,
+                  middleName: extracted.middleName,
+                  lastName: extracted.lastName,
+                  company: extracted.company,
+                  email: extracted.email,
+                  phone: extracted.phone,
+                  address1: extracted.address1,
+                  address2: extracted.address2,
+                  address3: extracted.address3,
+                  city: extracted.city,
+                  state: extracted.state,
+                  postalCode: extracted.postalCode,
+                  country: extracted.country,
+                  ssn: extracted.ssn,
+                  passport: extracted.passport,
+                  license: extracted.license,
+                } : EMPTY_IDENTITY_FORM);
               }
         } else {
           setCustomFieldsState([]);
@@ -276,23 +267,7 @@ export function ItemFormModal({
           setCardExpMonth("");
           setCardExpYear("");
           setCardCvv("");
-          setIdenTitle("");
-          setIdenFirstName("");
-          setIdenMiddleName("");
-          setIdenLastName("");
-          setIdenCompany("");
-          setIdenEmail("");
-          setIdenPhone("");
-          setIdenAddress1("");
-          setIdenAddress2("");
-          setIdenAddress3("");
-          setIdenCity("");
-          setIdenState("");
-          setIdenPostalCode("");
-          setIdenCountry("");
-          setIdenSsn("");
-          setIdenPassport("");
-          setIdenLicense("");
+          setIdentityForm(EMPTY_IDENTITY_FORM);
         }
       } else {
         // Reset for Add
@@ -306,26 +281,7 @@ export function ItemFormModal({
         setCardExpYear("");
         setCardCvv("");
         setShowCardCvv(false);
-        setIdenTitle("");
-        setIdenFirstName("");
-        setIdenMiddleName("");
-        setIdenLastName("");
-        setIdenCompany("");
-        setIdenEmail("");
-        setIdenPhone("");
-        setIdenAddress1("");
-        setIdenAddress2("");
-        setIdenAddress3("");
-        setIdenCity("");
-        setIdenState("");
-        setIdenPostalCode("");
-        setIdenCountry("");
-        setIdenSsn("");
-        setIdenPassport("");
-        setIdenLicense("");
-        setShowIdenSsn(false);
-        setShowIdenPassport(false);
-        setShowIdenLicense(false);
+        setIdentityForm(EMPTY_IDENTITY_FORM);
         setUrl("");
         setExtraUris([]);
         setPasswordHistory([]);
@@ -407,36 +363,15 @@ export function ItemFormModal({
           finalCustomFields.push({ id: generateUUID(), name: 'Security Code (CVV)', type: 'hidden', value: cardCvv.trim() });
         }
       } else if (type === 'identity') {
-        const fullName = [idenFirstName.trim(), idenMiddleName.trim(), idenLastName.trim()].filter(Boolean).join(' ');
-        finalSecret = notes.trim() || fullName || username.trim() || title.trim();
-        finalUsername = username.trim() || fullName || "";
-
-        // Clean out existing identity keys
-        const idenKeyNames = ['title', 'first name', 'middle name', 'last name', 'full name', 'company', 'email', 'phone', 'address 1', 'address 2', 'address 3', 'city', 'state / province', 'state', 'postal code', 'country', 'location', 'ssn', 'passport number', 'passport', 'license number', 'license'];
-        finalCustomFields = finalCustomFields.filter(f => !idenKeyNames.includes(f.name.toLowerCase()));
-
-        if (idenTitle.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Title', type: 'text', value: idenTitle.trim() });
-        if (idenFirstName.trim()) finalCustomFields.push({ id: generateUUID(), name: 'First Name', type: 'text', value: idenFirstName.trim() });
-        if (idenMiddleName.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Middle Name', type: 'text', value: idenMiddleName.trim() });
-        if (idenLastName.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Last Name', type: 'text', value: idenLastName.trim() });
-        if (fullName) finalCustomFields.push({ id: generateUUID(), name: 'Full Name', type: 'text', value: fullName });
-        if (idenCompany.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Company', type: 'text', value: idenCompany.trim() });
-        if (idenEmail.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Email', type: 'text', value: idenEmail.trim() });
-        if (idenPhone.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Phone', type: 'text', value: idenPhone.trim() });
-        if (idenAddress1.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Address 1', type: 'text', value: idenAddress1.trim() });
-        if (idenAddress2.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Address 2', type: 'text', value: idenAddress2.trim() });
-        if (idenAddress3.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Address 3', type: 'text', value: idenAddress3.trim() });
-        if (idenCity.trim()) finalCustomFields.push({ id: generateUUID(), name: 'City', type: 'text', value: idenCity.trim() });
-        if (idenState.trim()) finalCustomFields.push({ id: generateUUID(), name: 'State / Province', type: 'text', value: idenState.trim() });
-        if (idenPostalCode.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Postal Code', type: 'text', value: idenPostalCode.trim() });
-        if (idenCountry.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Country', type: 'text', value: idenCountry.trim() });
-        if (idenCity.trim() || idenState.trim() || idenPostalCode.trim() || idenCountry.trim()) {
-          const loc = [idenCity.trim(), idenState.trim(), idenPostalCode.trim(), idenCountry.trim()].filter(Boolean).join(', ');
-          finalCustomFields.push({ id: generateUUID(), name: 'Location', type: 'text', value: loc });
-        }
-        if (idenSsn.trim()) finalCustomFields.push({ id: generateUUID(), name: 'SSN', type: 'hidden', value: idenSsn.trim() });
-        if (idenPassport.trim()) finalCustomFields.push({ id: generateUUID(), name: 'Passport Number', type: 'hidden', value: idenPassport.trim() });
-        if (idenLicense.trim()) finalCustomFields.push({ id: generateUUID(), name: 'License Number', type: 'hidden', value: idenLicense.trim() });
+        const resolved = resolveIdentityUsernameAndSecret({
+          title,
+          username,
+          notes,
+          values: identityForm,
+        });
+        finalSecret = resolved.secret;
+        finalUsername = resolved.username;
+        finalCustomFields = buildIdentityCustomFields(finalCustomFields, identityForm, username);
       }
       
       let finalTotp = "";
@@ -797,245 +732,12 @@ export function ItemFormModal({
 
             {/* Identity Specifics */}
             {type === 'identity' && (
-              <div className="col-span-1 md:col-span-2 space-y-5">
-                {/* 1. Personal Names */}
-                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 space-y-3">
-                  <div className="flex items-center gap-2 text-blue-500 font-bold text-xs uppercase tracking-wider">
-                    <Contact size={16} />
-                    <span>Personal Details</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Title</label>
-                      <input 
-                        type="text" 
-                        value={idenTitle}
-                        onChange={(e) => setIdenTitle(e.target.value)}
-                        placeholder="Mr / Mrs / Dr"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">First Name</label>
-                      <input 
-                        type="text" 
-                        value={idenFirstName}
-                        onChange={(e) => setIdenFirstName(e.target.value)}
-                        placeholder="First"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Middle Name</label>
-                      <input 
-                        type="text" 
-                        value={idenMiddleName}
-                        onChange={(e) => setIdenMiddleName(e.target.value)}
-                        placeholder="Middle"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Last Name</label>
-                      <input 
-                        type="text" 
-                        value={idenLastName}
-                        onChange={(e) => setIdenLastName(e.target.value)}
-                        placeholder="Last"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Username / Handle</label>
-                    <input 
-                      type="text" 
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="e.g. captain_reef"
-                      className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
-                    />
-                  </div>
-                </div>
-
-                {/* 2. Contact Information */}
-                <div className="p-4 rounded-2xl bg-slate-900/30 dark:bg-black/20 border border-theme-subtle space-y-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-theme-muted block">Contact Information</span>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Company</label>
-                      <input 
-                        type="text" 
-                        value={idenCompany}
-                        onChange={(e) => setIdenCompany(e.target.value)}
-                        placeholder="Company Ltd."
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Email</label>
-                      <input 
-                        type="email" 
-                        value={idenEmail}
-                        onChange={(e) => setIdenEmail(e.target.value)}
-                        placeholder="user@example.com"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Phone</label>
-                      <input 
-                        type="tel" 
-                        value={idenPhone}
-                        onChange={(e) => setIdenPhone(e.target.value)}
-                        placeholder="+1 (555) 000-0000"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Address Information */}
-                <div className="p-4 rounded-2xl bg-slate-900/30 dark:bg-black/20 border border-theme-subtle space-y-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-theme-muted block">Address Details</span>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="md:col-span-3">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Address Line 1</label>
-                      <input 
-                        type="text" 
-                        value={idenAddress1}
-                        onChange={(e) => setIdenAddress1(e.target.value)}
-                        placeholder="123 Ocean Way"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Address Line 2</label>
-                      <input 
-                        type="text" 
-                        value={idenAddress2}
-                        onChange={(e) => setIdenAddress2(e.target.value)}
-                        placeholder="Suite / Apt"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Address Line 3</label>
-                      <input 
-                        type="text" 
-                        value={idenAddress3}
-                        onChange={(e) => setIdenAddress3(e.target.value)}
-                        placeholder="Building / Floor"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">City</label>
-                      <input 
-                        type="text" 
-                        value={idenCity}
-                        onChange={(e) => setIdenCity(e.target.value)}
-                        placeholder="City"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">State / Province</label>
-                      <input 
-                        type="text" 
-                        value={idenState}
-                        onChange={(e) => setIdenState(e.target.value)}
-                        placeholder="State / Region"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Postal Code</label>
-                      <input 
-                        type="text" 
-                        value={idenPostalCode}
-                        onChange={(e) => setIdenPostalCode(e.target.value)}
-                        placeholder="Postal Code"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Country</label>
-                      <input 
-                        type="text" 
-                        value={idenCountry}
-                        onChange={(e) => setIdenCountry(e.target.value)}
-                        placeholder="Country"
-                        className="w-full bg-theme-base border border-theme-subtle rounded-xl px-3 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Identification Documents */}
-                <div className="p-4 rounded-2xl bg-slate-900/30 dark:bg-black/20 border border-theme-subtle space-y-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-theme-muted block">Identification Documents (Encrypted & Masked)</span>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">SSN / National ID</label>
-                      <div className="relative flex items-center">
-                        <input 
-                          type={showIdenSsn ? "text" : "password"}
-                          value={idenSsn}
-                          onChange={(e) => setIdenSsn(e.target.value)}
-                          placeholder="•••-••-••••"
-                          className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-3 pr-10 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowIdenSsn(!showIdenSsn)}
-                          className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
-                        >
-                          {showIdenSsn ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Passport Number</label>
-                      <div className="relative flex items-center">
-                        <input 
-                          type={showIdenPassport ? "text" : "password"}
-                          value={idenPassport}
-                          onChange={(e) => setIdenPassport(e.target.value)}
-                          placeholder="Passport Number"
-                          className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-3 pr-10 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowIdenPassport(!showIdenPassport)}
-                          className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
-                        >
-                          {showIdenPassport ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">Driver's License</label>
-                      <div className="relative flex items-center">
-                        <input 
-                          type={showIdenLicense ? "text" : "password"}
-                          value={idenLicense}
-                          onChange={(e) => setIdenLicense(e.target.value)}
-                          placeholder="License Number"
-                          className="w-full bg-theme-base border border-theme-subtle rounded-xl pl-3 pr-10 py-2 text-sm focus:border-claw-cyan outline-none text-theme-main font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowIdenLicense(!showIdenLicense)}
-                          className="absolute right-2 text-slate-400 hover:text-theme-main p-1 cursor-pointer"
-                        >
-                          {showIdenLicense ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <IdentityFormSection
+                values={identityForm}
+                username={username}
+                onChange={setIdentityForm}
+                onUsernameChange={setUsername}
+              />
             )}
 
             {/* Password/Login specifics */}

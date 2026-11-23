@@ -12,6 +12,8 @@ import { downloadAttachment, formatBytes } from '../../lib/attachmentUtils.ts';
 import { parseSshKeySecret, formatAuthorizedKeysCommand } from '../../lib/keyGen.ts';
 import { formatCardNumber, maskCardNumber, cleanCardNumber, detectCardBrand } from '../../lib/cardUtils.ts';
 import { normalizeCustomFields } from '../../lib/customFieldUtils.ts';
+import { extractIdentityDetails } from '../../lib/identityFieldUtils.ts';
+import { IdentityDetailSection } from './IdentityDetailSection.tsx';
 import { globalIngestionQueue } from '../../lib/habitatImport.ts';
 import { restAdapter } from '../../services/api/restAdapter.ts';
 
@@ -158,57 +160,7 @@ export function ItemDetailPane({
 
   const identityDetails = useMemo(() => {
     if (!item || item.type !== 'identity') return null;
-    const customFields: CustomField[] = normalizeCustomFields(item.custom_fields);
-
-    const getVal = (names: string[]) => {
-      const match = customFields.find(f => names.includes(f.name.toLowerCase()));
-      return match ? match.value : '';
-    };
-
-    const title = getVal(['title']);
-    const firstName = getVal(['first name']);
-    const middleName = getVal(['middle name']);
-    const lastName = getVal(['last name']);
-    const fullName = getVal(['full name']) || [firstName, middleName, lastName].filter(Boolean).join(' ') || item.username || item.title;
-    const username = getVal(['username']) || (item.username !== fullName ? item.username : '');
-    const company = getVal(['company']);
-    const email = getVal(['email']);
-    const phone = getVal(['phone']);
-
-    const address1 = getVal(['address 1', 'address1']);
-    const address2 = getVal(['address 2', 'address2']);
-    const address3 = getVal(['address 3', 'address3']);
-    const city = getVal(['city']);
-    const state = getVal(['state / province', 'state']);
-    const postalCode = getVal(['postal code', 'zip']);
-    const country = getVal(['country']);
-    const location = getVal(['location']) || [city, state, postalCode, country].filter(Boolean).join(', ');
-    const fullAddress = [address1, address2, address3, location].filter(Boolean).join('\n');
-
-    const ssn = getVal(['ssn']);
-    const passport = getVal(['passport number', 'passport']);
-    const license = getVal(['license number', 'license']);
-
-    return {
-      title,
-      fullName,
-      username,
-      company,
-      email,
-      phone,
-      address1,
-      address2,
-      address3,
-      city,
-      state,
-      postalCode,
-      country,
-      location,
-      fullAddress,
-      ssn,
-      passport,
-      license,
-    };
+    return extractIdentityDetails(item);
   }, [item?.type, item?.title, item?.username, item?.custom_fields]);
 
   if (isLocked) {
@@ -656,277 +608,20 @@ export function ItemDetailPane({
                   </div>
                 </div>
               ) : item.type === "identity" && identityDetails ? (
-                <div className="space-y-3 pt-1">
-                  {/* Profile Banner */}
-                  <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-950/20 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
-                        <Contact size={20} />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {identityDetails.title && (
-                            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                              {identityDetails.title}
-                            </span>
-                          )}
-                          <h4 className="text-base font-bold text-theme-main truncate">
-                            {identityDetails.fullName}
-                          </h4>
-                        </div>
-                        {(identityDetails.company || identityDetails.username) && (
-                          <span className="text-xs text-theme-muted truncate">
-                            {identityDetails.company ? identityDetails.company : ''}
-                            {identityDetails.company && identityDetails.username ? ' • ' : ''}
-                            {identityDetails.username ? `@${identityDetails.username}` : ''}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(identityDetails.fullName, "iden-fullname")}
-                      title="Copy Full Name"
-                      className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                        copyFeedback === "iden-fullname" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-blue-500"
-                      }`}
-                    >
-                      {copyFeedback === "iden-fullname" ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-
-                  {/* Contact Information (Email, Phone, Username) */}
-                  {(identityDetails.email || identityDetails.phone || identityDetails.username) && (
-                    <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        Contact Details
-                      </span>
-
-                      {identityDetails.email && (
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <Mail size={15} className="text-slate-400 flex-shrink-0" />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Email</span>
-                              <a href={`mailto:${identityDetails.email}`} className="text-xs font-mono text-claw-cyan hover:underline truncate">
-                                {identityDetails.email}
-                              </a>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(identityDetails.email, "iden-email")}
-                            title="Copy Email"
-                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                              copyFeedback === "iden-email" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
-                            }`}
-                          >
-                            {copyFeedback === "iden-email" ? <Check size={14} /> : <Copy size={14} />}
-                          </button>
-                        </div>
-                      )}
-
-                      {identityDetails.phone && (
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <Phone size={15} className="text-slate-400 flex-shrink-0" />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Phone</span>
-                              <a href={`tel:${identityDetails.phone}`} className="text-xs font-mono text-theme-main hover:text-claw-cyan truncate">
-                                {identityDetails.phone}
-                              </a>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(identityDetails.phone, "iden-phone")}
-                            title="Copy Phone"
-                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                              copyFeedback === "iden-phone" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
-                            }`}
-                          >
-                            {copyFeedback === "iden-phone" ? <Check size={14} /> : <Copy size={14} />}
-                          </button>
-                        </div>
-                      )}
-
-                      {identityDetails.username && (
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <User size={15} className="text-slate-400 flex-shrink-0" />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Username</span>
-                              <span className="text-xs font-mono text-theme-main truncate">{identityDetails.username}</span>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(identityDetails.username, "iden-uname")}
-                            title="Copy Username"
-                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                              copyFeedback === "iden-uname" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
-                            }`}
-                          >
-                            {copyFeedback === "iden-uname" ? <Check size={14} /> : <Copy size={14} />}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Address Block */}
-                  {identityDetails.fullAddress && (
-                    <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <MapPin size={15} className="text-slate-400 flex-shrink-0" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            Address & Location
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(identityDetails.fullAddress, "iden-address")}
-                          title="Copy Full Address"
-                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                            copyFeedback === "iden-address" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
-                          }`}
-                        >
-                          {copyFeedback === "iden-address" ? <Check size={14} /> : <Copy size={14} />}
-                        </button>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-theme-surface border border-theme-subtle text-xs font-mono text-theme-main whitespace-pre-line leading-relaxed select-all">
-                        {identityDetails.fullAddress}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Identification Documents (SSN, Passport, License) with Eye-beside-Copy */}
-                  {(identityDetails.ssn || identityDetails.passport || identityDetails.license) && (
-                    <div className="p-3.5 rounded-xl border border-theme-subtle bg-slate-900/30 dark:bg-black/20 space-y-2.5">
-                      <div className="flex items-center gap-2">
-                        <Shield size={15} className="text-amber-400 flex-shrink-0" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Identification Documents
-                        </span>
-                      </div>
-
-                      {identityDetails.ssn && (
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                              Social Security Number (SSN)
-                            </span>
-                            <span className="text-xs font-mono text-theme-main truncate mt-0.5">
-                              {revealedHiddenFields.has('iden_ssn') ? identityDetails.ssn : '•••••••••'}
-                            </span>
-                          </div>
-                          {/* Eye-beside-Copy Invariant */}
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => setRevealedHiddenFields(prev => {
-                                const next = new Set(prev);
-                                if (next.has('iden_ssn')) next.delete('iden_ssn'); else next.add('iden_ssn');
-                                return next;
-                              })}
-                              title={revealedHiddenFields.has('iden_ssn') ? "Mask SSN" : "Reveal SSN"}
-                              className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                            >
-                              {revealedHiddenFields.has('iden_ssn') ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(identityDetails.ssn, "iden-ssn")}
-                              title="Copy SSN"
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                copyFeedback === "iden-ssn" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
-                              }`}
-                            >
-                              {copyFeedback === "iden-ssn" ? <Check size={14} /> : <Copy size={14} />}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {identityDetails.passport && (
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                              Passport Number
-                            </span>
-                            <span className="text-xs font-mono text-theme-main truncate mt-0.5">
-                              {revealedHiddenFields.has('iden_passport') ? identityDetails.passport : '•••••••••'}
-                            </span>
-                          </div>
-                          {/* Eye-beside-Copy Invariant */}
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => setRevealedHiddenFields(prev => {
-                                const next = new Set(prev);
-                                if (next.has('iden_passport')) next.delete('iden_passport'); else next.add('iden_passport');
-                                return next;
-                              })}
-                              title={revealedHiddenFields.has('iden_passport') ? "Mask Passport" : "Reveal Passport"}
-                              className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                            >
-                              {revealedHiddenFields.has('iden_passport') ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(identityDetails.passport, "iden-passport")}
-                              title="Copy Passport Number"
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                copyFeedback === "iden-passport" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
-                              }`}
-                            >
-                              {copyFeedback === "iden-passport" ? <Check size={14} /> : <Copy size={14} />}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {identityDetails.license && (
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-theme-surface border border-theme-subtle">
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                              Driver's License Number
-                            </span>
-                            <span className="text-xs font-mono text-theme-main truncate mt-0.5">
-                              {revealedHiddenFields.has('iden_license') ? identityDetails.license : '•••••••••'}
-                            </span>
-                          </div>
-                          {/* Eye-beside-Copy Invariant */}
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => setRevealedHiddenFields(prev => {
-                                const next = new Set(prev);
-                                if (next.has('iden_license')) next.delete('iden_license'); else next.add('iden_license');
-                                return next;
-                              })}
-                              title={revealedHiddenFields.has('iden_license') ? "Mask Driver's License" : "Reveal Driver's License"}
-                              className="p-1.5 text-slate-400 hover:text-claw-cyan hover:bg-claw-cyan/10 rounded-lg transition-colors cursor-pointer"
-                            >
-                              {revealedHiddenFields.has('iden_license') ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(identityDetails.license, "iden-license")}
-                              title="Copy Driver's License Number"
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                copyFeedback === "iden-license" ? "text-green-500 bg-green-500/10" : "text-slate-400 hover:text-claw-cyan"
-                              }`}
-                            >
-                              {copyFeedback === "iden-license" ? <Check size={14} /> : <Copy size={14} />}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <IdentityDetailSection
+                  identityDetails={identityDetails}
+                  copyFeedback={copyFeedback}
+                  revealedHiddenFields={revealedHiddenFields}
+                  onCopy={handleCopy}
+                  onToggleReveal={(fieldKey) =>
+                    setRevealedHiddenFields((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(fieldKey)) next.delete(fieldKey);
+                      else next.add(fieldKey);
+                      return next;
+                    })
+                  }
+                />
               ) : item.type === "note" ? null : (
                 /* Standard Password Row */
                 <div className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">

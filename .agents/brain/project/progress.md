@@ -66,15 +66,26 @@
 
 - [x] **Milestone v0.0.3.0 (Build 32) / Phase 28 Complete & Merged to Main** — All 4 Sub-Phases (28.1, 28.2, 28.3, 28.4 / Tasks 55-62) implemented, tested across 35 test suites, physically verified live across two tabs by Lucas on `https://localhost:6565`, and merged to `main` (`7770999`).
 - [x] **Milestone v0.0.3.0 Documentation Walk & Project Skill Alignment (Issues #23 & #24)** — Walked 4 documentation zones, authored `RELEASE-v0.0.3.0.md` (single release draft invariant), updated `SECURITY.md`, `ARCHITECTURE.md`, `README.md`, `CHANGELOG.md`, `package.json`, and `docs/deployment/docker.md`. Reconciled modular `project` skill genome (`ROADMAP-ERA2.md` Phase 28 complete `[x]`, `meta-prompt-antigravity.md` slid to Stage 29, `storage-quota-spec.md` and `network-topology-spec.md` authored, `encryption-layers-spec.md` §6 added, `stage-28.{1,2,3,4}.md` ratified records created, and prompt folders pruned). 12/12 doc oracle tests and 29/30 build gate tests passing 100% green (`tsc --noEmit` 0 errors).
+- [x] **Stage 29A Implemented — Bulk Request Amplification Elimination, Multi-Domain Batching & 429 Stream Pacing (PR #33, Closes #30, #31, #32)** — Eliminated the $4N$ Reactive River SSE feedback loop and $O(N)$ bulk client loops while preserving all security rate limiters (`apiLimiter` 100/min, `authLimiter` 10/15m, `adminAuthLimiter` 5/10m, `agentRateLimiter`) untouched. Coalesced bulk SSE broadcasts to 1 event/batch and wrapped batch audit writes in `auditDb.transaction()` (`vault.ts`); added single-flight `scuttleVault()` deduplication and `200ms` trailing debounce (`App.tsx`); extended `POST /api/vault/bulk-import` (500-item chunks + shared `import_batch_id`) and `DELETE /api/vault/bulk` across all 4 tables; added `PATCH /api/vault/bulk-metadata` (Layer 2 metadata only, Layer 1 secrets immobile) for bulk move/tag and pod rename/delete; exposed IETF `RateLimit-*` / `Retry-After` CORS headers (`corsConfig.ts`); and wired `429 Retry-After` pacing into `AttachmentIngestionQueue` and `fetchAttachmentEnvelope()`. Completed `/walk-the-docs` across 9 files (Delta #36, `CHANGELOG.md`, `SKILL.md`, 4 VitePress pages, 2 network specs). Merged to `main` (`277e039`) with Cloud CI 100% green (`#44864420916`, `#44864417848`).
 
 ## What's Left to Build (Era 2 Forward Horizon)
 
-Next up is **Stage 3 (Phase 29: Dual-Homed Network Resolution Engine & MagicDNS Mesh, Tasks 63 & 64)**:
-- Task 63: Client-side latency probing and Tailscale MagicDNS (`*.ts.net`) dynamic resolver.
-- Task 64: Transport Health Diagnostics drawer & manual network overrides.
+Next up in **Milestone `v0.0.3.1` / Build 33 (1 open issue remaining)**:
+- **#29**: `[Docs-as-Code]: 4-Zone Documentation Walk & Project Skill Genome Alignment` *(branch `stage/stage-29.8-docs-walk-v0.0.3.1`)*
 *(Era 2 Horizon: Phase 29 through Phase 32 staged in `.agents/skills/project/ROADMAP-ERA2.md`, `.agents/skills/project/meta-prompt-antigravity.md`, and `.agents/skills/project/stages/`).*
 
 ## Current Status
+
+**Milestone `v0.0.3.1` (Build 33 — Stage 29)**:
+- [x] **Stage 29A (Issues #30, #31, #32)**: Merged to `main` via PR #33 (`277e039`). Cloud CI (`#44864420916`, `#44864417848`) 100% green.
+- [x] **Stage 29B Issue #21 (Dual-Homed LAN + Tailscale SAN Auto-Detection)**: Merged to `main` via PR #35 (`a8bb50f`). Cloud CI (`#44949099078`, `#44949070655`) 100% green.
+- [x] **Stage 29B Issue #22 (CORS Mesh & Origin Authorization for `*.ts.net`)**: Merged to `main` via PR #36 (`dc63a5c`). Cloud CI (`#44958649194`, `#44958637389`) 100% green.
+- [x] **Stage 29B Issue #25 (Public Reachability Vectors Discovery Endpoint)**: Merged to `main` via PR #37 (`2eae2c0`). Cloud CI (`#44959074535`, `#44959063723`) 100% green.
+- [x] **Stage 29B Issue #26 (NetworkResolver Latency Prober & Vector Racing Engine)**: Merged to `main` via PR #38 (`c299297`). Cloud CI (`#44960412980`, `#44960407112`) 100% green.
+- [x] **Stage 29B Issue #27 (RestAdapter & Reactive River Auto-Failover)**: Merged to `main` via PR #45 (`1f2bb20`). Cloud CI (`#44977577256`, `#44977567473`) 100% green.
+- [x] **Stage 29B Issue #28 (Transport Health Diagnostics Drawer & Status Pill Telemetry)**: Merged to `main` via PR #46 (`7ee3ef0`). Cloud CI (`#44984370459`, `#44984359634`) 100% green.
+- [x] **Mobile Interop Parity (Issue #34)**: Merged to `main` via PR #47 (`8b7338e`). Cloud CI (`#45020213969`, `#45020209739`) 100% green.
+- [ ] **Final Issue (`#29`)**: 4-Zone Docs Walk & Project Skill Genome Alignment.
 
 **Milestone `v0.0.3.0` (Build 32) — Docs Walk & Skill Alignment**:
 - [x] **Automated Doc & Build Oracles**: 12/12 passing in `tests/unit/{docsLinks,mermaidDiagrams,version}.test.ts`; 29 passing (1 skipped) in `tests/build-gates.test.ts`.

@@ -6,6 +6,20 @@ The story says how it felt. This says what was actually chosen and why.
 
 ---
 
+## stage-29a-preserve-rate-limits-eliminate-amplification — 2026-11-20 20:20
+
+**Context**: Importing a real multi-hundred-item Bitwarden vault and bulk deleting items hit `apiLimiter` (HTTP 429 at 100 req/min).
+**Options considered**:
+- *Option A*: Exempt authenticated human sessions (`hu-` Bearer tokens) from `apiLimiter` while keeping strict rate limits on agents (`lb-`) — Viable for immediate UX relief, but weakens defense-in-depth against compromised human sessions and leaves the underlying $4N$ SSE feedback storm and $O(N)$ client request loops intact.
+- *Option B*: Keep all security rate limits (`apiLimiter`, `authLimiter`, `adminAuthLimiter`, `agentRateLimiter`) 100% unchanged and fix the architectural amplification around them (SSE batch coalescing + 200ms client debounce + unified multi-domain bulk endpoints + `Retry-After` stream pacing) — Viable, eliminates the root cause (reducing 300-item imports from ~1,200 requests to 1–2 requests), and leaves the vault strictly more secure and faster.
+**Chosen**: Option B (Preserve all security rate limits; eliminate request amplification and add 429 stream pacing across Issues #30, #31, #32).
+**Why**: Lucas caught the security smell immediately—weakening a security wall to hide an $N+1$ / $4N$ engineering bug is the wrong trade. Fixing the real amplification made the vault both faster and strictly as defended as before.
+**Confidence**: high — Verified via integration and unit tests across SSE coalescing, multi-domain bulk endpoints, Layer 1 secret immobility, and 429 retry pacing; Cloud CI Runs `#44864420916` and `#44864417848` 100% green.
+**Outcome**: Merged PR #33 into `main` (`277e039`), auto-closing Issues #30, #31, and #32.
+**Pattern reference**: New pattern — first instance (`fix-amplification-not-security-wall`).
+
+---
+
 ## milestone-v0.0.3.0-docs-walk-and-skill-alignment — 2026-11-01 19:45
 
 **Context**: Executing final two milestone issues (#23 Docs-as-Code walk and #24 project skill alignment) for Milestone `v0.0.3.0 (Build 32)` following live physical verification of Stage 28.4.  

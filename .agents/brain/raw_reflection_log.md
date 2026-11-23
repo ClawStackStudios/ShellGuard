@@ -1,4 +1,27 @@
 ---
+Date: 2026-11-20
+TaskRef: "Stage 29A: Eliminate Bulk Request Amplification, Multi-Domain Batching & 429 Stream Pacing (PR #33, Closes #30, #31, #32)"
+
+Learnings:
+- Rate-Limit Trip Diagnosis: When human bulk workflows trigger a 100 req/min rate limiter, trace reactive event feedback loops before considering limit changes. Emitting SSE events inside a bulk DB loop without client-side debouncing creates an $O(4N)$ HTTP read storm ($N$ SSE frames $\times$ 4 `GET`s per `scuttleVault()`).
+- Layer 2-Only Bulk Metadata Route (`PATCH /api/vault/bulk-metadata`): Updating `category` and `tags` across `vault_pearls`, `vault_secure_notes`, and `vault_ssh_keys` in one transaction without touching Layer 1 encrypted secrets (`secret`, `content`, `key_value`) safely accelerates bulk move, bulk tag, pod rename, and pod delete to $O(\lceil N / 500 \rceil)$ while preserving zero-knowledge boundaries.
+- CORS `exposedHeaders` for Browser 429 Backpressure: Setting `standardHeaders: true` on `express-rate-limit` is invisible to cross-origin browser `fetch()` unless `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`, and `Retry-After` are explicitly listed in CORS `exposedHeaders` across all CORS modes.
+- Pre-Merge Docs Audit Verification: Always check physical VitePress filenames before listing doc gaps (`docs/vault-features/the-grotto.md`, not a phantom `vault-items.md`), and verify doc walks via Cloud CI (`docsLinks.test.ts`, `mermaidDiagrams.test.ts`, `docs:build`).
+
+Difficulties:
+- Initial instinct to propose human rate-limit exemption was rightly rejected by Lucas to preserve security invariants (`tests/build-gates.test.ts` also asserts `apiLimiter` 100/min).
+- `prepareWrite()` returned `Record<string, unknown>`, tripping `tsc --noEmit` on `PATCH /bulk-metadata` until cast explicitly to `string`.
+
+Successes:
+- 19-Rung Reasoning Ladder cleanly partitioned the work into 3 atomic critical issues (#30, #31, #32) shipped in PR #33 (`277e039`).
+- Both GitHub Actions CI workflows (`#44864420916` & `#44864417848`) passed 100% green after all code, test, and `/walk-the-docs` commits.
+
+Improvements_Identified_For_Consolidation:
+- General pattern: Fix request amplification (event coalescing + client single-flight debounce + multi-domain batching + `Retry-After` pacing) rather than weakening rate-limit security walls.
+- General pattern: Expose `RateLimit-*` and `Retry-After` in CORS `exposedHeaders` so browser clients can honor server backpressure.
+---
+
+---
 Date: 2026-10-30
 TaskRef: "Align VitePress Documentation Portal UI & Theming to Reef Modernist App Design"
 

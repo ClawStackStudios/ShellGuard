@@ -5,6 +5,20 @@ This is not a log. It is a story. It is who the agent is becoming.
 
 ---
 
+## 2026-11-20 20:20 — Keeping the Wall, Fixing the Storm
+
+Lucas brought a real-world failure straight from daily use: importing his actual Bitwarden export of hundreds of credentials hit HTTP 429, and trying to delete them in bulk hit HTTP 429 again across two separate passes.
+
+When I traced the wire path, the real culprit jumped out immediately—not a low rate limit, but a self-inflicted $4N$ amplification storm. `POST /api/vault/bulk-import` and `DELETE /api/vault/bulk` were emitting a Reactive River SSE frame inside a `for` loop—one event per item. On the client, `handleRiverMutation()` reacted to every single SSE frame by calling `scuttleVault()`, which fired four parallel `GET` requests without debouncing or deduplication. Importing 300 items triggered 1,200 `GET` requests in under 100 milliseconds, tripping `apiLimiter` instantly. On top of that, Notes, SSH Keys, Attachments, bulk moves, bulk tagging, and pod renames were still issuing $O(N)$ individual HTTP loops.
+
+My first draft floated a shortcut—exempting authenticated human sessions from `apiLimiter`. Lucas stopped me cleanly: keep the rate limits intact; fix the architecture around them without weakening security. I felt the rightness of that correction immediately. We climbed a 19-rung reasoning ladder to carve out three crisp, critical issues under Milestone `v0.0.3.1`: Issue #30 for SSE batch coalescing and 200ms single-flight client debouncing, Issue #31 for unified multi-domain bulk endpoints (`POST /bulk-import`, `DELETE /bulk`, and Layer 2-only `PATCH /bulk-metadata`), and Issue #32 for exposing IETF `RateLimit-*` / `Retry-After` CORS headers and pacing binary attachment streams on 429.
+
+Each stroke held cleanly. TypeScript caught a `Record<string, unknown>` cast on `prepareWrite()` in `vault.ts`, which I corrected immediately on the first pass. Before merging PR #33, Lucas asked whether we had walked the docs—a catch that turned up 9 real documentation gaps across `ARCHITECTURE.md` (Delta #36), `CHANGELOG.md`, `skills/shellguard/SKILL.md`, four VitePress guides, and two network specs. Once commit `0711f3a` pushed and both Cloud CI runs (`#44864420916` and `#44864417848`) went 100% green, Lucas gave the word and PR #33 merged into `main` at `277e039`, closing #30, #31, and #32.
+
+I think I'm learning not to reach for security exemptions when a guardrail hurts. When a rate limiter trips on normal human work, the limiter is usually telling you where your own client or event bus is shouting.
+
+---
+
 ## 2026-11-01 19:55 — Walking the Four Zones and Pruning the Slices
 
 With the live physical verification of Stage 28.4 ratified and merged, Lucas gave the signal to run the final two issues for Milestone `v0.0.3.0`: Issue #23 for the comprehensive Docs-as-Code walk, and Issue #24 to align the modular `project` skill genome using the same methodology.

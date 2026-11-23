@@ -17,6 +17,12 @@ The **Technical Reference** section provides ground-truth specifications, data m
   <Card title="Database Schema Ground Truth" href="/reference/blueprint-schema" icon="🗄️" tag="Database">
     Complete SQLite schema definitions for <code>lobsters</code>, <code>vault_pearls</code>, <code>agent_keys</code>, attachments, and audit tables.
   </Card>
+  <Card title="Reactive River SSE & Sync Events" href="/reference/sync-events" icon="🌊" tag="Sync">
+    Real-time Server-Sent Events mutation bus, Last-Event-ID cursor replay, and coalesced bulk batch reconciliation.
+  </Card>
+  <Card title="Dual-Homed Network Resolver" href="/reference/network-resolver" icon="🌐" tag="Networking">
+    Zero-config LAN + Tailscale MagicDNS discovery, parallel fast-first racing, transparent REST/SSE failover, and diagnostics UI.
+  </Card>
   <Card title="Reef Modernist Design System" href="/reference/design-system" icon="🎨" tag="Design">
     Design philosophy, bioluminescent color tokens, dynamic theme palettes, typography, and motion physics.
   </Card>

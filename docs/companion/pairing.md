@@ -24,12 +24,12 @@ sequenceDiagram
     Super->>Super: Generates SVG QR Code (shellguard://pair)
     Admin->>Mobile: Points camera at QR Code
 
-    Mobile->>Mobile: Decodes URI (endpoint, fingerprint, pubkey)
-    Mobile->>API: Initiates TLS 1.3 handshake to endpoint
+    Mobile->>Mobile: Decodes URI (v, lan, ts, fp, ik, alias)
+    Mobile->>API: Probes LAN & Tailscale vectors (TLS 1.3 handshake)
     API-->>Mobile: Presents self-signed leaf certificate
-    Mobile->>Mobile: Verifies leaf cert matches expected fingerprint
+    Mobile->>Mobile: Verifies leaf cert matches expected fingerprint (fp)
 
-    Mobile->>Mobile: Cryptographically pins instance public key (pubkey)
+    Mobile->>Mobile: Cryptographically pins instance public key (ik)
     Mobile-->>Admin: ✅ "Instance Paired & Pinned"
 
     opt Leaf Certificate Regeneration Later
@@ -38,7 +38,7 @@ sequenceDiagram
         Mobile->>API: Connects and detects new leaf cert
         Mobile->>API: GET /api/public/tls-manifest
         API-->>Mobile: Returns signed manifest (fingerprint, timestamp, signature)
-        Mobile->>Mobile: Verifies signature with pinned pubkey
+        Mobile->>Mobile: Verifies signature with pinned ik
         Mobile->>Mobile: ✅ Auto-heals: Updates trusted fingerprint seamlessly
     end
 ```
@@ -52,23 +52,29 @@ From the SuperLobster control panel, navigating to **Transport & Mobile Pairing*
 1. Open **ShellGuard Mobile** on your Android or iOS device.
 2. Tap **Pair with Reef (Scan QR)**.
 3. Align the camera with the on-screen QR code in SuperLobster.
-4. The client decodes the `shellguard://pair` URI, executes a cryptographic probe, pins the server identity, and opens the gateway.
+4. The client decodes the dual-vector `shellguard://pair` URI, probes the LAN and Tailscale vectors (falling back automatically if one is unreachable), pins the server identity, and opens the gateway.
 
 ---
 
 ## 📐 The `shellguard://pair` URI Schema
 
-The visual QR code encodes a standard custom-scheme URI containing all parameters required for secure transport bootstrapping:
+The visual QR code encodes a standard custom-scheme URI containing both LAN and Tailscale vectors plus all parameters required for secure transport bootstrapping:
 
-```
-shellguard://pair?endpoint=https%3A%2F%2F192.168.1.50%3A6565&fingerprint=80%3ABF%3A34%3AC8%3A32%3A94%3A...&pubkey=04a98b8d69e39153dd204147837126950c7694f5ea24022ff0cb0cdae6c23fccd984922aea90fd55c6105c3afd08feb4bf62f21fb530c39432568f0d67bf2c3e9c
+```text
+shellguard://pair?v=1&lan=https%3A%2F%2F192.168.1.50%3A6565&ts=https%3A%2F%2Freef.tail12345.ts.net%3A6565&fp=80:BF:34:C8:32:94:...&ik=04a98b8d69e39153dd204147837126950c7694f5ea24022ff0cb0cdae6c23fccd984922aea90fd55c6105c3afd08feb4bf62f21fb530c39432568f0d67bf2c3e9c&alias=reef-server
 ```
 
 | Query Parameter | Format | Purpose |
 |:---|:---|:---|
-| **`endpoint`** | Fully Qualified URL | The primary HTTPS address and port of the ShellGuard server on the local network (e.g. `https://192.168.1.50:6565`). |
-| **`fingerprint`** | Colon-delimited Hex | The SHA-256 fingerprint of the server's current self-signed leaf certificate. Used for initial Trust on First Use (TOFU) verification. |
-| **`pubkey`** | 130-char Hex String | The uncompressed EC P-256 public key of the server's immutable **Instance Identity Anchor** (`DATA_DIR/instance.key`). |
+| **`v`** | Integer (`1`) | Pairing URI schema version. |
+| **`lan`** | URL-encoded HTTPS URL | The primary RFC 1918 local network address and port of the ShellGuard server (e.g. `https://192.168.1.50:6565`). |
+| **`ts`** | URL-encoded HTTPS URL *(optional)* | The Tailscale MagicDNS (`*.ts.net`) or CGNAT (`100.x.y.z`) reachability vector when Tailscale is detected on the host. Empty string when running LAN-only. |
+| **`fp`** | Colon-delimited Hex | The SHA-256 fingerprint of the server's current self-signed leaf certificate. Used for initial Trust on First Use (TOFU) verification. |
+| **`ik`** | 130-char Hex String | The uncompressed EC P-256 public key of the server's immutable **Instance Identity Anchor** (`DATA_DIR/instance.key`). |
+| **`alias`** | URL-encoded Hostname | Human-readable server hostname (`os.hostname()`) displayed as the default reef label in the companion app. |
+
+> [!TIP]
+> **Runtime Vector Discovery**: Paired clients and the Web Vault can also refresh active LAN/Tailscale endpoints at any time via the unauthenticated `GET /api/public/endpoints` manifest. See the [Dual-Homed Network Resolver Reference](/reference/network-resolver) for details.
 
 ---
 
@@ -78,8 +84,8 @@ Traditional web browsers rely on trusted Certificate Authorities (CAs). On a loc
 
 The Reef Handshake solves this through **Instance Identity Pinning**:
 1. During the handshake, the mobile app does **not** simply pin the leaf certificate (which is ephemeral and may expire or rotate).
-2. Instead, it extracts and permanently stores the server's `pubkey` (the public half of `DATA_DIR/instance.key`).
-3. All subsequent connections require either the pinned certificate fingerprint or a cryptographic signature verified by this pinned public key.
+2. Instead, it extracts and permanently stores the server's `ik` (the public half of `DATA_DIR/instance.key`).
+3. All subsequent connections require either the pinned certificate fingerprint (`fp`) or a cryptographic signature verified by this pinned public key.
 4. An attacker cannot impersonate the server without stealing `DATA_DIR/instance.key` (protected by file mode `0o600` on the server).
 
 ---

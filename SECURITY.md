@@ -33,7 +33,7 @@ Security updates and critical patches are actively provided for the following re
 
 | Version | Supported | Security Notes |
 |:---|:---|:---|
-| `v0.0.3.x (Build 32+)` | ✅ Supported | Active development & current release branch |
+| `v0.0.3.x (Build 32–33+)` | ✅ Supported | Active release branch (`v0.0.3.1` Build 33 — Dual-Homed MagicDNS Mesh & Bulk Coalescing) |
 | `v0.0.2.x (Build 26–31)` | ⚠️ Maintenance Only | Upgrade to latest `v0.0.3.x` recommended |
 | `< v0.0.2.0` | ❌ End of Life | Legacy pre-migration builds; no patches |
 

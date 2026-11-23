@@ -58,11 +58,18 @@ When `TLS_ENABLED=true`, ShellGuard initializes a hardened cryptographic hierarc
 
 ### 2. Automatic 10-Year Leaf Certificate (`DATA_DIR/certs/`)
 - ShellGuard generates a 10-year self-signed EC P-256 certificate (`cert.pem`) and matching private key (`key.pem`) saved in `DATA_DIR/certs/` with `0o600` permissions.
-- **Dynamic SAN Reflection**: The certificate automatically computes Subject Alternative Names (SANs) for:
+- **Dual-Homed Dynamic SAN Reflection (`networkTopology.ts`)**: The certificate automatically computes Subject Alternative Names (SANs) for:
   - `localhost` and `127.0.0.1`
   - Host system hostname (e.g. `reef-server.local`)
-  - All non-internal IPv4 interfaces detected on the host (e.g. `192.168.1.50`, `10.0.0.12`, `100.x.y.z` Tailscale IPs).
-- The certificate is stored on disk and reused across container restarts, providing **Trust on First Use (TOFU)** stability without prompting users on every boot.
+  - All non-internal RFC 1918 LAN IPv4 interfaces (e.g. `192.168.1.50`, `10.0.0.12`)
+  - Tailscale CGNAT IPv4 (`100.64.0.0/10`) and IPv6 (`fd7a:115c:a1e0::/48`) interfaces
+  - **Tailscale MagicDNS (`*.ts.net`, DNS SAN `type: 2`)**: Resolved automatically via a zero-config 3-tier waterfall:
+    1. **Tailscale LocalAPI Unix Socket** (`/var/run/tailscale/tailscaled.sock`) — reads `Self.DNSName` directly when mounted or running on host.
+    2. **Reverse DNS (`dns.reverse`)** — queries PTR records on detected `100.x.y.z` interfaces.
+    3. **Environment Variable Hint** — falls back to `TAILSCALE_DOMAIN` / `MAGIC_DNS_HOST` when set.
+  - **Graceful LAN-Only Fallback**: If no Tailscale interface or MagicDNS hostname is present, certificate generation proceeds cleanly with LAN SANs only.
+  - **LAN-Mode Tailscale CORS**: `src/config/corsConfig.ts` automatically authorizes `*.ts.net` and `fd7a:115c:a1e0::/48` origins with `credentials: true` in LAN mode, enabling seamless cross-vector access without manual `CORS_ORIGINS` overrides.
+- The certificate is stored on disk and reused across container restarts, providing **Trust on First Use (TOFU)** stability without prompting users on every boot. See [Dual-Homed Network Resolver](/reference/network-resolver) for client-side automatic failover.
 
 ### 3. Signed Rotation Manifest (`DATA_DIR/certs/manifest.json`)
 - Each time a certificate is generated or reforged, ShellGuard produces a rotation manifest:
